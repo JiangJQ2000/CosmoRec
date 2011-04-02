@@ -50,7 +50,7 @@ int show_messages=3;
 // switch on/off electron scattering kernel corrections
 //
 //====================================================================================================================
-int solve_with_Kernel_HI=1; // ==0: no kernel correction; 
+int solve_with_Kernel_HI=0; // ==0: no kernel correction; 
                             // ==1: kernel correction using iteration; This runmode takes very long, and is only 
                             //      included for completeness. The additional correction is tiny.
 

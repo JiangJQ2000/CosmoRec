@@ -59,6 +59,17 @@ double xmin_glob_HeI=0.0001;
 double theta_HeI=0.51;
 
 //====================================================================================================================
+// setting different paramters for PDE problem
+//====================================================================================================================
+bool compute_full_2s_1s_corr_HeI=1;
+
+void switch_off_1s_2s_HeI_absorption_correction()
+{
+    compute_full_2s_1s_corr_HeI=0;
+    return;
+}
+
+//====================================================================================================================
 //
 // important functions
 //
@@ -279,6 +290,7 @@ void output_solution_HeI(int output_count, string endname, double nu21,
 //====================================================================================================================
 int compute_HeI_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z, 
                                                         vector<vector<double> > &DF_vec,
+                                                        vector<double> &DI1_2s_vec, 
                                                         vector<int> &HeI_level_indices,
                                                         double zs, double ze, 
                                                         Cosmos &cos, 
@@ -310,6 +322,7 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z
     bool do_output=0;
     bool write_solution_z0=0;
     bool output_DP=1;
+    bool output_DI1=0;
 
     //==============================================================================================
     bool boundary_up=0;                          // change upper boundary condition (==0 --> Dn_x=0)
@@ -367,6 +380,7 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z
     //==============================================================================================
     DF_vec_z.clear();
     DF_vec.clear();
+    DI1_2s_vec.clear();
     HeI_level_indices.pop_back();
     
     vector<double> DPesc_dum_z;
@@ -392,7 +406,7 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z
     // outputs/names/etc
     //==============================================================================================
     string fname, endname=exten+".it_"+int_to_string(it_num)+".dat";
-    ofstream DPfile;
+    ofstream DPfile, Ifile;
     
     if(output_DP)
     {
@@ -401,6 +415,14 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z
         DPfile.precision(8);
     }
 
+    if(output_DI1)
+    {
+        fname=COSMORECDIR+"./temp/DPesc/DI1.HeI.2s1s"+endname;
+        Ifile.open(fname.c_str());
+        Ifile.precision(8);
+ 
+    }
+    
     //==============================================================================================
     // main run
     //==============================================================================================
@@ -536,6 +558,14 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z
                 DF_vec_z.push_back(zout);
                 
                 //==================================================================================
+                // HeI singlet 2s-1s channel correction
+                //==================================================================================
+                compute_DI1_2s_and_dump_it_HeI(zout, nu21, SPDE_D_HeI.xarr, SPDE_D_HeI.yarr, 
+                                               HeIAtoms, cos, Ifile, DI1_2s_vec, 
+                                               SPDE_D_HeI.Fwork, PDE_funcs_HeI.exp_x,
+                                               phi_2s1s_HeI, PDE_funcs_HeI, output_DI1);
+                
+                //==================================================================================
                 // SPDE_D_HeI.yarr is Dn_x
                 //==================================================================================
                 for(int line=0; line<(int)HeI_level_indices.size(); line++)
@@ -598,6 +628,7 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z
     }
         
     if(output_DP) DPfile.close();
+    if(output_DI1) Ifile.close();
     
     //==============================================================================================
 	// Flush the output buffer and close Grace 

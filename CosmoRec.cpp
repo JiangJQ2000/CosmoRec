@@ -292,7 +292,7 @@ int CosmoRec()
     if(DI1_2s_correction_on)
     {
         include_2s1s_corr=1; 
-        DI1_2s_correction_on=0;
+        DI1_2s_correction_on=DI1_2s_correction_on_HeI=0;
     }   
     
     //==============================================================================
@@ -306,7 +306,8 @@ int CosmoRec()
             
             if(show_CosmoRec_mess>=0) cout << " Entering HI-diffusion part " << endl; 
             
-            if(include_2s1s_corr==1 && iteration_count==1) DI1_2s_correction_on=1;
+            if(include_2s1s_corr==1 && iteration_count==1) 
+                DI1_2s_correction_on=DI1_2s_correction_on_HeI=1;
             
             //======================================================================
             // reset parameters
@@ -354,10 +355,11 @@ int CosmoRec()
                 if(show_CosmoRec_mess>=0) cout << "\n Entering HeI-diffusion part " << endl; 
 
                 vector<vector<double> > DF_lines_vec; 
+                vector<double> DI1_2s_vec;  
                 vector<int> HeI_level_indices; 
 
                 compute_HeI_DPesc_with_diffusion_equation_effective(DF_vec_z,
-                                                                    DF_lines_vec,
+                                                                    DF_lines_vec, DI1_2s_vec, 
                                                                     HeI_level_indices,
                                                                     min(3000.0, parameters.zstart/1.001), 
                                                                     max(1500.0, parameters.zend*1.001),
@@ -367,6 +369,7 @@ int CosmoRec()
                                                                     iteration_count-1);
                 
                 setup_DP_spline_data_HeI(DF_vec_z, DF_lines_vec, HeI_level_indices);    
+                if(DI1_2s_correction_on_HeI) setup_DI1_2s_spline_data_HeI(DF_vec_z, DI1_2s_vec);
                 
                 Diffusion_correction_HeI_is_on=1;
             }

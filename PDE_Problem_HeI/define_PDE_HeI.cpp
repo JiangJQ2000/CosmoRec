@@ -276,7 +276,8 @@ void update_HeI_2s_1s_profile(double z, double nu21, const vector<double> &xi)
         double npl_fac=1.0/(1.0-PDE_Setup_D_HeI.PDE_funcs->exp_x[j]);
         double nplp_fac=1.0/(1.0-exp_2s1s/PDE_Setup_D_HeI.PDE_funcs->exp_x[j]);
         
-        PDE_Setup_D_HeI.PDE_funcs->phi_2s1s_x[j]=phi*npl_fac*nplp_fac;
+        PDE_Setup_D_HeI.PDE_funcs->phi_2s1s_x[j]=const_HeI_A2s_1s*phi*npl_fac*nplp_fac
+                                                   /PDE_Setup_D_HeI.PDE_funcs->nu2s1s;
     }
     
     return;
@@ -485,7 +486,7 @@ void add_HeI_2s_1s_terms(double z, double nu21, double Tg, double N1s, double Hz
     //----------------------------------------------------------
 	// 2s-1s emission/absorption term
 	//----------------------------------------------------------
-	double sig_2s=const_HeI_A2s_1s/PDE_Setup_D_HeI.PDE_funcs->nu2s1s/2.0/FOURPI*pow(const_cl/nu21, 2);
+	double sig_2s=pow(const_cl/nu21, 2)/2.0/FOURPI;
 	double kappa_2s1s=-sig_2s*N1s*const_cl/Hz/(1.0+z);
 	//
 	double Dnem_2s=PDE_Setup_D_HeI.PDE_funcs->HeI_Dnem_i(z, 0)*nu21;
@@ -496,8 +497,7 @@ void add_HeI_2s_1s_terms(double z, double nu21, double Tg, double N1s, double Hz
 	{
 		double x=xi[k];
         double phi_em=phi_2s1s_HeI(k);
-		double npl=PDE_Setup_D_HeI.PDE_funcs->exp_x[k]/(1.0-PDE_Setup_D_HeI.PDE_funcs->exp_x[k]);
-		double exp_fac_2s=exp_dum/npl;
+		double exp_fac_2s=exp_dum*(1.0/PDE_Setup_D_HeI.PDE_funcs->exp_x[k]-1.0);
 		double DD=kappa_2s1s*phi_em/x/x;
 		
 		//------------------------------------------------------

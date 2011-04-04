@@ -186,7 +186,75 @@ double compute_DR_1sc_absorption_HI(double z, double nu21, Cosmos &cos, Gas_of_H
     return r;
 }
 
+//====================================================================================================================
+//
+// DI1 output function; correction to the HeI singlet 2s-1s channel
+//
+//====================================================================================================================
+double calc_DI1_2s_Patt_HeI(double xmin, double xmax)
+{
+    //=========================================================================
+    // 1s-->2s Integral; only high nu part (nu/nu21>=0.5) matters
+    //=========================================================================
+    double r=0.0, epsrel=epsrel_HeI, epsabs=1.0e-60;
+    
+    r=Integrate_using_Patterson_adaptive(xmin, xmax, epsrel, epsabs, dnbar_dx_HeI); 
+    
+    return r/const_HeI_A2s_1s;   
+}
 
+//====================================================================================================================
+void compute_DI1_2s_and_dump_it_HeI(double z, double nu21, vector<double> &xarr, vector<double> &yarr, 
+                                    Gas_of_HeI_Atoms &HeIA, Cosmos &cos, 
+                                    ofstream &Ifile, vector<double> &DI1_2s_vec, 
+                                    vector<double> &Fwork, vector<double> &exp_x,
+                                    double (*phi_2g)(int k), PDE_solver_functions_HeI &PDE_funcs,
+                                    bool output=0)
+{
+    //==========================================================================
+    int nnu_pts=xarr.size();
+    double nu2s1s=HeIA.Sing.Level(2, 0).Get_Dnu_1s2();
+    double Tg=cos.TCMB(z);
+    double exp_2s1s=exp(-const_h_kb*nu2s1s/Tg);
+    double Dnem=PDE_funcs.HeI_Dnem_i(z, 0);
+    
+    //==========================================================================
+    // tabulate Dn(nu) for splines
+    //==========================================================================
+    for(int k=0; k<nnu_pts; k++)
+    { 
+        double f_x=exp_2s1s*(1.0/exp_x[k]-1.0); 
+        
+        if(compute_full_2s_1s_corr_HeI) Fwork[k]=(yarr[k]*f_x-nu21*Dnem)*phi_2g(k); 
+        else Fwork[k]=-nu21*Dnem*phi_2g(k); 
+    }       
+    
+    //==========================================================================
+    // setup splines
+    //==========================================================================
+    if(!DP_integrals_splines_are_set) 
+    {
+        Spline_for_nx_integral_HeI_memindex=calc_spline_coeffies_JC(nnu_pts, &xarr[0], &Fwork[0], "DI1-integral");
+        DP_integrals_splines_are_set=1;
+    }
+    else update_spline_coeffies_JC(Spline_for_nx_integral_HeI_memindex, nnu_pts, &xarr[0], &Fwork[0]);
+    
+    //==========================================================================
+    // compute integrals
+    //==========================================================================
+    double DI1=calc_DI1_2s_Patt_HeI(0.5*nu2s1s/nu21, nu2s1s/nu21);
+    DI1=DI1/Dnem+1.0;
+    
+    if(show_messages_HeI>=2) cout << " HeI 2s-1s-2g " << z << " DI1= " << DI1 << endl;
+    if(output) Ifile << z << " " << DI1 << endl;
+    
+    //==========================================================================
+    // save
+    //==========================================================================
+    DI1_2s_vec.push_back(DI1);
+    
+    return;
+}
 
 
 

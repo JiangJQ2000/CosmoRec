@@ -9,8 +9,15 @@
 #include "Atom.h"
 #include "HeI_Atom.h"
 
+//======================================================================================
+// this allows to switch the 1s-2s absorption correction off; in the radiative transfer 
+// everything is included, but the integral is only taken over the emission term
+//======================================================================================
+void switch_off_1s_2s_HeI_absorption_correction();
+
 int compute_HeI_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z, 
                                                         vector<vector<double> > &DF_vec,
+                                                        vector<double> &DI1_2s_vec,
                                                         vector<int> &HeI_level_indices,
                                                         double zs, double ze, 
                                                         Cosmos &cos, 

@@ -238,7 +238,7 @@ void set_startup_data(string filename, double param[12], Parameters_form_initfil
     { 
         Diffusion_flag=1;
         Diffusion_correction=1;
-        DI1_2s_correction_on=0;
+        DI1_2s_correction_on=DI1_2s_correction_on_HeI=0;
         
         if(show_CosmoRec_mess>=0)
         {
@@ -249,7 +249,7 @@ void set_startup_data(string filename, double param[12], Parameters_form_initfil
 
         if(induced_flag>=1)
         { 
-            DI1_2s_correction_on=1;
+            DI1_2s_correction_on=DI1_2s_correction_on_HeI=1;
             
             if(show_CosmoRec_mess>=0) 
                 cout << " Switching on stimulated 2s-1s two-photon decays " << endl; 
@@ -259,7 +259,11 @@ void set_startup_data(string filename, double param[12], Parameters_form_initfil
                 if(show_CosmoRec_mess>=0)
                     cout << " Ly-n feedback to the 1s-2s two-photon channel " << endl; 
             }
-            else switch_off_1s_2s_absorption_correction(); // defined in Solve_PDEs.h
+            else
+            {   
+                switch_off_1s_2s_absorption_correction();     // defined in Solve_PDEs.h
+                switch_off_1s_2s_HeI_absorption_correction(); // defined in Solve_PDEs_HeI.h
+            }
         }
     }
         

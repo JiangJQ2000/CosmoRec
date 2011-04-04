@@ -140,8 +140,14 @@ void fcn_He_effective(double z, double Xe, double Tg, double NH, double H_z,
     // HeI-diffusion correction (added 22.01.2011; JF & JC)
     //==================================================================
     if(Diffusion_correction_HeI_is_on)
+    {
         evaluate_HeI_Diffusion_correction(z, HeI_Atoms, NH, H_z, Tg, 
                                           &LI.g[iHeI], LI.g[0], LI.g[LI.index_HI]);
+        
+        if(DI1_2s_correction_on_HeI) evaluate_HeI_DI1_DI2_correction(z, HeI_Atoms.Xi(0), HeI_Atoms.Xi(1), 
+                                                                     HeI_Atoms.Sing.Level(1).Get_Dnu_1s2(), 
+                                                                     Tg, &LI.g[iHeI]);
+    }
     
     //==================================================================
     // HeI-feedback
@@ -262,6 +268,7 @@ void fcn_effective(double z, Data_Level_III &LIII)
     if(Diffusion_correction_is_on)
     {
         evaluate_HI_Diffusion_correction(z, Hydrogen_Atoms, NH, H_z, Tg, &Level_I_temp.g[iHI]);
+        
         if(DI1_2s_correction_on) evaluate_HI_DI1_DI2_correction(z, Hydrogen_Atoms.X(0), Hydrogen_Atoms.X(1), 
                                                                 Hydrogen_Atoms.Level(1).Get_Dnu_1s(), Tg, &Level_I_temp.g[iHI]);
     }
@@ -340,6 +347,7 @@ void fcn_for_jacobian_eval(int jX, int neq, double DXj, double z, double Tg, dou
         if(Diffusion_correction_is_on)
         {
             evaluate_HI_Diffusion_correction(z, Hydrogen_Atoms, NH, cosmos.H(z), Tg, &f[LI0.index_HI]);
+            
             if(DI1_2s_correction_on) evaluate_HI_DI1_DI2_correction(z, Hydrogen_Atoms.X(0), Hydrogen_Atoms.X(1), 
                                                                     Hydrogen_Atoms.Level(1).Get_Dnu_1s(), Tg, &f[LI0.index_HI]);
         }      
@@ -350,8 +358,14 @@ void fcn_for_jacobian_eval(int jX, int neq, double DXj, double z, double Tg, dou
             // HeI-diffusion correction (added 22.01.2011; JF & JC)
             //==================================================================
             if(Diffusion_correction_HeI_is_on)
+            {
                 evaluate_HeI_Diffusion_correction(z, HeI_Atoms, NH, cosmos.H(z), Tg, 
                                                   &f[LI0.index_HeI], dum, f[LI0.index_HI]);
+                
+                if(DI1_2s_correction_on_HeI) evaluate_HeI_DI1_DI2_correction(z, HeI_Atoms.Xi(0), HeI_Atoms.Xi(1), 
+                                                                             HeI_Atoms.Sing.Level(1).Get_Dnu_1s2(), 
+                                                                             Tg, &f[LI0.index_HeI]);
+            }                
 
             //==========================================================================
             // HeI-feedback

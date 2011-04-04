@@ -267,7 +267,7 @@ double DI1_2s_spline(double z)
 }
 
 //==========================================================================================================
-// correction to Ly-a line
+// correction to 2s-1s two-photon channel
 //==========================================================================================================
 void evaluate_HI_DI1_DI2_correction(double z, double X1s, double X2s, double nu21, double Tg, double *g)
 {

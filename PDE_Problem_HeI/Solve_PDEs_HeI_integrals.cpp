@@ -212,7 +212,7 @@ void compute_DI1_2s_and_dump_it_HeI(double z, double nu21, vector<double> &xarr,
                                     bool output=0)
 {
     //==========================================================================
-    int nnu_pts=xarr.size();
+    int nnu_pts=PDE_funcs.emission_2s1s;
     double nu2s1s=HeIA.Sing.Level(2, 0).Get_Dnu_1s2();
     double Tg=cos.TCMB(z);
     double exp_2s1s=exp(-const_h_kb*nu2s1s/Tg);

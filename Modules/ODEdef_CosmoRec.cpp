@@ -145,7 +145,7 @@ void fcn_He_effective(double z, double Xe, double Tg, double NH, double H_z,
                                           &LI.g[iHeI], LI.g[0], LI.g[LI.index_HI]);
         
         if(DI1_2s_correction_on_HeI) evaluate_HeI_DI1_DI2_correction(z, HeI_Atoms.Xi(0), HeI_Atoms.Xi(1), 
-                                                                     HeI_Atoms.Sing.Level(1).Get_Dnu_1s2(), 
+                                                                     HeI_Atoms.Sing.Level(2, 0).Get_Dnu_1s2(), 
                                                                      Tg, &LI.g[iHeI]);
     }
     
@@ -363,7 +363,7 @@ void fcn_for_jacobian_eval(int jX, int neq, double DXj, double z, double Tg, dou
                                                   &f[LI0.index_HeI], dum, f[LI0.index_HI]);
                 
                 if(DI1_2s_correction_on_HeI) evaluate_HeI_DI1_DI2_correction(z, HeI_Atoms.Xi(0), HeI_Atoms.Xi(1), 
-                                                                             HeI_Atoms.Sing.Level(1).Get_Dnu_1s2(), 
+                                                                             HeI_Atoms.Sing.Level(2, 0).Get_Dnu_1s2(), 
                                                                              Tg, &f[LI0.index_HeI]);
             }                
 

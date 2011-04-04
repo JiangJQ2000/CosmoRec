@@ -26,19 +26,41 @@
 
 using namespace std;
 
-int define_PDE_verbose=0;
+int define_PDE_verbosity=0;
 
 //=====================================================================================
 //
 // run-flags
 //
 //=====================================================================================
-bool line_sc=1;
-bool el_sc=1;
-bool line_em_abs=1;
-bool A2s1s_em_abs=1;
-//=====================================================================================
+struct define_PDE_HI_runflags
+{
+    bool line_sc;         // resonance scattering on/off
+    bool el_sc;           // electron scattering on/off
+    bool line_em_abs;     // line emission & absorption on/off
+    bool A2s1s_em_abs;    // HI 2s-1s emission & absorption on/off
+};
 
+define_PDE_HI_runflags def_HI_run={1, 1, 1, 1};  // default setting
+
+//=====================================================================================
+void HI_switch_on_line_scattering(){ def_HI_run.line_sc=1; return; }
+void HI_switch_off_line_scattering(){ def_HI_run.line_sc=0; return; }
+
+void HI_switch_on_e_scattering(){ def_HI_run.el_sc=1; return; }
+void HI_switch_off_e_scattering(){ def_HI_run.el_sc=0; return; }
+
+void HI_switch_on_line_em_abs(){ def_HI_run.line_em_abs=1; return; }
+void HI_switch_off_line_em_abs(){ def_HI_run.line_em_abs=0; return; }
+
+void HI_switch_on_2s1s(){ def_HI_run.A2s1s_em_abs=1; return; }
+void HI_switch_off_2s1s(){ def_HI_run.A2s1s_em_abs=0; return; }
+
+//=====================================================================================
+//
+// more delicate run-flags; These are just for detailed computations, and should
+// normally not be changed.
+//
 //=====================================================================================
 bool recoil_l=1;
 bool diffusion_l=1;
@@ -82,7 +104,7 @@ void switch_off_two_g_corrections()
     two_g_process=0;
     two_g_process_nmax=0;
     
-    if(define_PDE_verbose>=1) 
+    if(define_PDE_verbosity>=1) 
         cout << " switch_off_two_g_corrections :: Switching two-gamma corrections off. " << endl;
     
     return;
@@ -93,7 +115,7 @@ void switch_on_two_g_corrections(int tg_nmax, int nS)
     two_g_process=1;
     two_g_process_nmax=(int)min(8, min(tg_nmax, nS));
     
-    if(define_PDE_verbose>=1)
+    if(define_PDE_verbosity>=1)
     {
         cout << " switch_on_two_g_corrections :: Switching on two-gamma corrections. " << endl;
         cout << " switch_on_two_g_corrections :: nmax will be set to " 
@@ -117,7 +139,7 @@ void switch_off_Raman_corrections()
     Raman_process=0;
     Raman_process_nmax=0;
     
-    if(define_PDE_verbose>=1)
+    if(define_PDE_verbosity>=1)
         cout << " switch_off_Raman_corrections :: Switching Raman corrections off. " << endl;
     
     return;
@@ -128,7 +150,7 @@ void switch_on_Raman_corrections(int R_nmax, int nS)
     Raman_process=1;
     Raman_process_nmax=(int)min(7, min(R_nmax, nS-1));
     
-    if(define_PDE_verbose>=1)
+    if(define_PDE_verbosity>=1)
     {
         cout << " switch_on_Raman_corrections :: Switching on Raman corrections. " << endl;
         cout << " switch_on_Raman_corrections :: nmax will be set to " 
@@ -1068,15 +1090,15 @@ void def_PDE_Lyn_and_2s1s(double z, const vector<double> &xi, vector<double> &Ai
     //------------------------------------------------------
     // electron scattering terms first (smallest term)
     //------------------------------------------------------
-    if(el_sc) add_electron_scattering(z, nu21, Te, Ne, Hz, xi, Ai, Bi, Ci);
+    if(def_HI_run.el_sc) add_electron_scattering(z, nu21, Te, Ne, Hz, xi, Ai, Bi, Ci);
 
     //------------------------------------------------------
     // normal Ly-n scatterring and emission/absorption
     //------------------------------------------------------
-    if(line_sc || line_em_abs)
+    if(def_HI_run.line_sc || def_HI_run.line_em_abs)
     {
-        bool local_line_em_abs=line_em_abs;
-        bool local_line_sc=line_sc;
+        bool local_line_em_abs=def_HI_run.line_em_abs;
+        bool local_line_sc=def_HI_run.line_sc;
         
         for(int n=2; n<=nmax; n++)
         {
@@ -1125,7 +1147,8 @@ void def_PDE_Lyn_and_2s1s(double z, const vector<double> &xi, vector<double> &Ai
     //------------------------------------------------------
     // Source-term 2s-1s emission and absorption
     //------------------------------------------------------
-    if(A2s1s_em_abs) add_nsd_1s_2gamma_terms(2, 0, phi_ns1s_2g, PDE_Setup_D.PDE_funcs->HI_Dnem_nl(z, 2, 0), z, nu21, Tg, N1s, Hz, xi, Ci, Di);
+    if(def_HI_run.A2s1s_em_abs) 
+        add_nsd_1s_2gamma_terms(2, 0, phi_ns1s_2g, PDE_Setup_D.PDE_funcs->HI_Dnem_nl(z, 2, 0), z, nu21, Tg, N1s, Hz, xi, Ci, Di);
     
     return;
 }

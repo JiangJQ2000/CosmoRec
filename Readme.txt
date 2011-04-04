@@ -10,11 +10,11 @@ CHECK FOR XXXX before final release...
 //
 // Author: J. Chluba (MPA & CITA). All rights reserved. No guarantee for the correctness of the outputs is given!
 //
-// Modifications and additions: J. Fung, R. Thomas, G. Vasil
+// Some modifications and additions: J. Fung (Astro. Dept. UoT), R. Thomas (CITA), G. Vasil (CITA)
 //===================================================================================================================================
 //
 // REQUIREMENTS: GSL-library 1.13 or later (download at http://www.gnu.org/software/gsl/)
-// OPTIONAL    : Grace-library 5.1.22 or later (download at http://plasma-gate.weizmann.ac.il/Grace/) for outputs of PDE solver
+// OPTIONAL    : Grace-library 5.1.22 or later (download at http://plasma-gate.weizmann.ac.il/Grace/) for outputs from PDE solver
 //
 //===================================================================================================================================
 
@@ -63,6 +63,7 @@ CHECK FOR XXXX before final release...
 // Update (30.03.2011 | CosmoRec v2.0b)
 // 
 // main new features: 
+//
 // - added interface for 'CosmoMC' support to "CosmoRec.h". Details XXX
 //
 // - radiative transfer problem for helium photons can now be explicitly solved. This module can be called instead of the simple
@@ -79,7 +80,10 @@ CHECK FOR XXXX before final release...
 //   and './PDE_Problem_HeI/Solve_PDEs_HeI.cpp' and their respective modules './PDE_Problem/Solve_PDEs_Grace.cpp' and 
 //   './PDE_Problem_HeI/Solve_PDEs_HeI_Grace.cpp' in the case of helium.
 //
+// - added new runmode for Recfast++ with corrections function (see 'RUNNING CosmoRec in Recfast++ mode' below). 
+//
 // Hydrogen:
+//
 // - 2s-1s two-photon decay previously were computed using the simple fitting formula for the two-photon profile given by 
 //   Nussbaumer & Schmutz, 1984. This has been replaced with the latest computation of the 2s-1s two-photon profile. The 
 //   normalization of the new profile can be set in './Development/Definitions/physical_constants.h', and is currently set 
@@ -90,6 +94,7 @@ CHECK FOR XXXX before final release...
 //   The computation of two-photon and Raman events for up to 8 shells was speed up in this way without loss of precision.
 //
 // Helium:
+//
 // - updated the effective rates for helium. The rates for up to 10 resolved states including quadrupole lines missed one important 
 //   set of rates.
 // - helium feedback in the analytic model of Chluba & Sunyaev, MNRAS, 402, 1221Ð1248 (2010) can now be included for up to 10 shells.
@@ -273,33 +278,42 @@ To clean up type "make clean" or "make tidy", as well as "make cleanall",
 
 //===================================================================================================================================
 
-
 RUNNING CosmoRec:
 
 'CosmoRec' can be run by invoking 
 
 ./CosmoRec runfiles/parameters.dat
 
-For standard settings, the output of the code will be written in './output/.' The filenames depend on the
-chosen runmode. The parameter file in './runfiles' contains the cosmological parameters and setting for 
-the different runmodes (see './runfiles/parameters.dat' for details). Using this startup file the following 
-outputs will be generated:
+For standard settings, the output of the code will be written in './outputs/.' The output directory can be changed
+in the parameter-file, './runfiles/parameters.dat', however, below we assume the default directory is kept.
+
+The filenames of the output depend on the chosen runmode. The parameter file in './runfiles' contains the cosmological 
+parameters and setting for different runmodes (see './runfiles/parameters.dat' for details). Using this startup file 
+the following outputs will be generated:
 
 XXXX
 CosmoRec.HI.nS_eff_400.nH_3.nHe_3.HeI_feedback_nf_3.w_HI_abs.HI.X_Recfast.dat
 CosmoRec.HI.nS_eff_400.nH_3.nHe_3.HeI_feedback_nf_3.w_HI_abs.Xe.dat
 CosmoRec.HI.nS_eff_400.nH_3.nHe_3.HeI_feedback_nf_3.w_HI_abs.Xe.final.dat
 
-The first file contains the Recfast++ solution in the format "z Xe Te". The second contains the solution for Xe and Te (format "z Xe Te") 
-without the radiative transfer effects taken into account. The last file provide the final solution for Xe and Te including all transfer
+The first file contains the Recfast++ solution in the format 'z Xe Te'. The second contains the solution for Xe and Te (format 'z Xe Te') 
+without the radiative transfer effects taken into account. The last file provides the final solution for Xe and Te including all transfer
 effects according to the settings.
+
+//===================================================================================================================================
+
+RUNNING CosmoRec in Recfast++ mode
 
 One can alternatively run the normal Recfast++ module by typing 
 
 ./CosmoRec REC runfiles/parameters.dat
 
-The output will be written into './output/Xe_Recfast.dat' with the format 'z Xe Te'
+The output will be written into './outputs/Xe_Recfast.dat' with the format 'z Xe Te'. Furthermore, by invoking
 
+./CosmoRec RECcf runfiles/parameters.dat
+
+Recfast++ is run using the correction function of Chluba & Thomas, 2010. The output will be written into 
+'./outputs/Xe_Recfast.corr_fac.dat' with the format 'z Xe Te', as above.
 
 //===================================================================================================================================
 

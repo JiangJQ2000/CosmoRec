@@ -45,6 +45,19 @@ using namespace nsnd_2gamma_profiles;
 //====================================================================================================================
 int show_messages=3;
 
+
+//====================================================================================================================
+//
+// settings for the grid
+//
+//====================================================================================================================
+int core_HI=25;            // points per Doppler width in the core region; 
+                           // For +/- 10 xD core=25 implies 500 points (which is recommended).
+int dec_HI=50;             // points per decade; from 10^-4 --> 1 ndec=50 gives ~ 200 points
+
+double theta_HI=0.51;
+
+
 //====================================================================================================================
 //
 // switch on/off electron scattering kernel corrections
@@ -52,30 +65,49 @@ int show_messages=3;
 //====================================================================================================================
 int solve_with_Kernel_HI=0; // ==0: no kernel correction; 
                             // ==1: kernel correction using iteration; This runmode takes very long, and is only 
-                            //      included for completeness. The additional correction is tiny.
+                            //      included for completeness. The additional correction is tiny. This runmode is
+                            //      not recommended.
+
 
 //====================================================================================================================
-// settings for the grid
-//====================================================================================================================
-int npts_2s1s=1000;        // number of points for 2s-1s two-photon part
-
-int core_HI=25;            // points per Doppler width in the core region; 
-                           // For +/- 10 xD core=25 implies 500 points (which is recommended).
-int dec_HI=50;             // points per decade; from 10^-4 --> 1 ndec=50 gives ~ 200 points
-
-double xmin_glob=0.0001;
-double theta_HI=0.51;
-
-//====================================================================================================================
-// setting different paramters for PDE problem
+//
+// setting different paramters for PDE problem regarding the HeI Singlet 2s-1s channel
+//
 //====================================================================================================================
 bool compute_full_2s_1s_corr=1;
+bool HI_2s_1s_corr_is_on=1;
 
+//====================================================================================================================
+// switch on/off HI 2s-1s channel; this overwrites all other settings for 2s-1s channel
+//====================================================================================================================
+int npts_2s1s=1000;         // number of points for 2s-1s two-photon part
+double xmin_glob=0.0001;
+
+void switch_off_1s_2s_correction()
+{ 
+    HI_switch_off_2s1s(); 
+    HI_2s_1s_corr_is_on=0; 
+    
+    return; 
+}
+
+void switch_on_1s_2s_correction()
+{ 
+    HI_switch_on_2s1s(); 
+    HI_2s_1s_corr_is_on=1; 
+    
+    return; 
+}
+
+//====================================================================================================================
+// HI 1s-2s absorption can be switched off separately with this.
+//====================================================================================================================
 void switch_off_1s_2s_absorption_correction()
 {
     compute_full_2s_1s_corr=0;
     return;
 }
+
 
 //====================================================================================================================
 //
@@ -496,8 +528,8 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
 	// output for Grace
 	//=========================================================================== 
 #ifdef GRACE_DEFINED
-	bool out_put_GRACE=0;
-	int GR_output_step=10;
+	bool out_put_GRACE=1;
+	int GR_output_step=1;
 #endif
     
     //=========================================================================== 
@@ -552,7 +584,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
         nresmax=2; 
         boundary_up=1; 
         include_Ly_corr=1;
-        dz_out=min(dz_out, 2.0); // npts_2s1s=2000;
+        dz_out=min(dz_out, 2.0);
     }
 
     //=========================================================================== 
@@ -643,7 +675,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
         Raman_file.precision(8);
     }
     
-    if(output_DI1)
+    if(output_DI1 && HI_2s_1s_corr_is_on)
     {
         fname=COSMORECDIR+"./temp/DPesc/DI1.2s1s"+endname;
         Ifile.open(fname.c_str());
@@ -747,8 +779,9 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
                 //=============================================================== 
                 // SPDE_D.yarr is Dn_x
                 //=============================================================== 
-                compute_DI1_2s_and_dump_it(zout, SPDE_D.xarr, SPDE_D.yarr, HIA, cos, Ifile, DI1_2s_vec, 
-                                           SPDE_D.Fwork, PDE_funcs.exp_x, phi_ns1s_2g, PDE_funcs, output_DI1);
+                if(HI_2s_1s_corr_is_on)
+                    compute_DI1_2s_and_dump_it(zout, SPDE_D.xarr, SPDE_D.yarr, HIA, cos, Ifile, DI1_2s_vec, 
+                                               SPDE_D.Fwork, PDE_funcs.exp_x, phi_ns1s_2g, PDE_funcs, output_DI1);
                 
                 //===============================================================
                 // Ly-n integrals (added 26.03.2011)
@@ -844,7 +877,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
     //=====================================================================================
     // clean up
     //=====================================================================================
-    if(output_DI1) Ifile.close();
+    if(output_DI1 && HI_2s_1s_corr_is_on) Ifile.close();
     if(output_2gR)
     {
         Ly_n_file.close();

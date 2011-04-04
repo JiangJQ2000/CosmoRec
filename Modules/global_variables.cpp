@@ -53,6 +53,7 @@ int iteration_count=Diff_iteration_min;
 //==========================================================================================================
 bool Diffusion_correction_HeI=0;
 bool Diffusion_correction_HeI_is_on=0;
+double HeI_was_switched_off_at_z=0.0;
 
 //==========================================================================================================
 // Variables for dark matter annihilation module

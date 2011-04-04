@@ -71,6 +71,8 @@ void evaluate_HeI_Diffusion_correction(double z, Gas_of_HeI_Atoms &HeIA,
                                        double NH, double H_z, double Tg, 
                                        double *g_HeI, double &g_Xe, double &g_HI1s)
 {
+    return;
+    
     double DRij;
     double X1s=HeIA.Xi(0);
     int i_HeI;
@@ -109,7 +111,6 @@ void evaluate_HeI_Diffusion_correction(double z, Gas_of_HeI_Atoms &HeIA,
 // Module to account for the HeI 2s-1s corrections
 //
 //==========================================================================================================
-int induced_flag_HeI=0;
 bool DI1_2s_correction_on_HeI=0;
 bool DI1_2s_splines_are_setup_HeI=0;
 
@@ -177,7 +178,7 @@ void evaluate_HeI_DI1_DI2_correction(double z, double X1s, double X2s, double nu
     g[0]+=-DRij; // remove electron from 1s level
     g[1]+= DRij; // add it to 2s-state
     
-    //  cout << z << " HeI 2s-1s correction " << DRij << " DI1= " << DI1_2s << " " << exp(-x21) << endl;
+    //cout << z << " HeI 2s-1s correction " << DRij << " DI1= " << DI1_2s << " " << exp(-x21) << endl;
     
     return;
 }

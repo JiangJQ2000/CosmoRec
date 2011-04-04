@@ -32,28 +32,46 @@
 
 using namespace std;
 
-int define_PDE_verbose_HeI=0;
-
 //==================================================================================================================================
 //
 // run-flags
 //
 //==================================================================================================================================
-bool line_sc_HeI=1;
-bool el_sc_HeI=1;
-bool HI_absorption=1;
-bool line_em_abs_HeI=1;
-bool A2s1s_em_abs_HeI=1;
-//==================================================================================================================================
+struct define_PDE_HeI_runflags
+{
+    bool line_sc;         // resonance scattering on/off
+    bool el_sc;           // electron scattering on/off
+    bool line_em_abs;     // line emission & absorption on/off
+    bool A2s1s_em_abs;    // HeI Singlet 2s-1s emission & absorption on/off
+    bool HI_absorption;   // HI continuum absorption on/off
+};
 
-//=====================================================================================
+define_PDE_HeI_runflags def_HeI_run={1, 1, 1, 1, 1};  // default setting
+
+//==================================================================================================================================
+void HeI_switch_on_line_scattering(){ def_HeI_run.line_sc=1; return; }
+void HeI_switch_off_line_scattering(){ def_HeI_run.line_sc=0; return; }
+
+void HeI_switch_on_e_scattering(){ def_HeI_run.el_sc=1; return; }
+void HeI_switch_off_e_scattering(){ def_HeI_run.el_sc=0; return; }
+
+void HeI_switch_on_line_em_abs(){ def_HeI_run.line_em_abs=1; return; }
+void HeI_switch_off_line_em_abs(){ def_HeI_run.line_em_abs=0; return; }
+
+void HeI_switch_on_HI_abs(){ def_HeI_run.HI_absorption=1; return; }
+void HeI_switch_off_HI_abs(){ def_HeI_run.HI_absorption=0; return; }
+
+void HeI_switch_on_2s1s(){ def_HeI_run.A2s1s_em_abs=1; return; }
+void HeI_switch_off_2s1s(){ def_HeI_run.A2s1s_em_abs=0; return; }
+
+//==================================================================================================================================
 // for numerical purposes it can be beneficial to add a very small diffusion term, to
 // damp small scale perturbations. The effect of electron scattering is very small on
 // Xe and if one does not want e-scattering be important reducing its efficiency by ~100 
 // will make it extremely insignificant but allows stabilizing the system. This can be 
 // controlled with the e_sc_efficiency parameter. ==1 means full electron scattering.
 // Default is 1.0 if this function is not called.
-//=====================================================================================
+//==================================================================================================================================
 double e_sc_efficiency_HeI=1.0;
 void set_electron_scattering_efficiency_HeI(double val){ e_sc_efficiency_HeI=val; return; }
 
@@ -261,7 +279,7 @@ double phi_HeI_2s_decay_spectrum(double y)
 	if(y<0.0000001 || y> 0.9999999) return 0.0;
     double w=y*(1.0-y);
     
-    return 19.602*pow(w, 3)*( 1.742-7.2*w+12.8*w*w)/pow(w+0.03, 2);
+    return 19.6039602*pow(w, 3)*( 1.742-7.2*w+12.8*w*w)/pow(w+0.03, 2);
 }
 
 void update_HeI_2s_1s_profile(double z, double nu21, const vector<double> &xi)
@@ -269,7 +287,7 @@ void update_HeI_2s_1s_profile(double z, double nu21, const vector<double> &xi)
     double Tg=PDE_Setup_D_HeI.cosm->TCMB(z);
     double exp_2s1s=exp(-const_h_kb*PDE_Setup_D_HeI.PDE_funcs->nu2s1s/Tg);
     
-    for(int j=0; j<(int)xi.size(); j++) 
+    for(int j=0; j<PDE_Setup_D_HeI.PDE_funcs->emission_2s1s; j++) 
     {
         double y=xi[j]*nu21/PDE_Setup_D_HeI.PDE_funcs->nu2s1s;
         double phi=phi_HeI_2s_decay_spectrum(y);
@@ -284,7 +302,16 @@ void update_HeI_2s_1s_profile(double z, double nu21, const vector<double> &xi)
 }
 
 //==================================================================================================================================
+//
+// access two HeI Singlet 2s-1s emission profile (with stimulated emission)
+//
+//==================================================================================================================================
+double phi_2s1s_HeI(int k){ return PDE_Setup_D_HeI.PDE_funcs->phi_2s1s_x[k]; }
+
+//==================================================================================================================================
+//
 // access line properties (i==line index)
+//
 //==================================================================================================================================
 double phi_i_HeI(int i, int k){ return PDE_Setup_D_HeI.PDE_funcs->Voigt_profiles[i][k]; }
 double dphi_i_dx_HeI(int i, int k){ return PDE_Setup_D_HeI.PDE_funcs->dVoigt_profiles_dx[i][k]; }
@@ -294,9 +321,6 @@ double phi_i_pd_HeI(int i){ return PDE_Setup_D_HeI.PDE_funcs->Voigt_profiles_pd[
 double phi_i_nui1s_HeI(int i){ return PDE_Setup_D_HeI.PDE_funcs->Voigt_profiles_nui1s[i]; }
 double phi_i_Ai1s_HeI(int i){ return PDE_Setup_D_HeI.PDE_funcs->Voigt_profiles_Ai1s[i]; }
 double phi_i_Dnu_HeI(int i){ return phi_i_nui1s_HeI(i)*PDE_Setup_D_HeI.PDE_funcs->Voigt_profiles_Dnuj1s_nuj1s[i]; }
-double phi_2s1s_HeI(int k){ return PDE_Setup_D_HeI.PDE_funcs->phi_2s1s_x[k]; }
-
-
 
 //==================================================================================================================================
 //
@@ -376,7 +400,7 @@ void add_Ly_n_em_only_HeI(int line, double z, double nu21, double Tg, double Te,
         //------------------------------------------------------
         // Source-term from emission & absorption 
         //------------------------------------------------------
-        double exp_fac=exp_dum/PDE_Setup_D_HeI.PDE_funcs->exp_x[k];
+        double exp_fac=exp_dum*(1.0/PDE_Setup_D_HeI.PDE_funcs->exp_x[k]-1.0);
         double D_x=kappa_Ly_n_abs*phi_x/x/x;
         
         //------------------------------------------------------
@@ -437,7 +461,7 @@ void add_Ly_n_sc_em_full_HeI(int line, double z, double nu21, double Tg, double 
         //------------------------------------------------------
         // Source-term from emission & absorption 
         //------------------------------------------------------
-        double exp_fac=exp_dum/PDE_Setup_D_HeI.PDE_funcs->exp_x[k];
+        double exp_fac=exp_dum*(1.0/PDE_Setup_D_HeI.PDE_funcs->exp_x[k]-1.0);
         D_x=kappa_Ly_n_abs*phi_x/x/x;
         
         //------------------------------------------------------
@@ -477,12 +501,6 @@ void add_HeI_2s_1s_terms(double z, double nu21, double Tg, double N1s, double Hz
 {
 	update_HeI_2s_1s_profile(z, nu21, xi);
     
-//    ofstream ofile("./temp/phi.dat");
-//    ofile.precision(10);
-//    for(int k=0; k<(int) xi.size(); k++) ofile << xi[k] << " " << phi_2s1s_HeI(k) << endl;
-//    ofile.close();
-//    wait_f_r();
-    
     //----------------------------------------------------------
 	// 2s-1s emission/absorption term
 	//----------------------------------------------------------
@@ -493,7 +511,7 @@ void add_HeI_2s_1s_terms(double z, double nu21, double Tg, double N1s, double Hz
 	double x_c=const_h_kb*PDE_Setup_D_HeI.PDE_funcs->nu2s1s/Tg;
 	double exp_dum=exp(-x_c);
 	
-	for(int k=0; k<(int) xi.size(); k++) 
+	for(int k=0; k<PDE_Setup_D_HeI.PDE_funcs->emission_2s1s; k++) 
 	{
 		double x=xi[k];
         double phi_em=phi_2s1s_HeI(k);
@@ -559,17 +577,17 @@ void def_PDE_HeI(double z, const vector<double> &xi,
     //------------------------------------------------------
     // electron scattering terms first (smallest term)
     //------------------------------------------------------
-    if(el_sc_HeI) add_electron_scattering_HeI(z, nu21, Te, Ne, Hz, xi, Ai, Bi, Ci);
+    if(def_HeI_run.el_sc) add_electron_scattering_HeI(z, nu21, Te, Ne, Hz, xi, Ai, Bi, Ci);
     
     //------------------------------------------------------
     // normal Ly-n scatterring and emission/absorption
     //------------------------------------------------------
     update_Voigt_profiles_HeI(z, nu21, xi);
     
-    if(line_sc_HeI || line_em_abs_HeI)
+    if(def_HeI_run.line_sc || def_HeI_run.line_em_abs)
     {
-        bool local_line_em_abs=line_em_abs_HeI;
-        bool local_line_sc=line_sc_HeI;
+        bool local_line_em_abs=def_HeI_run.line_em_abs;
+        bool local_line_sc=def_HeI_run.line_sc;
         
         for(int n=0; n<nmax; n++)
         {
@@ -582,12 +600,12 @@ void def_PDE_HeI(double z, const vector<double> &xi,
     //------------------------------------------------------
     // account for HI absorption
     //------------------------------------------------------
-    if(HI_absorption) add_HI_absorption_term(z, nu21, Tg, N1s, Hz, xi, Ci);
+    if(def_HeI_run.HI_absorption) add_HI_absorption_term(z, nu21, Tg, N1s, Hz, xi, Ci);
             
     //------------------------------------------------------
     // Source-term HeI Singlet 2s-1s emission and absorption
     //------------------------------------------------------
-    if(A2s1s_em_abs_HeI) add_HeI_2s_1s_terms(z, nu21, Tg, N1s, Hz, xi, Ci, Di);
+    if(def_HeI_run.A2s1s_em_abs) add_HeI_2s_1s_terms(z, nu21, Tg, NHeI1s, Hz, xi, Ci, Di);
     
     return;
 }

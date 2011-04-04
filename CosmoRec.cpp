@@ -134,7 +134,7 @@ void print_message(string mess)
 //===========================================================================================================
 // initialization
 //===========================================================================================================
-void read_startup_data_RECFAST(string filename, Parameters_form_initfile &inparams, Cosmos &cosmos)
+void read_startup_data_RECFAST(string filename, Parameters_form_initfile &inparams, Cosmos &cosmos, int corr_fac)
 {
     ifstream paramfile(filename.c_str());
     if(!paramfile) { cerr << " Error opening parameter file. Exiting. " << endl; exit(1); }
@@ -160,7 +160,7 @@ void read_startup_data_RECFAST(string filename, Parameters_form_initfile &inpara
     }   
     
     set_startup_data(param, inparams);
-    set_cosmology(inparams, cosmos, fDM_CosmoRec, 0);
+    set_cosmology(inparams, cosmos, fDM_CosmoRec, corr_fac);
     
     return;
 }
@@ -168,12 +168,12 @@ void read_startup_data_RECFAST(string filename, Parameters_form_initfile &inpara
 //===========================================================================================================
 // Just RECFAST
 //===========================================================================================================
-void run_RECFAST(string filename)
+void run_RECFAST(string filename, int corr_fac)
 {
     //=======================================================================================================
     // initialize cosmology and the general startup
     //=======================================================================================================
-    read_startup_data_RECFAST(filename, parameters, cosmos);
+    read_startup_data_RECFAST(filename, parameters, cosmos, corr_fac);
     
     double *za=new double[parameters.nz]; 
     //=======================================================================================================
@@ -184,7 +184,10 @@ void run_RECFAST(string filename)
     if(show_CosmoRec_mess>=0) cout << " writing data to " << path << endl;
     
     ofstream ofile;
-    ofile.open((path+"Xe_Recfast.dat").c_str());
+    string name=path;
+    if(corr_fac==1) name+="Xe_Recfast.corr_fac.dat";
+    else name+="Xe_Recfast.dat";
+    ofile.open(name.c_str());
     ofile.precision(10); 
     
     for(int l=0; l<parameters.nz; l++) ofile << za[l] << " " 
@@ -287,13 +290,7 @@ int CosmoRec()
     // setup for the iteration
     //==============================================================================
     bool iteration=(Diffusion_correction ? 1 : 0);
-    int include_2s1s_corr=0, err=0;
-    //
-    if(DI1_2s_correction_on)
-    {
-        include_2s1s_corr=1; 
-        DI1_2s_correction_on=DI1_2s_correction_on_HeI=0;
-    }   
+    int err=0;
     
     //==============================================================================
     // enter the main run of ODE --> PDE-solver --> ODE
@@ -305,9 +302,6 @@ int CosmoRec()
             print_message("computing diffusion corrections from iteration # " + int_to_string(iteration_count-1)); 
             
             if(show_CosmoRec_mess>=0) cout << " Entering HI-diffusion part " << endl; 
-            
-            if(include_2s1s_corr==1 && iteration_count==1) 
-                DI1_2s_correction_on=DI1_2s_correction_on_HeI=1;
             
             //======================================================================
             // reset parameters
@@ -358,17 +352,21 @@ int CosmoRec()
                 vector<double> DI1_2s_vec;  
                 vector<int> HeI_level_indices; 
 
+                if(DI1_2s_correction_on_HeI) switch_on_1s_2s_HeI_correction();
+                else switch_off_1s_2s_HeI_correction();
+                
                 compute_HeI_DPesc_with_diffusion_equation_effective(DF_vec_z,
                                                                     DF_lines_vec, DI1_2s_vec, 
                                                                     HeI_level_indices,
                                                                     min(3000.0, parameters.zstart/1.001), 
-                                                                    max(1500.0, parameters.zend*1.001),
+                                                                    HeI_was_switched_off_at_z*1.001,
                                                                     cosmos, 
                                                                     HeI_Atoms,
                                                                     pass_on_the_Solution_CosmoRec_HeI,
                                                                     iteration_count-1);
                 
-                setup_DP_spline_data_HeI(DF_vec_z, DF_lines_vec, HeI_level_indices);    
+                setup_DP_spline_data_HeI(DF_vec_z, DF_lines_vec, HeI_level_indices); 
+                
                 if(DI1_2s_correction_on_HeI) setup_DI1_2s_spline_data_HeI(DF_vec_z, DI1_2s_vec);
                 
                 Diffusion_correction_HeI_is_on=1;
@@ -424,6 +422,7 @@ int CosmoRec(int narg, char *args[])
         string solvermode=args[narg-2];
         mode=args[narg-2];
         if(mode=="REC") print_message(" Running Recfast++ module.");
+        if(mode=="RECcf") print_message(" Running Recfast++ module with correction function."); 
         else{ mode=""; print_message(" Running CosmoRec."); }
     }
     else{ cerr << " Too many/few parameters " << endl; exit(1); }
@@ -431,7 +430,8 @@ int CosmoRec(int narg, char *args[])
     //========================================================================
     // just run history using the recfast module in the cosmology class
     //========================================================================
-    if(mode=="REC") run_RECFAST(filename);
+    if(mode=="REC") run_RECFAST(filename, 0);
+    if(mode=="RECcf") run_RECFAST(filename, 1);
 
     //========================================================================
     // initialize cosmology and the general startup

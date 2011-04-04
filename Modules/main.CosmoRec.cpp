@@ -112,6 +112,7 @@ int Xe_frac_effective_rates()
             { 
                 print_var_change_message("Xe_frac :: switching off helium at XHeII =", parameters.fHe-HeI_Atoms.Xi(0));
                 flag_He=0;
+                HeI_was_switched_off_at_z=zs;
                 
                 //--------------------------------------------------------
                 // set helium to be completely recombined

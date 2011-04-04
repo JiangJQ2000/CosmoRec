@@ -31,6 +31,7 @@
 //====================================================================================================================
 using namespace std;
 
+
 //====================================================================================================================
 //
 // flags for message output and aVoigt setting
@@ -38,36 +39,78 @@ using namespace std;
 //====================================================================================================================
 int show_messages_HeI=3;
 
+
+//====================================================================================================================
+//
+// settings for the grid
+//
+//====================================================================================================================
+int core_HeI=25;            // points per Doppler width in the core region; 
+                            // For +/- 10 xD core=25 implies 500 points (which is recommended).
+int dec_HeI=50;             // points per decade; from 10^-4 --> 1 ndec=50 gives ~ 200 points
+
+double theta_HeI=0.51;
+
+
 //====================================================================================================================
 //
 // switch on/off electron scattering kernel corrections
 //
 //====================================================================================================================
 int solve_with_Kernel=0; // ==0: no kernel correction; 
-                         // ==1: kernel correction using iteration; 
+                         // ==1: kernel correction using iteration; This runmode takes rather long, but the additional
+                         //      correction is small.
 
 //====================================================================================================================
-// settings for the grid
-//====================================================================================================================
-int npts_2s1s_HeI=1000;     // number of points for HeI singlet 2s-1s two-photon part
+void switch_off_e_scat_kernel_HeI(){ solve_with_Kernel=0; return; }
+void switch_on_e_scat_kernel_HeI (){ solve_with_Kernel=1; return; }
 
-int core_HeI=25;            // points per Doppler width in the core region; 
-                            // For +/- 10 xD core=25 implies 500 points (which is recommended).
-int dec_HeI=50;             // points per decade; from 10^-4 --> 1 ndec=50 gives ~ 200 points
-
-double xmin_glob_HeI=0.0001;
-double theta_HeI=0.51;
 
 //====================================================================================================================
-// setting different paramters for PDE problem
+//
+// setting different paramters for PDE problem regarding the HeI Singlet 2s-1s channel
+//
 //====================================================================================================================
 bool compute_full_2s_1s_corr_HeI=1;
+bool HeI_2s_1s_corr_is_on=1;
 
+//====================================================================================================================
+// switch on/off HeI singlet 2s-1s channel; this overwrites all other settings for 2s-1s channel
+//====================================================================================================================
+int npts_2s1s_HeI=1000;     // number of points for HeI singlet 2s-1s two-photon part
+double xmin_glob_HeI=0.3;   // if 2s-1s correction is on, this should be <~0.3  
+
+void switch_off_1s_2s_HeI_correction()
+{ 
+    HeI_switch_off_2s1s(); 
+    HeI_2s_1s_corr_is_on=0; 
+    
+    npts_2s1s_HeI=400;
+    xmin_glob_HeI=0.8;
+    
+    return; 
+}
+
+void switch_on_1s_2s_HeI_correction()
+{ 
+    HeI_switch_on_2s1s(); 
+    HeI_2s_1s_corr_is_on=1; 
+    
+    npts_2s1s_HeI=1000;
+    xmin_glob_HeI=0.3;
+    
+    return; 
+}
+
+//====================================================================================================================
+// HI 1s-2s absorption can be switched off separately with this.
+//====================================================================================================================
 void switch_off_1s_2s_HeI_absorption_correction()
 {
     compute_full_2s_1s_corr_HeI=0;
     return;
 }
+
 
 //====================================================================================================================
 //
@@ -146,7 +189,12 @@ void arm_PDE_solver_HeI(double nu21, Cosmos &cos, Gas_of_HeI_Atoms &HeIAtoms,
             PDE_funcs_HeI.sig_Lyc_x[k]=HeIAtoms.HILyc.sig_phot_ion(xarr[k]*nu21);
         
         PDE_funcs_HeI.nu2s1s=HeIAtoms.Sing.Level(2, 0).Get_Dnu_1s2();
-
+        
+        unsigned long jem=0;
+        locate_JC(&xarr[0], xarr.size(), PDE_funcs_HeI.nu2s1s, &jem);
+        PDE_funcs_HeI.emission_2s1s=jem+1;
+        
+        
         PDE_funcs_are_set_HeI=1;
     }
     
@@ -298,6 +346,9 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z
                                                         vector<vector<double> > HeI_Solution, 
                                                         int it_num)
 {
+    int nHeIShells=HeIAtoms.Get_nShells();
+    if(nHeIShells<2){ cerr << " Not enough helium shells. Exiting. " << endl; exit(0); }
+
     Set_Load_Populations_HeI_verbosity(show_messages_HeI);
     Set_HeI_pd_Rp_splines_effective_verbosity(show_messages_HeI);    
 
@@ -344,22 +395,33 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z
     // select lines
     //==============================================================================================
     HeI_level_indices.clear();
-    
-    HeI_level_indices.push_back(HeIAtoms.Get_Level_index(2, 1, 1, 1)); // 2^3 P - 1 S
-    HeI_level_indices.push_back(HeIAtoms.Get_Level_index(2, 1, 0, 1)); // 2^1 P - 1 S
-    HeI_level_indices.push_back(HeIAtoms.Get_Level_index(3, 1, 1, 1)); // 3^3 P - 1 S
-//    HeI_level_indices.push_back(HeIAtoms.Get_Level_index(3, 2, 0, 1)); // 3^1 D - 1 S
-//    HeI_level_indices.push_back(HeIAtoms.Get_Level_index(3, 1, 0, 1)); // 3^1 P - 1 S
-    //
-    int nnm=0;
-    for(int nn=4; nn<=nnm; nn++)
+
+    if(nHeIShells>=2)
     {
-        HeI_level_indices.push_back(HeIAtoms.Get_Level_index(nn, 1, 1, 1)); // n^3 P - 1 S
-        HeI_level_indices.push_back(HeIAtoms.Get_Level_index(nn, 2, 0, 1)); // n^1 D - 1 S
-        HeI_level_indices.push_back(HeIAtoms.Get_Level_index(nn, 1, 0, 1)); // n^1 P - 1 S
+        HeI_level_indices.push_back(HeIAtoms.Get_Level_index(2, 1, 1, 1)); // 2^3 P - 1 S
+        HeI_level_indices.push_back(HeIAtoms.Get_Level_index(2, 1, 0, 1)); // 2^1 P - 1 S
     }
-//    HeI_level_indices.push_back(HeIAtoms.Get_Level_index(nnm+1, 1, 0, 1)); // n^1 P - 1 S
     
+    if(nHeIShells>=3)
+    {
+        HeI_level_indices.push_back(HeIAtoms.Get_Level_index(3, 1, 1, 1)); // 3^3 P - 1 S
+//        HeI_level_indices.push_back(HeIAtoms.Get_Level_index(3, 2, 0, 1)); // 3^1 D - 1 S
+//        HeI_level_indices.push_back(HeIAtoms.Get_Level_index(3, 1, 0, 1)); // 3^1 P - 1 S
+    }
+    
+    if(nHeIShells>=4)
+    {
+        int nnm=(int) min(0, nHeIShells-1);
+        
+        for(int nn=4; nn<=nnm; nn++)
+        {
+            HeI_level_indices.push_back(HeIAtoms.Get_Level_index(nn, 1, 1, 1)); // n^3 P - 1 S
+            HeI_level_indices.push_back(HeIAtoms.Get_Level_index(nn, 2, 0, 1)); // n^1 D - 1 S
+            HeI_level_indices.push_back(HeIAtoms.Get_Level_index(nn, 1, 0, 1)); // n^1 P - 1 S
+        }
+
+        HeI_level_indices.push_back(HeIAtoms.Get_Level_index(nnm+1, 1, 0, 1));  // n^1 P - 1 S
+    }    
     //==============================================================================================
     
     //==============================================================================================
@@ -415,7 +477,7 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z
         DPfile.precision(8);
     }
 
-    if(output_DI1)
+    if(output_DI1 && HeI_2s_1s_corr_is_on)
     {
         fname=COSMORECDIR+"./temp/DPesc/DI1.HeI.2s1s"+endname;
         Ifile.open(fname.c_str());
@@ -560,10 +622,11 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z
                 //==================================================================================
                 // HeI singlet 2s-1s channel correction
                 //==================================================================================
-                compute_DI1_2s_and_dump_it_HeI(zout, nu21, SPDE_D_HeI.xarr, SPDE_D_HeI.yarr, 
-                                               HeIAtoms, cos, Ifile, DI1_2s_vec, 
-                                               SPDE_D_HeI.Fwork, PDE_funcs_HeI.exp_x,
-                                               phi_2s1s_HeI, PDE_funcs_HeI, output_DI1);
+                if(HeI_2s_1s_corr_is_on)    
+                    compute_DI1_2s_and_dump_it_HeI(zout, nu21, SPDE_D_HeI.xarr, SPDE_D_HeI.yarr, 
+                                                   HeIAtoms, cos, Ifile, DI1_2s_vec, 
+                                                   SPDE_D_HeI.Fwork, PDE_funcs_HeI.exp_x,
+                                                   phi_2s1s_HeI, PDE_funcs_HeI, output_DI1);
                 
                 //==================================================================================
                 // SPDE_D_HeI.yarr is Dn_x
@@ -627,8 +690,8 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z
         ofile.close();      
     }
         
+    if(output_DI1 && HeI_2s_1s_corr_is_on) Ifile.close();
     if(output_DP) DPfile.close();
-    if(output_DI1) Ifile.close();
     
     //==============================================================================================
 	// Flush the output buffer and close Grace 
@@ -636,7 +699,7 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z
 #ifdef GRACE_DEFINED
 	if(out_put_GRACE && GraceIsOpen()) GraceClose();
 #endif
-    
+        
     return 0;
 }
 

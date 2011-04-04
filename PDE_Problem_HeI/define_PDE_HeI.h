@@ -25,9 +25,30 @@
 using namespace std;
 
 //=====================================================================================
+//
+// setting different run-flags
+//
+//=====================================================================================
+void HeI_switch_on_line_scattering();
+void HeI_switch_off_line_scattering();
+
+void HeI_switch_on_e_scattering();
+void HeI_switch_off_e_scattering();
+
+void HeI_switch_on_line_em_abs();
+void HeI_switch_off_line_em_abs();
+
+void HeI_switch_on_HI_abs();
+void HeI_switch_off_HI_abs();
+
+void HeI_switch_on_2s1s();
+void HeI_switch_off_2s1s();
+
+//=====================================================================================
 struct PDE_solver_functions_HeI
 {
     double nu2s1s;
+    int emission_2s1s;
     
     double (* HI_Xe)(double z);
     double (* HI_rho)(double z);
@@ -92,8 +113,12 @@ double phi_i_HeI(int i, int k);
 double phi_i_nui1s_HeI(int i);
 double phi_i_Ai1s_HeI(int i);
 double phi_i_Dnu_HeI(int i);
-double phi_2s1s_HeI(int k);
 Voigtprofile_Dawson& get_HeI_profile(int line);
+
+//=====================================================================================
+// access two HeI Singlet 2s-1s emission profile (with stimulated emission)
+//=====================================================================================
+double phi_2s1s_HeI(int k);
 
 //=====================================================================================
 // PDE setup with electron scattering treated using kernel (added 24.02.2011 JC)

@@ -211,7 +211,7 @@ void evaluate_HI_Diffusion_correction(double z, Gas_of_Atoms &HIA, double NH, do
 // Module to account for the 2s-1s corrections
 //
 //==========================================================================================================
-int induced_flag=0;
+int induced_flag=0;                 // is set according to parameter file (see ./Modules/aux_functions.cpp).
 bool DI1_2s_correction_on=0;
 bool DI1_2s_splines_are_setup=0;
 

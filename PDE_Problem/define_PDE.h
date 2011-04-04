@@ -21,6 +21,23 @@
 using namespace std;
 
 //=====================================================================================
+//
+// setting different run-flags
+//
+//=====================================================================================
+void HI_switch_on_line_scattering();
+void HI_switch_off_line_scattering();
+
+void HI_switch_on_e_scattering();
+void HI_switch_off_e_scattering();
+
+void HI_switch_on_line_em_abs();
+void HI_switch_off_line_em_abs();
+
+void HI_switch_on_2s1s();
+void HI_switch_off_2s1s();
+
+//=====================================================================================
 struct Raman_2g_profiles
 {
     vector<double> ratio;

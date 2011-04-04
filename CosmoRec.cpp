@@ -627,7 +627,7 @@ int CosmoRec(const int runmode, const double runpars[5],
     //======================================================================
     // general setup 
     //======================================================================
-    params[0]=500;  // number of redshift points for CosmoRec computation;
+    params[0]=5000;  // number of redshift points for CosmoRec computation;
                     // for higher accuracy this number should be increased
     params[1]=3000; // starting redshift
     params[2]=0;    // ending redshift
@@ -685,7 +685,7 @@ int CosmoRec(const int runmode, const double runpars[5],
     //======================================================================
     // number of iterations over HI & HeI diffusion problem
     //======================================================================
-    Diff_iteration_max=1;
+    Diff_iteration_max=2;
 
     //======================================================================
     // settings for non-default cases

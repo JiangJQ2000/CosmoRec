@@ -36,7 +36,7 @@ using namespace std;
 // flags for message output and aVoigt setting
 //
 //====================================================================================================================
-int show_messages_HeI=0;
+int show_messages_HeI=3;
 
 //====================================================================================================================
 //
@@ -49,13 +49,13 @@ int solve_with_Kernel=0; // ==0: no kernel correction;
 //====================================================================================================================
 // settings for the grid
 //====================================================================================================================
-int npts_2s1s_HeI=200;      // number of points for 2s-1s two-photon part
+int npts_2s1s_HeI=1000;     // number of points for HeI singlet 2s-1s two-photon part
 
 int core_HeI=25;            // points per Doppler width in the core region; 
                             // For +/- 10 xD core=25 implies 500 points (which is recommended).
-int dec_HeI=100;             // points per decade; from 10^-4 --> 1 ndec=50 gives ~ 200 points
+int dec_HeI=50;             // points per decade; from 10^-4 --> 1 ndec=50 gives ~ 200 points
 
-double xmin_glob_HeI=0.8;   // as long as 2s-1s emission is not included this should be ok.
+double xmin_glob_HeI=0.0001;
 double theta_HeI=0.51;
 
 //====================================================================================================================
@@ -134,6 +134,8 @@ void arm_PDE_solver_HeI(double nu21, Cosmos &cos, Gas_of_HeI_Atoms &HeIAtoms,
         for(int k=0; k<(int)xarr.size(); k++)
             PDE_funcs_HeI.sig_Lyc_x[k]=HeIAtoms.HILyc.sig_phot_ion(xarr[k]*nu21);
         
+        PDE_funcs_HeI.nu2s1s=HeIAtoms.Sing.Level(2, 0).Get_Dnu_1s2();
+
         PDE_funcs_are_set_HeI=1;
     }
     
@@ -298,7 +300,7 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z
 	// output for Grace (optional)
     //==============================================================================================
 #ifdef GRACE_DEFINED
-	bool out_put_GRACE=0;
+	bool out_put_GRACE=1;
 	int GR_output_step=1;
 #endif
 	
@@ -333,17 +335,17 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z
     HeI_level_indices.push_back(HeIAtoms.Get_Level_index(2, 1, 1, 1)); // 2^3 P - 1 S
     HeI_level_indices.push_back(HeIAtoms.Get_Level_index(2, 1, 0, 1)); // 2^1 P - 1 S
     HeI_level_indices.push_back(HeIAtoms.Get_Level_index(3, 1, 1, 1)); // 3^3 P - 1 S
-    HeI_level_indices.push_back(HeIAtoms.Get_Level_index(3, 2, 0, 1)); // 3^1 D - 1 S
-    HeI_level_indices.push_back(HeIAtoms.Get_Level_index(3, 1, 0, 1)); // 3^1 P - 1 S
+//    HeI_level_indices.push_back(HeIAtoms.Get_Level_index(3, 2, 0, 1)); // 3^1 D - 1 S
+//    HeI_level_indices.push_back(HeIAtoms.Get_Level_index(3, 1, 0, 1)); // 3^1 P - 1 S
     //
-    int nnm=4;
+    int nnm=0;
     for(int nn=4; nn<=nnm; nn++)
     {
         HeI_level_indices.push_back(HeIAtoms.Get_Level_index(nn, 1, 1, 1)); // n^3 P - 1 S
         HeI_level_indices.push_back(HeIAtoms.Get_Level_index(nn, 2, 0, 1)); // n^1 D - 1 S
         HeI_level_indices.push_back(HeIAtoms.Get_Level_index(nn, 1, 0, 1)); // n^1 P - 1 S
     }
-    HeI_level_indices.push_back(HeIAtoms.Get_Level_index(nnm+1, 1, 0, 1)); // n^1 P - 1 S
+//    HeI_level_indices.push_back(HeIAtoms.Get_Level_index(nnm+1, 1, 0, 1)); // n^1 P - 1 S
     
     //==============================================================================================
     

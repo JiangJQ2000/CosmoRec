@@ -86,6 +86,7 @@ void init_profile_memory_HeI(int nxi, int nres, PDE_solver_functions_HeI &PDE_fu
 {
     init_profile_memory_HeI(nxi, PDE_funcs.exp_x);
     init_profile_memory_HeI(nxi, PDE_funcs.sig_Lyc_x);
+    init_profile_memory_HeI(nxi, PDE_funcs.phi_2s1s_x);
     init_profile_memory_HeI(nxi, PDE_funcs.Kernel_plus);
     init_profile_memory_HeI(nxi, PDE_funcs.Kernel_minus);
     
@@ -253,6 +254,35 @@ void update_Voigt_profiles_HeI(double z, double nu21, const vector<double> &xi)
 }
 
 //==================================================================================================================================
+// HeI Singlet 2s-1s two photon decay profile function; normalised to 2
+//==================================================================================================================================
+double phi_HeI_2s_decay_spectrum(double y)
+{
+	if(y<0.0000001 || y> 0.9999999) return 0.0;
+    double w=y*(1.0-y);
+    
+    return 19.602*pow(w, 3)*( 1.742-7.2*w+12.8*w*w)/pow(w+0.03, 2);
+}
+
+void update_HeI_2s_1s_profile(double z, double nu21, const vector<double> &xi)
+{
+    double Tg=PDE_Setup_D_HeI.cosm->TCMB(z);
+    double exp_2s1s=exp(-const_h_kb*PDE_Setup_D_HeI.PDE_funcs->nu2s1s/Tg);
+    
+    for(int j=0; j<(int)xi.size(); j++) 
+    {
+        double y=xi[j]*nu21/PDE_Setup_D_HeI.PDE_funcs->nu2s1s;
+        double phi=phi_HeI_2s_decay_spectrum(y);
+        double npl_fac=1.0/(1.0-PDE_Setup_D_HeI.PDE_funcs->exp_x[j]);
+        double nplp_fac=1.0/(1.0-exp_2s1s/PDE_Setup_D_HeI.PDE_funcs->exp_x[j]);
+        
+        PDE_Setup_D_HeI.PDE_funcs->phi_2s1s_x[j]=phi*npl_fac*nplp_fac;
+    }
+    
+    return;
+}
+
+//==================================================================================================================================
 // access line properties (i==line index)
 //==================================================================================================================================
 double phi_i_HeI(int i, int k){ return PDE_Setup_D_HeI.PDE_funcs->Voigt_profiles[i][k]; }
@@ -263,6 +293,8 @@ double phi_i_pd_HeI(int i){ return PDE_Setup_D_HeI.PDE_funcs->Voigt_profiles_pd[
 double phi_i_nui1s_HeI(int i){ return PDE_Setup_D_HeI.PDE_funcs->Voigt_profiles_nui1s[i]; }
 double phi_i_Ai1s_HeI(int i){ return PDE_Setup_D_HeI.PDE_funcs->Voigt_profiles_Ai1s[i]; }
 double phi_i_Dnu_HeI(int i){ return phi_i_nui1s_HeI(i)*PDE_Setup_D_HeI.PDE_funcs->Voigt_profiles_Dnuj1s_nuj1s[i]; }
+double phi_2s1s_HeI(int k){ return PDE_Setup_D_HeI.PDE_funcs->phi_2s1s_x[k]; }
+
 
 
 //==================================================================================================================================
@@ -435,6 +467,50 @@ void add_HI_absorption_term(double z, double nu21, double Tg, double N1s, double
 
 //==================================================================================================================================
 //
+// HeI Singlet 2s-1s term
+//
+//==================================================================================================================================
+
+void add_HeI_2s_1s_terms(double z, double nu21, double Tg, double N1s, double Hz, 
+                         const vector<double> &xi, vector<double> &Ci, vector<double> &Di)
+{
+	update_HeI_2s_1s_profile(z, nu21, xi);
+    
+//    ofstream ofile("./temp/phi.dat");
+//    ofile.precision(10);
+//    for(int k=0; k<(int) xi.size(); k++) ofile << xi[k] << " " << phi_2s1s_HeI(k) << endl;
+//    ofile.close();
+//    wait_f_r();
+    
+    //----------------------------------------------------------
+	// 2s-1s emission/absorption term
+	//----------------------------------------------------------
+	double sig_2s=const_HeI_A2s_1s/PDE_Setup_D_HeI.PDE_funcs->nu2s1s/2.0/FOURPI*pow(const_cl/nu21, 2);
+	double kappa_2s1s=-sig_2s*N1s*const_cl/Hz/(1.0+z);
+	//
+	double Dnem_2s=PDE_Setup_D_HeI.PDE_funcs->HeI_Dnem_i(z, 0)*nu21;
+	double x_c=const_h_kb*PDE_Setup_D_HeI.PDE_funcs->nu2s1s/Tg;
+	double exp_dum=exp(-x_c);
+	
+	for(int k=0; k<(int) xi.size(); k++) 
+	{
+		double x=xi[k];
+        double phi_em=phi_2s1s_HeI(k);
+		double npl=PDE_Setup_D_HeI.PDE_funcs->exp_x[k]/(1.0-PDE_Setup_D_HeI.PDE_funcs->exp_x[k]);
+		double exp_fac_2s=exp_dum/npl;
+		double DD=kappa_2s1s*phi_em/x/x;
+		
+		//------------------------------------------------------
+		Ci[k]+=-DD*exp_fac_2s;
+		Di[k]+= DD*Dnem_2s;
+		//------------------------------------------------------
+	}
+	
+	return;
+}
+
+//==================================================================================================================================
+//
 // main wrapper
 //
 //==================================================================================================================================
@@ -508,11 +584,11 @@ void def_PDE_HeI(double z, const vector<double> &xi,
     //------------------------------------------------------
     if(HI_absorption) add_HI_absorption_term(z, nu21, Tg, N1s, Hz, xi, Ci);
             
-/*  //------------------------------------------------------
-    // Source-term 2s-1s emission and absorption
     //------------------------------------------------------
-    if(A2s1s_em_abs) add_2s_1s_terms(z, nu21, Tg, N1s, Hz, xi, Ci, Di);
-*/    
+    // Source-term HeI Singlet 2s-1s emission and absorption
+    //------------------------------------------------------
+    if(A2s1s_em_abs_HeI) add_HeI_2s_1s_terms(z, nu21, Tg, N1s, Hz, xi, Ci, Di);
+    
     return;
 }
 

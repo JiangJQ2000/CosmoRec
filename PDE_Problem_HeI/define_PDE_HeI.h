@@ -27,6 +27,8 @@ using namespace std;
 //=====================================================================================
 struct PDE_solver_functions_HeI
 {
+    double nu2s1s;
+    
     double (* HI_Xe)(double z);
     double (* HI_rho)(double z);
     double (* HI_X1s)(double z);
@@ -38,6 +40,7 @@ struct PDE_solver_functions_HeI
     
     vector<double> exp_x;
     vector<double> sig_Lyc_x;
+    vector<double> phi_2s1s_x;
     vector<double> Kernel_plus;
     vector<double> Kernel_minus;
 
@@ -89,6 +92,7 @@ double phi_i_HeI(int i, int k);
 double phi_i_nui1s_HeI(int i);
 double phi_i_Ai1s_HeI(int i);
 double phi_i_Dnu_HeI(int i);
+double phi_2s1s_HeI(int k);
 Voigtprofile_Dawson& get_HeI_profile(int line);
 
 //=====================================================================================

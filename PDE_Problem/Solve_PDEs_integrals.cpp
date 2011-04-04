@@ -10,9 +10,6 @@ struct HI_nx_spline_Data
 {
     int memindex;
     double xmin, xmax;
-    double nu21, x_c;
-    Gas_of_Atoms *HIA;
-    Cosmos *cos;
 };
 
 bool DF_integrals_splines_are_set=0;
@@ -372,7 +369,6 @@ void compute_DI1_2s_and_dump_it(double z, vector<double> &xarr, vector<double> &
 
     Spline_for_nx_integral.xmin=xarr[0];
     Spline_for_nx_integral.xmax=xarr[nnu_pts-1];
-    Spline_for_nx_integral.x_c=const_h_kb*nu21/Tg;
     
     //==========================================================================
     // tabulate Dn(nu) for splines

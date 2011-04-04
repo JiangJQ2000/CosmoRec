@@ -28,12 +28,6 @@ double calc_HI_pd_nl_splines_effective(double z, int n, int l);
 double calc_HI_pd_i_splines_effective(double z, int i);
 
 //===========================================================================================================
-// Rp-functions
-//===========================================================================================================
-double calc_HI_Rp_Rm_nl_splines_effective(double z, int n, int l);
-double calc_HI_Rp_Rm_i_splines_effective(double z, int i);
-
-//===========================================================================================================
 // Dnem-functions
 //===========================================================================================================
 double calc_HI_Dnem_nl_splines_effective(double z, int n, int l);

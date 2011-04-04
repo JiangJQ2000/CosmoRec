@@ -63,7 +63,7 @@ int core_HI=25;            // points per Doppler width in the core region;
                            // For +/- 10 xD core=25 implies 500 points (which is recommended).
 int dec_HI=50;             // points per decade; from 10^-4 --> 1 ndec=50 gives ~ 200 points
 
-double xmin_glob=0.001;
+double xmin_glob=0.0001;
 double theta_HI=0.51;
 
 //====================================================================================================================
@@ -488,7 +488,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
     //=========================================================================== 
     // extension for filename
     //=========================================================================== 
-    string exten=".new.test.Ly-b.P_Compton";
+    string exten=".Voigt";
 
     if(solve_with_Kernel_HI==1) exten+=".Kernel_Int";
     
@@ -497,17 +497,17 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
 	//=========================================================================== 
 #ifdef GRACE_DEFINED
 	bool out_put_GRACE=0;
-	int GR_output_step=1;
+	int GR_output_step=10;
 #endif
     
     //=========================================================================== 
     // general flags
     //=========================================================================== 
-    bool do_output=1;
+    bool do_output=0;
     bool output_DI1=0;
     bool output_2gR=0;
     bool write_solution_z0=0;
-    bool include_Ly_corr=1;  // ==1: include the correction from the 1+1 photon 
+    bool include_Ly_corr=0;  // ==1: include the correction from the 1+1 photon 
                              // terms in the Ly-series. 
 
     //=========================================================================== 
@@ -519,7 +519,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
     //=========================================================================== 
     double dz_out=2.0;
     int output_count=0;
-    int output_step=10;
+    int output_step=20;
     int DF_step=1;
     
     //=========================================================================== 
@@ -560,7 +560,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
     // has to be decreased. The precision of the output should 
     // then be like ~<0.01%.
     //=========================================================================== 
-    if(nresmax>4){ dz_out=min(dz_out, 2.0); DF_step=10; }
+    if(nresmax>4){ dz_out=min(dz_out, 2.0); DF_step=1; }
         
     //=========================================================================== 
     // prepare memory for back-communication
@@ -687,6 +687,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
         zout=max(ze, zin+dz);
         
 //YH        double zcomp=1.100092E+03; // 1.300108e+03; 1.350090E+03;
+//YH        double zcomp=1100.0;
 //YH        if(zout<=zcomp && zin>=zcomp) zout=zcomp;
         
         //=======================================================================
@@ -697,7 +698,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
         for(i=0; i<SPDE_D.npts; i++) if(SPDE_D.xarr[i]>=xeval){ i--; break; }
         double y_lower, dydum;
         polint_JC(&SPDE_D.xarr[0], &SPDE_D.yarr[0], SPDE_D.npts, xeval, i, 6, &y_lower, &dydum);
-        double y_upper=( boundary_up ? PDE_funcs.HI_Dnem_nl(zout, nresmax+1, 1)*nu21 : 0.0);
+        double y_upper=( boundary_up ? PDE_funcs.HI_Dnem_nl(zout, nresmax+1, 1)*nu21 : 1.0e-60);
         
         //=======================================================================
         // solve PDE

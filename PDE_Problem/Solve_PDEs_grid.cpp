@@ -115,11 +115,27 @@ void init_PDE_xarr_cores_HI(vector<double> &xarr, double xmin, double xmax, vect
 
     if(xmin<=xcrit)
     {
+        double xcrit_2=0.05;        
+        int np_2s_log=0;
+        if(xmin<=xcrit_2)
+        {
+            int dens_log=30;
+            double dlog=log10(xcrit_2/xmin);
+            np_2s_log=dlog*dens_log;
+            
+            //=============================================================================
+            // normal log-scale for x<xcrit_2
+            //=============================================================================
+            init_xarr(xl, xcrit_2, &xarr[istart], np_2s_log, 1, mess);    
+            istart+=np_2s_log-1;
+            xl=xcrit_2;
+        }
+            
         //=============================================================================
-        // normal log-scale for x<xcrit
+        // linear scale between xcrit_2 and xcrit
         //=============================================================================
-        init_xarr(xl, xcrit, &xarr[istart], np_2s, 1, mess);    
-        istart+=np_2s-1;
+        init_xarr(xl, xcrit, &xarr[istart], np_2s-np_2s_log, 0, mess);    
+        istart+=np_2s-np_2s_log-1;
         xl=xcrit;
         
         dx[0]+=xmin-xl;

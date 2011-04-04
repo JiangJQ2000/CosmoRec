@@ -83,8 +83,6 @@ void calc_HeI_Rp_Rm_pd_all(double z, Gas_of_HeI_Atoms &HeIA, double Tg, double T
 // For precalulated death probabilities and emission rates
 //
 //===========================================================================================================
-int HeI_Rp_nz_eff=2000;
-
 struct HeI_Rp_pd_eff_Data
 {
     double *Rp;
@@ -92,7 +90,6 @@ struct HeI_Rp_pd_eff_Data
 };
 
 vector<HeI_Rp_pd_eff_Data > HeI_pd_eff_Data;
-vector<HeI_Rp_pd_eff_Data > HeI_Rp_eff_Data;
 vector<HeI_Rp_pd_eff_Data > HeI_Dnem_eff_Data;
 
 //===========================================================================================================
@@ -115,7 +112,6 @@ void clear_HeI_pd_Rp_effective_memory()
     clear_HeI_pd_Rp_effective_splines();
     
     HeI_pd_eff_Data.clear();
-    HeI_Rp_eff_Data.clear();
     HeI_Dnem_eff_Data.clear();
     
     return;
@@ -123,12 +119,11 @@ void clear_HeI_pd_Rp_effective_memory()
 
 //===========================================================================================================
 void set_up_splines_for_HeI_pd_Rp_effective(double zend, double zstart,
-                                            Cosmos &cosmos, Gas_of_HeI_Atoms &HeA)
+                                            Cosmos &cosmos, Gas_of_HeI_Atoms &HeA, 
+                                            double *Rp_zarr, int nz)
 {   
     //===========================================================================
     int ntot=get_number_of_resolved_levels_HeI();
-    int nz=HeI_Rp_nz_eff;
-    double *Rp_zarr=new double[nz];
         
     //===========================================================================
     // check if spline memory was already allocated for as many levels
@@ -143,10 +138,8 @@ void set_up_splines_for_HeI_pd_Rp_effective(double zend, double zstart,
         // prepare spline data
         //=======================================================================
         HeI_pd_eff_Data.clear();
-        HeI_Rp_eff_Data.clear();
         HeI_Dnem_eff_Data.clear();
         HeI_pd_eff_Data.resize(ntot+1);
-        HeI_Rp_eff_Data.resize(ntot+1);
         HeI_Dnem_eff_Data.resize(ntot+1);
         
         //=======================================================================
@@ -155,7 +148,6 @@ void set_up_splines_for_HeI_pd_Rp_effective(double zend, double zstart,
         for(int i=0; i<ntot+1; i++)
         { 
             HeI_pd_eff_Data[i].Rp=new double[nz]; 
-            HeI_Rp_eff_Data[i].Rp=new double[nz]; 
             HeI_Dnem_eff_Data[i].Rp=new double[nz]; 
         }
     }   
@@ -188,45 +180,20 @@ void set_up_splines_for_HeI_pd_Rp_effective(double zend, double zstart,
         //=====================================================================
         // common data
         //=====================================================================
-        T=HeA.Get_Trans_Data(1, 1, 0, 0, 0);
-        double x_c=const_h_kb*T.Dnu/Tg;
+        double x_c=const_h_kb*HeA.Sing.Level(2, 0).Get_Dnu_1s2()/Tg;
         double exp_21=exp(-x_c);
         double N1s=NH*calc_HeI_X1s(z);
         double N2s=NH*calc_HeI_Xi(z, 0);
-        double N2p=NH*calc_HeI_Xi(z, 1);
 
         //=====================================================================
-        // compute the 2s Rp_Rm using the net rate equation
+        // Dnem for singlet 2s-state (pd==1)
         //=====================================================================
-        int res_i=get_res_index_HeI(1);
-
-        //=====================================================================
-        // case pd_2s==1
-        //=====================================================================
-        Rp_Rm[res_i]=N2s;                // this is the normal multi-level term
-        Dnem_arr[res_i]=N2s/N1s-exp_21;
-        
-        //=====================================================================
-        // compute the 2p Rp_Rm using the net rate equation
-        //=====================================================================
-        res_i=get_res_index_HeI(2);
-        T=HeA.Get_Trans_Data(2, 1, 0, 0, 0);
-        x_c=const_h_kb*T.Dnu/Tg;
-        exp_21=exp(-x_c);
-        //
-        double npl_c=exp_21;
-        double nL=N2p/3.0/N1s;      
-        double tauS=T.A21*pow(T.lambda21, 3)/(8.0*PI*cosmos.H(z))*(N1s*3.0 - N2p);      
-        double PS=(1.0-exp(-tauS))/tauS;
-        //
-        double Dnem=(nL-npl_c)*(1.0+(1.0/pd[res_i]-1.0)*PS);
-        Rp_Rm[res_i]=(Dnem+npl_c)*3.0*N1s;
-        Dnem_arr[res_i]=Dnem;
-        
+        Dnem_arr[0]=N2s/N1s-exp_21;
+            
         //=====================================================================
         // compute the nP - 1s and nD - 1s Rp_Rm using the net rate equation
         //=====================================================================
-        for(int res_i=2; res_i<ntot; res_i++)
+        for(int res_i=1; res_i<ntot; res_i++)
         {
             int HeI_i=get_HeI_index(res_i);
             double Ni=NH*calc_HeI_Xi(z, res_i);
@@ -235,15 +202,12 @@ void set_up_splines_for_HeI_pd_Rp_effective(double zend, double zstart,
             //
             x_c=const_h_kb*T.Dnu/Tg;
             exp_21=exp(-x_c);
-            npl_c=exp_21;
             //
-            nL=wr*Ni/N1s;
-            tauS=T.A21*pow(T.lambda21, 3)/(8.0*PI*cosmos.H(z))*(N1s/wr - Ni);
-            PS=(1.0-exp(-tauS))/tauS;
+            double nL=wr*Ni/N1s;
+            double tauS=T.A21*pow(T.lambda21, 3)/(8.0*PI*cosmos.H(z))*(N1s/wr - Ni);
+            double PS=(1.0-exp(-tauS))/tauS;
             //
-            Dnem=(nL-npl_c)*(1.0+(1.0/pd[res_i]-1.0)*PS);
-            Rp_Rm[res_i]=(Dnem+npl_c)*N1s/wr;
-            Dnem_arr[res_i]=Dnem;
+            Dnem_arr[res_i]=(nL-exp_21)*(1.0+(1.0/pd[res_i]-1.0)*PS);
         }
         
         //=====================================================================
@@ -252,7 +216,6 @@ void set_up_splines_for_HeI_pd_Rp_effective(double zend, double zstart,
         for(int nr=0; nr<ntot; nr++)
         { 
             HeI_pd_eff_Data[nr].Rp[i]=log(pd[nr]); 
-            HeI_Rp_eff_Data[nr].Rp[i]=log(Rp_Rm[nr]); 
             HeI_Dnem_eff_Data[nr].Rp[i]=Dnem_arr[nr]; 
         }
         
@@ -260,7 +223,7 @@ void set_up_splines_for_HeI_pd_Rp_effective(double zend, double zstart,
         // set the the entry with res-index=ntot to zero 
         // (needed for spline interpolation)
         //=====================================================================
-        HeI_pd_eff_Data[ntot].Rp[i]=HeI_Rp_eff_Data[ntot].Rp[i]=HeI_Dnem_eff_Data[ntot].Rp[i]=0.0;
+        HeI_pd_eff_Data[ntot].Rp[i]=HeI_Dnem_eff_Data[ntot].Rp[i]=0.0;
         
         if(HeI_pd_Rp_splines_effective_verbose>=1) 
             cout << "\033[2K" << " z= " << z << endl << "\033[1A";
@@ -277,7 +240,6 @@ void set_up_splines_for_HeI_pd_Rp_effective(double zend, double zstart,
         for(int n=0; n<ntot+1; n++)
         {
             update_spline_coeffies_JC(HeI_pd_eff_Data[n].memindex, nz, Rp_zarr, HeI_pd_eff_Data[n].Rp);
-            update_spline_coeffies_JC(HeI_Rp_eff_Data[n].memindex, nz, Rp_zarr, HeI_Rp_eff_Data[n].Rp);
             update_spline_coeffies_JC(HeI_Dnem_eff_Data[n].memindex, nz, Rp_zarr, HeI_Dnem_eff_Data[n].Rp);
         }
     }
@@ -287,10 +249,6 @@ void set_up_splines_for_HeI_pd_Rp_effective(double zend, double zstart,
         {
             HeI_pd_eff_Data[n].memindex=calc_spline_coeffies_JC(nz, Rp_zarr, HeI_pd_eff_Data[n].Rp, 
                                                                "set_up_splines_for_HeI_pd_Rp :: pd "
-                                                               + int_to_string(n));
-
-            HeI_Rp_eff_Data[n].memindex=calc_spline_coeffies_JC(nz, Rp_zarr, HeI_Rp_eff_Data[n].Rp, 
-                                                               "set_up_splines_for_HeI_pd_Rp :: Rp "
                                                                + int_to_string(n));
 
             HeI_Dnem_eff_Data[n].memindex=calc_spline_coeffies_JC(nz, Rp_zarr, HeI_Dnem_eff_Data[n].Rp, 
@@ -304,10 +262,67 @@ void set_up_splines_for_HeI_pd_Rp_effective(double zend, double zstart,
     if(HeI_pd_Rp_splines_effective_verbose>=1) 
         cout << " set_up_splines_for_HeI_pd_Rp:: splines done." << endl; 
     
+    return;
+}
+
+//===========================================================================================================
+void set_up_splines_for_HeI_pd_Rp_effective(double zend, double zstart, Cosmos &cosmos, Gas_of_HeI_Atoms &HeA)
+{   
+    int nz=2000;
+    double *Rp_zarr=new double[nz];
+    
+    //===========================================================================
+    // fill z-array (z0 < z1 < ... < zn)
+    //===========================================================================
+    init_xarr(zend/1.01, zstart*1.01, Rp_zarr, nz, 0, 0);
+    
+    //===========================================================================
+    // compute splines
+    //===========================================================================
+    set_up_splines_for_HeI_pd_Rp_effective(zend, zstart, cosmos, HeA, Rp_zarr, nz);
+    
     //========================================================================
     // clean up
     //========================================================================
     delete[] Rp_zarr;
+    
+    return;
+}
+
+//===========================================================================================================
+void set_up_splines_for_HeI_pd_Rp_effective(double zend, double zstart, 
+                                           Cosmos &cosmos, Gas_of_HeI_Atoms &HeA,
+                                           vector<vector<double> > &X_Data)
+{   
+    int nmax=X_Data.size();
+    vector<double> Rp_zarr(nmax, 0.0);
+    
+    for(int k=0; k<nmax; k++)
+    {
+        double z=X_Data[k][0];
+        if(z>=zend/1.01 && z<=zstart*1.01) Rp_zarr[nmax-1-k]=z;
+    }
+    
+    for(int k=0; k<nmax; k++)
+        if(Rp_zarr[0]==0.0) Rp_zarr.erase(Rp_zarr.begin());
+        else break;
+    
+    int nz=Rp_zarr.size();
+    
+    //===========================================================================
+    // fill z-array (z0 < z1 < ... < zn)
+    //===========================================================================
+    init_xarr(zend/1.01, zstart*1.01, &Rp_zarr[0], nz, 0, 0);
+    
+    //===========================================================================
+    // compute splines
+    //===========================================================================
+    set_up_splines_for_HeI_pd_Rp_effective(zend, zstart, cosmos, HeA, &Rp_zarr[0], nz);
+    
+    //========================================================================
+    // clean up
+    //========================================================================
+    Rp_zarr.clear();
     
     return;
 }
@@ -319,14 +334,6 @@ void set_up_splines_for_HeI_pd_Rp_effective(double zend, double zstart,
 //===========================================================================================================
 double calc_HeI_pd_i_splines_effective(double z, int ires)
 { return exp(calc_spline_JC(z, HeI_pd_eff_Data[ires].memindex)); }
-
-//===========================================================================================================
-//
-// Rp-functions
-//
-//===========================================================================================================
-double calc_HeI_Rp_Rm_i_splines_effective(double z, int ires)
-{ return exp(calc_spline_JC(z, HeI_Rp_eff_Data[ires].memindex)); }
 
 //===========================================================================================================
 //

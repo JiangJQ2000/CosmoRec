@@ -25,11 +25,6 @@ void Set_HeI_pd_Rp_splines_effective_verbosity(int v);
 double calc_HeI_pd_i_splines_effective(double z, int ires);
 
 //===========================================================================================================
-// Rp-functions (the index ires is the corresponding resolved level index)
-//===========================================================================================================
-double calc_HeI_Rp_Rm_i_splines_effective(double z, int ires);
-
-//===========================================================================================================
 // Dnem-functions (the index ires is the corresponding resolved level index)
 //===========================================================================================================
 double calc_HeI_Dnem_i_splines_effective(double z, int ires);

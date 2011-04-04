@@ -349,7 +349,7 @@ void update_Voigt_profile_Ly_n(double z, double nu21, int n, const vector<double
     for(int k=0; k<(int)xi.size(); k++) 
     {
         double x=xi[k];
-        double xD   =PDE_Setup_D.HI->HI_Lyn_profile(n).nu2x(nu21*x, Tm);
+        double xD=PDE_Setup_D.HI->HI_Lyn_profile(n).nu2x(nu21*x, Tm);
         PDE_Setup_D.PDE_funcs->Voigt_profiles[n-2][k]=PDE_Setup_D.HI->HI_Lyn_profile(n).phi(xD, PDE_Setup_D.PDE_funcs->Voigt_profiles_aV[n-2]);
     }
     
@@ -361,7 +361,7 @@ void update_Voigt_profile_Ly_n(double z, double nu21, int n, const vector<double
         for(int k=0; k<(int)xi.size(); k++) 
         {
             double x=(1.0-1.0/n/n)/0.75-xi[k];
-            double xD   =PDE_Setup_D.HI->HI_Lyn_profile(n).nu2x(nu21*x, Tm);
+            double xD=PDE_Setup_D.HI->HI_Lyn_profile(n).nu2x(nu21*x, Tm);
             PDE_Setup_D.PDE_funcs->HP_Voigt_profiles[n-2][k]=PDE_Setup_D.HI->HI_Lyn_profile(n).phi(xD, PDE_Setup_D.PDE_funcs->Voigt_profiles_aV[n-2]);
         }
     }       
@@ -808,6 +808,10 @@ void add_Ly_n_sc_em_full(int n, double z, double nu21, double Tg, double Te, dou
     double kappa_Ly_n_abs=-pd_np*const_sigr*N1s*const_cl/Hz/(1.0+z); 
     double exp_dum=exp(-x_c);
     
+//    ofstream ofile;
+//    string name="./temp/Dp_d."+int_to_string(n)+".4.dat";
+//    ofile.open(name.c_str(), ios_base::app);
+    
     //----------------------------------------------------------
     // correcting the death probability and Dnem
     //----------------------------------------------------------
@@ -816,10 +820,16 @@ void add_Ly_n_sc_em_full(int n, double z, double nu21, double Tg, double Te, dou
         double Dp, Dn;
         Dp_Dnem_function(n, z, Tg, pd_np, Dnem/nu21+exp_dum, N1s, Dp, Dn);
         //
+        
+//        cout << z << " " << n << " " << 1.0-Dp/pd_np << " " << 1.0+Dn*nu21/Dnem << endl;
+//        ofile << z << " " << 1.0-Dp/pd_np << " " << 1.0+Dn*nu21/Dnem << endl;
+        
         kappa_Ly_n_abs*=1.0-Dp/pd_np;  
         pd_np*=1.0-Dp/pd_np;
         Dnem+=Dn*nu21;
     }
+
+//    ofile.close();
     
     //----------------------------------------------------------
     // save info for computation of DPesc
@@ -834,7 +844,7 @@ void add_Ly_n_sc_em_full(int n, double z, double nu21, double Tg, double Te, dou
         //------------------------------------------------------
         // prepare for line-scattering and em/abs terms 
         //------------------------------------------------------
-        double phi_x=phi_Ly_n(n, k);
+        double phi_x=phi_Ly_n(n, k);	
         
         //------------------------------------------------------
         // line-scattering terms 
@@ -855,7 +865,8 @@ void add_Ly_n_sc_em_full(int n, double z, double nu21, double Tg, double Te, dou
         // Doppler core emission/absorption; Lorentzian wings 
         // will not be included in the 1+1 terms when switched on
         //------------------------------------------------------
-        //phi_x=PDE_Setup_D.HI->HI_Lyn_profile(n).phi_DC(xD); 
+        //if(n==2) phi_x=PDE_Setup_D.HI->HI_Lyn_profile(n).phi_DC(xD); 
+        //phi_x=0.0;
         
         D_x=kappa_Ly_n_abs*phi_x/x/x;
         
@@ -1069,13 +1080,6 @@ void def_PDE_Lyn_and_2s1s(double z, const vector<double> &xi, vector<double> &Ai
         
         for(int n=2; n<=nmax; n++)
         {
-//          if(n==2){ local_line_em_abs=1; local_line_sc=1; }
-//          else{ local_line_em_abs=1; local_line_sc=0; }
-//          else if(n==3){ local_line_em_abs=1; local_line_sc=1; }
-//          else if(n==4){ local_line_em_abs=1; local_line_sc=1; }
-//          else if(n==5){ local_line_em_abs=0; local_line_sc=1; }
-//          else{ local_line_em_abs=0; local_line_sc=0; }
-            
             update_Voigt_profile_Ly_n(z, nu21, n, xi);
             
             if(local_line_sc && local_line_em_abs) add_Ly_n_sc_em_full(n, z, nu21, Tg, Te, Ne, N1s, Hz, xi, Ai, Bi, Ci, Di);

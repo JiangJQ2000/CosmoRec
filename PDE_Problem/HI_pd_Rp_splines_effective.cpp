@@ -94,7 +94,6 @@ struct HI_Rp_pd_eff_Data
 };
 
 vector<HI_Rp_pd_eff_Data > HI_pd_eff_Data;
-vector<HI_Rp_pd_eff_Data > HI_Rp_eff_Data;
 vector<HI_Rp_pd_eff_Data > HI_Dnem_eff_Data;
 
 //===========================================================================================================
@@ -117,7 +116,6 @@ void clear_HI_pd_Rp_effective_memory()
     clear_HI_pd_Rp_effective_splines();
     
     HI_pd_eff_Data.clear();
-    HI_Rp_eff_Data.clear();
     HI_Dnem_eff_Data.clear();
     
     return;
@@ -144,10 +142,8 @@ void set_up_splines_for_HI_pd_Rp_effective(double zend, double zstart,
         // prepare spline data
         //=======================================================================
         HI_pd_eff_Data.clear();
-        HI_Rp_eff_Data.clear();
         HI_Dnem_eff_Data.clear();
         HI_pd_eff_Data.resize(ntot+1);
-        HI_Rp_eff_Data.resize(ntot+1);
         HI_Dnem_eff_Data.resize(ntot+1);
         
         //=======================================================================
@@ -156,7 +152,6 @@ void set_up_splines_for_HI_pd_Rp_effective(double zend, double zstart,
         for(int i=0; i<ntot+1; i++)
         { 
             HI_pd_eff_Data[i].Rp=new double[nz]; 
-            HI_Rp_eff_Data[i].Rp=new double[nz]; 
             HI_Dnem_eff_Data[i].Rp=new double[nz]; 
         }
     }   
@@ -191,30 +186,21 @@ void set_up_splines_for_HI_pd_Rp_effective(double zend, double zstart,
         double N2p=NH*calc_HI_Xi(z, 2);
 
         //=====================================================================
-        // compute the 2s Rp_Rm using the net rate equation
+        // compute Dnem for 2s-state (pd==1)
         //=====================================================================
         int res_i=get_res_index(1);
-
-        //=====================================================================
-        // case pd_2s==1
-        //=====================================================================
-        Rp_Rm[res_i]=N2s;                // this is the normal multi-level term
         Dnem_arr[res_i]=N2s/N1s-exp_21;
         
         //=====================================================================
-        // compute the 2p Rp_Rm using the net rate equation
+        // compute Dnem for 2p-state
         //=====================================================================
         res_i=get_res_index(2);
-        //
-        double npl_c=exp_21;
         double nL=N2p/3.0/N1s;      
         double tauS=HA.Level(2, 1).Get_A21(1, 0)*pow(HA.Level(2, 1).Get_lambda21(1, 0), 3)
                     /(8.0*PI*cosmos.H(z))*(N1s*3.0 - N2p);      
         double PS=(1.0-exp(-tauS))/tauS;
-        //
-        double Dnem=(nL-npl_c)*(1.0+(1.0/pd[res_i]-1.0)*PS);
-        Rp_Rm[res_i]=(Dnem+npl_c)*3.0*N1s;
-        Dnem_arr[res_i]=Dnem;
+
+        Dnem_arr[res_i]=(nL-exp_21)*(1.0+(1.0/pd[res_i]-1.0)*PS);
         
         //=====================================================================
         // compute the nP - 1s Rp_Rm using the net rate equation
@@ -231,16 +217,13 @@ void set_up_splines_for_HI_pd_Rp_effective(double zend, double zstart,
                 nu21=HA.Level(HI_i).Get_Dnu_1s();
                 x_c=const_h_kb*nu21/Tg;
                 exp_21=exp(-x_c);
-                npl_c=exp_21;
                 //
                 nL=Ni/3.0/N1s;
                 tauS=HA.Level(HI_i).Get_A21(1, 0)*pow(HA.Level(HI_i).Get_lambda21(1, 0), 3)
                      /(8.0*PI*cosmos.H(z))*(N1s*3.0 - Ni);
                 PS=(1.0-exp(-tauS))/tauS;
                 //
-                Dnem=(nL-npl_c)*(1.0+(1.0/pd[res_i]-1.0)*PS);
-                Rp_Rm[res_i]=(Dnem+npl_c)*3.0*N1s;
-                Dnem_arr[res_i]=Dnem;
+                Dnem_arr[res_i]=(nL-exp_21)*(1.0+(1.0/pd[res_i]-1.0)*PS);
             }
             else if( (HA.Level(HI_i).Get_l()==0 || HA.Level(HI_i).Get_l()==2) && HA.Level(HI_i).Get_n()>2)
             {
@@ -251,7 +234,6 @@ void set_up_splines_for_HI_pd_Rp_effective(double zend, double zstart,
                 x_c=const_h_kb*nu21/Tg;
                 exp_21=exp(-x_c);
                 //
-                Rp_Rm[res_i]=Ni;         // this is the normal multi-level term
                 Dnem_arr[res_i]=Ni/N1s/(2.0*HA.Level(HI_i).Get_l()+1.0)-exp_21;
             }
         }
@@ -262,7 +244,6 @@ void set_up_splines_for_HI_pd_Rp_effective(double zend, double zstart,
         for(int nr=0; nr<ntot; nr++)
         { 
             HI_pd_eff_Data[nr].Rp[i]=log(pd[nr]); 
-            HI_Rp_eff_Data[nr].Rp[i]=log(Rp_Rm[nr]); 
             HI_Dnem_eff_Data[nr].Rp[i]=Dnem_arr[nr]; 
         }
         
@@ -270,7 +251,7 @@ void set_up_splines_for_HI_pd_Rp_effective(double zend, double zstart,
         // set the the entry with res-index=ntot to zero 
         // (needed for spline interpolation)
         //=====================================================================
-        HI_pd_eff_Data[ntot].Rp[i]=HI_Rp_eff_Data[ntot].Rp[i]=HI_Dnem_eff_Data[ntot].Rp[i]=0.0;
+        HI_pd_eff_Data[ntot].Rp[i]=HI_Dnem_eff_Data[ntot].Rp[i]=0.0;
         
         if(HI_pd_Rp_splines_effective_verbose>=1) 
             cout << "\033[2K" << " z= " << z << endl << "\033[1A";
@@ -287,7 +268,6 @@ void set_up_splines_for_HI_pd_Rp_effective(double zend, double zstart,
         for(int n=0; n<ntot+1; n++)
         {
             update_spline_coeffies_JC(HI_pd_eff_Data[n].memindex, nz, Rp_zarr, HI_pd_eff_Data[n].Rp);
-            update_spline_coeffies_JC(HI_Rp_eff_Data[n].memindex, nz, Rp_zarr, HI_Rp_eff_Data[n].Rp);
             update_spline_coeffies_JC(HI_Dnem_eff_Data[n].memindex, nz, Rp_zarr, HI_Dnem_eff_Data[n].Rp);
         }
     }
@@ -297,10 +277,6 @@ void set_up_splines_for_HI_pd_Rp_effective(double zend, double zstart,
         {
             HI_pd_eff_Data[n].memindex=calc_spline_coeffies_JC(nz, Rp_zarr, HI_pd_eff_Data[n].Rp, 
                                                                "set_up_splines_for_HI_pd_Rp :: pd "
-                                                               + int_to_string(n));
-
-            HI_Rp_eff_Data[n].memindex=calc_spline_coeffies_JC(nz, Rp_zarr, HI_Rp_eff_Data[n].Rp, 
-                                                               "set_up_splines_for_HI_pd_Rp :: Rp "
                                                                + int_to_string(n));
 
             HI_Dnem_eff_Data[n].memindex=calc_spline_coeffies_JC(nz, Rp_zarr, HI_Dnem_eff_Data[n].Rp, 
@@ -389,17 +365,6 @@ double calc_HI_pd_nl_splines_effective(double z, int n, int l)
 
 double calc_HI_pd_i_splines_effective(double z, int i)
 { return exp(calc_spline_JC(z, HI_pd_eff_Data[get_res_index(i)].memindex)); }
-
-//===========================================================================================================
-//
-// Rp-functions
-//
-//===========================================================================================================
-double calc_HI_Rp_Rm_nl_splines_effective(double z, int n, int l)
-{ return exp(calc_spline_JC(z, HI_Rp_eff_Data[get_res_index(n*(n-1)/2+l)].memindex)); }
-
-double calc_HI_Rp_Rm_i_splines_effective(double z, int i)
-{ return exp(calc_spline_JC(z, HI_Rp_eff_Data[get_res_index(i)].memindex)); }
 
 //===========================================================================================================
 //

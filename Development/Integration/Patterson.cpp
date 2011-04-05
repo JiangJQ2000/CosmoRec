@@ -1,7 +1,12 @@
-//=========================================================================
+//==================================================================================================
+// Author Jens Chluba Jan 2010
+// Last modification: April 2011
+//==================================================================================================
+
+//==================================================================================================
 // patterson formulae & integration
 // Integral_-1^1 f(x) dx = f(0)+Sum _1^order w[i]*(f(0-x[i])+f(0+x[i]))
-//=========================================================================
+//==================================================================================================
 # include <cstdlib>
 # include <cmath>
 # include <iostream>
@@ -14,15 +19,15 @@
 
 using namespace std;
 
-//==================================
-//order 1 (not needed)
-//==================================
+//==================================================================================================
+//order 1 (trival and hence not needed)
+//==================================================================================================
 //static double Patterson_x1[1]={0.0};
 //static double Patterson_w1[1]={2.0};
 
-//==================================
+//==================================================================================================
 //order 3
-//==================================
+//==================================================================================================
 static const double Patterson_x3[1]={
     0.7745966692414834
 };
@@ -32,9 +37,9 @@ static const double Patterson_w3[2]={
     0.5555555555555556
 };
 
-//==================================
+//==================================================================================================
 //order 7
-//==================================
+//==================================================================================================
 static const double Patterson_x7[2]={
     0.4342437493468025,
     0.9604912687080203
@@ -45,9 +50,9 @@ static const double Patterson_w7[4]={
     0.2684880898683334, 0.1046562260264673
 };
 
-//==================================
+//==================================================================================================
 //order 15
-//==================================
+//==================================================================================================
 static const double Patterson_x15[4]={  
     0.2233866864289669, 0.6211029467372264,
     0.888459232872257, 0.993831963212755
@@ -58,9 +63,9 @@ static const double Patterson_w15[8]={
     0.1344152552437842, 0.09292719531512454, 0.05160328299707974, 0.01700171962994026
 };
 
-//==================================
+//==================================================================================================
 //order 31
-//==================================
+//==================================================================================================
 static const double Patterson_x31[8]={
     0.1124889431331866, 0.3311353932579768, 0.5313197436443756, 0.7024962064915271,
     0.8367259381688688, 0.9296548574297401, 0.9815311495537401, 0.9990981249676676
@@ -72,9 +77,9 @@ static const double Patterson_w31[16]={
     0.02580759809617665, 0.01644604985438781, 0.008434565739321106, 0.002544780791561875
 };
 
-//==================================
+//==================================================================================================
 //order 63
-//==================================
+//==================================================================================================
 static const double Patterson_x63[16]={
     0.05634431304659279, 0.1682352515522075, 0.2777498220218243, 0.3833593241987304, 0.4836180269458411, 0.5771957100520458, 0.6629096600247806,
     0.7397560443526947, 0.8069405319502176, 0.8639079381936905, 0.9103711569570043, 0.9463428583734029, 0.9721828747485818, 0.9886847575474295,
@@ -89,9 +94,9 @@ static const double Patterson_w63[32]={
     0.0003632214818455306
 };
 
-//==================================
+//==================================================================================================
 //order 127
-//==================================
+//==================================================================================================
 static const double Patterson_x127[32]={
     0.02818464894974569, 0.08445404008371088, 0.1404242331525602, 0.1958975027111002, 0.2506787303034832, 0.304576441556714, 0.3574038378315322, 0.4089798212298887,    
     0.4591300119898323, 0.5076877575337166, 0.5544951326319325, 0.5994039302422429, 0.6422766425097595, 0.6829874310910792, 0.7214230853700989, 0.7574839663805136,     
@@ -110,9 +115,9 @@ static const double Patterson_w127[64]={
     0.002108815245726633, 0.00168114286542147, 0.001289524082610417, 0.0009383698485423815, 0.0006326073193626335, 0.0003777466463269846, 0.0001807395644453884, 5.053609520786252e-05  
 };
 
-//==================================
+//==================================================================================================
 //order 255
-//==================================
+//==================================================================================================
 static const double Patterson_x255[64]={
     0.01409388641078246, 0.0422691647653636, 0.07040697604285517, 0.09848239659811921, 0.126470584372302, 0.1543468114813781, 0.1820864967592522, 0.2096652382431812, 
     0.2370588455898297, 0.2642433724109268, 0.2911951485182467, 0.3178908120684767, 0.344307341599438, 0.3704220879500782, 0.3962128060576159, 0.4216576866261633, 
@@ -145,10 +150,14 @@ static const double Patterson_w255[128]={
 
 static const unsigned short Patterson_iteration[8]={1, 3, 7, 15, 31, 63, 127, 255};
 
-//====================================================================================
+//==================================================================================================
+//
 // Functions to compute the integral
-//====================================================================================
-int compute_integral_function_Patterson(int order, double xc, double Dx, double (*f)(double), int *neval, double *r, vector<double> &Patterson_fvals)
+//
+//==================================================================================================
+int compute_integral_function_Patterson(int order, double xc, double Dx, 
+                                        double (*f)(double), int *neval, double *r, 
+                                        vector<double> &Patterson_fvals)
 {
     int debug=0;
     *neval=2*(order-1)+1;
@@ -160,9 +169,9 @@ int compute_integral_function_Patterson(int order, double xc, double Dx, double 
     int nx;
     double Del;
     
-    //======================================================
+    //==============================================================================================
     // decide which rule to use
-    //======================================================
+    //==============================================================================================
     if(order==3){ x=Patterson_x3; w=Patterson_w3; nx=1; }
     else if(order==7){ x=Patterson_x7; w=Patterson_w7; nx=2; }
     else if(order==15){ x=Patterson_x15; w=Patterson_w15; nx=4; }
@@ -170,46 +179,52 @@ int compute_integral_function_Patterson(int order, double xc, double Dx, double 
     else if(order==63){ x=Patterson_x63; w=Patterson_w63; nx=16; }
     else if(order==127){ x=Patterson_x127; w=Patterson_w127; nx=32; }
     else if(order==255){ x=Patterson_x255; w=Patterson_w255; nx=64; }
-    //======================================================
-    else{ cout << " compute_integral_function_Patterson:: too many points requested " << endl; *neval=0; return 1; } 
+    //==============================================================================================
+    else
+    { 
+        cerr << " compute_integral_function_Patterson:: too many points requested " << endl; 
+        *neval=0; 
+        return 1; 
+    } 
     
-    //======================================================
+    //==============================================================================================
     // only add new points
-    //======================================================
+    //==============================================================================================
     double dum;
     int index_f=0;
     // copy first point
-    loc_vals.push_back(Patterson_fvals[index_f]);  // compute f(xc) outside!
+    loc_vals.push_back(Patterson_fvals[index_f]);  // computed f(xc) outside!
     index_f++;
     for(int k=0; k<nx-1; k++)
     {
-        //---------------------------------
+        //-------------------------------------------
         // calc new point
         Del=Dx*x[k];
         dum=f(xc+Del)+f(xc-Del);
         loc_vals.push_back(dum);
-        //---------------------------------
+        //-------------------------------------------
         // copy old point
         loc_vals.push_back(Patterson_fvals[index_f]);
         index_f++;
     }
-    //======================================================
+    //==============================================================================================
     // finish last point
-    //======================================================
+    //==============================================================================================
     Del=Dx*x[nx-1];
     dum=f(xc+Del)+f(xc-Del);
     loc_vals.push_back(dum);
     
-    //======================================================
+    //==============================================================================================
     // save things for next call
-    //======================================================
+    //==============================================================================================
     Patterson_fvals=loc_vals;
 
-    if(debug>=2) for(int k=0; k<(int)Patterson_fvals.size(); k++) cout << k << " " << Patterson_fvals[k] << " " << w[k] << endl;
+    if(debug>=2) for(int k=0; k<(int)Patterson_fvals.size(); k++) 
+        cout << k << " " << Patterson_fvals[k] << " " << w[k] << endl;
     
-    //======================================================
+    //==============================================================================================
     // compute integral; start with smallest terms first
-    //======================================================
+    //==============================================================================================
     for(int k=(int)Patterson_fvals.size()-1; k>=0; k--) *r+=Patterson_fvals[k]*w[k];
     (*r)*=Dx;
     
@@ -219,46 +234,43 @@ int compute_integral_function_Patterson(int order, double xc, double Dx, double 
     return 0;
 }
 
-//====================================================================================
-// Epsilon algorithm
-//====================================================================================
-void Patterson_update_remaining_epsilon_table(int m, int n, vector<vector<double> > &epstable)
+//==================================================================================================
+// Epsilon algorithm (has never really helped so far...)
+//==================================================================================================
+void Patterson_update_epsilon_table(int it, vector<vector<double> > &epstable)
 {
-    if(m>0)
+    if(it>0)
     {
-        double Del=epstable[m+1][n-1]-epstable[m][n-1];
-        cout << " Check " << m << " " << n << " " << Del << " " << epstable[m][n-2]+1.0/Del << endl;
-        
-        epstable[m].push_back(epstable[m+1][n-2]+1.0/Del);
-        
-        Patterson_update_remaining_epsilon_table(m-1, n+1, epstable);
-    }
-    
-    return; 
-}
+        double Del=epstable[0][it]-epstable[0][it-1];        
+        epstable[1][it-1]=1.0/Del;
 
-void Patterson_show_epsilon_table(vector<vector<double> > &epstable)
-{
-    int mmax=epstable.size();
+        for(int m=1; m<it; m++)
+        {
+            int j=it-1-m;
+            double Del=epstable[m][j+1]-epstable[m][j];        
+            epstable[m+1][j]=epstable[m-1][j+1]+1.0/Del;
+        }
+    }
     
     cout.precision(16);
-    cout << " epsilon-table::" << endl;
-    for(int m=1; m<mmax; m++)
+    for(int j=0; j<=it+1; j++)
     {
-        cout << m << " ";
-        for(int n=0; n<(int)epstable[m].size(); n++) cout << epstable[m][n] << " ";
+        cout << " j= " << j << " || ";
+        for(int m=0; m<=it+1-j; m++) cout << epstable[m][j] << " ";
         cout << endl;
     }
-    
     wait_f_r();
     
     return; 
 }
 
-//====================================================================================
+//==================================================================================================
+//
 // Driver that loops over the different rules
-//====================================================================================
-int Integrate_using_Patterson(double a, double b, double epsrel, double epsabs, double (*fptr)(double), int *neval, double *r)
+//
+//==================================================================================================
+int Integrate_using_Patterson(double a, double b, double epsrel, double epsabs, 
+                              double (*fptr)(double), int *neval, double *r)
 {
     int debug=0;
     *r=0.0; 
@@ -272,37 +284,47 @@ int Integrate_using_Patterson(double a, double b, double epsrel, double epsabs, 
     vector<double> Patterson_fvals;
     Patterson_fvals.clear();
     Patterson_fvals.push_back(fi);
-    //--------------------------------
+    //-------------------------------------
     // Integral for 1-point formula
-    //--------------------------------
-    *r=2*fi*Dx;
+    //-------------------------------------
+    *r=2.0*fi*Dx;
     *neval=1;
     
     double r1;
-    vector<vector<double> > epstable; // for epsilon-acceleration
-    vector<double > dumeps;
-    //
+//    vector<vector<double> > epstable(10, 10); // for epsilon-acceleration
+//    epstable[0][0]=*r;
+    
     for(int it=1; it<8; it++)
     {
-        ifail=compute_integral_function_Patterson(Patterson_iteration[it], xc, Dx, fptr, neval, &r1, Patterson_fvals);
+        ifail=compute_integral_function_Patterson(Patterson_iteration[it], xc, Dx, fptr, 
+                                                  neval, &r1, Patterson_fvals);
+        
         Dr= *r-r1;
         *r=r1;
         
-        if(debug>=2) cout << a << " " << b << " " << *r << " " << Dr << " " << fabs(Dr/(*r +1.0e-300)) << " neval= " << *neval<< endl;
+//        epstable[0][it]=r1;
+//        Patterson_update_epsilon_table(it, epstable);
         
-        //======================================================
+        if(debug>=2) cout << a << " " << b << " " << *r << " " << Dr << " " 
+                          << fabs(Dr/(*r +1.0e-300)) << " neval= " << *neval<< endl;
+        
+        //==========================================================================================
         // check error
-        //======================================================
+        //==========================================================================================
         if(fabs(Dr)<=max(epsabs, fabs( *r)*epsrel)) return 0;
     }
     
     return 1;           
 }
     
-//====================================================================================
+//==================================================================================================
+//
 // Functions to compute the integral (with external parameter)
-//====================================================================================
-int compute_integral_function_Patterson(int order, double xc, double Dx, double (*f)(double, void *p), int *neval, double *r, vector<double> &Patterson_fvals, void *p)
+//
+//==================================================================================================
+int compute_integral_function_Patterson(int order, double xc, double Dx, 
+                                        double (*f)(double, void *p), int *neval, double *r, 
+                                        vector<double> &Patterson_fvals, void *p)
 {
     int debug=0;
     *neval=2*(order-1)+1;
@@ -314,9 +336,9 @@ int compute_integral_function_Patterson(int order, double xc, double Dx, double 
     int nx;
     double Del;
     
-    //======================================================
+    //==============================================================================================
     // decide which rule to use
-    //======================================================
+    //==============================================================================================
     if(order==3){ x=Patterson_x3; w=Patterson_w3; nx=1; }
     else if(order==7){ x=Patterson_x7; w=Patterson_w7; nx=2; }
     else if(order==15){ x=Patterson_x15; w=Patterson_w15; nx=4; }
@@ -324,46 +346,52 @@ int compute_integral_function_Patterson(int order, double xc, double Dx, double 
     else if(order==63){ x=Patterson_x63; w=Patterson_w63; nx=16; }
     else if(order==127){ x=Patterson_x127; w=Patterson_w127; nx=32; }
     else if(order==255){ x=Patterson_x255; w=Patterson_w255; nx=64; }
-    //======================================================
-    else{ cout << " compute_integral_function_Patterson:: too many points requested " << endl; *neval=0; return 1; } 
+    //==============================================================================================
+    else
+    { 
+        cerr << " compute_integral_function_Patterson:: too many points requested " << endl; 
+        *neval=0; 
+        return 1; 
+    } 
     
-    //======================================================
+    //==============================================================================================
     // only add new points
-    //======================================================
+    //==============================================================================================
     double dum;
     int index_f=0;
     // copy first point
-    loc_vals.push_back(Patterson_fvals[index_f]);  // compute f(xc) outside!
+    loc_vals.push_back(Patterson_fvals[index_f]);  // computed f(xc) outside!
     index_f++;
     for(int k=0; k<nx-1; k++)
     {
-        //---------------------------------
+        //-------------------------------------------
         // calc new point
         Del=Dx*x[k];
         dum=f(xc+Del, p)+f(xc-Del, p);
         loc_vals.push_back(dum);
-        //---------------------------------
+        //-------------------------------------------
         // copy old point
         loc_vals.push_back(Patterson_fvals[index_f]);
         index_f++;
     }
-    //======================================================
+    //==============================================================================================
     // finish last point
-    //======================================================
+    //==============================================================================================
     Del=Dx*x[nx-1];
     dum=f(xc+Del, p)+f(xc-Del, p);
     loc_vals.push_back(dum);
     
-    //======================================================
+    //==============================================================================================
     // save things for next call
-    //======================================================
+    //==============================================================================================
     Patterson_fvals=loc_vals;
     
-    if(debug>=2) for(int k=0; k<(int)Patterson_fvals.size(); k++) cout << k << " " << Patterson_fvals[k] << " " << w[k] << endl;
+    if(debug>=2) for(int k=0; k<(int)Patterson_fvals.size(); k++) 
+        cout << k << " " << Patterson_fvals[k] << " " << w[k] << endl;
     
-    //======================================================
+    //==============================================================================================
     // compute integral; start with smallest terms first
-    //======================================================
+    //==============================================================================================
     for(int k=(int)Patterson_fvals.size()-1; k>=0; k--) *r+=Patterson_fvals[k]*w[k];
     (*r)*=Dx;
     
@@ -373,7 +401,9 @@ int compute_integral_function_Patterson(int order, double xc, double Dx, double 
     return 0;
 }
 
-int Integrate_using_Patterson(double a, double b, double epsrel, double epsabs, double (*fptr)(double, void *p), int *neval, double *r, void *p)
+//==================================================================================================
+int Integrate_using_Patterson(double a, double b, double epsrel, double epsabs, 
+                              double (*fptr)(double, void *p), int *neval, double *r, void *p)
 {
     int debug=0;
     *r=0.0; 
@@ -387,21 +417,24 @@ int Integrate_using_Patterson(double a, double b, double epsrel, double epsabs, 
     vector<double> Patterson_fvals;
     Patterson_fvals.clear();
     Patterson_fvals.push_back(fi);
-    //--------------------------------
+    //-------------------------------------
     // Integral for 1-point formula
-    //--------------------------------
-    *r=2*fi*Dx;
+    //-------------------------------------
+    *r=2.0*fi*Dx;
     *neval=1;
     
     double r1;
     //
     for(int it=1; it<8; it++)
     {
-        ifail=compute_integral_function_Patterson(Patterson_iteration[it], xc, Dx, fptr, neval, &r1, Patterson_fvals, p);
+        ifail=compute_integral_function_Patterson(Patterson_iteration[it], xc, Dx, fptr, 
+                                                  neval, &r1, Patterson_fvals, p);
+        
         Dr= *r-r1;
         *r=r1;
         
-        if(debug>=2) cout << a << " " << b << " " << *r << " " << Dr << " " << fabs(Dr/(*r +1.0e-300)) << " neval= " << *neval<< endl;
+        if(debug>=2) cout << a << " " << b << " " << *r << " " << Dr << " " 
+                          << fabs(Dr/(*r +1.0e-300)) << " neval= " << *neval<< endl;
         
         //======================================================
         // check error
@@ -412,10 +445,13 @@ int Integrate_using_Patterson(double a, double b, double epsrel, double epsabs, 
     return 1;           
 }
     
-//================================================================================================
-// Integral using Patterson formulae
-//================================================================================================
-int Integrate_Patterson_refine(int &reclev, double a, double b, double epsrel, double epsabs, double (*fptr)(double), double *r)
+//==================================================================================================
+//
+// Integral using Patterson formulae (refinement of regions)
+//
+//==================================================================================================
+int Integrate_Patterson_refine(int &reclev, double a, double b, double epsrel, double epsabs, 
+                               double (*fptr)(double), double *r)
 {
     int debug=0;
     *r=0.0;
@@ -424,7 +460,12 @@ int Integrate_Patterson_refine(int &reclev, double a, double b, double epsrel, d
     // to avoid SEGfault for strange solution
     //-------------------------------------------------------------------
     reclev++;
-    if(reclev>=100){ cout << " Integrate_Patterson_refine::recursion_level has exceeded limit of 100. Exiting \n" << endl; exit(0); }
+    if(reclev>=100)
+    { 
+        cerr << " Integrate_Patterson_refine::recursion_level has exceeded limit of 100." 
+             << " Exiting \n" << endl; 
+        exit(0); 
+    }
     
     if(debug>=1) cout << " entering subdivision " << a << " " << b << endl;
     int neval, ntot=0, ifail=0;
@@ -443,9 +484,9 @@ int Integrate_Patterson_refine(int &reclev, double a, double b, double epsrel, d
         ifail=Integrate_using_Patterson(a1, b1, epsrel, err, fptr, &neval, &r1);
         ntot+=neval;
         
-        //===========================================================================================
+        //==========================================================================================
         // do subdivision (recursive calling)
-        //===========================================================================================
+        //==========================================================================================
         if(ifail!=0)
         { 
             neval=Integrate_Patterson_refine(reclev, a1, b1, epsrel, err, fptr, &r1); 
@@ -464,7 +505,9 @@ int Integrate_Patterson_refine(int &reclev, double a, double b, double epsrel, d
     return ntot;
 }   
 
-double Integrate_using_Patterson_adaptive(double a, double b, double epsrel, double epsabs, double (*fptr)(double))
+//==================================================================================================
+double Integrate_using_Patterson_adaptive(double a, double b, double epsrel, double epsabs, 
+                                          double (*fptr)(double))
 {
     if(a>=b) return 0.0;
     
@@ -472,7 +515,7 @@ double Integrate_using_Patterson_adaptive(double a, double b, double epsrel, dou
     int neval, ntot=0, ifail=0;
     double r=0.0, r1;
     
-    int subint=1;
+    int subint=1; // minimal number of subdivisions
     double a1, b1=a, fa=(b-a)/subint, err;
     int k;
     
@@ -491,9 +534,9 @@ double Integrate_using_Patterson_adaptive(double a, double b, double epsrel, dou
         ifail=Integrate_using_Patterson(a1, b1, epsrel, err, fptr, &neval, &r1);
         ntot+=neval;
         
-        //===========================================================================================
+        //==========================================================================================
         // do subdivision
-        //===========================================================================================
+        //==========================================================================================
         if(ifail!=0)
         { 
             neval=Integrate_Patterson_refine(reclev, a1, b1, epsrel, err, fptr, &r1); 
@@ -512,10 +555,13 @@ double Integrate_using_Patterson_adaptive(double a, double b, double epsrel, dou
     return r;
 }
 
-//================================================================================================
-// Integral using Patterson formulae
-//================================================================================================
-int Integrate_Patterson_refine(int &reclev, double a, double b, double epsrel, double epsabs, double (*fptr)(double, void *p), double *r, void *p)
+//==================================================================================================
+//
+// Integral using Patterson formulae (refinement of regions)
+//
+//==================================================================================================
+int Integrate_Patterson_refine(int &reclev, double a, double b, double epsrel, double epsabs, 
+                               double (*fptr)(double, void *p), double *r, void *p)
 {
     int debug=0;
     *r=0.0;
@@ -523,14 +569,18 @@ int Integrate_Patterson_refine(int &reclev, double a, double b, double epsrel, d
     //-------------------------------------------------------------------
     // to avoid SEGfault for strange solution
     //-------------------------------------------------------------------
-    reclev++;
-    if(reclev>=100){ cout << " Integrate_Patterson_refine::recursion_level has exceeded limit of 100. Exiting \n" << endl; exit(0); }
+    if(reclev>=100)
+    { 
+        cerr << " Integrate_Patterson_refine::recursion_level has exceeded limit of 100." 
+             << " Exiting \n" << endl; 
+        exit(0); 
+    }
     
     if(debug>=1) cout << " entering subdivision " << a << " " << b << endl;
     int neval, ntot=0, ifail=0;
     double r1;
     
-    int subint=2;
+    int subint=2; 
     double a1, b1=a, fa=(b-a)/subint, err;
     
     for(int k=1; k<=subint; k++)
@@ -543,9 +593,9 @@ int Integrate_Patterson_refine(int &reclev, double a, double b, double epsrel, d
         ifail=Integrate_using_Patterson(a1, b1, epsrel, err, fptr, &neval, &r1, p);
         ntot+=neval;
         
-        //===========================================================================================
+        //==========================================================================================
         // do subdivision (recursive calling)
-        //===========================================================================================
+        //==========================================================================================
         if(ifail!=0)
         { 
             neval=Integrate_Patterson_refine(reclev, a1, b1, epsrel, err, fptr, &r1, p); 
@@ -564,7 +614,9 @@ int Integrate_Patterson_refine(int &reclev, double a, double b, double epsrel, d
     return ntot;
 }   
 
-double Integrate_using_Patterson_adaptive(double a, double b, double epsrel, double epsabs, double (*fptr)(double, void *p), void *p)
+//==================================================================================================
+double Integrate_using_Patterson_adaptive(double a, double b, double epsrel, double epsabs, 
+                                          double (*fptr)(double, void *p), void *p)
 {
     if(a>=b) return 0.0;
     
@@ -572,7 +624,7 @@ double Integrate_using_Patterson_adaptive(double a, double b, double epsrel, dou
     int neval, ntot=0, ifail=0;
     double r=0.0, r1;
     
-    int subint=1;
+    int subint=1; // minimal number of subdivisions
     double a1, b1=a, fa=(b-a)/subint, err;
     int k;
     
@@ -591,9 +643,9 @@ double Integrate_using_Patterson_adaptive(double a, double b, double epsrel, dou
         ifail=Integrate_using_Patterson(a1, b1, epsrel, err, fptr, &neval, &r1, p);
         ntot+=neval;
         
-        //===========================================================================================
+        //==========================================================================================
         // do subdivision
-        //===========================================================================================
+        //==========================================================================================
         if(ifail!=0)
         { 
             neval=Integrate_Patterson_refine(reclev, a1, b1, epsrel, err, fptr, &r1, p); 
@@ -612,3 +664,5 @@ double Integrate_using_Patterson_adaptive(double a, double b, double epsrel, dou
     return r;
 }
 
+//==================================================================================================
+//==================================================================================================

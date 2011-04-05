@@ -124,7 +124,8 @@ double Dn_nu_ref_effective(int Lyn, double z, double Dn_ref, double pd, double n
     double tau_d=pd*3.0*HIA.HI_Lyn_profile(Lyn).Get_A21()*pow(HIA.HI_Lyn_profile(Lyn).Get_lambda21(), 3)
                    *calc_HI_X1s(z)*cos.NH(z)/8.0/PI/cos.H(z);
     
-    double xi_I=HIA.HI_Lyn_profile(Lyn).xi_Int(HIA.HI_Lyn_profile(Lyn).nu2x(nu, Tm), 1.0e+5, HIA.HI_Lyn_profile(Lyn).aVoigt(Tm));
+    double xi_I=HIA.HI_Lyn_profile(Lyn).xi_Int(HIA.HI_Lyn_profile(Lyn).nu2x(nu, Tm), 1.0e+5, 
+                                               HIA.HI_Lyn_profile(Lyn).aVoigt(Tm));
     return Dn_ref*(1.0-exp(-tau_d*xi_I));
 }
 
@@ -133,7 +134,8 @@ double Dn_nu_ref_effective_sum(int Lyn_max, double z, double nu, double nu21, Co
     double r=0.0;
     
     for(int ni=2; ni<=Lyn_max; ni++) 
-        r+=Dn_nu_ref_effective(ni, z, HI_Dnem_for_nl_effective(z, ni, 1)*nu21, HI_pd_for_nl_effective(z, ni, 1), nu, cos, HIA);
+        r+=Dn_nu_ref_effective(ni, z, HI_Dnem_for_nl_effective(z, ni, 1)*nu21, 
+                               HI_pd_for_nl_effective(z, ni, 1), nu, cos, HIA);
     
     return r;
 }
@@ -461,7 +463,7 @@ void output_solution(int output_count, string endname, double nu21, Cosmos &cos,
 
 //====================================================================================================================
 //
-// read HyRec solution
+// read HyRec solution (or any other solution) from file
 //
 //====================================================================================================================
 void read_Hyrec_Population_from_file(vector<vector<double> > &Xi_Data, Cosmos &cos)
@@ -528,7 +530,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
 	// output for Grace
 	//=========================================================================== 
 #ifdef GRACE_DEFINED
-	bool out_put_GRACE=1;
+	bool out_put_GRACE=0;
 	int GR_output_step=1;
 #endif
     
@@ -564,7 +566,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
     //=========================================================================== 
     // always make sure that Raman-processes are not switched on 
     // above two-gamma processes!
-    //--------------------------------------------------------------
+    //---------------------------------------------------------------------------
     nmax_R_corrs=(nmax_R_corrs<nmax_2g_corrs ? nmax_R_corrs : nmax_2g_corrs);
     //
     if(nmax_2g_corrs<2) switch_off_two_g_corrections();
@@ -635,9 +637,9 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
     //=========================================================================== 
     // load precomputed solutions (load could be avoided...)
     //=========================================================================== 
-//YH    read_Hyrec_Population_from_file(HI_Solution, cos);    
-//    zs=HI_Solution[0][0];
-//    ze=HI_Solution[HI_Solution.size()-1][0];
+//CC    read_Hyrec_Population_from_file(HI_Solution, cos);    
+//CC    zs=HI_Solution[0][0];
+//CC    ze=HI_Solution[HI_Solution.size()-1][0];
     
     compute_Xi_HI_splines(zs, ze, HIA, HI_Solution);
     set_up_splines_for_HI_pd_Rp_effective(ze, zs, cos, HIA, HI_Solution);    
@@ -718,9 +720,9 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
         dz=-dz_out;
         zout=max(ze, zin+dz);
         
-//YH        double zcomp=1.100092E+03; // 1.300108e+03; 1.350090E+03;
-//YH        double zcomp=1100.0;
-//YH        if(zout<=zcomp && zin>=zcomp) zout=zcomp;
+//CC        double zcomp=1.100092E+03; // 1.300108e+03; 1.350090E+03;
+//CC        double zcomp=1100.0;
+//CC        if(zout<=zcomp && zin>=zcomp) zout=zcomp;
         
         //=======================================================================
         // define lower & upper boundary
@@ -765,8 +767,8 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
             if(!(output_count%output_step) && do_output) 
                output_solution(output_count, endname, nu21, cos, HIA, zout, nresmax, boundary_up);
  
-//YH            if(zout==zcomp)
-//YH            {    output_solution(9999, endname, nu21, cos, HIA, zout, nresmax, boundary_up); wait_f_r(); }
+//CC            if(zout==zcomp)
+//CC            {    output_solution(9999, endname, nu21, cos, HIA, zout, nresmax, boundary_up); wait_f_r(); }
             
             //===================================================================
             // compute correction

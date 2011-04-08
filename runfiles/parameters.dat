@@ -22,12 +22,12 @@
 -3
 
 1
-1
+2
 3
 2
 
 ./outputs/
-.HeI_tests.dat
+.test_small_core.dat
 
 //=============================================================================================
 // the above parameters are (default values are given as examples)

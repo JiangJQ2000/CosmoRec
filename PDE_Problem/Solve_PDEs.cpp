@@ -53,7 +53,7 @@ int show_messages=3;
 //====================================================================================================================
 int core_HI=25;            // points per Doppler width in the core region; 
                            // For +/- 10 xD core=25 implies 500 points (which is recommended).
-int dec_HI=50;             // points per decade; from 10^-4 --> 1 ndec=50 gives ~ 200 points
+int dec_HI=50;             // points per decade; from 10^-4 --> 1 for ndec==50 gives ~ 200 points
 
 double theta_HI=0.51;
 

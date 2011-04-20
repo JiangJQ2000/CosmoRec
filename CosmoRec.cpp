@@ -358,7 +358,7 @@ int CosmoRec()
                 compute_HeI_DPesc_with_diffusion_equation_effective(DF_vec_z,
                                                                     DF_lines_vec, DI1_2s_vec, 
                                                                     HeI_level_indices,
-                                                                    min(3000.0, parameters.zstart/1.001), 
+                                                                    min(3400.0, parameters.zstart/1.001), 
                                                                     HeI_was_switched_off_at_z*1.001,
                                                                     cosmos, 
                                                                     HeI_Atoms,

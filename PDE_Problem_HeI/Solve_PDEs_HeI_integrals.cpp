@@ -16,12 +16,12 @@ double dnbar_dx_HeI(double x)
 { return calc_spline_JC(x, Spline_for_nx_integral_HeI_memindex); }
 
 //====================================================================================================================
-double calc_DP(double xmin, double xmax)
+double calc_DP(double xmin, double xmax, double epsabs=1.0e-50)
 {
     //================================================================================================================
     // Integrals
     //================================================================================================================
-    double epsrel=epsrel_HeI, epsabs=1.0e-50;
+    double epsrel=epsrel_HeI;
     double r=Integrate_using_Patterson_adaptive(xmin, xmax, epsrel, epsabs, dnbar_dx_HeI);
     
     return r;   
@@ -38,13 +38,14 @@ double compute_integral_over_several_resonances(int nres, double nu21, vector<do
     double a=xmin, b;
     double dx_x=1.0e-4;
     double r=0.0, r1;
+    double epsabs=1.0e-50;
     
     //================================================================================
     // setup splines for interpolation function
     //================================================================================
     if(!DP_integrals_splines_are_set) 
     {
-        Spline_for_nx_integral_HeI_memindex=calc_spline_coeffies_JC(nnu_pts, &xarr[0], &Fwork[0], "DR1sc-integral");
+        Spline_for_nx_integral_HeI_memindex=calc_spline_coeffies_JC(nnu_pts, &xarr[0], &Fwork[0], "DR1sj-integral");
         DP_integrals_splines_are_set=1;
     }
     else update_spline_coeffies_JC(Spline_for_nx_integral_HeI_memindex, nnu_pts, &xarr[0], &Fwork[0]);
@@ -53,8 +54,8 @@ double compute_integral_over_several_resonances(int nres, double nu21, vector<do
     // lower boundary may contain large phase space density (better to separate it)
     //================================================================================
     b=a*(1.0+0.001);
-    r1=calc_DP(a, b);
-    r+=r1;  
+    r1=calc_DP(a, b, epsabs);
+    r+=r1; epsabs=fabs(r)*epsrel_HeI;
     a=b;
     
     //================================================================================
@@ -67,24 +68,24 @@ double compute_integral_over_several_resonances(int nres, double nu21, vector<do
         // below resonance 
         //============================================================================
         b=xres*(1.0-dx_x);
-        r1=calc_DP(a, b);
-        r+=r1;  
+        r1=calc_DP(a, b, epsabs);
+        r+=r1; epsabs=fabs(r)*epsrel_HeI;
         a=b;
         
         //============================================================================
         // across resonance
         //============================================================================
         b=xres*(1.0+dx_x);
-        r1=calc_DP(a, b);
-        r+=r1;  
+        r1=calc_DP(a, b, epsabs);
+        r+=r1; epsabs=fabs(r)*epsrel_HeI;
         a=b;
     }
     
     b=xmax*(1.0-dx_x);
-    r1=calc_DP(a, b);
-    r+=r1;
+    r1=calc_DP(a, b, epsabs);
+    r+=r1; epsabs=fabs(r)*epsrel_HeI;
     
-    r1=calc_DP(b, xmax);
+    r1=calc_DP(b, xmax, epsabs);
     r+=r1;
 
     return r;
@@ -117,10 +118,9 @@ double compute_DP_HeI(int line, double z, double nu21, Cosmos &cos, Gas_of_HeI_A
     //================================================================================
     for(int k=0; k<nnu_pts; k++)
     { 
-        double npl=exp_x[k]/(1.0-exp_x[k]);
-        double f_x=exp_i1/npl; 
+        double f_x=exp_i1*(1.0/exp_x[k]-1.0); // exp(-xi1)/npl
 
-        Fwork[k]=-(yarr[k]*f_x-nu21*Dnem)*phi_i_HeI(line, k)/phi_i_Dnu_HeI(line); 
+        Fwork[k]=(nu21*Dnem-yarr[k]*f_x)*phi_i_HeI(line, k)/phi_i_Dnu_HeI(line); 
     }       
     
     //================================================================================
@@ -131,7 +131,7 @@ double compute_DP_HeI(int line, double z, double nu21, Cosmos &cos, Gas_of_HeI_A
     //================================================================================
     // convert to escape probabilities
     //================================================================================
-    double tau_S=w*phi_i_Ai1s_HeI(line)*pow(const_cl/nui1, 3)*calc_HeI_X1s(z)*cos.NH(z)/8.0/PI/cos.H(z); 
+    double tau_S=0.5*w*phi_i_Ai1s_HeI(line)*pow(const_cl/nui1, 3)*X1s*cos.NH(z)/FOURPI/cos.H(z); 
     double Peff=r/Dnem, pd=phi_i_pd_HeI(line), p_sc=1.0-pd;
     double PS=p_ij(tau_S);                               // this is the total Sobolev escape probability 
     double taud=tau_S*pd;
@@ -147,11 +147,11 @@ double compute_DP_HeI(int line, double z, double nu21, Cosmos &cos, Gas_of_HeI_A
     Peff+=Pd_t-Pd_part;                                        // correct for difference to total Pd;
                                                                // At low z this can be a ~0.5 % difference.
 
-    double Pesc=pd*Peff/(1.0-p_sc*Peff);
-
+    double Pesc=pd*Peff/(1.0-p_sc*Peff);    
+    
     if(show_messages_HeI>=2) cout << " line = " << line << " z= " << z << " DR = " << r 
-                                  << " Pesc = " << Pesc << " PS = " << PS 
-                                  << " DPesc= " << Pesc-PS << " pd= " << pd
+                                  << " Pesc = " << Pesc << " PS= " << PS 
+                                  << " DPesc= " << Pesc-PS << " pd= " << pd << " Pd_eff= " << Peff
                                   << " tau_S= " << tau_S << " Dnem/DnL= " << Dnem/DnLj << endl;
     
     return Pesc-PS;

@@ -32,12 +32,12 @@ double tau_S_function(int Lyn, double z, Cosmos &cos, Gas_of_Atoms &HIA)
 //====================================================================================================================
 double dnbar_dx_2g_R(double x){ return calc_spline_JC(x, Spline_for_nx_integral.memindex); }
 
-double calc_DF(double xmin, double xmax)
+double calc_DF(double xmin, double xmax, double epsabs=1.0e-60)
 {
     //=========================================================================
     // Integrals
     //=========================================================================
-    double epsrel=epsrel_HI, epsabs=1.0e-60;
+    double epsrel=epsrel_HI;
     double r=Integrate_using_Patterson_adaptive(xmin, xmax, epsrel, epsabs, dnbar_dx_2g_R);
     
     return r;   
@@ -50,14 +50,15 @@ double compute_integral_over_resonances(double xmin, double xmax,
     double a=xmin, b;
     double dx_x=1.0e-4;
     double r=0.0, r1, xres;
+    double epsabs=1.0e-60;
 
     //----------------------------------------------------------------------
     // lower boundary may contain large phase space density 
     // (better to separate it)
     //----------------------------------------------------------------------
     b=a*(1.0+0.01);
-    r1=calc_DF(a, b);
-    r+=r1;  
+    r1=calc_DF(a, b, epsabs);
+    r+=r1; epsabs=fabs(r)*epsrel_HI;
     a=b;
     
     for(int n=nmin; n<=nmax; n++)
@@ -67,24 +68,24 @@ double compute_integral_over_resonances(double xmin, double xmax,
         // below Lyn-resonance (term from Sobolev xmin-->0)
         //----------------------------------------------------------------------
         b=xres*(1.0-dx_x);
-        r1=calc_DF(a, b);
-        r+=r1;  
+        r1=calc_DF(a, b, epsabs);
+        r+=r1; epsabs=fabs(r)*epsrel_HI;
         a=b;
         
         //----------------------------------------------------------------------
         // across Lyn-resonance
         //----------------------------------------------------------------------
         b=xres*(1.0+dx_x);
-        r1=calc_DF(a, b);
-        r+=r1;  
+        r1=calc_DF(a, b, epsabs);
+        r+=r1; epsabs=fabs(r)*epsrel_HI;
         a=b;
     }
     
     b=xmax*(1.0-dx_x);
-    r1=calc_DF(a, b);
-    r+=r1;
+    r1=calc_DF(a, b, epsabs);
+    r+=r1; epsabs=fabs(r)*epsrel_HI;
     
-    r1=calc_DF(b, xmax);
+    r1=calc_DF(b, xmax, epsabs);
     r+=r1;
 
     return r;
@@ -132,8 +133,7 @@ double compute_DF_Ly_n(int ni, int nmax, double z, Cosmos &cos, Gas_of_Atoms &HI
     //==========================================================================
     for(int k=0; k<nnu_pts; k++)
     { 
-        double npl=exp_x[k]/(1.0-exp_x[k]);
-        double f_x=exp_i1/npl; 
+        double f_x=exp_i1*(1.0/exp_x[k]-1.0); // exp(-xi1)/npl
                 
         Fwork[k]=(yarr[k]*f_x-nu21*Dnem_eff)*phi_Ly_n(ni, k); 
     }       
@@ -217,8 +217,7 @@ double compute_DF_2gamma(int ni, int li, double z, Cosmos &cos, Gas_of_Atoms &HI
     //==========================================================================
     for(int k=0; k<nnu_pts; k++)
     { 
-        double npl=exp_x[k]/(1.0-exp_x[k]);
-        double f_x=exp_i1/npl; 
+        double f_x=exp_i1*(1.0/exp_x[k]-1.0); // exp(-xi1)/npl
 
         Fwork[k]=(yarr[k]*f_x-nu21*Dnem)*phi_2g(ni, k); 
     }       
@@ -303,8 +302,7 @@ double compute_DF_Raman(int ni, int li, int nmax, double z, Cosmos &cos, Gas_of_
     //==========================================================================
     for(int k=0; k<nnu_pts; k++)
     { 
-        double npl=exp_x[k+k0]/(1.0-exp_x[k+k0]);
-        double f_x=exp_i1/npl; 
+        double f_x=exp_i1*(1.0/exp_x[k+k0]-1.0); // exp(-xi1)/npl
 
         Fwork[k+k0]=(yarr[k+k0]*f_x-nu21*Dnem)*phi_R(ni, k+k0); 
     }       
@@ -375,8 +373,7 @@ void compute_DI1_2s_and_dump_it(double z, vector<double> &xarr, vector<double> &
     //==========================================================================
     for(int k=0; k<nnu_pts; k++)
     { 
-        double npl=exp_x[k]/(1.0-exp_x[k]);
-        double f_x=exp_i1/npl; 
+        double f_x=exp_i1*(1.0/exp_x[k]-1.0); // exp(-xi1)/npl
         
         if(compute_full_2s_1s_corr) Fwork[k]=(yarr[k]*f_x-nu21*Dnem)*phi_2g(2, k); 
         else Fwork[k]=-nu21*Dnem*phi_2g(2, k); 

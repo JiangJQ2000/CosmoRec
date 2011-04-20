@@ -73,6 +73,7 @@ struct PDE_solver_functions_HeI
     vector<double> Voigt_profiles_nui1s;
     vector<double> Voigt_profiles_Ai1s;
     vector<double> Voigt_profiles_pd;
+    vector<double> Voigt_profiles_w;
     vector<double> dum_factors;
 };
 
@@ -113,6 +114,7 @@ double phi_i_HeI(int i, int k);
 double phi_i_nui1s_HeI(int i);
 double phi_i_Ai1s_HeI(int i);
 double phi_i_Dnu_HeI(int i);
+double phi_i_w_HeI(int i);
 Voigtprofile_Dawson& get_HeI_profile(int line);
 
 //=====================================================================================

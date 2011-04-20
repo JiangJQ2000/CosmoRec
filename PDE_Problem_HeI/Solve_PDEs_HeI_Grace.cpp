@@ -35,7 +35,7 @@ void prepare_Grace_HeI(double xmin, vector<double> &resonances)
 	//===============================================================
 //	GracePrintf("world xmax 1.2");
 //	GracePrintf("world xmin 0.5");
-	GracePrintf("world xmax 1.04");
+	GracePrintf("world xmax 1.16");
 	GracePrintf("world xmin 0.96");
 //	GracePrintf("world xmax 1.091");
 //	GracePrintf("world xmin 1.08");
@@ -107,7 +107,7 @@ void output_Grace_HeI(double zout,
 	strs << zout;
 	string dumstr= strs.str();
 	
-	command="TITLE \"HeI Lyman-series spectral distortion at \\1z\\0 = "+dumstr+"\"";
+	command="TITLE \"HeI spectral distortion at \\1z\\0 = "+dumstr+"\"";
 	GracePrintf(command.c_str());
 	GracePrintf("PRINT");
 	
@@ -142,6 +142,8 @@ void output_Grace_HeI(double zout,
 	GracePrintf("s3 COLOR 2");
 	GracePrintf("s3 on");
     
+    double fac_a=5.1305e+15*HeI_Dnem_for_i_effective(zout, 1)*exp(const_h_kb*5.1305e+15/(1.0+zout)/2.725);
+    
 	for (int i = 0; i < (int)xarr.size(); i++) 
 	{
 		double xxx=xarr[i];
@@ -151,7 +153,7 @@ void output_Grace_HeI(double zout,
 //        yyy=yarr2[i]*1.0e-9;
 //		GracePrintf("g0.s1 point %10.10f, %10.10f", xxx, yyy);
 
-        yyy=fabs(yarr3[i]*pow(xxx, 3));
+        yyy=fac_a*fabs(yarr3[i]*pow(xxx, 3));
 		GracePrintf("g0.s3 point %10.10f, %10.10f", xxx, yyy);
 	}
 	
@@ -164,7 +166,7 @@ void output_Grace_HeI(double zout,
 	strs << zout;
 	string dumstr= strs.str();
 	
-	command="TITLE \"HeI Lyman-series spectral distortion at \\1z\\0 = "+dumstr+"\"";
+	command="TITLE \"HeI spectral distortion at \\1z\\0 = "+dumstr+"\"";
 	GracePrintf(command.c_str());
 	GracePrintf("PRINT");
 	

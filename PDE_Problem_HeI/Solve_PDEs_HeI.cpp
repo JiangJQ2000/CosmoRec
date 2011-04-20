@@ -47,7 +47,7 @@ int show_messages_HeI=3;
 //====================================================================================================================
 int core_HeI=25;            // points per Doppler width in the core region; 
                             // For +/- 10 xD core=25 implies 500 points (which is recommended).
-int dec_HeI=50;             // points per decade; from 10^-4 --> 1 for ndec==50 gives ~ 200 points
+int dec_HeI=150;             // points per decade; from 10^-4 --> 1 for ndec==50 gives ~ 200 points
 
 double theta_HeI=0.51;
 
@@ -217,7 +217,7 @@ Solve_PDE_Data_HeI SPDE_D_HeI;
 bool SPDE_D_is_set_HeI=0;
 
 //====================================================================================================================
-void init_Solve_PDE_Data_HeI(int iresmax, bool bound, vector<int> &lines, Gas_of_HeI_Atoms &HeIAtoms)
+void init_Solve_PDE_Data_HeI(int iresmax, vector<int> &lines, Gas_of_HeI_Atoms &HeIAtoms)
 {
     //==================================================================
     if(SPDE_D_is_set_HeI && iresmax!=SPDE_D_HeI.iresmax)
@@ -246,12 +246,20 @@ void init_Solve_PDE_Data_HeI(int iresmax, bool bound, vector<int> &lines, Gas_of
         
         for(int n=0; n<=iresmax; n++)
         {
+            if(lines[n]==-10)
+            { 
+                // if the upper point is not used as boundary 
+                // condition, just enlarge frequency range.
+                SPDE_D_HeI.resonances.push_back(SPDE_D_HeI.resonances.back()*1.05);
+                break;
+            }
+                
             int i_HeI=get_HeI_index(lines[n]);
             
             nui1=HeIAtoms.Get_nu21(HeIAtoms.Get_n(i_HeI), HeIAtoms.Get_l(i_HeI), 
                                    HeIAtoms.Get_S(i_HeI), HeIAtoms.Get_J(i_HeI), 
                                    1, 0, 0, 0);
-            
+             
             SPDE_D_HeI.resonances.push_back(nui1/nu21);
         }
         
@@ -260,10 +268,7 @@ void init_Solve_PDE_Data_HeI(int iresmax, bool bound, vector<int> &lines, Gas_of
         //============================================================== 
         double xmin=xmin_glob_HeI; 
         double xmax=SPDE_D_HeI.resonances.back();
-        SPDE_D_HeI.resonances.pop_back();
-        
-        if(!bound) xmax*=1.05; // if the upper point is not used as boundary 
-                               // condition, push this a bit farther away.
+        if(lines[iresmax]==-10) SPDE_D_HeI.resonances.pop_back();
 
         init_PDE_xarr_cores_HeI(SPDE_D_HeI.xarr, xmin, xmax, SPDE_D_HeI.resonances);
 
@@ -355,7 +360,7 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z
     //==============================================================================================
     // extension for filename
     //==============================================================================================
-    string exten=".nS_2_nS_3";
+    string exten=".movie.1a";
      
     if(solve_with_Kernel==1) exten+=".Kernel_Int";
 
@@ -363,7 +368,7 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z
 	// output for Grace (optional)
     //==============================================================================================
 #ifdef GRACE_DEFINED
-	bool out_put_GRACE=1;
+	bool out_put_GRACE=0;
 	int GR_output_step=1;
 #endif
 	
@@ -396,6 +401,9 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z
     //==============================================================================================
     HeI_level_indices.clear();
 
+//    HeI_level_indices.push_back(HeIAtoms.Get_Level_index(2, 1, 1, 1)); // 2^3 P - 1 S
+//    HeI_level_indices.push_back(HeIAtoms.Get_Level_index(2, 1, 0, 1)); // 2^1 P - 1 S
+
     if(nHeIShells>=2)
     {
         HeI_level_indices.push_back(HeIAtoms.Get_Level_index(2, 1, 1, 1)); // 2^3 P - 1 S
@@ -405,13 +413,13 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z
     if(nHeIShells>=3)
     {
         HeI_level_indices.push_back(HeIAtoms.Get_Level_index(3, 1, 1, 1)); // 3^3 P - 1 S
-//        HeI_level_indices.push_back(HeIAtoms.Get_Level_index(3, 2, 0, 1)); // 3^1 D - 1 S
-//        HeI_level_indices.push_back(HeIAtoms.Get_Level_index(3, 1, 0, 1)); // 3^1 P - 1 S
+        HeI_level_indices.push_back(HeIAtoms.Get_Level_index(3, 2, 0, 1)); // 3^1 D - 1 S
+        HeI_level_indices.push_back(HeIAtoms.Get_Level_index(3, 1, 0, 1)); // 3^1 P - 1 S
     }
     
     if(nHeIShells>=4)
     {
-        int nnm=(int) min(0, nHeIShells-1);
+        int nnm=(int) min(10, nHeIShells);
         
         for(int nn=4; nn<=nnm; nn++)
         {
@@ -419,8 +427,6 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z
             HeI_level_indices.push_back(HeIAtoms.Get_Level_index(nn, 2, 0, 1)); // n^1 D - 1 S
             HeI_level_indices.push_back(HeIAtoms.Get_Level_index(nn, 1, 0, 1)); // n^1 P - 1 S
         }
-
-        HeI_level_indices.push_back(HeIAtoms.Get_Level_index(nnm+1, 1, 0, 1));  // n^1 P - 1 S
     }    
     //==============================================================================================
     
@@ -430,6 +436,8 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z
     vector<int> lines;
     for(int line=0; line<(int)HeI_level_indices.size(); line++) 
         lines.push_back(get_res_index_HeI(HeI_level_indices[line]));
+    
+    if(boundary_up==0) lines.push_back(-10);
 
     //==============================================================================================
     // total number of treated resonances; the last resonance is 
@@ -443,10 +451,9 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z
     DF_vec_z.clear();
     DF_vec.clear();
     DI1_2s_vec.clear();
-    HeI_level_indices.pop_back();
     
     vector<double> DPesc_dum_z;
-    for(int line=0; line<iresmax; line++) DF_vec.push_back(DPesc_dum_z); 
+    for(int line=0; line<(int)HeI_level_indices.size(); line++) DF_vec.push_back(DPesc_dum_z); 
     
     //==============================================================================================
     // load precomputed solutions (load could be avoided...)
@@ -457,7 +464,7 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z
     //==============================================================================================
     // memory for Solve_PDE
     //==============================================================================================
-    init_Solve_PDE_Data_HeI(iresmax, boundary_up, lines, HeIAtoms);
+    init_Solve_PDE_Data_HeI(iresmax, lines, HeIAtoms);
     
     //==============================================================================================
     // memory for PDE Solver
@@ -514,7 +521,7 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z
         //=======================================================================
         // always add some small amount of diffusion to stabilize the PDE
         //=======================================================================
-        set_electron_scattering_efficiency_HeI(0.01);
+        set_electron_scattering_efficiency_HeI(0.0001);
         
         //===================================================================
         // switch kernel treatment off at very low Xe_HeI
@@ -598,6 +605,8 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z
             {
                 if (!(output_count%GR_output_step) && out_put_GRACE && GraceIsOpen()) 
                     output_Grace_HeI(zout, SPDE_D_HeI.xarr, SPDE_D_HeI.yarr, exten, output_count);
+//                output_Grace_HeI(zout, SPDE_D_HeI.xarr, SPDE_D_HeI.yarr, PDE_funcs_HeI.exp_x, 
+//                                 PDE_funcs_HeI.exp_x, exten, output_count);
             }
 #endif
             

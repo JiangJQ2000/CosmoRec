@@ -124,8 +124,24 @@ void init_profile_memory_HeI(int nxi, int nres, PDE_solver_functions_HeI &PDE_fu
     init_profile_memory_HeI(nres, PDE_funcs.Voigt_profiles_pd);
     init_profile_memory_HeI(nres, PDE_funcs.Voigt_profiles_nui1s);
     init_profile_memory_HeI(nres, PDE_funcs.Voigt_profiles_Ai1s);
+    init_profile_memory_HeI(nres, PDE_funcs.Voigt_profiles_w);
     init_profile_memory_HeI(nres, PDE_funcs.dum_factors);
 
+    //==============================================================
+    // Temperature independent values for profiles
+    //==============================================================
+    for(int k=0; k<(int)PDE_funcs.Voigt_profiles_aV.size(); k++)
+    {
+        Voigtprofile_Dawson p=get_HeI_profile(k);
+        
+        PDE_funcs.Voigt_profiles_nui1s[k]=p.Get_nu21();
+        PDE_funcs.Voigt_profiles_Ai1s[k] =p.Get_A21();
+        
+        int HeI_i=get_HeI_index(PDE_funcs.res_index_of_lines[k]);
+        PDE_funcs.Voigt_profiles_w[k] = PDE_Setup_D_HeI.HeI->Get_gw(HeI_i)/PDE_Setup_D_HeI.HeI->Get_gw(0);
+    }
+    
+    
     return;
 }
 
@@ -222,8 +238,7 @@ void update_given_profile_HeI(int k, double Tm, double psc, double nu21,
 {
     double aV=PDE_Setup_D_HeI.PDE_funcs->Voigt_profiles_aV[k]=p.aVoigt(Tm);
     PDE_Setup_D_HeI.PDE_funcs->Voigt_profiles_Dnuj1s_nuj1s[k]=p.DnuT_nu12(Tm);
-    PDE_Setup_D_HeI.PDE_funcs->Voigt_profiles_nui1s[k]=p.Get_nu21();
-    double A21=PDE_Setup_D_HeI.PDE_funcs->Voigt_profiles_Ai1s[k]=p.Get_A21();
+    double A21=PDE_Setup_D_HeI.PDE_funcs->Voigt_profiles_Ai1s[k];
     //
     PDE_Setup_D_HeI.PDE_funcs->Voigt_profiles_aV[k]=aV*A21/p.Get_Gamma()/psc;
     
@@ -321,6 +336,7 @@ double phi_i_pd_HeI(int i){ return PDE_Setup_D_HeI.PDE_funcs->Voigt_profiles_pd[
 double phi_i_nui1s_HeI(int i){ return PDE_Setup_D_HeI.PDE_funcs->Voigt_profiles_nui1s[i]; }
 double phi_i_Ai1s_HeI(int i){ return PDE_Setup_D_HeI.PDE_funcs->Voigt_profiles_Ai1s[i]; }
 double phi_i_Dnu_HeI(int i){ return phi_i_nui1s_HeI(i)*PDE_Setup_D_HeI.PDE_funcs->Voigt_profiles_Dnuj1s_nuj1s[i]; }
+double phi_i_w_HeI(int i){ return PDE_Setup_D_HeI.PDE_funcs->Voigt_profiles_w[i]; }
 
 //==================================================================================================================================
 //
@@ -343,7 +359,8 @@ void add_Ly_n_sc_only_HeI(int line, double z, double nu21, double Tg, double Te,
     double DnuD_nu=phi_i_Dnu_nu_HeI(line);
     double pd_np=phi_i_pd_HeI(line);
     double psc_np=1.0-pd_np;
-    double const_sigr=1.5*lambda*lambda*phi_i_Ai1s_HeI(line)/FOURPI/phi_i_Dnu_HeI(line);
+    
+    double const_sigr=0.5*phi_i_w_HeI(line)*lambda*lambda*phi_i_Ai1s_HeI(line)/FOURPI/phi_i_Dnu_HeI(line);
     double kappa_Ly_n_sc =-psc_np*const_sigr*N1s*(const_kB*Te/const_mHe4_gr/const_cl)/Hz/(1.0+z);
     
     //----------------------------------------------------------
@@ -376,7 +393,7 @@ void add_Ly_n_em_only_HeI(int line, double z, double nu21, double Tg, double Te,
     //----------------------------------------------------------
     double lambda=const_cl/nu21;         // lambdaj1*(nuj1/nu21)
     double pd_np=phi_i_pd_HeI(line);
-    double const_sigr=1.5*lambda*lambda*phi_i_Ai1s_HeI(line)/FOURPI/phi_i_Dnu_HeI(line);
+    double const_sigr=0.5*phi_i_w_HeI(line)*lambda*lambda*phi_i_Ai1s_HeI(line)/FOURPI/phi_i_Dnu_HeI(line);
     
     //----------------------------------------------------------
     // Ly-n emission/absorption term
@@ -388,6 +405,8 @@ void add_Ly_n_em_only_HeI(int line, double z, double nu21, double Tg, double Te,
     double kappa_Ly_n_abs=-pd_np*const_sigr*N1s*const_cl/Hz/(1.0+z); 
     double exp_dum=exp(-x_c);
 
+    cout << line << " " << phi_i_w_HeI(line) << " " << nun1 << " " << nun1/nu21 << endl;
+    
     for(int k=0; k<(int)xi.size(); k++) 
     {
         double x=xi[k];
@@ -408,7 +427,7 @@ void add_Ly_n_em_only_HeI(int line, double z, double nu21, double Tg, double Te,
         Di[k]+= D_x*Dnem;
         //------------------------------------------------------
     }
-    
+        
     return;
 }
 
@@ -429,7 +448,7 @@ void add_Ly_n_sc_em_full_HeI(int line, double z, double nu21, double Tg, double 
     double DnuD_nu=phi_i_Dnu_nu_HeI(line);
     double pd_np=phi_i_pd_HeI(line);
     double psc_np=1.0-pd_np;
-    double const_sigr=1.5*lambda*lambda*phi_i_Ai1s_HeI(line)/FOURPI/phi_i_Dnu_HeI(line);
+    double const_sigr=0.5*phi_i_w_HeI(line)*lambda*lambda*phi_i_Ai1s_HeI(line)/FOURPI/phi_i_Dnu_HeI(line);
     double kappa_Ly_n_sc =-psc_np*const_sigr*N1s*(const_kB*Te/const_mHe4_gr/const_cl)/Hz/(1.0+z);
     
     //----------------------------------------------------------

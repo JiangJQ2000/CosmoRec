@@ -46,7 +46,7 @@ struct define_PDE_HeI_runflags
     bool HI_absorption;   // HI continuum absorption on/off
 };
 
-define_PDE_HeI_runflags def_HeI_run={1, 1, 1, 1, 1};  // default setting
+define_PDE_HeI_runflags def_HeI_run={0, 1, 1, 1, 1};  // default setting
 
 //==================================================================================================================================
 void HeI_switch_on_line_scattering(){ def_HeI_run.line_sc=1; return; }
@@ -405,8 +405,6 @@ void add_Ly_n_em_only_HeI(int line, double z, double nu21, double Tg, double Te,
     double kappa_Ly_n_abs=-pd_np*const_sigr*N1s*const_cl/Hz/(1.0+z); 
     double exp_dum=exp(-x_c);
 
-    cout << line << " " << phi_i_w_HeI(line) << " " << nun1 << " " << nun1/nu21 << endl;
-    
     for(int k=0; k<(int)xi.size(); k++) 
     {
         double x=xi[k];

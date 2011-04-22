@@ -1,15 +1,15 @@
 //==================================================================================================================================
 // routines to account for corrections to electron scattering coming form the Doppler Kernel
 //==================================================================================================================================
-double dmax_kernel=sqrt(-log(1.0e-10));
+double dmax_kernel=sqrt(-log(1.0e-12));
 
 //==================================================================================================================================
 //
 // pointer to chosen kernel
 //
 //==================================================================================================================================
-//double (*P_Kernel)(double nu, double nup, double Th_e)=PK_Kernel;
-double (*P_Kernel)(double nu, double nup, double Th_e)=P0_Kernel;
+double (*P_Kernel)(double nu, double nup, double Th_e)=PK_Kernel;
+//double (*P_Kernel)(double nu, double nup, double Th_e)=P0_Kernel;
 //double (*P_Kernel)(double nu, double nup, double Th_e)=P0_Kernel_AliHaimoud;
 //double (*P_Kernel)(double nu, double nup, double Th_e)=P_Compton;
 
@@ -132,15 +132,28 @@ double compute_kernel_Integral_polint(int ix, double nu21, double Tm,
     Kernel_polint_nu21=nu21;
     Kernel_polint_np=np;
     
-    double epsrel=1.0e-6, epsabs=1.0e-60;   
+    double epsrel=1.0e-6, epsabs=1.0e-60;  
+    
+    double dx1=min(xi[np-1]-xi[ix], xi[ix]-xi[0]);
+    double dxa=min(dx1, xi[ix]*dx*ndx);
+    //
+    double r=Integrate_using_Patterson_adaptive(0.0, dxa, epsrel, epsabs, dKernel_func_polint_sym); 
+    //
+    r+=Integrate_using_Patterson_adaptive(dxa, xi[ix]*dx*ndx, epsrel, epsabs, dKernel_func_polint_sym); 
+    return fac*r;
+/*    
     double r=Integrate_using_Patterson_adaptive(0.0, xi[ix]*3*dx, epsrel, epsabs, dKernel_func_polint_sym); 
     for(int k=2; 3*k<=ndx; k++)
     {
         epsabs=fabs(r)*epsrel;
-        r+=Integrate_using_Patterson_adaptive(xi[ix]*3*(k-1)*dx, xi[ix]*3*k*dx, epsrel, epsabs, dKernel_func_polint_sym); 
+        double Dr=Integrate_using_Patterson_adaptive(xi[ix]*3*(k-1)*dx, xi[ix]*3*k*dx, epsrel, epsabs, dKernel_func_polint_sym);
+        r+=Dr;
+        
+        if(fabs(Dr/r)<epsrel/10.0) break; // stop integrating the decaying kernel part
     }
     
     return r*fac;
+*/ 
 }
 
 //==================================================================================================================================

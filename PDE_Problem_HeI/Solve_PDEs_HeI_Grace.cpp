@@ -57,19 +57,19 @@ void prepare_Grace_HeI(double xmin, vector<double> &resonances)
 	GracePrintf("s2 on");
 	//
 	
-	GracePrintf("g0.s2 point %10.10f, %10.10f", 0.0, 1.0e-40);
+	GracePrintf("g0.s2 point %10.16f, %10.16f", 0.0, 1.0e-40);
 	
 	for(int m=0; m<(int)resonances.size(); m++)
 	{
 		if(m%2)
 		{	
-			GracePrintf("g0.s2 point %10.10f, %10.10f", resonances[m]*(1.0-1.0e-10), 1.0e-40);
-			GracePrintf("g0.s2 point %10.10f, %10.10f", resonances[m]*(1.0+1.0e-10), 1.0e+40);
+			GracePrintf("g0.s2 point %10.16f, %10.16f", resonances[m]*(1.0-1.0e-10), 1.0e-40);
+			GracePrintf("g0.s2 point %10.16f, %10.16f", resonances[m]*(1.0+1.0e-10), 1.0e+40);
 		}
 		else
 		{	
-			GracePrintf("g0.s2 point %10.10f, %10.10f", resonances[m]*(1.0-1.0e-10), 1.0e+40);
-			GracePrintf("g0.s2 point %10.10f, %10.10f", resonances[m]*(1.0+1.0e-10), 1.0e-40);
+			GracePrintf("g0.s2 point %10.16f, %10.16f", resonances[m]*(1.0-1.0e-10), 1.0e+40);
+			GracePrintf("g0.s2 point %10.16f, %10.16f", resonances[m]*(1.0+1.0e-10), 1.0e-40);
 		}
 	}
 	
@@ -95,7 +95,7 @@ void output_Grace_HeI(double zout,
 		double xxx=xarr[i];
 		double yyy=yarr[i]*pow(xxx, 3);
         
-		GracePrintf("g0.s0 point %10.10f, %10.10f", xxx, yyy);
+		GracePrintf("g0.s0 point %10.16f, %10.16f", xxx, yyy);
 	}
 	
 	string namef="./temp/JPEG/sol"+exten+"."+int_to_string(output_count, 5)+".jpg";
@@ -148,13 +148,13 @@ void output_Grace_HeI(double zout,
 	{
 		double xxx=xarr[i];
         double yyy=yarr[i]*pow(xxx, 3);
-		GracePrintf("g0.s0 point %10.10f, %10.10f", xxx, yyy);
+		GracePrintf("g0.s0 point %10.16f, %10.16f", xxx, yyy);
 		
 //        yyy=yarr2[i]*1.0e-9;
-//		GracePrintf("g0.s1 point %10.10f, %10.10f", xxx, yyy);
+//		GracePrintf("g0.s1 point %10.16f, %10.16f", xxx, yyy);
 
         yyy=fac_a*fabs(yarr3[i]*pow(xxx, 3));
-		GracePrintf("g0.s3 point %10.10f, %10.10f", xxx, yyy);
+		GracePrintf("g0.s3 point %10.16f, %10.16f", xxx, yyy);
 	}
 	
 	string namef="./temp/JPEG/sol"+exten+"."+int_to_string(output_count, 5)+".jpg";

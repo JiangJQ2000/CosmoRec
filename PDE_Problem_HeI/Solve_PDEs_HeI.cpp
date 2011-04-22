@@ -47,7 +47,7 @@ int show_messages_HeI=3;
 //====================================================================================================================
 int core_HeI=25;            // points per Doppler width in the core region; 
                             // For +/- 10 xD core=25 implies 500 points (which is recommended).
-int dec_HeI=150;             // points per decade; from 10^-4 --> 1 for ndec==50 gives ~ 200 points
+int dec_HeI=50;             // points per decade; from 10^-4 --> 1 for ndec==50 gives ~ 200 points
 
 double theta_HeI=0.51;
 
@@ -57,7 +57,7 @@ double theta_HeI=0.51;
 // switch on/off electron scattering kernel corrections
 //
 //====================================================================================================================
-int solve_with_Kernel=0; // ==0: no kernel correction; 
+int solve_with_Kernel=1; // ==0: no kernel correction; 
                          // ==1: kernel correction using iteration; This runmode takes rather long, but the additional
                          //      correction is small.
 
@@ -328,7 +328,7 @@ void output_solution_HeI(int output_count, string endname, double nu21,
                 
         ofile << SPDE_D_HeI.yarr[i] << " " << SPDE_D_HeI.yarr[i]/exp_fac_Tg << " " << SPDE_D_HeI.yarr[i]/exp_fac_Te << " "; 
         
-        ofile << endl;
+        ofile << zout << endl;
     }           
     
     ofile.close();  
@@ -360,7 +360,8 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z
     //==============================================================================================
     // extension for filename
     //==============================================================================================
-    string exten=".movie.1a";
+    string exten=".movie.e_sc.all_res";
+//    string exten=".spectrum.n_10.no_diff";
      
     if(solve_with_Kernel==1) exten+=".Kernel_Int";
 
@@ -368,14 +369,14 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z
 	// output for Grace (optional)
     //==============================================================================================
 #ifdef GRACE_DEFINED
-	bool out_put_GRACE=0;
+	bool out_put_GRACE=1;
 	int GR_output_step=1;
 #endif
-	
+
     //==============================================================================================
     // general flags
     //==============================================================================================
-    bool do_output=0;
+    bool do_output=1;
     bool write_solution_z0=0;
     bool output_DP=1;
     bool output_DI1=0;
@@ -386,7 +387,7 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z
     //==============================================================================================
     // step size
     //==============================================================================================
-    double dz_out=1.0;
+    double dz_out=2.0;
     int output_count=0;
     int output_step=100;
     int DP_step=1;
@@ -521,7 +522,9 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z
         //=======================================================================
         // always add some small amount of diffusion to stabilize the PDE
         //=======================================================================
-        set_electron_scattering_efficiency_HeI(0.0001);
+        set_electron_scattering_efficiency_HeI(0.002); // 0.01 --> 10% difference for Trip; 
+                                                       // 0.001 --> very small difference; 0.0001 fine
+//        set_electron_scattering_efficiency_HeI(1.0);
         
         //===================================================================
         // switch kernel treatment off at very low Xe_HeI
@@ -589,7 +592,7 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z
 			// output to grace (JPEG)
             //======================================================================================
 #ifdef GRACE_DEFINED
-            if(solve_with_Kernel_loc>0) 
+            if(solve_with_Kernel_loc>1) 
             {
                 compute_kernel_factors(3200, nu21, cos.Te(zout), SPDE_D_HeI.xarr,
                                        PDE_funcs_HeI.Kernel_plus, PDE_funcs_HeI.Kernel_minus, 1.0e-5);

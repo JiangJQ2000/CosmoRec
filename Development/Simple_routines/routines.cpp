@@ -17,6 +17,13 @@
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_spline.h>
 
+//======================================================================================
+// for xmgrace output
+//======================================================================================
+#ifdef GRACE_DEFINED
+#include <grace_np.h>
+#endif
+
 using namespace std;
 
 //======================================================================================
@@ -811,4 +818,70 @@ double find_root_brent(double (* func)(double *, void *p), void *para, double x1
     cerr << "Maximum number of iterations exceeded in find_root_brent" << endl;
     return x2;
 }
+
+//======================================================================================
+// for xmgrace output; added April 2011; does not work very well yet...
+//======================================================================================
+#ifdef GRACE_DEFINED
+void plot_xy_function(const vector<double> &xarr, const vector<double> &yarr, int flg=0)
+{
+    if (GraceOpen(1028) == -1) 
+	{
+		cerr << " can't run grace " << endl; 
+		exit(-1);
+	}
+	
+	//===============================================================
+	// Send some initialization commands to Grace 
+	//===============================================================
+	GracePrintf("s0 COLOR 1");
+	GracePrintf("s0 LINESTYLE 1");
+	GracePrintf("s0 on");
+    
+    if(flg==2) GracePrintf("XAXES SCALE LOGARITHMIC");
+    else GracePrintf("XAXES SCALE NORMAL");
+	if(flg==0) GracePrintf("YAXES SCALE NORMAL");
+    else GracePrintf("YAXES SCALE LOGARITHMIC");
+	
+	//===============================================================
+	// plot set
+	//===============================================================
+    for(int i=0; i<(int)xarr.size(); i++) 
+    {
+        GracePrintf("g0.s0 point %10.16f, %10.16f", xarr[i], yarr[i]);
+    }
+    
+    GracePrintf("AUTOTICKS");
+    GracePrintf("AUTOSCALE s0");
+	GracePrintf("PRINT");	
+	GracePrintf("redraw");
+    
+	//===============================================================
+	// wait before cleaning up
+	//===============================================================
+    wait_f_r();
+    GraceClose();
+    
+	return;
+}
+#else
+void plot_xy_function(const vector<double> &xarr, const vector<double> &yarr, int flg=0)
+{
+    cerr << " plot_xy_function::Grace support was not activated. Exiting. " << endl;
+    exit(0);
+    return;
+}
+#endif
+
+void plot_xy_function_linear(const vector<double> &xarr, const vector<double> &yarr)
+{ plot_xy_function(xarr, yarr, 0); return; }
+
+void plot_xy_function_log(const vector<double> &xarr, const vector<double> &yarr)
+{ plot_xy_function(xarr, yarr, 1); return; }
+
+void plot_xy_function_loglog(const vector<double> &xarr, const vector<double> &yarr)
+{ plot_xy_function(xarr, yarr, 2); return; }
+
+
+
 

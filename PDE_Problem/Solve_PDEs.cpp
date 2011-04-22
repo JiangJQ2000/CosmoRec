@@ -43,7 +43,7 @@ using namespace nsnd_2gamma_profiles;
 // flags for message output
 //
 //====================================================================================================================
-int show_messages=3;
+int show_messages=0;
 
 
 //====================================================================================================================
@@ -551,7 +551,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
     //=========================================================================== 
     // step size
     //=========================================================================== 
-    double dz_out=2.0;
+    double dz_out=10.0;
     int output_count=0;
     int output_step=20;
     int DF_step=1;

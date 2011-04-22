@@ -27,7 +27,7 @@
 2
 
 ./outputs.paper/
-.DP_S.no_HI.dat
+.e_sc.Kernel.dat
 
 //=============================================================================================
 // the above parameters are (default values are given as examples)

@@ -10,6 +10,7 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
 
 using namespace std;
 
@@ -78,5 +79,12 @@ string int_to_string(int i, int ni);
 double find_root(double (* func)(double *), double x1, double x2, double xacc);
 double find_root_brent(double (* func)(double *), double x1, double x2, double xacc);
 double find_root_brent(double (* func)(double *, void *p), void *p, double x1, double x2, double xacc);
+
+//======================================================================================
+// for xmgrace output
+//======================================================================================
+void plot_xy_function_linear(const vector<double> &xarr, const vector<double> &yarr);
+void plot_xy_function_log   (const vector<double> &xarr, const vector<double> &yarr);
+void plot_xy_function_loglog(const vector<double> &xarr, const vector<double> &yarr);
 
 #endif

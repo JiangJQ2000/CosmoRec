@@ -455,7 +455,7 @@ double Dn_minus_HeI_feedback(int linenum, double z, double X1sHI, Gas_of_HeI_Ato
         double PSeff=PS*(1.0-Dnminus/DnL);
         
         static double Dzstep=2.0, zsaved[11]={0,0,0,0,0,0,0,0,0,0,0};
-        if(linenum<=10 && fabs(zi-zsaved[linenum])>=Dzstep)
+        if(linenum<=11 && fabs(zi-zsaved[linenum])>=Dzstep)
         {
             double DP=0.0;
             if(linenum==1) DP=DP_interpol_T(cosmos.TCMB(z), tauS, const_cl*X1sHI*cosmos.NH(z)*HeIA.HILyc.sig_phot_ion_nuc()/cosmos.H(z));

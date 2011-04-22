@@ -37,7 +37,7 @@ using namespace std;
 // flags for message output and aVoigt setting
 //
 //====================================================================================================================
-int show_messages_HeI=3;
+int show_messages_HeI=0;
 
 
 //====================================================================================================================
@@ -57,7 +57,7 @@ double theta_HeI=0.51;
 // switch on/off electron scattering kernel corrections
 //
 //====================================================================================================================
-int solve_with_Kernel=1; // ==0: no kernel correction; 
+int solve_with_Kernel=0; // ==0: no kernel correction; 
                          // ==1: kernel correction using iteration; This runmode takes rather long, but the additional
                          //      correction is small.
 
@@ -185,6 +185,9 @@ void arm_PDE_solver_HeI(double nu21, Cosmos &cos, Gas_of_HeI_Atoms &HeIAtoms,
         //==================================================================
         // HI Lyc photon-ionization cross section at grid-points
         //==================================================================
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
         for(int k=0; k<(int)xarr.size(); k++)
             PDE_funcs_HeI.sig_Lyc_x[k]=HeIAtoms.HILyc.sig_phot_ion(xarr[k]*nu21);
         
@@ -369,7 +372,7 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z
 	// output for Grace (optional)
     //==============================================================================================
 #ifdef GRACE_DEFINED
-	bool out_put_GRACE=1;
+	bool out_put_GRACE=0;
 	int GR_output_step=1;
 #endif
 

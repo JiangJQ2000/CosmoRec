@@ -311,6 +311,9 @@ void add_electron_scattering(double z, double nu21, double Te, double Ne, double
     else if(diffusion_e && !recoil_e) add_ptr_f=add_Diff_f;
     else if(!diffusion_e && recoil_e) add_ptr_f=add_recoil_f;
     
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
     for(int k=0; k<(int)xi.size(); k++) 
     {
         double x=xi[k];
@@ -342,6 +345,9 @@ double Dnem_n_func(int n, double z)
 //==================================================================================================================================
 void update_exp_x(double Tg, double nu21, const vector<double> &xi)
 {
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
     for(int k=0; k<(int)xi.size(); k++) PDE_Setup_D.PDE_funcs->exp_x[k]=exp(-const_h_kb*nu21*xi[k]/Tg);
     
     return;
@@ -368,6 +374,9 @@ void update_Voigt_profile_Ly_n(double z, double nu21, int n, const vector<double
     //==============================================================================================================================
     // Ly-n profiles
     //==============================================================================================================================
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
     for(int k=0; k<(int)xi.size(); k++) 
     {
         double x=xi[k];
@@ -380,6 +389,9 @@ void update_Voigt_profile_Ly_n(double z, double nu21, int n, const vector<double
     //==============================================================================================================================
     if(two_g_process)
     {
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
         for(int k=0; k<(int)xi.size(); k++) 
         {
             double x=(1.0-1.0/n/n)/0.75-xi[k];
@@ -432,6 +444,9 @@ void update_Raman_profiles_nsd_1s(double z, int ni, Raman_2g_profiles &RGP, vect
     for(int m=ni-2+1; m<mmax; m++)
         PDE_Setup_D.PDE_funcs->dum_factors[m]=( 1.0-phi_Ly_n_pd(m+2) )*Voigt_profiles_A_np_nsd[m]/phi_Ly_n_Dnu(m+2);
     
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
     for(int k=klow; k<(int)RGP.profile.size(); k++)
     {
         RGP.profile[k]=0.0;
@@ -479,6 +494,9 @@ void update_two_g_profiles_nsd_1s(double z, int ni, Raman_2g_profiles &RGP, vect
     for(int m=0; m<ni-2; m++)
         PDE_Setup_D.PDE_funcs->dum_factors[m]=( 1.0-phi_Ly_n_pd(m+2) )*Voigt_profiles_A_np_nsd[m]/phi_Ly_n_Dnu(m+2);
     
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
     for(int k=0; k<kmax; k++)
     {
         RGP.profile[k]=0.0;
@@ -703,6 +721,9 @@ void add_Ly_n_sc_only(int n, double z, double nu21, double Tg, double Te, double
     else if(diffusion_l && !recoil_l) add_ptr_f=add_Diff_f;
     else if(!diffusion_l && recoil_l) add_ptr_f=add_recoil_f;
     
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
     for(int k=0; k<(int)xi.size(); k++) 
     {
         double x=xi[k];
@@ -762,6 +783,9 @@ void add_Ly_n_em_only(int n, double z, double nu21, double Tg, double Te, double
     PDE_Setup_D.PDE_funcs->Voigt_profiles_pd_eff[n-2]=pd_np;
     PDE_Setup_D.PDE_funcs->Voigt_profiles_Dnem_eff[n-2]=Dnem/nu21;
     
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
     for(int k=0; k<(int)xi.size(); k++) 
     {
         double x=xi[k];
@@ -859,6 +883,9 @@ void add_Ly_n_sc_em_full(int n, double z, double nu21, double Tg, double Te, dou
     PDE_Setup_D.PDE_funcs->Voigt_profiles_pd_eff[n-2]=pd_np;
     PDE_Setup_D.PDE_funcs->Voigt_profiles_Dnem_eff[n-2]=Dnem/nu21;
     
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
     for(int k=0; k<(int)xi.size(); k++) 
     {
         double x=xi[k];
@@ -926,6 +953,9 @@ void add_nsd_1s_Raman_terms(int n, int l, double (*phi_func)(int, int), double D
     //
     int klow=PDE_Setup_D.PDE_funcs->index_emission[n-2];    
 
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
     for(int k=klow; k<(int)xi.size(); k++) 
     {
         double x=xi[k];
@@ -969,6 +999,9 @@ void add_nsd_1s_2gamma_terms(int n, int l, double (*phi_func)(int, int), double 
     //
     int kmax=PDE_Setup_D.PDE_funcs->index_emission[n-2];    
     
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
     for(int k=0; k<kmax; k++) 
     {
         double x=xi[k];
@@ -1080,11 +1113,17 @@ void def_PDE_Lyn_and_2s1s(double z, const vector<double> &xi, vector<double> &Ai
     //------------------------------------------------------
     // reset things (Bi is alway initialized with Hubble)
     //------------------------------------------------------
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
     for(int k=0; k<(int)xi.size(); k++) Ai[k]=Ci[k]=Di[k]=0.0;
     
     //------------------------------------------------------
     // Hubble term 
     //------------------------------------------------------
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
     for(int k=0; k<(int)xi.size(); k++) Bi[k]=-xi[k]/(1.0+z);  
     
     //------------------------------------------------------
@@ -1184,6 +1223,9 @@ void electron_kernel_corr_func_HI(double z, const vector<double> &xi,
     double Te=Tg*rho;    
     double kap_e=-const_sigT*Ne*(const_kB*Te/const_me_gr/const_cl)/Hz/(1.0+z);
     
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
     for(int k=1; k<(int)xi.size()-1; k++) 
         corr_v[k]=kap_e*compute_kernel_Integral_polint(k, nu21, Te, xi, yi);
     

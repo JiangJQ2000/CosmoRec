@@ -43,7 +43,7 @@ using namespace nsnd_2gamma_profiles;
 // flags for message output
 //
 //====================================================================================================================
-int show_messages=0;
+int show_messages=3;
 
 
 //====================================================================================================================
@@ -228,6 +228,9 @@ void arm_PDE_solver(Cosmos &cos, Gas_of_Atoms &HIA, vector<double> &xarr, vector
         // Raman profiles
         //=========================================================================== 
         if(Get_nmax_Raman_correction()>=2) 
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
             for(int k=0; k<npts; k++) 
                 PDE_funcs.Raman_ns_1s[0].ratio[k]=sigma_2s_1s_Raman_ratio(xarr[k]-1.0);
 
@@ -235,6 +238,9 @@ void arm_PDE_solver(Cosmos &cos, Gas_of_Atoms &HIA, vector<double> &xarr, vector
         {
             xres_loc=(1.0-1.0/ni/ni)/0.75;
             
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
             for(int k=0; k<npts; k++)
             {
                 PDE_funcs.Raman_ns_1s[ni-2].ratio[k]=sigma_ns_1s_Raman_ratio(ni, xarr[k]/xres_loc-1.0);
@@ -245,6 +251,9 @@ void arm_PDE_solver(Cosmos &cos, Gas_of_Atoms &HIA, vector<double> &xarr, vector
         //=========================================================================== 
         for(int ni=(int)max(2, Get_nmax_Raman_correction()+1); ni<=nresmax; ni++)
         {
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
             for(int k=0; k<npts; k++)
             {
                 PDE_funcs.Raman_ns_1s[ni-2].ratio[k]=1.0;
@@ -256,12 +265,18 @@ void arm_PDE_solver(Cosmos &cos, Gas_of_Atoms &HIA, vector<double> &xarr, vector
         // two-photon profiles
         //=========================================================================== 
         if(Get_nmax_two_g_correction()>=2) 
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
             for(int k=0; k<npts; k++) PDE_funcs.two_g_ns_1s[0].ratio[k]=sigma_2s_1s_2gamma(xarr[k]);
 
         for(int ni=3; ni<=Get_nmax_two_g_correction(); ni++)
         {
             xres_loc=(1.0-1.0/ni/ni)/0.75;
         
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
             for(int k=0; k<npts; k++)
             {
                 PDE_funcs.two_g_ns_1s[ni-2].ratio[k]=sigma_ns_1s_2gamma_ratio(ni, xarr[k]/xres_loc);
@@ -272,6 +287,9 @@ void arm_PDE_solver(Cosmos &cos, Gas_of_Atoms &HIA, vector<double> &xarr, vector
         //=========================================================================== 
         for(int ni=(int)max(2, Get_nmax_two_g_correction()+1); ni<=nresmax; ni++)
         {
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
             for(int k=0; k<npts; k++)
             {
                 PDE_funcs.two_g_ns_1s[ni-2].ratio[k]=1.0;
@@ -384,6 +402,9 @@ void init_Solve_PDE_Data(int nresmax, bool bound)
     //==================================================================
     // initial solution
     //==================================================================
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
     for(int k=0; k<(int)SPDE_D.yarr.size(); k++) SPDE_D.yarr[k]=0.0;
     
     return;
@@ -530,7 +551,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
 	// output for Grace
 	//=========================================================================== 
 #ifdef GRACE_DEFINED
-	bool out_put_GRACE=0;
+	bool out_put_GRACE=1;
 	int GR_output_step=1;
 #endif
     

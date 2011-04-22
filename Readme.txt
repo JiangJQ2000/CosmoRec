@@ -64,6 +64,8 @@ CHECK FOR XXXX before final release...
 // 
 // main new features: 
 //
+// - added simple OPENMP support for ODE and PDE solver. CosmoRec now runs in XXX
+//
 // - added interface for 'CosmoMC' support to "CosmoRec.h". Details XXX
 //
 // - radiative transfer problem for helium photons can now be explicitly solved. This module can be called instead of the simple

@@ -11,6 +11,7 @@
 // for the helium diffusion problem. Electron scattering, line scattering can be 
 // treated, as well as resonance emission and absorption using Lorentzian profiles
 //
+// 22.04.2011: added simple support for openmp
 //==================================================================================================================================
 
 #include <iostream>
@@ -201,6 +202,9 @@ void add_electron_scattering_HeI(double z, double nu21, double Te, double Ne, do
     double kappa_electron_sc=-const_sigT*Ne*(const_kB*Te/const_me_gr/const_cl)/Hz/(1.0+z);
     kappa_electron_sc*=e_sc_efficiency_HeI;
     
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
     for(int k=0; k<(int)xi.size(); k++) 
     {
         double x=xi[k];
@@ -226,7 +230,12 @@ double Dnem_n_func_HeI(int line, double z)
 //==================================================================================================================================
 void update_exp_x_HeI(double Tg, double nu21, const vector<double> &xi)
 {
-    for(int k=0; k<(int)xi.size(); k++) PDE_Setup_D_HeI.PDE_funcs->exp_x[k]=exp(-const_h_kb*nu21*xi[k]/Tg);    
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
+    for(int k=0; k<(int)xi.size(); k++) 
+        PDE_Setup_D_HeI.PDE_funcs->exp_x[k]=exp(-const_h_kb*nu21*xi[k]/Tg);    
+    
     return;
 }
 
@@ -245,6 +254,9 @@ void update_given_profile_HeI(int k, double Tm, double psc, double nu21,
     //==============================================================================================================================
     // Ly-n profiles
     //==============================================================================================================================
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
     for(int j=0; j<(int)xi.size(); j++) 
     {
         double x=xi[j];
@@ -302,6 +314,9 @@ void update_HeI_2s_1s_profile(double z, double nu21, const vector<double> &xi)
     double Tg=PDE_Setup_D_HeI.cosm->TCMB(z);
     double exp_2s1s=exp(-const_h_kb*PDE_Setup_D_HeI.PDE_funcs->nu2s1s/Tg);
     
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
     for(int j=0; j<PDE_Setup_D_HeI.PDE_funcs->emission_2s1s; j++) 
     {
         double y=xi[j]*nu21/PDE_Setup_D_HeI.PDE_funcs->nu2s1s;
@@ -366,6 +381,9 @@ void add_Ly_n_sc_only_HeI(int line, double z, double nu21, double Tg, double Te,
     //----------------------------------------------------------
     // add terms
     //----------------------------------------------------------
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
     for(int k=0; k<(int)xi.size(); k++) 
     {
         double x=xi[k];
@@ -405,6 +423,9 @@ void add_Ly_n_em_only_HeI(int line, double z, double nu21, double Tg, double Te,
     double kappa_Ly_n_abs=-pd_np*const_sigr*N1s*const_cl/Hz/(1.0+z); 
     double exp_dum=exp(-x_c);
 
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
     for(int k=0; k<(int)xi.size(); k++) 
     {
         double x=xi[k];
@@ -461,6 +482,9 @@ void add_Ly_n_sc_em_full_HeI(int line, double z, double nu21, double Tg, double 
     //----------------------------------------------------------
     // add terms
     //----------------------------------------------------------
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
     for(int k=0; k<(int)xi.size(); k++) 
     {
         double x=xi[k];
@@ -501,6 +525,9 @@ void add_HI_absorption_term(double z, double nu21, double Tg, double N1s, double
 {
     double kappa_abs=-const_cl*N1s/Hz/(1.0+z);
   
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
     for(int k=0; k<(int)xi.size(); k++) 
         Ci[k]+=-kappa_abs*PDE_Setup_D_HeI.PDE_funcs->sig_Lyc_x[k];
     
@@ -528,6 +555,9 @@ void add_HeI_2s_1s_terms(double z, double nu21, double Tg, double N1s, double Hz
 	double x_c=const_h_kb*PDE_Setup_D_HeI.PDE_funcs->nu2s1s/Tg;
 	double exp_dum=exp(-x_c);
 	
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
 	for(int k=0; k<PDE_Setup_D_HeI.PDE_funcs->emission_2s1s; k++) 
 	{
 		double x=xi[k];
@@ -584,11 +614,17 @@ void def_PDE_HeI(double z, const vector<double> &xi,
     //------------------------------------------------------
     // reset things
     //------------------------------------------------------
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
     for(int k=0; k<(int)xi.size(); k++) Ai[k]=Bi[k]=Ci[k]=Di[k]=0.0;
     
     //------------------------------------------------------
     // Hubble term 
     //------------------------------------------------------
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
     for(int k=0; k<(int)xi.size(); k++) Bi[k]+=-xi[k]/(1.0+z);  
     
     //------------------------------------------------------

@@ -131,6 +131,9 @@ double compute_DF_Ly_n(int ni, int nmax, double z, Cosmos &cos, Gas_of_Atoms &HI
     //==========================================================================
     // tabulate Dn(nu) for splines
     //==========================================================================
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
     for(int k=0; k<nnu_pts; k++)
     { 
         double f_x=exp_i1*(1.0/exp_x[k]-1.0); // exp(-xi1)/npl
@@ -215,6 +218,9 @@ double compute_DF_2gamma(int ni, int li, double z, Cosmos &cos, Gas_of_Atoms &HI
     //==========================================================================
     // tabulate Dn(nu) for splines
     //==========================================================================
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
     for(int k=0; k<nnu_pts; k++)
     { 
         double f_x=exp_i1*(1.0/exp_x[k]-1.0); // exp(-xi1)/npl
@@ -300,6 +306,9 @@ double compute_DF_Raman(int ni, int li, int nmax, double z, Cosmos &cos, Gas_of_
     //==========================================================================
     // tabulate Dn(nu) for splines
     //==========================================================================
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
     for(int k=0; k<nnu_pts; k++)
     { 
         double f_x=exp_i1*(1.0/exp_x[k+k0]-1.0); // exp(-xi1)/npl
@@ -371,6 +380,9 @@ void compute_DI1_2s_and_dump_it(double z, vector<double> &xarr, vector<double> &
     //==========================================================================
     // tabulate Dn(nu) for splines
     //==========================================================================
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
     for(int k=0; k<nnu_pts; k++)
     { 
         double f_x=exp_i1*(1.0/exp_x[k]-1.0); // exp(-xi1)/npl

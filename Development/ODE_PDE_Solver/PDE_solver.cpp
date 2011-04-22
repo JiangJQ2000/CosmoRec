@@ -70,6 +70,9 @@ void init_PDE_Stepper_Data(PDE_Stepper_Data &PDE_D, int npts)
     PDE_D.Dip_ptr=&PDE_D.Dip;
     PDE_D.Iip_ptr=&PDE_D.Iip;
         
+    PDE_D.lambda.resize(npts, vector<double> (5));
+    PDE_D.lambdap.resize(npts, vector<double> (5));
+
     return;
 }
 
@@ -338,13 +341,26 @@ void setup_Lagrange_interpolation_coefficients_O2(PDE_Stepper_Data &PDE_D, vecto
 //-------------------------------------------------------------------------------------
 // compute lambda_i
 //-------------------------------------------------------------------------------------
-void compute_lambda_i_02(double dz, int i, int center, vector<double> &Ai, 
-                         vector<double> &Bi, vector<double> &Ci, 
-                         PDE_Stepper_Data &PDE_D, double *lambda)
+void compute_lambda_i_02(const double dz, const double dzp, 
+                         const int i, const int center, 
+                         const vector<double> &Ai, 
+                         const vector<double> &Bi, 
+                         const vector<double> &Ci, 
+                         PDE_Stepper_Data &PDE_D)
 {       
-    for(int j=0; j<5; j++) lambda[j]=PDE_D.LG.d2li_d2x[i][j]*Ai[i]+PDE_D.LG.dli_dx[i][j]*Bi[i];
-    lambda[center]+=Ci[i];
-    lambda[center]-=1.0/(dz+1.0e-100);
+    for(int j=0; j<5; j++) 
+    {
+        PDE_D.lambda[i][j] =PDE_D.LG.d2li_d2x[i][j]*Ai[i]+PDE_D.LG.dli_dx[i][j]*Bi[i];
+        PDE_D.lambdap[i][j]=PDE_D.lambda[i][j];
+    }
+    
+    PDE_D.lambda[i][center]+=Ci[i];
+    PDE_D.lambda[i][center]-=1.0/(dz+1.0e-100);
+
+    PDE_D.lambdap[i][center]+=Ci[i];
+    PDE_D.lambdap[i][center]-=1.0/(dzp+1.0e-100);
+    
+    return;
 }
 
 //-------------------------------------------------------------------------------------
@@ -352,6 +368,8 @@ void compute_lambda_i_02(double dz, int i, int center, vector<double> &Ai,
 //
 // 24.02.2011: This routine was optimized to reduce the number of operations per call
 // 28.02.2011: Found small bug in the matrix solving part. Affected the boundary.
+// 22.04.2011: Added simple openmp support for matrix element evaluations
+//
 //-------------------------------------------------------------------------------------
 void Step_PDE_O2t(double theta, double zs, double ze, const vector<double> &xi, vector<double> &yi, 
                   double yi_low, double yi_up, PDE_Stepper_Data &PDE_D,
@@ -373,68 +391,74 @@ void Step_PDE_O2t(double theta, double zs, double ze, const vector<double> &xi, 
     
     func(ze, xi, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, *PDE_D.Ci_ptr, *PDE_D.Di_ptr);
     
+    //=================================================================================
+    // compute all matrix elements
+    //=================================================================================
+    int i=1;
+    compute_lambda_i_02(dz*theta, dz*kap, i, 1, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, *PDE_D.Ci_ptr, PDE_D);
+    
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
+    for(i=2; i<npxi-2; i++)
+        compute_lambda_i_02(dz*theta, dz*kap, i, 2, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, *PDE_D.Ci_ptr, PDE_D);
+    
+    i=npxi-2;
+    compute_lambda_i_02(dz*theta, dz*kap, i, 3, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, *PDE_D.Ci_ptr, PDE_D);
+
     //================================================================================= 
     // compute Ui* and bi*
     //================================================================================= 
-    double lambda[5], lambdap[5], dum1, dum2, dum3;
+    double dum1, dum2, dum3;
     double Zlow;
     
     //================================================================================= 
     // 1. intereor point
     //=================================================================================  
-    int i=1;
-    // matrix elements
-    compute_lambda_i_02(dz*theta, i, 1, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, *PDE_D.Ci_ptr, PDE_D, lambda );
-    compute_lambda_i_02(dz*kap  , i, 1, *PDE_D.Aip_ptr,*PDE_D.Bip_ptr,*PDE_D.Cip_ptr,PDE_D, lambdap); 
+    i=1;
     //
-    PDE_D.bi[i]=lambdap[0]*eta*yi[0];
-    for(int m=1; m<5; m++) PDE_D.bi[i]+=lambdap[m]*eta*yi[i+m-1];
+    PDE_D.bi[i]=PDE_D.lambdap[i][0]*eta*yi[0];
+    for(int m=1; m<5; m++) PDE_D.bi[i]+=PDE_D.lambdap[i][m]*eta*yi[i+m-1];
     PDE_D.bi[i]+=eta*(*PDE_D.Dip_ptr)[i]-(*PDE_D.Di_ptr)[i];
-    PDE_D.bi[i]-=lambda[0]*yi_low; // JC changed sign 28.02.2011
+    PDE_D.bi[i]-=PDE_D.lambda[i][0]*yi_low; // JC changed sign 28.02.2011
     
-    PDE_D.bi[i]/=lambda[1];
-    PDE_D.Ui[i] =lambda[2]/lambda[1];
-    PDE_D.Vi[i] =lambda[3]/lambda[1];
-    Zlow        =lambda[4]/lambda[1];
+    PDE_D.bi[i]/=PDE_D.lambda[i][1];
+    PDE_D.Ui[i] =PDE_D.lambda[i][2]/PDE_D.lambda[i][1];
+    PDE_D.Vi[i] =PDE_D.lambda[i][3]/PDE_D.lambda[i][1];
+    Zlow        =PDE_D.lambda[i][4]/PDE_D.lambda[i][1];
     
     //================================================================================= 
     // 2. intereor point
     //=================================================================================  
     i=2;
-    // matrix elements
-    compute_lambda_i_02(dz*theta, i, 2, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, *PDE_D.Ci_ptr, PDE_D, lambda);
-    compute_lambda_i_02(dz*kap  , i, 2, *PDE_D.Aip_ptr,*PDE_D.Bip_ptr,*PDE_D.Cip_ptr,PDE_D, lambdap); 
     //
-    PDE_D.bi[i]=lambdap[0]*eta*yi[0];
-    for(int m=1; m<5; m++) PDE_D.bi[i]+=lambdap[m]*eta*yi[i+m-2];
+    PDE_D.bi[i]=PDE_D.lambdap[i][0]*eta*yi[0];
+    for(int m=1; m<5; m++) PDE_D.bi[i]+=PDE_D.lambdap[i][m]*eta*yi[i+m-2];
     PDE_D.bi[i]+=eta*(*PDE_D.Dip_ptr)[i]-(*PDE_D.Di_ptr)[i];
-    PDE_D.bi[i]-=lambda[0]*yi_low; // JC changed sign 28.02.2011
+    PDE_D.bi[i]-=PDE_D.lambda[i][0]*yi_low; // JC changed sign 28.02.2011
     
-    dum2=lambda[2]-lambda[1]*PDE_D.Ui[i-1];
+    dum2=PDE_D.lambda[i][2]-PDE_D.lambda[i][1]*PDE_D.Ui[i-1];
     //
-    PDE_D.bi[i]-=lambda[1]*PDE_D.bi[i-1];
+    PDE_D.bi[i]-=PDE_D.lambda[i][1]*PDE_D.bi[i-1];
     PDE_D.bi[i]/=dum2;
     //
-    PDE_D.Ui[i] =(lambda[3]-lambda[1]*PDE_D.Vi[i-1])/dum2;
-    PDE_D.Vi[i] =(lambda[4]-lambda[1]*Zlow)/dum2;
+    PDE_D.Ui[i] =(PDE_D.lambda[i][3]-PDE_D.lambda[i][1]*PDE_D.Vi[i-1])/dum2;
+    PDE_D.Vi[i] =(PDE_D.lambda[i][4]-PDE_D.lambda[i][1]*Zlow)/dum2;
     
     //================================================================================= 
     // 3. intereor point
     //=================================================================================  
     i=3;
-    // matrix elements
-    compute_lambda_i_02(dz*theta, i, 2, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, *PDE_D.Ci_ptr, PDE_D, lambda);
-    compute_lambda_i_02(dz*kap  , i, 2, *PDE_D.Aip_ptr,*PDE_D.Bip_ptr,*PDE_D.Cip_ptr,PDE_D, lambdap); 
     //
-    PDE_D.bi[i]=lambdap[0]*eta*yi[i-2];
-    for(int m=1; m<5; m++) PDE_D.bi[i]+=lambdap[m]*eta*yi[i+m-2];
+    PDE_D.bi[i]=PDE_D.lambdap[i][0]*eta*yi[i-2];
+    for(int m=1; m<5; m++) PDE_D.bi[i]+=PDE_D.lambdap[i][m]*eta*yi[i+m-2];
     PDE_D.bi[i]+=eta*(*PDE_D.Dip_ptr)[i]-(*PDE_D.Di_ptr)[i];
     
-    dum1=lambda[1]-lambda[0]*PDE_D.Ui[i-2];
-    dum2=lambda[2]-lambda[0]*PDE_D.Vi[i-2];
+    dum1=PDE_D.lambda[i][1]-PDE_D.lambda[i][0]*PDE_D.Ui[i-2];
+    dum2=PDE_D.lambda[i][2]-PDE_D.lambda[i][0]*PDE_D.Vi[i-2];
     //
-    PDE_D.bi[i]-=lambda[0]*PDE_D.bi[i-2];
-    PDE_D.Ui[i] =lambda[3]-lambda[0]*Zlow;
+    PDE_D.bi[i]-=PDE_D.lambda[i][0]*PDE_D.bi[i-2];
+    PDE_D.Ui[i] =PDE_D.lambda[i][3]-PDE_D.lambda[i][0]*Zlow;
     //---------------------------------------------
     dum2-=dum1*PDE_D.Ui[i-1];
     //
@@ -443,26 +467,22 @@ void Step_PDE_O2t(double theta, double zs, double ze, const vector<double> &xi, 
     //
     PDE_D.Ui[i]-=dum1*PDE_D.Vi[i-1];
     PDE_D.Ui[i]/=dum2;
-    PDE_D.Vi[i] =lambda[4]/dum2;
+    PDE_D.Vi[i] =PDE_D.lambda[i][4]/dum2;
     
     //================================================================================= 
     // intereor point 4...n-4
     //=================================================================================  
     for(i=4; i<npxi-3; i++)
     {
-        // matrix elements
-        compute_lambda_i_02(dz*theta, i, 2, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, *PDE_D.Ci_ptr, PDE_D, lambda);
-        compute_lambda_i_02(dz*kap  , i, 2, *PDE_D.Aip_ptr,*PDE_D.Bip_ptr,*PDE_D.Cip_ptr,PDE_D, lambdap); 
-        //
-        PDE_D.bi[i]=lambdap[0]*eta*yi[i-2];
-        for(int m=1; m<5; m++) PDE_D.bi[i]+=lambdap[m]*eta*yi[i+m-2];
+        PDE_D.bi[i]=PDE_D.lambdap[i][0]*eta*yi[i-2];
+        for(int m=1; m<5; m++) PDE_D.bi[i]+=PDE_D.lambdap[i][m]*eta*yi[i+m-2];
         PDE_D.bi[i]+=eta*(*PDE_D.Dip_ptr)[i]-(*PDE_D.Di_ptr)[i];
         
-        dum1=lambda[1]-lambda[0]*PDE_D.Ui[i-2];
-        dum2=lambda[2]-lambda[0]*PDE_D.Vi[i-2];
+        dum1=PDE_D.lambda[i][1]-PDE_D.lambda[i][0]*PDE_D.Ui[i-2];
+        dum2=PDE_D.lambda[i][2]-PDE_D.lambda[i][0]*PDE_D.Vi[i-2];
         //
-        PDE_D.bi[i]-=lambda[0]*PDE_D.bi[i-2];
-        PDE_D.Ui[i] =lambda[3];
+        PDE_D.bi[i]-=PDE_D.lambda[i][0]*PDE_D.bi[i-2];
+        PDE_D.Ui[i] =PDE_D.lambda[i][3];
         //---------------------------------------------
         dum2-=dum1*PDE_D.Ui[i-1];
         //
@@ -471,27 +491,24 @@ void Step_PDE_O2t(double theta, double zs, double ze, const vector<double> &xi, 
         //
         PDE_D.Ui[i]-=dum1*PDE_D.Vi[i-1];
         PDE_D.Ui[i]/=dum2;
-        PDE_D.Vi[i] =lambda[4]/dum2;
+        PDE_D.Vi[i] =PDE_D.lambda[i][4]/dum2;
     }
     
     //================================================================================= 
     // intereor point n-3
     //=================================================================================  
     i=npxi-3;
-    // matrix elements
-    compute_lambda_i_02(dz*theta, i, 2, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, *PDE_D.Ci_ptr, PDE_D, lambda);
-    compute_lambda_i_02(dz*kap  , i, 2, *PDE_D.Aip_ptr,*PDE_D.Bip_ptr,*PDE_D.Cip_ptr,PDE_D, lambdap); 
     //
-    PDE_D.bi[i]=lambdap[0]*eta*yi[i-2];
-    for(int m=1; m<5; m++) PDE_D.bi[i]+=lambdap[m]*eta*yi[i+m-2];
+    PDE_D.bi[i]=PDE_D.lambdap[i][0]*eta*yi[i-2];
+    for(int m=1; m<5; m++) PDE_D.bi[i]+=PDE_D.lambdap[i][m]*eta*yi[i+m-2];
     PDE_D.bi[i]+=eta*(*PDE_D.Dip_ptr)[i]-(*PDE_D.Di_ptr)[i];
-    PDE_D.bi[i]-=lambda[4]*yi_up;
+    PDE_D.bi[i]-=PDE_D.lambda[i][4]*yi_up;
 
-    dum1=lambda[1]-lambda[0]*PDE_D.Ui[i-2];
-    dum2=lambda[2]-lambda[0]*PDE_D.Vi[i-2];
+    dum1=PDE_D.lambda[i][1]-PDE_D.lambda[i][0]*PDE_D.Ui[i-2];
+    dum2=PDE_D.lambda[i][2]-PDE_D.lambda[i][0]*PDE_D.Vi[i-2];
     //
-    PDE_D.bi[i]-=lambda[0]*PDE_D.bi[i-2];
-    PDE_D.Ui[i] =lambda[3];
+    PDE_D.bi[i]-=PDE_D.lambda[i][0]*PDE_D.bi[i-2];
+    PDE_D.Ui[i] =PDE_D.lambda[i][3];
     //---------------------------------------------
     dum2-=dum1*PDE_D.Ui[i-1];
     //
@@ -506,20 +523,17 @@ void Step_PDE_O2t(double theta, double zs, double ze, const vector<double> &xi, 
     // intereor point n-2
     //=================================================================================  
     i=npxi-2;
-    // matrix elements
-    compute_lambda_i_02(dz*theta, i, 3, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, *PDE_D.Ci_ptr, PDE_D, lambda);
-    compute_lambda_i_02(dz*kap  , i, 3, *PDE_D.Aip_ptr,*PDE_D.Bip_ptr,*PDE_D.Cip_ptr,PDE_D, lambdap); 
     //
-    PDE_D.bi[i]=lambdap[0]*eta*yi[i-3];
-    for(int m=1; m<5; m++) PDE_D.bi[i]+=lambdap[m]*eta*yi[i+m-3];
+    PDE_D.bi[i]=PDE_D.lambdap[i][0]*eta*yi[i-3];
+    for(int m=1; m<5; m++) PDE_D.bi[i]+=PDE_D.lambdap[i][m]*eta*yi[i+m-3];
     PDE_D.bi[i]+=eta*(*PDE_D.Dip_ptr)[i]-(*PDE_D.Di_ptr)[i];
-    PDE_D.bi[i]-=lambda[4]*yi_up;
+    PDE_D.bi[i]-=PDE_D.lambda[i][4]*yi_up;
 
-    dum1=lambda[1]-lambda[0]*PDE_D.Ui[i-3];
-    dum2=lambda[2]-lambda[0]*PDE_D.Vi[i-3];
-    dum3=lambda[3];
+    dum1=PDE_D.lambda[i][1]-PDE_D.lambda[i][0]*PDE_D.Ui[i-3];
+    dum2=PDE_D.lambda[i][2]-PDE_D.lambda[i][0]*PDE_D.Vi[i-3];
+    dum3=PDE_D.lambda[i][3];
     //
-    PDE_D.bi[i]-=lambda[0]*PDE_D.bi[i-3];
+    PDE_D.bi[i]-=PDE_D.lambda[i][0]*PDE_D.bi[i-3];
     //---------------------------------------------
     dum2-=dum1*PDE_D.Ui[i-2];
     dum3-=dum1*PDE_D.Vi[i-2];
@@ -678,10 +692,23 @@ void Step_PDE_O2t_Int(double theta, int it_max, double zs, double ze,
     func(ze, xi, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, *PDE_D.Ci_ptr, *PDE_D.Di_ptr);
     
     //=================================================================================
+    // compute all matrix elements
+    //=================================================================================
+    int i=1;
+    compute_lambda_i_02(dz*theta, dz*kap, i, 1, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, *PDE_D.Ci_ptr, PDE_D);
+    
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
+    for(i=2; i<npxi-2; i++)
+        compute_lambda_i_02(dz*theta, dz*kap, i, 2, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, *PDE_D.Ci_ptr, PDE_D);
+    
+    i=npxi-2;
+    compute_lambda_i_02(dz*theta, dz*kap, i, 3, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, *PDE_D.Ci_ptr, PDE_D);
+    
+    //=================================================================================
     // compute Ui* and bi*
     //=================================================================================
-    vector<vector<double> > lambda(npxi, vector<double> (5));
-    vector<vector<double> > lambdap(npxi, vector<double> (5));
     double dum1, dum2, dum3;
     double Zlow;
     //=================================================================================
@@ -690,28 +717,22 @@ void Step_PDE_O2t_Int(double theta, int it_max, double zs, double ze,
         //==============================================================================
         // 1. intereor point
         //==============================================================================
-        int i=1;
+        i=1;
 
         if(it==0) 
         {
-            //--------------------------------------------------------------------------
-            // matrix elements
-            //--------------------------------------------------------------------------
-            compute_lambda_i_02(dz*theta, i, 1, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, *PDE_D.Ci_ptr , PDE_D, &lambda [i][0]);
-            compute_lambda_i_02(dz*kap  , i, 1, *PDE_D.Aip_ptr,*PDE_D.Bip_ptr,*PDE_D.Cip_ptr, PDE_D, &lambdap[i][0]); 
-            
-            PDE_D.bi[i]=lambdap[i][0]*eta*yi[0];
-            for(int m=1; m<5; m++) PDE_D.bi[i]+=lambdap[i][m]*eta*yi[i+m-1];
+            PDE_D.bi[i]=PDE_D.lambdap[i][0]*eta*yi[0];
+            for(int m=1; m<5; m++) PDE_D.bi[i]+=PDE_D.lambdap[i][m]*eta*yi[i+m-1];
             PDE_D.bi[i]+=eta*(*PDE_D.Dip_ptr)[i]-(*PDE_D.Di_ptr)[i];
-            PDE_D.bi[i]-=lambda[i][0]*yi_low; // JC changed sign 28.02.2011
+            PDE_D.bi[i]-=PDE_D.lambda[i][0]*yi_low; // JC changed sign 28.02.2011
             PDE_D.bi[i]+=eta*(*PDE_D.Iip_ptr)[i];
         }
         else PDE_D.bi[i]=-(*PDE_D.Ii_ptr)[i];        
 
-        PDE_D.bi[i]/=lambda[i][1];
-        PDE_D.Ui[i] =lambda[i][2]/lambda[i][1];
-        PDE_D.Vi[i] =lambda[i][3]/lambda[i][1];
-        Zlow        =lambda[i][4]/lambda[i][1];
+        PDE_D.bi[i]/=PDE_D.lambda[i][1];
+        PDE_D.Ui[i] =PDE_D.lambda[i][2]/PDE_D.lambda[i][1];
+        PDE_D.Vi[i] =PDE_D.lambda[i][3]/PDE_D.lambda[i][1];
+        Zlow        =PDE_D.lambda[i][4]/PDE_D.lambda[i][1];
         
         //==============================================================================
         // 2. intereor point
@@ -720,26 +741,20 @@ void Step_PDE_O2t_Int(double theta, int it_max, double zs, double ze,
 
         if(it==0) 
         {
-            //--------------------------------------------------------------------------
-            // matrix elements
-            //--------------------------------------------------------------------------
-            compute_lambda_i_02(dz*theta, i, 2, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, *PDE_D.Ci_ptr , PDE_D, &lambda [i][0]);
-            compute_lambda_i_02(dz*kap  , i, 2, *PDE_D.Aip_ptr,*PDE_D.Bip_ptr,*PDE_D.Cip_ptr, PDE_D, &lambdap[i][0]); 
-
-            PDE_D.bi[i]=lambdap[i][0]*eta*yi[0];
-            for(int m=1; m<5; m++) PDE_D.bi[i]+=lambdap[i][m]*eta*yi[i+m-2];
+            PDE_D.bi[i]=PDE_D.lambdap[i][0]*eta*yi[0];
+            for(int m=1; m<5; m++) PDE_D.bi[i]+=PDE_D.lambdap[i][m]*eta*yi[i+m-2];
             PDE_D.bi[i]+=eta*(*PDE_D.Dip_ptr)[i]-(*PDE_D.Di_ptr)[i];
-            PDE_D.bi[i]-=lambda[i][0]*yi_low; // JC changed sign 28.02.2011
+            PDE_D.bi[i]-=PDE_D.lambda[i][0]*yi_low; // JC changed sign 28.02.2011
             PDE_D.bi[i]+=eta*(*PDE_D.Iip_ptr)[i];
         }
         else PDE_D.bi[i]=-(*PDE_D.Ii_ptr)[i];        
         
-        dum2=lambda[i][2]-lambda[i][1]*PDE_D.Ui[i-1];
+        dum2=PDE_D.lambda[i][2]-PDE_D.lambda[i][1]*PDE_D.Ui[i-1];
         //
-        PDE_D.bi[i]-=lambda[i][1]*PDE_D.bi[i-1];
+        PDE_D.bi[i]-=PDE_D.lambda[i][1]*PDE_D.bi[i-1];
         PDE_D.bi[i]/=dum2;
-        PDE_D.Ui[i] =(lambda[i][3]-lambda[i][1]*PDE_D.Vi[i-1])/dum2;
-        PDE_D.Vi[i] =(lambda[i][4]-lambda[i][1]*Zlow)/dum2;
+        PDE_D.Ui[i] =(PDE_D.lambda[i][3]-PDE_D.lambda[i][1]*PDE_D.Vi[i-1])/dum2;
+        PDE_D.Vi[i] =(PDE_D.lambda[i][4]-PDE_D.lambda[i][1]*Zlow)/dum2;
         
         //==============================================================================
         // 3. intereor point
@@ -748,24 +763,18 @@ void Step_PDE_O2t_Int(double theta, int it_max, double zs, double ze,
 
         if(it==0) 
         {
-            //--------------------------------------------------------------------------
-            // matrix elements
-            //--------------------------------------------------------------------------
-            compute_lambda_i_02(dz*theta, i, 2, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, *PDE_D.Ci_ptr , PDE_D, &lambda [i][0]);
-            compute_lambda_i_02(dz*kap  , i, 2, *PDE_D.Aip_ptr,*PDE_D.Bip_ptr,*PDE_D.Cip_ptr, PDE_D, &lambdap[i][0]); 
-            
-            PDE_D.bi[i]=lambdap[i][0]*eta*yi[i-2];
-            for(int m=1; m<5; m++) PDE_D.bi[i]+=lambdap[i][m]*eta*yi[i+m-2];
+            PDE_D.bi[i]=PDE_D.lambdap[i][0]*eta*yi[i-2];
+            for(int m=1; m<5; m++) PDE_D.bi[i]+=PDE_D.lambdap[i][m]*eta*yi[i+m-2];
             PDE_D.bi[i]+=eta*(*PDE_D.Dip_ptr)[i]-(*PDE_D.Di_ptr)[i];
             PDE_D.bi[i]+=eta*(*PDE_D.Iip_ptr)[i];
         }
         else PDE_D.bi[i]=-(*PDE_D.Ii_ptr)[i];        
         
-        dum1=lambda[i][1]-lambda[i][0]*PDE_D.Ui[i-2];
-        dum2=lambda[i][2]-lambda[i][0]*PDE_D.Vi[i-2];
+        dum1=PDE_D.lambda[i][1]-PDE_D.lambda[i][0]*PDE_D.Ui[i-2];
+        dum2=PDE_D.lambda[i][2]-PDE_D.lambda[i][0]*PDE_D.Vi[i-2];
         //
-        PDE_D.bi[i]-=lambda[i][0]*PDE_D.bi[i-2];
-        PDE_D.Ui[i] =lambda[i][3]-lambda[i][0]*Zlow;
+        PDE_D.bi[i]-=PDE_D.lambda[i][0]*PDE_D.bi[i-2];
+        PDE_D.Ui[i] =PDE_D.lambda[i][3]-PDE_D.lambda[i][0]*Zlow;
         //
         dum2-=dum1*PDE_D.Ui[i-1];
         //
@@ -773,30 +782,23 @@ void Step_PDE_O2t_Int(double theta, int it_max, double zs, double ze,
         PDE_D.bi[i]/=dum2;
         PDE_D.Ui[i]-=dum1*PDE_D.Vi[i-1];
         PDE_D.Ui[i]/=dum2;
-        PDE_D.Vi[i] =lambda[i][4]/dum2;
+        PDE_D.Vi[i] =PDE_D.lambda[i][4]/dum2;
         
         //==============================================================================
         // intereor point 4...n-4
         //==============================================================================
         if(it==0) for(i=4; i<npxi-3; i++)
         {
-            //--------------------------------------------------------------------------
-            // matrix elements
-            //--------------------------------------------------------------------------
-            compute_lambda_i_02(dz*theta, i, 2, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, *PDE_D.Ci_ptr , PDE_D, &lambda [i][0]);
-            compute_lambda_i_02(dz*kap  , i, 2, *PDE_D.Aip_ptr,*PDE_D.Bip_ptr,*PDE_D.Cip_ptr, PDE_D, &lambdap[i][0]); 
-            
-
-            PDE_D.bi[i]=lambdap[i][0]*eta*yi[i-2];
-            for(int m=1; m<5; m++) PDE_D.bi[i]+=lambdap[i][m]*eta*yi[i+m-2];
+            PDE_D.bi[i]=PDE_D.lambdap[i][0]*eta*yi[i-2];
+            for(int m=1; m<5; m++) PDE_D.bi[i]+=PDE_D.lambdap[i][m]*eta*yi[i+m-2];
             PDE_D.bi[i]+=eta*(*PDE_D.Dip_ptr)[i]-(*PDE_D.Di_ptr)[i];
             PDE_D.bi[i]+=eta*(*PDE_D.Iip_ptr)[i];
             
-            dum1=lambda[i][1]-lambda[i][0]*PDE_D.Ui[i-2];
-            dum2=lambda[i][2]-lambda[i][0]*PDE_D.Vi[i-2];
+            dum1=PDE_D.lambda[i][1]-PDE_D.lambda[i][0]*PDE_D.Ui[i-2];
+            dum2=PDE_D.lambda[i][2]-PDE_D.lambda[i][0]*PDE_D.Vi[i-2];
             //
-            PDE_D.bi[i]-=lambda[i][0]*PDE_D.bi[i-2];
-            PDE_D.Ui[i] =lambda[i][3];
+            PDE_D.bi[i]-=PDE_D.lambda[i][0]*PDE_D.bi[i-2];
+            PDE_D.Ui[i] =PDE_D.lambda[i][3];
             //
             dum2-=dum1*PDE_D.Ui[i-1];
             //
@@ -804,17 +806,17 @@ void Step_PDE_O2t_Int(double theta, int it_max, double zs, double ze,
             PDE_D.bi[i]/=dum2;
             PDE_D.Ui[i]-=dum1*PDE_D.Vi[i-1];
             PDE_D.Ui[i]/=dum2;
-            PDE_D.Vi[i] =lambda[i][4]/dum2;
+            PDE_D.Vi[i] =PDE_D.lambda[i][4]/dum2;
         }
         else for(i=4; i<npxi-3; i++)
         {
             PDE_D.bi[i]=-(*PDE_D.Ii_ptr)[i];
             
-            dum1=lambda[i][1]-lambda[i][0]*PDE_D.Ui[i-2];
-            dum2=lambda[i][2]-lambda[i][0]*PDE_D.Vi[i-2];
+            dum1=PDE_D.lambda[i][1]-PDE_D.lambda[i][0]*PDE_D.Ui[i-2];
+            dum2=PDE_D.lambda[i][2]-PDE_D.lambda[i][0]*PDE_D.Vi[i-2];
             //
-            PDE_D.bi[i]-=lambda[i][0]*PDE_D.bi[i-2];
-            PDE_D.Ui[i] =lambda[i][3];
+            PDE_D.bi[i]-=PDE_D.lambda[i][0]*PDE_D.bi[i-2];
+            PDE_D.Ui[i] =PDE_D.lambda[i][3];
             //
             dum2-=dum1*PDE_D.Ui[i-1];
             //
@@ -822,7 +824,7 @@ void Step_PDE_O2t_Int(double theta, int it_max, double zs, double ze,
             PDE_D.bi[i]/=dum2;
             PDE_D.Ui[i]-=dum1*PDE_D.Vi[i-1];
             PDE_D.Ui[i]/=dum2;
-            PDE_D.Vi[i] =lambda[i][4]/dum2;
+            PDE_D.Vi[i] =PDE_D.lambda[i][4]/dum2;
         }        
         
         //==============================================================================
@@ -832,25 +834,19 @@ void Step_PDE_O2t_Int(double theta, int it_max, double zs, double ze,
 
         if(it==0) 
         {
-            //--------------------------------------------------------------------------
-            // matrix elements
-            //--------------------------------------------------------------------------
-            compute_lambda_i_02(dz*theta, i, 2, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, *PDE_D.Ci_ptr , PDE_D, &lambda [i][0]);
-            compute_lambda_i_02(dz*kap  , i, 2, *PDE_D.Aip_ptr,*PDE_D.Bip_ptr,*PDE_D.Cip_ptr, PDE_D, &lambdap[i][0]); 
-            
-            PDE_D.bi[i]=lambdap[i][0]*eta*yi[i-2];
-            for(int m=1; m<5; m++) PDE_D.bi[i]+=lambdap[i][m]*eta*yi[i+m-2];
+            PDE_D.bi[i]=PDE_D.lambdap[i][0]*eta*yi[i-2];
+            for(int m=1; m<5; m++) PDE_D.bi[i]+=PDE_D.lambdap[i][m]*eta*yi[i+m-2];
             PDE_D.bi[i]+=eta*(*PDE_D.Dip_ptr)[i]-(*PDE_D.Di_ptr)[i];
-            PDE_D.bi[i]-=lambda[i][4]*yi_up;
+            PDE_D.bi[i]-=PDE_D.lambda[i][4]*yi_up;
             PDE_D.bi[i]+=eta*(*PDE_D.Iip_ptr)[i];
         }
         else PDE_D.bi[i]=-(*PDE_D.Ii_ptr)[i];        
         
-        dum1=lambda[i][1]-lambda[i][0]*PDE_D.Ui[i-2];
-        dum2=lambda[i][2]-lambda[i][0]*PDE_D.Vi[i-2];
+        dum1=PDE_D.lambda[i][1]-PDE_D.lambda[i][0]*PDE_D.Ui[i-2];
+        dum2=PDE_D.lambda[i][2]-PDE_D.lambda[i][0]*PDE_D.Vi[i-2];
         //
-        PDE_D.bi[i]-=lambda[i][0]*PDE_D.bi[i-2];
-        PDE_D.Ui[i] =lambda[i][3];
+        PDE_D.bi[i]-=PDE_D.lambda[i][0]*PDE_D.bi[i-2];
+        PDE_D.Ui[i] =PDE_D.lambda[i][3];
         PDE_D.Vi[i] =0.0;
         //
         dum2-=dum1*PDE_D.Ui[i-1];
@@ -867,25 +863,19 @@ void Step_PDE_O2t_Int(double theta, int it_max, double zs, double ze,
 
         if(it==0) 
         {
-            //--------------------------------------------------------------------------
-            // matrix elements
-            //--------------------------------------------------------------------------
-            compute_lambda_i_02(dz*theta, i, 3, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, *PDE_D.Ci_ptr , PDE_D, &lambda [i][0]);
-            compute_lambda_i_02(dz*kap  , i, 3, *PDE_D.Aip_ptr,*PDE_D.Bip_ptr,*PDE_D.Cip_ptr, PDE_D, &lambdap[i][0]); 
-            
-            PDE_D.bi[i]=lambdap[i][0]*eta*yi[i-3];
-            for(int m=1; m<5; m++) PDE_D.bi[i]+=lambdap[i][m]*eta*yi[i+m-3];
+            PDE_D.bi[i]=PDE_D.lambdap[i][0]*eta*yi[i-3];
+            for(int m=1; m<5; m++) PDE_D.bi[i]+=PDE_D.lambdap[i][m]*eta*yi[i+m-3];
             PDE_D.bi[i]+=eta*(*PDE_D.Dip_ptr)[i]-(*PDE_D.Di_ptr)[i];
-            PDE_D.bi[i]-=lambda[i][4]*yi_up;
+            PDE_D.bi[i]-=PDE_D.lambda[i][4]*yi_up;
             PDE_D.bi[i]+=eta*(*PDE_D.Iip_ptr)[i];
         }
         else PDE_D.bi[i]=-(*PDE_D.Ii_ptr)[i];        
         
-        dum1=lambda[i][1]-lambda[i][0]*PDE_D.Ui[i-3];
-        dum2=lambda[i][2]-lambda[i][0]*PDE_D.Vi[i-3];
-        dum3=lambda[i][3];
+        dum1=PDE_D.lambda[i][1]-PDE_D.lambda[i][0]*PDE_D.Ui[i-3];
+        dum2=PDE_D.lambda[i][2]-PDE_D.lambda[i][0]*PDE_D.Vi[i-3];
+        dum3=PDE_D.lambda[i][3];
         //
-        PDE_D.bi[i]-=lambda[i][0]*PDE_D.bi[i-3];
+        PDE_D.bi[i]-=PDE_D.lambda[i][0]*PDE_D.bi[i-3];
         PDE_D.Ui[i]=PDE_D.Vi[i]=0.0;
         //
         dum2-=dum1*PDE_D.Ui[i-2];
@@ -949,9 +939,6 @@ void Step_PDE_O2t_Int(double theta, int it_max, double zs, double ze,
     PDE_D.Di_ptr=PDE_D.ptr;
     //
     PDE_D.ptr=NULL;
-    
-    lambda.clear();
-    lambdap.clear();
     
     return;
 }

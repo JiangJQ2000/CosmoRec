@@ -71,7 +71,7 @@ void evaluate_HeI_Diffusion_correction(double z, Gas_of_HeI_Atoms &HeIA,
                                        double NH, double H_z, double Tg, 
                                        double *g_HeI, double &g_Xe, double &g_HI1s)
 {
-    return;
+//    return;
     
     double DRij;
     double X1s=HeIA.Xi(0);

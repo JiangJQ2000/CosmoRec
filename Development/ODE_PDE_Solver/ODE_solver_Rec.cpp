@@ -1084,9 +1084,10 @@ namespace ODE_solver_Rec
             
             //--------------------------------------------------------------------
             // if X1s or rho become unphysical one should restart the solver
+            // 22.04.2011: changed this condition to be a bit wider.
             //--------------------------------------------------------------------
-            if(ODE_Solver_info.Sguessptr->y[0]>2.0 || ODE_Solver_info.Sguessptr->y[0]<0.5 ||
-               ODE_Solver_info.Sguessptr->y[1]>1.2   || ODE_Solver_info.Sguessptr->y[1]<0.0)
+            if(ODE_Solver_info.Sguessptr->y[0]>10.0 || ODE_Solver_info.Sguessptr->y[0]<0.0 ||
+               ODE_Solver_info.Sguessptr->y[1]>10.0 || ODE_Solver_info.Sguessptr->y[1]<0.0)
                 LA_error=1;
             
             //--------------------------------------------------------

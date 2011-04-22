@@ -116,6 +116,9 @@ double compute_DP_HeI(int line, double z, double nu21, Cosmos &cos, Gas_of_HeI_A
     //================================================================================
     // tabulate Dn(nu) for splines
     //================================================================================
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
     for(int k=0; k<nnu_pts; k++)
     { 
         double f_x=exp_i1*(1.0/exp_x[k]-1.0); // exp(-xi1)/npl
@@ -172,7 +175,10 @@ double compute_DR_1sc_absorption_HI(double z, double nu21, Cosmos &cos, Gas_of_H
     //================================================================================
     double fac=2.0*FOURPI*pow(nu21/const_cl, 2);
     
-    for(int k=0; k<nnu_pts; k++)
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
+    for(int k=0; k<nnu_pts; k++) 
         Fwork[k]=fac*yarr[k]*pow(xarr[k], 2)*sig_Lyc_x[k]; 
     
     //================================================================================
@@ -221,6 +227,9 @@ void compute_DI1_2s_and_dump_it_HeI(double z, double nu21, vector<double> &xarr,
     //==========================================================================
     // tabulate Dn(nu) for splines
     //==========================================================================
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
     for(int k=0; k<nnu_pts; k++)
     { 
         double f_x=exp_2s1s*(1.0/exp_x[k]-1.0); 

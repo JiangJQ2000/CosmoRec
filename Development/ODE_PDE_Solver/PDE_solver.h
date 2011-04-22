@@ -48,6 +48,9 @@ struct PDE_Stepper_Data
     vector<double> *Cip_ptr;    
     vector<double> *Dip_ptr;    
     vector<double> *Iip_ptr;    
+    //
+    vector<vector<double> > lambda; // temporary data for banded solve
+    vector<vector<double> > lambdap;
 
     Lagrange_interpolation_coefficients LG;
 };

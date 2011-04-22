@@ -325,12 +325,17 @@ void setup_Lagrange_interpolation_coefficients_O2(PDE_Stepper_Data &PDE_D, vecto
     //====================================================================
     // the rest
     //====================================================================
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
     for(i=2; i<np-2; i++)
+    {
         for(int j=0; j<5; j++)
         {
             PDE_D.LG.dli_dx  [i][j]=dli_dx_xj  (j, 2, &xarr[i-2], 5);
             PDE_D.LG.d2li_d2x[i][j]=d2li_d2x_xj(j, 2, &xarr[i-2], 5);
         }
+    }
 
     cout << " setup_Lagrange_interpolation_coefficients_O2:: done " << endl;
 
@@ -341,26 +346,14 @@ void setup_Lagrange_interpolation_coefficients_O2(PDE_Stepper_Data &PDE_D, vecto
 //-------------------------------------------------------------------------------------
 // compute lambda_i
 //-------------------------------------------------------------------------------------
-void compute_lambda_i_02(const double dz, const double dzp, 
-                         const int i, const int center, 
-                         const vector<double> &Ai, 
-                         const vector<double> &Bi, 
+void compute_lambda_i_02(const double dz, const int i, const int center, 
+                         const vector<double> &Ai, const vector<double> &Bi, 
                          const vector<double> &Ci, 
-                         PDE_Stepper_Data &PDE_D)
+                         PDE_Stepper_Data &PDE_D, double *lambda)
 {       
-    for(int j=0; j<5; j++) 
-    {
-        PDE_D.lambda[i][j] =PDE_D.LG.d2li_d2x[i][j]*Ai[i]+PDE_D.LG.dli_dx[i][j]*Bi[i];
-        PDE_D.lambdap[i][j]=PDE_D.lambda[i][j];
-    }
-    
-    PDE_D.lambda[i][center]+=Ci[i];
-    PDE_D.lambda[i][center]-=1.0/(dz+1.0e-100);
-
-    PDE_D.lambdap[i][center]+=Ci[i];
-    PDE_D.lambdap[i][center]-=1.0/(dzp+1.0e-100);
-    
-    return;
+    for(int j=0; j<5; j++) lambda[j]=PDE_D.LG.d2li_d2x[i][j]*Ai[i]+PDE_D.LG.dli_dx[i][j]*Bi[i];
+    lambda[center]+=Ci[i];
+    lambda[center]-=1.0/(dz+1.0e-100);
 }
 
 //-------------------------------------------------------------------------------------
@@ -395,16 +388,21 @@ void Step_PDE_O2t(double theta, double zs, double ze, const vector<double> &xi, 
     // compute all matrix elements
     //=================================================================================
     int i=1;
-    compute_lambda_i_02(dz*theta, dz*kap, i, 1, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, *PDE_D.Ci_ptr, PDE_D);
+    compute_lambda_i_02(dz*theta, i, 1, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, *PDE_D.Ci_ptr , PDE_D, &PDE_D.lambda [i][0]);
+    compute_lambda_i_02(dz*kap  , i, 1, *PDE_D.Aip_ptr,*PDE_D.Bip_ptr,*PDE_D.Cip_ptr, PDE_D, &PDE_D.lambdap[i][0]); 
     
 #ifdef OPENMP_ACTIVATED    
 #pragma omp parallel for default(shared)	
 #endif	
     for(i=2; i<npxi-2; i++)
-        compute_lambda_i_02(dz*theta, dz*kap, i, 2, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, *PDE_D.Ci_ptr, PDE_D);
+    {
+        compute_lambda_i_02(dz*theta, i, 2, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, *PDE_D.Ci_ptr , PDE_D, &PDE_D.lambda [i][0]);
+        compute_lambda_i_02(dz*kap  , i, 2, *PDE_D.Aip_ptr,*PDE_D.Bip_ptr,*PDE_D.Cip_ptr, PDE_D, &PDE_D.lambdap[i][0]); 
+    }
     
     i=npxi-2;
-    compute_lambda_i_02(dz*theta, dz*kap, i, 3, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, *PDE_D.Ci_ptr, PDE_D);
+    compute_lambda_i_02(dz*theta, i, 3, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, *PDE_D.Ci_ptr , PDE_D, &PDE_D.lambda [i][0]);
+    compute_lambda_i_02(dz*kap  , i, 3, *PDE_D.Aip_ptr,*PDE_D.Bip_ptr,*PDE_D.Cip_ptr, PDE_D, &PDE_D.lambdap[i][0]); 
 
     //================================================================================= 
     // compute Ui* and bi*
@@ -643,12 +641,17 @@ void setup_Lagrange_interpolation_coefficients_O2_Int(PDE_Stepper_Data &PDE_D,
     //====================================================================
     // the rest
     //====================================================================
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
     for(i=2; i<np-2; i++)
+    {
         for(int j=0; j<5; j++)
         {
             PDE_D.LG.dli_dx  [i][j]=dli_dx_xj  (j, 2, &xarr[i-2], 5);
             PDE_D.LG.d2li_d2x[i][j]=d2li_d2x_xj(j, 2, &xarr[i-2], 5);
         }
+    }
     
     cout << " setup_Lagrange_interpolation_coefficients_O2_Int:: done " << endl;
     
@@ -686,6 +689,9 @@ void Step_PDE_O2t_Int(double theta, int it_max, double zs, double ze,
         func(zs, xi, *PDE_D.Aip_ptr, *PDE_D.Bip_ptr, *PDE_D.Cip_ptr, *PDE_D.Dip_ptr);
         PDE_solver_initial_call_of_solver=1;
         
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
         for(int i=0; i<npxi; i++) (*PDE_D.Iip_ptr)[i]=(*PDE_D.Ii_ptr)[i]=0.0;
     }
     
@@ -695,16 +701,21 @@ void Step_PDE_O2t_Int(double theta, int it_max, double zs, double ze,
     // compute all matrix elements
     //=================================================================================
     int i=1;
-    compute_lambda_i_02(dz*theta, dz*kap, i, 1, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, *PDE_D.Ci_ptr, PDE_D);
+    compute_lambda_i_02(dz*theta, i, 1, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, *PDE_D.Ci_ptr , PDE_D, &PDE_D.lambda [i][0]);
+    compute_lambda_i_02(dz*kap  , i, 1, *PDE_D.Aip_ptr,*PDE_D.Bip_ptr,*PDE_D.Cip_ptr, PDE_D, &PDE_D.lambdap[i][0]); 
     
 #ifdef OPENMP_ACTIVATED    
 #pragma omp parallel for default(shared)	
 #endif	
     for(i=2; i<npxi-2; i++)
-        compute_lambda_i_02(dz*theta, dz*kap, i, 2, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, *PDE_D.Ci_ptr, PDE_D);
+    {
+        compute_lambda_i_02(dz*theta, i, 2, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, *PDE_D.Ci_ptr , PDE_D, &PDE_D.lambda [i][0]);
+        compute_lambda_i_02(dz*kap  , i, 2, *PDE_D.Aip_ptr,*PDE_D.Bip_ptr,*PDE_D.Cip_ptr, PDE_D, &PDE_D.lambdap[i][0]); 
+    }
     
     i=npxi-2;
-    compute_lambda_i_02(dz*theta, dz*kap, i, 3, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, *PDE_D.Ci_ptr, PDE_D);
+    compute_lambda_i_02(dz*theta, i, 3, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, *PDE_D.Ci_ptr , PDE_D, &PDE_D.lambda [i][0]);
+    compute_lambda_i_02(dz*kap  , i, 3, *PDE_D.Aip_ptr,*PDE_D.Bip_ptr,*PDE_D.Cip_ptr, PDE_D, &PDE_D.lambdap[i][0]); 
     
     //=================================================================================
     // compute Ui* and bi*

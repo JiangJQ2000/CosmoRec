@@ -375,7 +375,7 @@ void update_Voigt_profile_Ly_n(double z, double nu21, int n, const vector<double
     // Ly-n profiles
     //==============================================================================================================================
 #ifdef OPENMP_ACTIVATED    
-#pragma omp parallel for default(shared)	
+//#pragma omp parallel for default(shared)	
 #endif	
     for(int k=0; k<(int)xi.size(); k++) 
     {
@@ -390,7 +390,7 @@ void update_Voigt_profile_Ly_n(double z, double nu21, int n, const vector<double
     if(two_g_process)
     {
 #ifdef OPENMP_ACTIVATED    
-#pragma omp parallel for default(shared)	
+//#pragma omp parallel for default(shared)	
 #endif	
         for(int k=0; k<(int)xi.size(); k++) 
         {
@@ -722,7 +722,7 @@ void add_Ly_n_sc_only(int n, double z, double nu21, double Tg, double Te, double
     else if(!diffusion_l && recoil_l) add_ptr_f=add_recoil_f;
     
 #ifdef OPENMP_ACTIVATED    
-#pragma omp parallel for default(shared)	
+//#pragma omp parallel for default(shared)	
 #endif	
     for(int k=0; k<(int)xi.size(); k++) 
     {
@@ -884,7 +884,7 @@ void add_Ly_n_sc_em_full(int n, double z, double nu21, double Tg, double Te, dou
     PDE_Setup_D.PDE_funcs->Voigt_profiles_Dnem_eff[n-2]=Dnem/nu21;
     
 #ifdef OPENMP_ACTIVATED    
-#pragma omp parallel for default(shared)	
+//#pragma omp parallel for default(shared)	
 #endif	
     for(int k=0; k<(int)xi.size(); k++) 
     {
@@ -940,7 +940,6 @@ void add_nsd_1s_Raman_terms(int n, int l, double (*phi_func)(int, int), double D
     //----------------------------------------------------------
     // ns/nd-1s Raman term
     //----------------------------------------------------------    
-    double phi_nsd_Raman_em;
     double nun1=PDE_Setup_D.HI->Level(n, 1).Get_Dnu_1s();
     //
     double sig_nsd=(2.0*l+1.0)/2.0/FOURPI*pow(const_cl/nu21, 2); 
@@ -949,7 +948,6 @@ void add_nsd_1s_Raman_terms(int n, int l, double (*phi_func)(int, int), double D
     double Dnem_nsd=Dnem*nu21;
     double x_c=const_h_kb*nun1/Tg;
     double exp_dum=exp(-x_c);
-    double npl_x;
     //
     int klow=PDE_Setup_D.PDE_funcs->index_emission[n-2];    
 
@@ -959,9 +957,9 @@ void add_nsd_1s_Raman_terms(int n, int l, double (*phi_func)(int, int), double D
     for(int k=klow; k<(int)xi.size(); k++) 
     {
         double x=xi[k];
-        phi_nsd_Raman_em=phi_func(n, k); // vacuum profile versus dy=dnu/nuj1
+        double phi_nsd_Raman_em=phi_func(n, k); // vacuum profile versus dy=dnu/nuj1
         //
-        npl_x =PDE_Setup_D.PDE_funcs->exp_x[k]/(1.0-PDE_Setup_D.PDE_funcs->exp_x[k]);
+        double npl_x =PDE_Setup_D.PDE_funcs->exp_x[k]/(1.0-PDE_Setup_D.PDE_funcs->exp_x[k]);
         //  
         double exp_fac_nsd=exp_dum/npl_x;
         double DD=kappa_nsd1s*phi_nsd_Raman_em/x/x;
@@ -987,7 +985,6 @@ void add_nsd_1s_2gamma_terms(int n, int l, double (*phi_func)(int, int), double 
     //----------------------------------------------------------
     // ns/nd-1s 2 gamma term
     //----------------------------------------------------------    
-    double phi_nsd_2g_em;
     double nun1=PDE_Setup_D.HI->Level(n, l).Get_Dnu_1s();
     //
     double sig_nsd=(2.0*l+1.0)/2.0/FOURPI*pow(const_cl/nu21, 2); 
@@ -1005,7 +1002,7 @@ void add_nsd_1s_2gamma_terms(int n, int l, double (*phi_func)(int, int), double 
     for(int k=0; k<kmax; k++) 
     {
         double x=xi[k];
-        phi_nsd_2g_em=phi_func(n, k); // vacuum profile versus dy=dnu/nuj1
+        double phi_nsd_2g_em=phi_func(n, k); // vacuum profile versus dy=dnu/nuj1
         //
         double npl_x=PDE_Setup_D.PDE_funcs->exp_x[k]/(1.0-PDE_Setup_D.PDE_funcs->exp_x[k]);
         //

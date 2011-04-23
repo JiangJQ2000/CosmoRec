@@ -278,7 +278,7 @@ void set_startup_data(string filename, double param[12], Parameters_form_initfil
     
     set_startup_data(param, inparams);
     
-    if(show_CosmoRec_mess>=0)
+    if( show_CosmoRec_mess>=0 && (write_Xe_Te_sol!=0 || write_populations!=0) )
     {
         cout << "\n output-path: " << path << endl;
         cout << " addname    : " << addname << endl;

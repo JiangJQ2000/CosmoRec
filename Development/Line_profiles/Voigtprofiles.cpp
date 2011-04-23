@@ -107,10 +107,9 @@ double Voigtprofile_Base :: phi_DC(double x, double a)
 
 double Voigtprofile_Base :: phi_wings(double x, double a)
 { 
-  double x2=x*x, d=a*a/x2; 
-  double K0=1.0+1.5/x2+15.0/4.0/x2/x2+105.0/8.0/x2/x2/x2;
-  double K1=1.0+5.0/x2+105.0/4.0/x2/x2;
-
+  register double x2=x*x, d=a*a/x2; 
+  register double K0=1.0+(1.5+(15.0/4.0+105.0/8.0/x2)/x2)/x2;
+  register double K1=1.0+(5.0+105.0/4.0/x2)/x2;
   return a/(x2*PI)*(K0-d*K1); 
 }
 
@@ -125,10 +124,8 @@ double Voigtprofile_Base :: dphi_dx_DC(double x, double a)
 
 double Voigtprofile_Base :: dphi_dx_wings(double x, double a)
 { 
-  double x2=x*x, a2=a*a; 
-
-  return -2.0*a/(x*x2*PI)*(1.0 +2.0*(1.5-a2)/x2 +15.0*(0.75-a2)/(x2*x2) 
-         +105.0*(0.5-a2)/(x2*x2*x2)); 
+  register double x2=x*x, a2=a*a; 
+  return -2.0*a/(x*x2*PI)*(1.0 + (2.0*(1.5-a2)+(15.0*(0.75-a2)+105.0*(0.5-a2)/x2)/x2)/x2 ); 
 }
 
 //======================================================================================
@@ -136,8 +133,8 @@ double Voigtprofile_Base :: dphi_dx_wings(double x, double a)
 //======================================================================================
 double Voigtprofile_Base :: xi_Int_wings(double x, double a)
 { 
-  double x2=x*x, a2=a*a; 
-  return -a/PI/x*(1.0 +(0.5-a2/3.0)/x2 + (0.75-a2)/x2/x2 + (1.875-15.0*a2/4.0)/x2/x2/x2 );
+  register double x2=x*x, a2=a*a; 
+  return -a/PI/x*(1.0 +((0.5-a2/3.0) + ((0.75-a2) + (1.875-15.0*a2/4.0)/x2)/x2)/x2 );
 }
 
 
@@ -159,11 +156,11 @@ const double Voigtprofile_Dawson_x_wing=30.0;
 double Voigtprofile_Dawson :: Dawson(double x)
 { return Dawson_Int(x); }
 
-void Voigtprofile_Dawson :: eval_Hn(double x)
+void Voigtprofile_Dawson :: eval_Hn(double x, double *H)
 {
   double x2=x*x;
 
-  F=Dawson(x);
+  double F=Dawson(x);
   H[0]=exp(-x2);
   H[1]=2.0/SQRT_PI*(2.0*x*F-1.0);
   H[2]=H[0]*(1.0-2.0*x2);
@@ -177,24 +174,6 @@ void Voigtprofile_Dawson :: eval_Hn(double x)
   return;
 }
 
-void Voigtprofile_Dawson :: display_Hn()
-{
-  cout << " Voigtprofile_Dawson :: display_Hn: "
-       << " F= " << F 
-       << "\n H0= " << H[0]  
-       << "\n H1= " << H[1]  
-       << "\n H2= " << H[2]  
-       << "\n H3= " << H[3]  
-       << "\n H4= " << H[4] 
-       << "\n H5= " << H[5] 
-       << "\n H6= " << H[6] 
-       << "\n H7= " << H[7] 
-       << "\n H8= " << H[8] 
-       << endl;
-
-  return;
-}
-
 //======================================================================================
 // Voigt-profile based on expansion in a (Mihalas) 
 // for a<~ 0.01 these should be accurate <~ 1.0e-8
@@ -204,18 +183,18 @@ void Voigtprofile_Dawson :: display_Hn()
 double Voigtprofile_Dawson :: phi(double x, double a)
 {
   if(fabs(x)>=Voigtprofile_Dawson_x_wing) return phi_wings(x, a);
-  double r=0.0;
-  eval_Hn(x);
+  double r=0.0, H[9];
+  eval_Hn(x, H);
   r=H[0]+(H[1]+(H[2]+(H[3]+(H[4]+(H[5]+(H[6]+(H[7]+H[8]*a)*a)*a)*a)*a)*a)*a)*a;
 
   return r/SQRT_PI;
 }
 
-void Voigtprofile_Dawson :: eval_dHn(double x)
+void Voigtprofile_Dawson :: eval_dHn(double x, double *dH)
 {
   double x2=x*x;
 
-  F=Dawson(x);
+  double F=Dawson(x);
   dH[0]=-2.0*x*exp(-x2);
   dH[1]= 4.0/SQRT_PI*(F+x-2.0*F*x2);
   dH[2]=dH[0]*(3.0-2.0*x2);
@@ -230,22 +209,6 @@ void Voigtprofile_Dawson :: eval_dHn(double x)
   return;
 }
 
-void Voigtprofile_Dawson :: display_dHn()
-{
-  cout << " Voigtprofile_Dawson :: display_dHn: "
-       << " F= " << F 
-       << "\n dH0= " << dH[0]  
-       << "\n dH1= " << dH[1]  
-       << "\n dH2= " << dH[2]  
-       << "\n dH3= " << dH[3]  
-       << "\n dH4= " << dH[4] 
-       << "\n dH5= " << dH[5] 
-       << "\n dH6= " << dH[6] 
-       << endl;
-
-  return;
-}
-
 //======================================================================================
 // 1. derivative of Voigt-profile based on expansion in a (Mihalas) 
 // for a<~ 0.01 these should be accurate <~ 1.0e-8
@@ -255,8 +218,8 @@ void Voigtprofile_Dawson :: display_dHn()
 double Voigtprofile_Dawson :: dphi_dx(double x, double a)
 {
   if(fabs(x)>=Voigtprofile_Dawson_x_wing) return dphi_dx_wings(x, a);
-  double r=0.0;
-  eval_dHn(x);
+  double r=0.0, dH[9];
+  eval_dHn(x, dH);
   r=dH[0]+(dH[1]+(dH[2]+(dH[3]+(dH[4]+(dH[5]+(dH[6]+(dH[7]+dH[8]*a)*a)*a)*a)*a)*a)*a)*a;
 
   return r/SQRT_PI;
@@ -265,7 +228,7 @@ double Voigtprofile_Dawson :: dphi_dx(double x, double a)
 //======================================================================================
 // approximation for int_{-xmin}^xmax phi(y) dy
 //======================================================================================
-void Voigtprofile_Dawson :: eval_IHn(double t1, double t2)
+void Voigtprofile_Dawson :: eval_IHn(double t1, double t2, double *IH)
 {
     double t12=t1*t1, t22=t2*t2;
     double F1=Dawson(t1), F2=Dawson(t2);
@@ -290,29 +253,11 @@ void Voigtprofile_Dawson :: eval_IHn(double t1, double t2)
     return;
 }
 
-void Voigtprofile_Dawson :: display_IHn()
-{
-    cout << " Voigtprofile_Dawson :: display_IHn: "
-    << " F= " << F 
-    << "\n IH0= " << IH[0]  
-    << "\n IH1= " << IH[1]  
-    << "\n IH2= " << IH[2]  
-    << "\n IH3= " << IH[3]  
-    << "\n IH4= " << IH[4] 
-    << "\n IH5= " << IH[5] 
-    << "\n IH6= " << IH[6] 
-    << "\n IH7= " << IH[7] 
-    << "\n IH8= " << IH[8] 
-    << endl;
-    
-    return;
-}
-
 //======================================================================================
 double Voigtprofile_Dawson :: xi_Int_Dawson(double xmin, double xmax, double a)
 {
-    double r=0.0;
-    eval_IHn(xmin, xmax);
+    double r=0.0, IH[9];
+    eval_IHn(xmin, xmax, IH);
     r=IH[0]+(IH[1]+(IH[2]+(IH[3]+(IH[4]+(IH[5]+(IH[6]+(IH[7]+IH[8]*a)*a)*a)*a)*a)*a)*a)*a;
     
     return r/SQRT_PI;

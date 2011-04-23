@@ -590,15 +590,15 @@ void run_RECFAST_pp(double param[12], const int nz, double *z_arr,
 //
 // The value of runpars[1] is only important for runmode 0 & 1.
 //
-// By default CosmoRec writes into a file the ionisation history, solutions for the
-// populations of the resolved levels, and some information about the Cosmology (usually 
+// CosmoRec can be set to output the ionization history & electron temperature, solutions for 
+// the populations of the resolved levels, and some information about the Cosmology (usually 
 // directed into the directory "./outputs/"). This can cause problems when using CosmoRec 
-// with a parallel CosmoMC, however, it possible to controll the outputs through runpars[2]:
+// with a parallel CosmoMC, however, it possible to control the outputs through runpars[2]:
 // 
-// runpars[2]==0: write out the recombination history, populations, and the cosmology.
-// runpars[2]==1: write out the recombination history, and the cosmology.
-// runpars[2]==2: write out only the recombination history.
-// runpars[2]==3: don't write out anything.
+// runpars[2]==0: don't write out anything (default).
+// runpars[2]==1: write out only the recombination history.
+// runpars[2]==2: write out the recombination history, and the cosmology.
+// runpars[2]==3: write out the recombination history, populations, and the cosmology.
 //
 //===========================================================================================================
 int CosmoRec(const int runmode, const double runpars[5], 
@@ -611,18 +611,18 @@ int CosmoRec(const int runmode, const double runpars[5],
     //======================================================================
     // switch off messages 
     //======================================================================
-    show_CosmoRec_mess=-1;
+    show_CosmoRec_mess=0;
 
     //======================================================================
     // switch on/off outputs 
     //======================================================================
-    write_Xe_Te_sol=1;
-    write_populations=1;
-    bool write_cosmology=1;
+    write_Xe_Te_sol=0;
+    write_populations=0;
+    bool write_cosmology=0;
     
-    if((int)runpars[2] > 0) write_populations=0;
-    if((int)runpars[2] > 1) write_cosmology=0;
-    if((int)runpars[2] > 2) write_Xe_Te_sol=0;
+    if((int)runpars[2] > 0) write_Xe_Te_sol=1;
+    if((int)runpars[2] > 1) write_cosmology=1;
+    if((int)runpars[2] > 2) write_populations=1;
     //======================================================================
 
     double params[12];
@@ -630,16 +630,17 @@ int CosmoRec(const int runmode, const double runpars[5],
     //======================================================================
     // general setup 
     //======================================================================
-    params[0]=5000;  // number of redshift points for CosmoRec computation;
-                    // for higher accuracy this number should be increased
+    params[0]=750;  // number of redshift points for CosmoRec computation;
+                    // for higher accuracy this number should be increased;
+                    // a smaller number than ~750 is not recommended.
     params[1]=3000; // starting redshift
     params[2]=0;    // ending redshift
 
     //======================================================================
     // cosmological parameters 
     //======================================================================
-    params[3]= yhe;
-    params[4]= tcmb;
+    params[3]= yhe;              // Helium mass fraction
+    params[4]= tcmb;             // CMB temperature today
     //
     params[5]= omegac + omegab;  // Omega_matter
     params[6]= omegab;           // Omega_b
@@ -688,7 +689,7 @@ int CosmoRec(const int runmode, const double runpars[5],
     //======================================================================
     // number of iterations over HI & HeI diffusion problem
     //======================================================================
-    Diff_iteration_max=2;
+    Diff_iteration_max=1;
 
     //======================================================================
     // settings for non-default cases
@@ -698,10 +699,10 @@ int CosmoRec(const int runmode, const double runpars[5],
     else if((int)runpars[1]==2){ nShells=10; ntg_max=8; nR_max=7; nShellsHeI=3; nHeFeedback=0; }
     else if((int)runpars[1]==3){ nShells=10; ntg_max=8; nR_max=7; nShellsHeI=5; nHeFeedback=-5; }      
     
-    nShells=4; ntg_max=4; nR_max=3; nShellsHeI=2; nHeFeedback=-2; flag_HI_absorption=1;
+//    nShells=4; ntg_max=4; nR_max=3; nShellsHeI=2; nHeFeedback=-2; flag_HI_absorption=1;
 //    nShells=4; ntg_max=4; nR_max=0; nShellsHeI=2; nHeFeedback=-2; flag_HI_absorption=1;
-    induced_flag=2;
-    Diffusion_flag=1;
+//    induced_flag=2;
+//    Diffusion_flag=1;
     
     //======================================================================
     if(runmode==1) Diffusion_flag=0;

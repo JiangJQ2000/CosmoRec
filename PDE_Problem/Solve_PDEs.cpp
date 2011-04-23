@@ -244,16 +244,8 @@ void arm_PDE_solver(Cosmos &cos, Gas_of_Atoms &HIA, vector<double> &xarr, vector
 
         //=========================================================================== 
         for(int ni=(int)max(2, Get_nmax_Raman_correction()+1); ni<=nresmax; ni++)
-        {
-#ifdef OPENMP_ACTIVATED    
-#pragma omp parallel for default(shared)	
-#endif	
             for(int k=0; k<npts; k++)
-            {
-                PDE_funcs.Raman_ns_1s[ni-2].ratio[k]=1.0;
-                PDE_funcs.Raman_nd_1s[ni-2].ratio[k]=1.0;
-            }
-        }
+                PDE_funcs.Raman_ns_1s[ni-2].ratio[k]=PDE_funcs.Raman_nd_1s[ni-2].ratio[k]=1.0;
         
         //=========================================================================== 
         // two-photon profiles
@@ -274,16 +266,8 @@ void arm_PDE_solver(Cosmos &cos, Gas_of_Atoms &HIA, vector<double> &xarr, vector
 
         //=========================================================================== 
         for(int ni=(int)max(2, Get_nmax_two_g_correction()+1); ni<=nresmax; ni++)
-        {
-#ifdef OPENMP_ACTIVATED    
-#pragma omp parallel for default(shared)	
-#endif	
             for(int k=0; k<npts; k++)
-            {
-                PDE_funcs.two_g_ns_1s[ni-2].ratio[k]=1.0;
-                PDE_funcs.two_g_nd_1s[ni-2].ratio[k]=1.0;
-            }
-        }
+                PDE_funcs.two_g_ns_1s[ni-2].ratio[k]=PDE_funcs.two_g_nd_1s[ni-2].ratio[k]=1.0;
         
         //=========================================================================== 
         // A-coefficients and splitting points
@@ -390,9 +374,6 @@ void init_Solve_PDE_Data(int nresmax, bool bound)
     //==================================================================
     // initial solution
     //==================================================================
-#ifdef OPENMP_ACTIVATED    
-#pragma omp parallel for default(shared)	
-#endif	
     for(int k=0; k<(int)SPDE_D.yarr.size(); k++) SPDE_D.yarr[k]=0.0;
     
     return;

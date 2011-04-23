@@ -34,15 +34,15 @@ int CosmoRec(int narg, char *args[]);
 //
 // The value of runpars[1] is only important for runmode 0 & 1.
 //
-// By default CosmoRec writes into a file the ionisation history, solutions for the
-// populations of the resolved levels, and some information about the Cosmology (usually 
+// CosmoRec can be set to output the ionization history & electron temperature, solutions for 
+// the populations of the resolved levels, and some information about the Cosmology (usually 
 // directed into the directory "./outputs/"). This can cause problems when using CosmoRec 
-// with a parallel CosmoMC, however, it possible to controll the outputs through runpars[2]:
+// with a parallel CosmoMC, however, it possible to control the outputs through runpars[2]:
 // 
-// runpars[2]==0: write out the recombination history, populations, and the cosmology.
-// runpars[2]==1: write out the recombination history, and the cosmology.
-// runpars[2]==2: write out only the recombination history.
-// runpars[2]==3: don't write out anything.
+// runpars[2]==0: don't write out anything (default).
+// runpars[2]==1: write out only the recombination history.
+// runpars[2]==2: write out the recombination history, and the cosmology.
+// runpars[2]==3: write out the recombination history, populations, and the cosmology.
 //
 //===========================================================================================================
 int CosmoRec(const int runmode, const double runpars[5], 

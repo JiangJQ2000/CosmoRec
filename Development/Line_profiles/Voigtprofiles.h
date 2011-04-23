@@ -73,7 +73,11 @@ class Voigtprofile_Dawson : public Voigtprofile_Base
 {
 private:
     
-    double F, H[9], dH[9], IH[9];
+    double Dawson(double x);                        // Dawson-integral exp(-x^2) * int_0^x  exp(y^2) dy
+    void eval_Hn(double x, double *H);
+    void eval_dHn(double x, double *dH);
+    void eval_IHn(double x1, double x2, double *IH);
+    
     double xi_Int_Dawson(double xmin, double xmax, double a);   
     
 public:
@@ -83,20 +87,6 @@ public:
     //======================================================================================
     Voigtprofile_Dawson();
     ~Voigtprofile_Dawson();
-    
-    double Dawson(double x);             // Dawson-integral exp(-x^2) * int_0^x  exp(y^2) dy
-    double H0(double x){ return exp(-x*x); }
-    double H1(double x){ return 2.0/SQRT_PI*(2.0*x*Dawson(x)-1.0); }
-    double H2(double x){ return exp(-x*x)*(1.0-2.0*x*x); }
-    double H3(double x){ return 4.0/3.0/SQRT_PI*( x*x-1.0 + Dawson(x)*x*(3.0-2.0*x*x) ); }
-    double H4(double x){ return exp(-x*x)*(3.0+4.0*x*x*(x*x-3.0) )/6.0; }
-    
-    void eval_Hn(double x);
-    void display_Hn();
-    void eval_dHn(double x);
-    void display_dHn();
-    void eval_IHn(double x1, double x2);
-    void display_IHn();
     
     //======================================================================================
     // different versions for the Voigt-profile

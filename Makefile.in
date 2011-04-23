@@ -7,13 +7,13 @@ CC= g++
 # compiler flags
 #===============================================================================
 CXXFLAGS = -Wall -pedantic -O2
-#CXXFLAGS = -Wall -pedantic -pg
+CXXFLAGS = -Wall -pedantic -pg
 
 #===============================================================================
 # linker flags
 #===============================================================================
 LXXFLAGS =
-#LXXFLAGS = -pg
+LXXFLAGS = -pg
 
 #===============================================================================
 # GSL lib
@@ -29,7 +29,7 @@ LIBSGSL = -L$(GSL_LIB_PATH) -l$(GSL) -lgslcblas
 # If openmp support should be used uncomment the next 3 definitions 
 # and set them accordingly.
 #===============================================================================
-USE_OPENMP   = -D OPENMP_ACTIVATED
+#USE_OPENMP   = -D OPENMP_ACTIVATED
 LIBOPENMI    = -lgomp
 CXXFLAGS    += -fopenmp
 

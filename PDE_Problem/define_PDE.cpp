@@ -348,7 +348,8 @@ void update_exp_x(double Tg, double nu21, const vector<double> &xi)
 #ifdef OPENMP_ACTIVATED    
 #pragma omp parallel for default(shared)	
 #endif	
-    for(int k=0; k<(int)xi.size(); k++) PDE_Setup_D.PDE_funcs->exp_x[k]=exp(-const_h_kb*nu21*xi[k]/Tg);
+    for(int k=0; k<(int)xi.size(); k++) 
+        PDE_Setup_D.PDE_funcs->exp_x[k]=exp(-const_h_kb*nu21*xi[k]/Tg);
     
     return;
 }
@@ -375,7 +376,7 @@ void update_Voigt_profile_Ly_n(double z, double nu21, int n, const vector<double
     // Ly-n profiles
     //==============================================================================================================================
 #ifdef OPENMP_ACTIVATED    
-//#pragma omp parallel for default(shared)	
+#pragma omp parallel for default(shared)	
 #endif	
     for(int k=0; k<(int)xi.size(); k++) 
     {
@@ -390,7 +391,7 @@ void update_Voigt_profile_Ly_n(double z, double nu21, int n, const vector<double
     if(two_g_process)
     {
 #ifdef OPENMP_ACTIVATED    
-//#pragma omp parallel for default(shared)	
+#pragma omp parallel for default(shared)	
 #endif	
         for(int k=0; k<(int)xi.size(); k++) 
         {
@@ -722,7 +723,7 @@ void add_Ly_n_sc_only(int n, double z, double nu21, double Tg, double Te, double
     else if(!diffusion_l && recoil_l) add_ptr_f=add_recoil_f;
     
 #ifdef OPENMP_ACTIVATED    
-//#pragma omp parallel for default(shared)	
+#pragma omp parallel for default(shared)	
 #endif	
     for(int k=0; k<(int)xi.size(); k++) 
     {
@@ -884,7 +885,7 @@ void add_Ly_n_sc_em_full(int n, double z, double nu21, double Tg, double Te, dou
     PDE_Setup_D.PDE_funcs->Voigt_profiles_Dnem_eff[n-2]=Dnem/nu21;
     
 #ifdef OPENMP_ACTIVATED    
-//#pragma omp parallel for default(shared)	
+#pragma omp parallel for default(shared)	
 #endif	
     for(int k=0; k<(int)xi.size(); k++) 
     {
@@ -1108,20 +1109,16 @@ void def_PDE_Lyn_and_2s1s(double z, const vector<double> &xi, vector<double> &Ai
     update_exp_x(Tg, nu21, xi);
     
     //------------------------------------------------------
-    // reset things (Bi is alway initialized with Hubble)
+    // reset things 
     //------------------------------------------------------
 #ifdef OPENMP_ACTIVATED    
 #pragma omp parallel for default(shared)	
 #endif	
-    for(int k=0; k<(int)xi.size(); k++) Ai[k]=Ci[k]=Di[k]=0.0;
-    
-    //------------------------------------------------------
-    // Hubble term 
-    //------------------------------------------------------
-#ifdef OPENMP_ACTIVATED    
-#pragma omp parallel for default(shared)	
-#endif	
-    for(int k=0; k<(int)xi.size(); k++) Bi[k]=-xi[k]/(1.0+z);  
+    for(int k=0; k<(int)xi.size(); k++)
+    {
+        Ai[k]=Ci[k]=Di[k]=0.0;
+        Bi[k]=-xi[k]/(1.0+z);  // Hubble term
+    }
     
     //------------------------------------------------------
     // electron scattering terms first (smallest term)

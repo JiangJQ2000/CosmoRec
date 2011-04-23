@@ -9,6 +9,7 @@
 
 #include <cstdlib>
 #include <fstream>
+#include <cmath>
 
 using namespace std;
 
@@ -58,6 +59,31 @@ int main_random()
     
     cout.precision(10); 
     clock_t seconds_start=clock(), seconds_end;
+
+/*    int runsn=10000;
+//    double *test=new double[runsn*5+5];
+    vector<vector<double> > test(runsn, vector<double> (5));
+    
+    for(int nr=0; nr<20000; nr++)
+    {
+#pragma omp parallel for default(shared)	
+        for(int i = 0; i < runsn; i++) 
+        {
+            for(int kl=0; kl<5; kl++)
+                test[i][kl]=exp(10.0*(2.0*i)/runsn);
+//                test[5*i+kl]=exp(10.0*(2.0*i)/runsn);
+        }
+    }
+    
+    seconds_end=clock();
+    double seconds_Drun=(1.0*seconds_end-seconds_start)/CLOCKS_PER_SEC;
+    cout << " The run took " << seconds_Drun << " sec. " << endl;    
+    seconds_start=seconds_end;
+    
+    cout << " **** Done. ****" << endl << endl; 
+    exit(0);
+*/    
+
     for(int i = 0; i < nrep; i++) 
     {
         cout << " **** Iteration: " << i << " ****" << endl;

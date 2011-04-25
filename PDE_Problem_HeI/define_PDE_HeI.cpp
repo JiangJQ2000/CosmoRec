@@ -47,7 +47,7 @@ struct define_PDE_HeI_runflags
     bool HI_absorption;   // HI continuum absorption on/off
 };
 
-define_PDE_HeI_runflags def_HeI_run={0, 1, 1, 1, 1};  // default setting
+define_PDE_HeI_runflags def_HeI_run={1, 1, 1, 1, 1};  // default setting
 
 //==================================================================================================================================
 void HeI_switch_on_line_scattering(){ def_HeI_run.line_sc=1; return; }
@@ -67,11 +67,11 @@ void HeI_switch_off_2s1s(){ def_HeI_run.A2s1s_em_abs=0; return; }
 
 //==================================================================================================================================
 // for numerical purposes it can be beneficial to add a very small diffusion term, to
-// damp small scale perturbations. The effect of electron scattering is very small on
-// Xe and if one does not want e-scattering be important reducing its efficiency by ~100 
-// will make it extremely insignificant but allows stabilizing the system. This can be 
-// controlled with the e_sc_efficiency parameter. ==1 means full electron scattering.
-// Default is 1.0 if this function is not called.
+// damp small scale perturbations. The effect of electron scattering (in the Fokker-Planck 
+// approximation) on Xe is rather notable for Helium recombinationon. If one does not want 
+// e-scattering be important reducing its efficiency by ~100-1000 will make it extremely 
+// insignificant but allows stabilizing the system. This can be controlled with the e_sc_efficiency 
+// parameter. ==1 means full electron scattering. Default is 1.0 if this function is not called.
 //==================================================================================================================================
 double e_sc_efficiency_HeI=1.0;
 void set_electron_scattering_efficiency_HeI(double val){ e_sc_efficiency_HeI=val; return; }
@@ -606,35 +606,31 @@ void def_PDE_HeI(double z, const vector<double> &xi,
     double rho=PDE_Setup_D_HeI.PDE_funcs->HI_rho(z);
     double Te=Tg*rho;
     
-    //------------------------------------------------------
+    //----------------------------------------------------------
     // exp(x) is at least needed in calling routine
-    //------------------------------------------------------
+    //----------------------------------------------------------
     update_exp_x_HeI(Tg, nu21, xi);
 
-    //------------------------------------------------------
+    //----------------------------------------------------------
     // reset things
-    //------------------------------------------------------
+    //----------------------------------------------------------
 #ifdef OPENMP_ACTIVATED    
 #pragma omp parallel for default(shared)	
 #endif	
-    for(int k=0; k<(int)xi.size(); k++) Ai[k]=Bi[k]=Ci[k]=Di[k]=0.0;
+    for(int k=0; k<(int)xi.size(); k++)
+    {
+        Ai[k]=Ci[k]=Di[k]=0.0;
+        Bi[k]=-xi[k]/(1.0+z);  // Hubble term
+    }
     
-    //------------------------------------------------------
-    // Hubble term 
-    //------------------------------------------------------
-#ifdef OPENMP_ACTIVATED    
-#pragma omp parallel for default(shared)	
-#endif	
-    for(int k=0; k<(int)xi.size(); k++) Bi[k]+=-xi[k]/(1.0+z);  
-    
-    //------------------------------------------------------
+    //----------------------------------------------------------
     // electron scattering terms first (smallest term)
-    //------------------------------------------------------
+    //----------------------------------------------------------
     if(def_HeI_run.el_sc) add_electron_scattering_HeI(z, nu21, Te, Ne, Hz, xi, Ai, Bi, Ci);
     
-    //------------------------------------------------------
+    //----------------------------------------------------------
     // normal Ly-n scatterring and emission/absorption
-    //------------------------------------------------------
+    //----------------------------------------------------------
     update_Voigt_profiles_HeI(z, nu21, xi);
     
     if(def_HeI_run.line_sc || def_HeI_run.line_em_abs)
@@ -650,14 +646,14 @@ void def_PDE_HeI(double z, const vector<double> &xi,
         }
     }
         
-    //------------------------------------------------------
+    //----------------------------------------------------------
     // account for HI absorption
-    //------------------------------------------------------
+    //----------------------------------------------------------
     if(def_HeI_run.HI_absorption) add_HI_absorption_term(z, nu21, Tg, N1s, Hz, xi, Ci);
             
-    //------------------------------------------------------
+    //----------------------------------------------------------
     // Source-term HeI Singlet 2s-1s emission and absorption
-    //------------------------------------------------------
+    //----------------------------------------------------------
     if(def_HeI_run.A2s1s_em_abs) add_HeI_2s_1s_terms(z, nu21, Tg, NHeI1s, Hz, xi, Ci, Di);
     
     return;

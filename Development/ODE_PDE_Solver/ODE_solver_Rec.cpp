@@ -92,7 +92,7 @@ namespace ODE_solver_Rec
         // equal to b & c; c is overwritten
         //------------------------------------------------------
         for(unsigned int j=0; j<c.size(); j++) c[j]=0.0;
-        //
+
         for(unsigned int i=0; i<Jac.A.size(); i++) c[Jac.row[i]]+= Jac.A[i] * b[Jac.col[i]];
         
         return;
@@ -261,7 +261,6 @@ namespace ODE_solver_Rec
             cout << " Something bad happened to the ODE system. Restarting solver. " << endl;
             
             if(isnan_loc(tol)) ifail=10;
-//          if(isnan_loc(tol)) wait_f_r_loc(" This is even worse :S ");
         }
         
         return ifail;
@@ -388,26 +387,39 @@ namespace ODE_solver_Rec
         //===================================================================================
         // fill Matrix with values
         //===================================================================================
-        for(int J=0; J<neq; J++)
-        {   
-            if(global_ODE_Solver_info_ptr_for_function->num_jac) ODE_solver_jac_2p(neq, J, z, Dz, y, &Jij[0]);
-            else ODE_solver_jac_user(neq, J, z, Dz, y, &Jij[0]);
-            
-/*          for(int row=0; row<neq; row++) cout << row << " " << Jij[row] << endl;
-            cout << J << endl;
-            ODE_solver_jac_2p(neq, J, z, Dz, y, &Jij[0]);
-            for(int row=0; row<neq; row++) cout << row << " " << Jij[row] << endl;
-            wait_f_r_loc();
-*/          
-            for(int row=0; row<neq; row++)
-                if(Jij[row]!=0.0)
-                {
-                    Jac.A.push_back(Jij[row]);
-                    Jac.col.push_back(J);
-                    Jac.row.push_back(row);
-                    
-                    if(J==row) Jac.diags.push_back((int)(Jac.A.size()-1));
-                }
+        if(global_ODE_Solver_info_ptr_for_function->num_jac) 
+        {
+            for(int J=0; J<neq; J++)
+            {   
+                ODE_solver_jac_2p(neq, J, z, Dz, y, &Jij[0]);
+                
+                for(int row=0; row<neq; row++)
+                    if(Jij[row]!=0.0)
+                    {
+                        Jac.A.push_back(Jij[row]);
+                        Jac.col.push_back(J);
+                        Jac.row.push_back(row);
+                        
+                        if(J==row) Jac.diags.push_back((int)(Jac.A.size()-1));
+                    }
+            }
+        }
+        else 
+        {
+            for(int J=0; J<neq; J++)
+            {   
+                ODE_solver_jac_user(neq, J, z, Dz, y, &Jij[0]);
+                
+                for(int row=0; row<neq; row++)
+                    if(Jij[row]!=0.0)
+                    {
+                        Jac.A.push_back(Jij[row]);
+                        Jac.col.push_back(J);
+                        Jac.row.push_back(row);
+                        
+                        if(J==row) Jac.diags.push_back((int)(Jac.A.size()-1));
+                    }
+            }
         }
         
         if(mess==1) cout << " Number of non-zero elements = " << Jac.A.size() 

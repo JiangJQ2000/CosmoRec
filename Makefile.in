@@ -7,13 +7,14 @@ CC= g++
 # compiler flags
 #===============================================================================
 CXXFLAGS = -Wall -pedantic -O2
-CXXFLAGS = -Wall -pedantic -pg
+#CXXFLAGS = -Wall -pedantic -pg -O2
+CXXFLAGS = -Wall -pedantic -g -O1
 
 #===============================================================================
 # linker flags
 #===============================================================================
 LXXFLAGS =
-LXXFLAGS = -pg
+#LXXFLAGS = -pg
 
 #===============================================================================
 # GSL lib
@@ -30,8 +31,8 @@ LIBSGSL = -L$(GSL_LIB_PATH) -l$(GSL) -lgslcblas
 # and set them accordingly.
 #===============================================================================
 #USE_OPENMP   = -D OPENMP_ACTIVATED
-LIBOPENMI    = -lgomp
-CXXFLAGS    += -fopenmp
+#LIBOPENMI    = -lgomp
+#CXXFLAGS    += -fopenmp
 
 #===============================================================================
 # grace lib (for outputs with xmgrace from the diffusion modules)

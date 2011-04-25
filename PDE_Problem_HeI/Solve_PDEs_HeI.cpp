@@ -59,7 +59,8 @@ double theta_HeI=0.51;
 //====================================================================================================================
 int solve_with_Kernel=0; // ==0: no kernel correction; 
                          // ==1: kernel correction using iteration; This runmode takes rather long, but the additional
-                         //      correction is small.
+                         //      correction is small. Still with openmp support it may be reasonable to use in the 
+                         //      final iteration of the PDE solver.
 
 //====================================================================================================================
 void switch_off_e_scat_kernel_HeI(){ solve_with_Kernel=0; return; }
@@ -80,6 +81,7 @@ bool HeI_2s_1s_corr_is_on=1;
 int npts_2s1s_HeI=1000;     // number of points for HeI singlet 2s-1s two-photon part
 double xmin_glob_HeI=0.3;   // if 2s-1s correction is on, this should be <~0.3  
 
+//====================================================================================================================
 void switch_off_1s_2s_HeI_correction()
 { 
     HeI_switch_off_2s1s(); 
@@ -185,9 +187,6 @@ void arm_PDE_solver_HeI(double nu21, Cosmos &cos, Gas_of_HeI_Atoms &HeIAtoms,
         //==================================================================
         // HI Lyc photon-ionization cross section at grid-points
         //==================================================================
-#ifdef OPENMP_ACTIVATED    
-#pragma omp parallel for default(shared)	
-#endif	
         for(int k=0; k<(int)xarr.size(); k++)
             PDE_funcs_HeI.sig_Lyc_x[k]=HeIAtoms.HILyc.sig_phot_ion(xarr[k]*nu21);
         

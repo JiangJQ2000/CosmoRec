@@ -602,14 +602,10 @@ void update_2gamma_profiles(double z)
 //==================================================================================================================================
 void Dp_Dnem_Raman_update(int ni, int li, int n, double N1s, double Nj, double Tg, double &DRp, double &DRm)
 {
-    if(ni>=n) return;
-    
-    double nuij, exp_x, npij, Aij;
-    
-    nuij=PDE_Setup_D.HI->Level(n, 1).Get_nu21(ni, li);
-    exp_x=exp(-const_h_kb*nuij/Tg);
-    npij=exp_x/(1.0-exp_x);
-    Aij=PDE_Setup_D.HI->Level(n, 1).Get_A21(ni, li);
+    double nuij=PDE_Setup_D.HI->Level(n, 1).Get_nu21(ni, li);
+    double exp_x=exp(-const_h_kb*nuij/Tg);
+    double npij=exp_x/(1.0-exp_x);
+    double Aij=PDE_Setup_D.HI->Level(n, 1).Get_A21(ni, li);
     //
     DRm+=Aij*(1.0+npij);
     DRp+=3.0/(2.0*li+1.0)*Nj*Aij*npij;
@@ -619,14 +615,10 @@ void Dp_Dnem_Raman_update(int ni, int li, int n, double N1s, double Nj, double T
 
 void Dp_Dnem_2gamma_update(int ni, int li, int n, double N1s, double Nj, double Tg, double &DRp, double &DRm)
 {
-    if(ni<=n) return;
-
-    double nuij, exp_x, npij, Aij;
-    
-    nuij=PDE_Setup_D.HI->Level(ni, li).Get_nu21(n, 1);
-    exp_x=exp(-const_h_kb*nuij/Tg);
-    npij=exp_x/(1.0-exp_x);
-    Aij=PDE_Setup_D.HI->Level(ni, li).Get_A21(n, 1);
+    double nuij=PDE_Setup_D.HI->Level(ni, li).Get_nu21(n, 1);
+    double exp_x=exp(-const_h_kb*nuij/Tg);
+    double npij=exp_x/(1.0-exp_x);
+    double Aij=PDE_Setup_D.HI->Level(ni, li).Get_A21(n, 1);
     //
     DRm+=(2.0*li+1.0)/3.0*Aij*npij;
     DRp+=Aij*(1.0+npij)*Nj;
@@ -650,9 +642,10 @@ void Dp_Dnem_function(int n, double z, double Tg, double pd_np, double nem, doub
     //----------------------------------------------------------
     if(Raman_process)
     {
-        if(Raman_process_nmax>=2) Dp_Dnem_Raman_update(2, 0, n, N1s, PDE_Setup_D.PDE_funcs->HI_Xnl(z, 2, 0)*NH, Tg, DRp, DRm);
+        if(Raman_process_nmax>=2 && n>2) 
+        	Dp_Dnem_Raman_update(2, 0, n, N1s, PDE_Setup_D.PDE_funcs->HI_Xnl(z, 2, 0)*NH, Tg, DRp, DRm);
         
-        for(int ni=3; ni<=(int)min(7, Raman_process_nmax); ni++)
+        for(int ni=3; ni<=(int)min(7, n-1); ni++)
         {
             Dp_Dnem_Raman_update(ni, 0, n, N1s, PDE_Setup_D.PDE_funcs->HI_Xnl(z, ni, 0)*NH, Tg, DRp, DRm);
             Dp_Dnem_Raman_update(ni, 2, n, N1s, PDE_Setup_D.PDE_funcs->HI_Xnl(z, ni, 2)*NH, Tg, DRp, DRm);
@@ -664,7 +657,7 @@ void Dp_Dnem_function(int n, double z, double Tg, double pd_np, double nem, doub
     //----------------------------------------------------------
     if(two_g_process)
     {
-        for(int ni=3; ni<=(int)min(8, two_g_process_nmax); ni++)
+        for(int ni=n+1; ni<=(int)min(8, two_g_process_nmax); ni++)
         {
             Dp_Dnem_2gamma_update(ni, 0, n, N1s, PDE_Setup_D.PDE_funcs->HI_Xnl(z, ni, 0)*NH, Tg, DRp, DRm);
             Dp_Dnem_2gamma_update(ni, 2, n, N1s, PDE_Setup_D.PDE_funcs->HI_Xnl(z, ni, 2)*NH, Tg, DRp, DRm);
@@ -1103,14 +1096,14 @@ void def_PDE_Lyn_and_2s1s(double z, const vector<double> &xi, vector<double> &Ai
     double rho=PDE_Setup_D.PDE_funcs->HI_rho(z);
     double Te=Tg*rho;
     
-    //------------------------------------------------------
+    //----------------------------------------------------------
     // exp(x) is at least needed in calling routine
-    //------------------------------------------------------
+    //----------------------------------------------------------
     update_exp_x(Tg, nu21, xi);
     
-    //------------------------------------------------------
+    //----------------------------------------------------------
     // reset things 
-    //------------------------------------------------------
+    //----------------------------------------------------------
 #ifdef OPENMP_ACTIVATED    
 #pragma omp parallel for default(shared)	
 #endif	
@@ -1120,14 +1113,14 @@ void def_PDE_Lyn_and_2s1s(double z, const vector<double> &xi, vector<double> &Ai
         Bi[k]=-xi[k]/(1.0+z);  // Hubble term
     }
     
-    //------------------------------------------------------
+    //----------------------------------------------------------
     // electron scattering terms first (smallest term)
-    //------------------------------------------------------
+    //----------------------------------------------------------
     if(def_HI_run.el_sc) add_electron_scattering(z, nu21, Te, Ne, Hz, xi, Ai, Bi, Ci);
 
-    //------------------------------------------------------
+    //----------------------------------------------------------
     // normal Ly-n scatterring and emission/absorption
-    //------------------------------------------------------
+    //----------------------------------------------------------
     if(def_HI_run.line_sc || def_HI_run.line_em_abs)
     {
         bool local_line_em_abs=def_HI_run.line_em_abs;
@@ -1142,9 +1135,10 @@ void def_PDE_Lyn_and_2s1s(double z, const vector<double> &xi, vector<double> &Ai
             else if(!local_line_sc && local_line_em_abs) add_Ly_n_em_only(n, z, nu21, Tg, Te, Ne, N1s, Hz, xi, Ci, Di);
         }
     }
-    //------------------------------------------------------
+
+    //----------------------------------------------------------
     // Raman-scattering
-    //------------------------------------------------------
+    //----------------------------------------------------------
     update_Raman_profiles(z);
     
     if(Raman_process)
@@ -1161,9 +1155,9 @@ void def_PDE_Lyn_and_2s1s(double z, const vector<double> &xi, vector<double> &Ai
     
 //  if(z<=1100.0) plot_Raman(xi);
 
-    //------------------------------------------------------
+    //----------------------------------------------------------
     // two-photon emission/absorption
-    //------------------------------------------------------
+    //----------------------------------------------------------
     update_2gamma_profiles(z);
     
     if(two_g_process)
@@ -1177,9 +1171,9 @@ void def_PDE_Lyn_and_2s1s(double z, const vector<double> &xi, vector<double> &Ai
         
 //    if(z<=1100.0){ plot_two_g(xi, nmax); wait_f_r(z); }
         
-    //------------------------------------------------------
+    //----------------------------------------------------------
     // Source-term 2s-1s emission and absorption
-    //------------------------------------------------------
+    //----------------------------------------------------------
     if(def_HI_run.A2s1s_em_abs) 
         add_nsd_1s_2gamma_terms(2, 0, phi_ns1s_2g, PDE_Setup_D.PDE_funcs->HI_Dnem_nl(z, 2, 0), z, nu21, Tg, N1s, Hz, xi, Ci, Di);
     

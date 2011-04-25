@@ -85,7 +85,7 @@ void calc_HeI_Rp_Rm_pd_all(double z, Gas_of_HeI_Atoms &HeIA, double Tg, double T
 //===========================================================================================================
 struct HeI_Rp_pd_eff_Data
 {
-    double *Rp;
+    vector<double> Rp;
     int memindex;
 };
 
@@ -147,8 +147,8 @@ void set_up_splines_for_HeI_pd_Rp_effective(double zend, double zstart,
         //=======================================================================
         for(int i=0; i<ntot+1; i++)
         { 
-            HeI_pd_eff_Data[i].Rp=new double[nz]; 
-            HeI_Dnem_eff_Data[i].Rp=new double[nz]; 
+            HeI_pd_eff_Data[i].Rp.resize(nz); 
+            HeI_Dnem_eff_Data[i].Rp.resize(nz); 
         }
     }   
     
@@ -239,19 +239,19 @@ void set_up_splines_for_HeI_pd_Rp_effective(double zend, double zstart,
     {
         for(int n=0; n<ntot+1; n++)
         {
-            update_spline_coeffies_JC(HeI_pd_eff_Data[n].memindex, nz, Rp_zarr, HeI_pd_eff_Data[n].Rp);
-            update_spline_coeffies_JC(HeI_Dnem_eff_Data[n].memindex, nz, Rp_zarr, HeI_Dnem_eff_Data[n].Rp);
+            update_spline_coeffies_JC(HeI_pd_eff_Data[n].memindex, nz, Rp_zarr, &HeI_pd_eff_Data[n].Rp[0]);
+            update_spline_coeffies_JC(HeI_Dnem_eff_Data[n].memindex, nz, Rp_zarr, &HeI_Dnem_eff_Data[n].Rp[0]);
         }
     }
     else 
     {
         for(int n=0; n<ntot+1; n++)
         {
-            HeI_pd_eff_Data[n].memindex=calc_spline_coeffies_JC(nz, Rp_zarr, HeI_pd_eff_Data[n].Rp, 
+            HeI_pd_eff_Data[n].memindex=calc_spline_coeffies_JC(nz, Rp_zarr, &HeI_pd_eff_Data[n].Rp[0], 
                                                                "set_up_splines_for_HeI_pd_Rp :: pd "
                                                                + int_to_string(n));
 
-            HeI_Dnem_eff_Data[n].memindex=calc_spline_coeffies_JC(nz, Rp_zarr, HeI_Dnem_eff_Data[n].Rp, 
+            HeI_Dnem_eff_Data[n].memindex=calc_spline_coeffies_JC(nz, Rp_zarr, &HeI_Dnem_eff_Data[n].Rp[0], 
                                                                  "set_up_splines_for_HeI_pd_Rp :: Dnem "
                                                                  + int_to_string(n));
         }

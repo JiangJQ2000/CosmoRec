@@ -85,7 +85,7 @@ void output_Grace_HeI(double zout,
                       vector<double> &yarr, 
                       string exten, int output_count)
 {
-	GracePrintf("KILL G0.S0");
+    GracePrintf("KILL G0.S0");
 	//
 	GracePrintf("s0 LINEWIDTH 1");
 	GracePrintf("s0 on");
@@ -110,8 +110,8 @@ void output_Grace_HeI(double zout,
 	command="TITLE \"HeI spectral distortion at \\1z\\0 = "+dumstr+"\"";
 	GracePrintf(command.c_str());
 	GracePrintf("PRINT");
-	
-	GracePrintf("redraw");
+    
+    GracePrintf("redraw");
 	
 //	wait_f_r();
 

@@ -14,20 +14,20 @@
 
 4
 500
-0.0e-24
+1.0e-24
 
-3
+5
 2
 1
 0
 
 1
 2
+4
 3
-2
 
-./outputs.paper/
-.e_sc.Kernel.dat
+./outputs/
+.DM_ion.dat
 
 //=============================================================================================
 // the above parameters are (default values are given as examples)

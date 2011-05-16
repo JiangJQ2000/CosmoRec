@@ -1,5 +1,6 @@
 //====================================================================================================================
-// Author Jens Chluba (July 2010)
+// Author Jens Chluba 
+// last modification May 2011
 //====================================================================================================================
 #include <iostream>
 #include <string>
@@ -528,8 +529,8 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
     // general flags
     //=========================================================================== 
     bool do_output=0;
-    bool output_DI1=0;
-    bool output_2gR=0;
+    bool output_DI1=1;
+    bool output_2gR=1;
     bool write_solution_z0=0;
     bool include_Ly_corr=0;  // ==1: include the correction from the 1+1 photon 
                              // terms in the Ly-series. 

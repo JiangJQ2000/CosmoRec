@@ -31,7 +31,8 @@ void switch_on_1s_2s_HeI_correction();
 void switch_off_1s_2s_HeI_absorption_correction();
 
 //==================================================================================================
-int compute_HeI_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z, 
+int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, 
+                                                        vector<double> &DF_vec_z, 
                                                         vector<vector<double> > &DF_vec,
                                                         vector<double> &DI1_2s_vec,
                                                         vector<int> &HeI_level_indices,

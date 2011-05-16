@@ -18,7 +18,7 @@ vector<vector<double> > pass_on_the_Solution_CosmoRec_HeI; //JF
 //===========================================================================================================
 // level of verbosity
 //===========================================================================================================
-int show_CosmoRec_mess=0;
+int show_CosmoRec_mess=3;
 
 //===========================================================================================================
 // output files
@@ -49,7 +49,7 @@ int Diff_iteration_max=2, Diff_iteration_min=0;
 int iteration_count=Diff_iteration_min;
 
 //==========================================================================================================
-// Helium diffusion correction (added Feb/March 2011 by Jeffrey Fung and Jens Chluba)
+// Helium diffusion correction (added Feb-May 2011 by Jens Chluba & Jeffrey Fung)
 //==========================================================================================================
 bool Diffusion_correction_HeI=0;
 bool Diffusion_correction_HeI_is_on=0;

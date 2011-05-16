@@ -1,6 +1,6 @@
 //===========================================================================================================
 // Author: Jens Chluba
-// last modification: March 2011
+// last modification: May 2011
 //===========================================================================================================
 
 //===========================================================================================================
@@ -80,7 +80,7 @@ void print_message(string mess);
 #include "./Modules/HeI.feedback.cpp"
 #include "./Modules/DPesc_HI_abs_tabulation.cpp"
 #include "./Modules/Diffusion_correction.cpp"   
-#include "./Modules/Diffusion_correction.HeI.cpp" // JF
+#include "./Modules/Diffusion_correction.HeI.cpp" 
 
 //===========================================================================================================
 // variable transformation. For numerical reasons it is better 
@@ -342,7 +342,7 @@ int CosmoRec()
             
             //======================================================================
             // HeI-diffusion corrections
-            // added Feb/March 2010 (Jeffrey Fung & Jens Chluba)
+            // added Feb-May 2011 (Jens Chluba & Jeffrey Fung)
             //======================================================================            
             if(Diffusion_correction_HeI)
             {
@@ -355,7 +355,7 @@ int CosmoRec()
                 if(DI1_2s_correction_on_HeI) switch_on_1s_2s_HeI_correction();
                 else switch_off_1s_2s_HeI_correction();
                 
-                compute_HeI_DPesc_with_diffusion_equation_effective(DF_vec_z,
+                compute_HeI_DPesc_with_diffusion_equation_effective(HeI_Atoms.Get_nShells(), DF_vec_z,
                                                                     DF_lines_vec, DI1_2s_vec, 
                                                                     HeI_level_indices,
                                                                     min(3400.0, parameters.zstart/1.001), 
@@ -422,7 +422,7 @@ int CosmoRec(int narg, char *args[])
         string solvermode=args[narg-2];
         mode=args[narg-2];
         if(mode=="REC") print_message(" Running Recfast++ module.");
-        if(mode=="RECcf") print_message(" Running Recfast++ module with correction function."); 
+        else if(mode=="RECcf") print_message(" Running Recfast++ module with correction function."); 
         else{ mode=""; print_message(" Running CosmoRec."); }
     }
     else{ cerr << " Too many/few parameters " << endl; exit(1); }
@@ -611,7 +611,7 @@ int CosmoRec(const int runmode, const double runpars[5],
     //======================================================================
     // switch off messages 
     //======================================================================
-    show_CosmoRec_mess=0;
+    show_CosmoRec_mess=3;
 
     //======================================================================
     // switch on/off outputs 
@@ -630,7 +630,7 @@ int CosmoRec(const int runmode, const double runpars[5],
     //======================================================================
     // general setup 
     //======================================================================
-    params[0]=750;  // number of redshift points for CosmoRec computation;
+    params[0]=5000;  // number of redshift points for CosmoRec computation;
                     // for higher accuracy this number should be increased;
                     // a smaller number than ~750 is not recommended.
     params[1]=3000; // starting redshift
@@ -689,7 +689,7 @@ int CosmoRec(const int runmode, const double runpars[5],
     //======================================================================
     // number of iterations over HI & HeI diffusion problem
     //======================================================================
-    Diff_iteration_max=1;
+    Diff_iteration_max=2;
 
     //======================================================================
     // settings for non-default cases
@@ -697,7 +697,8 @@ int CosmoRec(const int runmode, const double runpars[5],
     if((int)runpars[1]==-1){ nShells=4; ntg_max=4; nR_max=3; nShellsHeI=2; nHeFeedback=-2; flag_HI_absorption=1; }
     else if((int)runpars[1]==1){ nShells=4; ntg_max=4; nR_max=3; }
     else if((int)runpars[1]==2){ nShells=10; ntg_max=8; nR_max=7; nShellsHeI=3; nHeFeedback=0; }
-    else if((int)runpars[1]==3){ nShells=10; ntg_max=8; nR_max=7; nShellsHeI=5; nHeFeedback=-5; }      
+//    else if((int)runpars[1]==3){ nShells=10; ntg_max=8; nR_max=7; nShellsHeI=5; nHeFeedback=-5; }      
+    else if((int)runpars[1]==3){ nShells=10; ntg_max=8; nR_max=7; nShellsHeI=10; nHeFeedback=-10; }      
     
 //    nShells=4; ntg_max=4; nR_max=3; nShellsHeI=2; nHeFeedback=-2; flag_HI_absorption=1;
 //    nShells=4; ntg_max=4; nR_max=0; nShellsHeI=2; nHeFeedback=-2; flag_HI_absorption=1;

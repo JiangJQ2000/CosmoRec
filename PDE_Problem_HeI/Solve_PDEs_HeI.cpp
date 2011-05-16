@@ -1,5 +1,5 @@
 //====================================================================================================================
-// Authors Jeffrey Fung & Jens Chluba Feb/March 2010
+// Authors Jens Chluba & Jeffrey Fung Feb-May 2011
 //====================================================================================================================
 #include <iostream>
 #include <string>
@@ -37,7 +37,7 @@ using namespace std;
 // flags for message output and aVoigt setting
 //
 //====================================================================================================================
-int show_messages_HeI=0;
+int show_messages_HeI=3;
 
 
 //====================================================================================================================
@@ -343,7 +343,7 @@ void output_solution_HeI(int output_count, string endname, double nu21,
 // code with effective rates
 //
 //====================================================================================================================
-int compute_HeI_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z, 
+int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<double> &DF_vec_z, 
                                                         vector<vector<double> > &DF_vec,
                                                         vector<double> &DI1_2s_vec, 
                                                         vector<int> &HeI_level_indices,
@@ -353,8 +353,7 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z
                                                         vector<vector<double> > HeI_Solution, 
                                                         int it_num)
 {
-    int nHeIShells=HeIAtoms.Get_nShells();
-    if(nHeIShells<2){ cerr << " Not enough helium shells. Exiting. " << endl; exit(0); }
+    if(nHeI_Trans<2){ cerr << " Not enough helium shells. Exiting. " << endl; exit(0); }
 
     Set_Load_Populations_HeI_verbosity(show_messages_HeI);
     Set_HeI_pd_Rp_splines_effective_verbosity(show_messages_HeI);    
@@ -362,7 +361,12 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z
     //==============================================================================================
     // extension for filename
     //==============================================================================================
-    string exten=".movie.e_sc.all_res";
+    string exten=".test";
+//    string exten=".movie.no_scat.all.ref";
+//    string exten=".movie.iso_Sing.ref";
+//    string exten=".movie.iso_Sing.FP.ref";
+//    string exten=".movie.all.e_scat.FP.no_recoil.no_boost.ref";
+//    string exten=".movie.e_sc.all_res.III";
 //    string exten=".spectrum.n_10.no_diff";
      
     if(solve_with_Kernel==1) exten+=".Kernel_Int";
@@ -378,9 +382,9 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z
     //==============================================================================================
     // general flags
     //==============================================================================================
-    bool do_output=1;
+    bool do_output=0;
     bool write_solution_z0=0;
-    bool output_DP=1;
+    bool output_DP=0;
     bool output_DI1=0;
 
     //==============================================================================================
@@ -389,7 +393,7 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z
     //==============================================================================================
     // step size
     //==============================================================================================
-    double dz_out=2.0;
+    double dz_out=10.0;
     int output_count=0;
     int output_step=100;
     int DP_step=1;
@@ -407,22 +411,22 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z
 //    HeI_level_indices.push_back(HeIAtoms.Get_Level_index(2, 1, 1, 1)); // 2^3 P - 1 S
 //    HeI_level_indices.push_back(HeIAtoms.Get_Level_index(2, 1, 0, 1)); // 2^1 P - 1 S
 
-    if(nHeIShells>=2)
+    if(nHeI_Trans>=2)
     {
         HeI_level_indices.push_back(HeIAtoms.Get_Level_index(2, 1, 1, 1)); // 2^3 P - 1 S
         HeI_level_indices.push_back(HeIAtoms.Get_Level_index(2, 1, 0, 1)); // 2^1 P - 1 S
     }
     
-    if(nHeIShells>=3)
+    if(nHeI_Trans>=3)
     {
         HeI_level_indices.push_back(HeIAtoms.Get_Level_index(3, 1, 1, 1)); // 3^3 P - 1 S
         HeI_level_indices.push_back(HeIAtoms.Get_Level_index(3, 2, 0, 1)); // 3^1 D - 1 S
         HeI_level_indices.push_back(HeIAtoms.Get_Level_index(3, 1, 0, 1)); // 3^1 P - 1 S
     }
     
-    if(nHeIShells>=4)
+    if(nHeI_Trans>=4)
     {
-        int nnm=(int) min(10, nHeIShells);
+        int nnm=(int) min(10, nHeI_Trans);
         
         for(int nn=4; nn<=nnm; nn++)
         {
@@ -526,7 +530,7 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z
         //=======================================================================
         set_electron_scattering_efficiency_HeI(0.002); // 0.01 --> 10% difference for Trip; 
                                                        // 0.001 --> very small difference; 0.0001 fine
-//        set_electron_scattering_efficiency_HeI(1.0);
+        //set_electron_scattering_efficiency_HeI(1.0);
         
         //===================================================================
         // switch kernel treatment off at very low Xe_HeI

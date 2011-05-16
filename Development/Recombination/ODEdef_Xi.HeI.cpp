@@ -4,7 +4,7 @@
 // dXi/dt == g(t, Xi), with Xi=N_i/NHtot
 //
 // Author: Jens Chluba 
-// date: July 2007 
+// last modification: May 2011 
 //==============================================================================
 //
 #include "ODEdef_Xi.HeI.h"
@@ -516,8 +516,8 @@ void evaluate_HeI_feedback(double z, double XH1s, Gas_of_HeI_Atoms &HeI_Atoms,
         pij =p_ij(tauS);
         DRij=pij*HeI_Atoms.Xi(L[m].lowerLevel.i)*L[m].A21*L[m].upperLevel.gw/L[m].lowerLevel.gw*Dn;
         
-//        dXi_HeI_dt[L[m].lowerLevel.i]+=-DRij; // remove electron from lower level
-//        dXi_HeI_dt[L[m].upperLevel.i]+= DRij; // add it to nP-state
+        dXi_HeI_dt[L[m].lowerLevel.i]+=-DRij; // remove electron from lower level
+        dXi_HeI_dt[L[m].upperLevel.i]+= DRij; // add it to nP-state
     }
 
     return;

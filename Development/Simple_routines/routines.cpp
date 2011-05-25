@@ -16,6 +16,7 @@
 
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_spline.h>
+#include <gsl/gsl_sf_coupling.h>
 
 //======================================================================================
 // for xmgrace output
@@ -882,6 +883,11 @@ void plot_xy_function_log(const vector<double> &xarr, const vector<double> &yarr
 void plot_xy_function_loglog(const vector<double> &xarr, const vector<double> &yarr)
 { plot_xy_function(xarr, yarr, 2); return; }
 
+//======================================================================================
+// Wigner 3J symbol (added 17.05.2011)
+//======================================================================================
+double Wigner_3J_Symbol(int j1, int j2, int j3, int m1, int m2, int m3)
+{ return gsl_sf_coupling_3j (2*j1, 2*j2, 2*j3, 2*m1, 2*m2, 2*m3); }
 
 
 

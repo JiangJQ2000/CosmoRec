@@ -233,6 +233,12 @@ void set_startup_data(string filename, double param[12], Parameters_form_initfil
             cout << " HeI 2P-1S intercombination line is switched off " << endl; 
         flag_spin_forbidden=0; 
     }
+
+    if(Atom_activate_HI_Quadrupole_lines)
+    { 
+        if(show_CosmoRec_mess>=0 && nShells==3) 
+            cout << " HI quadrupole lines are included " << endl; 
+    }
     
     if(Diffusion_flag>0)
     { 

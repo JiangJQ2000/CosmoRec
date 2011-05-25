@@ -107,6 +107,7 @@ OBJSDEV =  $(DEV_DIR)/Simple_routines/File.o \
 	   $(DEV_DIR)/Hydrogenic/Rec_Phot_BB.o \
 	   $(DEV_DIR)/Hydrogenic/Atom.o \
 	   $(DEV_DIR)/Hydrogenic/Recombination_Integrals.o \
+	   $(DEV_DIR)/Hydrogenic/Quadrupole_lines_HI.o \
 	   $(DEV_DIR)/Helium/HeI_Atom.o \
 	   $(DEV_DIR)/Recombination/Sobolev.o \
 	   $(DEV_DIR)/Recombination/Pesc.HI.o \

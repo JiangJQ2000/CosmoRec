@@ -1,6 +1,6 @@
 //=================================================================================
 // Author: Jens Chluba 
-// last modification: Oct 2010
+// last modification: May 2011
 // 
 // The routines are based on Storey & Hummer, 1991. Notation and 
 // recursion relations can be found there. However, we modified these 
@@ -92,32 +92,34 @@ double A_SH_func(int &n, int &l, int &np, int &lp)
         //=========================================================================
         // formula 2.23
         //=========================================================================
-        Rnp_lplus1[lt] =((2.0*(lt+1.0)+1.0)*l_C(n, lt+2)*Rnp_lplus1[lt+1]*f1 
-                         +l_C(np,lt+2)*Rnp_lminus1[lt+2])/( (lt+2.0)*2.0*l_C(np, lt+1) );
+        Rnp_lplus1[lt] =((2.0*lt+3.0)*l_C(n, lt+2)*Rnp_lplus1 [lt+1]*f1 
+                                     +l_C(np,lt+2)*Rnp_lminus1[lt+2] )
+                        /( (lt+2.0)*2.0*l_C(np, lt+1) );
 
         //=========================================================================
         // formula 2.24
         //=========================================================================
-        Rnp_lminus1[lt]=(                   l_C(n, lt+1)*Rnp_lplus1[lt]*f2 
-                           +(2.0*lt+1.0)*l_C(np,lt+1)*Rnp_lminus1[lt+1]*f1)/( (lt+1.0)*2.0*l_C(n, lt) );
+        Rnp_lminus1[lt]=(                l_C(n, lt+1)*Rnp_lplus1[lt]   *f2 
+                           +(2.0*lt+1.0)*l_C(np,lt+1)*Rnp_lminus1[lt+1]*f1 )
+                        /( (lt+1.0)*2.0*l_C(n, lt) );
     }
     
     //=============================================================================
     // see Eq. 2.21, hydrogen
     //=============================================================================
     double mu_red=1.0/(1.0+const_me_mp), Z=1.0; 
-    double fac_A=pow(const_alpha, 4)*const_cl/6.0/const_a0; // 2.6775015e+9 according to S&H 1991
+    double fac_A=pow(const_alpha, 4)*const_cl/6.0/const_a0;  // 2.6775015e+9 according to S&H 1991
     double fac=fac_A*mu_red*pow(Z, 4)*pow(1.0/np/np-1.0/n/n, 3);
     
     //=============================================================================
     //lp=l+1 > l
     //=============================================================================
-    if(lp==l+1) return fac*(l+1.0)*pow(Rnp_lminus1[lp]*pow(f, lp-1), 2)/(2.0*l+1.0);          // 1/sec
+    if(lp==l+1) return fac*(l+1.0)*pow(Rnp_lminus1[lp]*pow(f, lp-1), 2)/(2.0*l+1.0);   // 1/sec
 
     //=============================================================================
     //lp=l-1 < l
     //=============================================================================
-    if(lp==l-1) return fac*l*pow(Rnp_lplus1[lp]*pow(f, lp+1), 2)/(2.0*l+1.0);                 // 1/sec
+    if(lp==l-1) return fac*l*pow(Rnp_lplus1[lp]*pow(f, lp+1), 2)/(2.0*l+1.0);          // 1/sec
     
     return 0.0;
 }
@@ -129,7 +131,8 @@ double A_SH(int &n, int &l, int &np, int &lp)
 
     if(isnan_JC(A))
     {
-        cout << " A_SH:: detected nan " << A << " || " << n << " " << l << " <--> " << np << " " << lp << endl;
+        cout << " A_SH:: detected nan " << A << " || " << n << " " << l 
+             << " <--> " << np << " " << lp << endl;
         wait_f_r();
     }
     
@@ -161,7 +164,8 @@ double A_SH(int Z, double Np, int n, int l, int np, int lp)
     
     if(isnan_JC(A))
     {
-        cout << " A_SH:: detected nan " << A << " || " << n << " " << l << " <--> " << np << " " << lp << endl;
+        cout << " A_SH:: detected nan " << A << " || " << n << " " << l 
+             << " <--> " << np << " " << lp << endl;
         wait_f_r();
     }
     

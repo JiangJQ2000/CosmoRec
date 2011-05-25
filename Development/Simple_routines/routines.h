@@ -1,6 +1,6 @@
 //======================================================================================
 // Author: Jens Chluba 
-// last modified: Oct 2010
+// last modified: May 2011
 //
 // Purpose: collection of several simple routines
 //======================================================================================
@@ -86,5 +86,10 @@ double find_root_brent(double (* func)(double *, void *p), void *p, double x1, d
 void plot_xy_function_linear(const vector<double> &xarr, const vector<double> &yarr);
 void plot_xy_function_log   (const vector<double> &xarr, const vector<double> &yarr);
 void plot_xy_function_loglog(const vector<double> &xarr, const vector<double> &yarr);
+
+//======================================================================================
+// Wigner 3J symbol (added 17.05.2011)
+//======================================================================================
+double Wigner_3J_Symbol(int j1, int j2, int j3, int m1, int m2, int m3);
 
 #endif

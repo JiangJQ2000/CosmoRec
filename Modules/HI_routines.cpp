@@ -11,11 +11,18 @@ Gas_of_Atoms *HAtoms=NULL;
 int nS_effective=500;                    // can be changed with start-file
 int Lyn_max_parameter=20;
 
-string effective_rate_path_arr[3]=
+//========================================================================
+// activate HI quadrupole lines or not
+//========================================================================
+bool Atom_activate_HI_Quadrupole_lines=0;
+
+//========================================================================
+string effective_rate_path_arr[4]=
 {
     Rec_database_path+"/Effective_Rates.HI/Effective_Rate_Tables.nS_3/",
     Rec_database_path+"/Effective_Rates.HI/Effective_Rate_Tables.nS_4/",
-    Rec_database_path+"/Effective_Rates.HI/Effective_Rate_Tables.nS_8.np_10/"
+    Rec_database_path+"/Effective_Rates.HI/Effective_Rate_Tables.nS_8.np_10/",
+    Rec_database_path+"/Effective_Rates.HI/Effective_Rate_Tables.nS_3.Q/"
 };
 
 string effective_rate_path;
@@ -33,7 +40,7 @@ vector<vector<double> > RijVec_df_dx;
 const double zref=1100.0;
 const double zcrit=1000.0;
 
-int nShells=5;
+int nShells=4;
 
 //========================================================================
 // setup routines
@@ -42,8 +49,20 @@ void setup_Hydrogen_atom()
 {
     print_message(" entering the setup for neutral hydrogen ");
     
-    HAtoms=new Gas_of_Atoms(nShells, 1, 1.0, 0, -2);
+    HAtoms=new Gas_of_Atoms(nShells, 1, 1.0, Atom_activate_HI_Quadrupole_lines, 0, 2);
 
+//    cout << Hydrogen_Atoms.Level(10, 2).Get_Gamma() << " " << Hydrogen_Atoms.Level(10, 2).Get_Gamma_E2() << endl;
+//    cout << Hydrogen_Atoms.Level(20, 2).Get_Gamma() << " " << Hydrogen_Atoms.Level(20, 2).Get_Gamma_E2() << endl;
+//    cout << Hydrogen_Atoms.Level(20, 10).Get_Gamma() << " " << Hydrogen_Atoms.Level(20, 10).Get_Gamma_E2() << endl;
+//    cout << Hydrogen_Atoms.Level(50, 2).Get_Gamma() << " " << Hydrogen_Atoms.Level(50, 2).Get_Gamma_E2() << endl;
+//    cout << Hydrogen_Atoms.Level(50, 10).Get_Gamma() << " " << Hydrogen_Atoms.Level(50, 10).Get_Gamma_E2() << endl;
+//    cout << Hydrogen_Atoms.Level(50, 40).Get_Gamma() << " " << Hydrogen_Atoms.Level(50, 40).Get_Gamma_E2() << endl;
+
+//    for(int n=3; n<=nShells; n++) 
+//    {
+//        cout << Hydrogen_Atoms.Level(n, 1).Get_Gamma() << " " << Hydrogen_Atoms.Level(n, 1).Get_Gamma_E2()/Hydrogen_Atoms.Level(n, 1).Get_Gamma() << endl;
+//        cout << Hydrogen_Atoms.Level(n, 2).Get_Gamma() << " " << Hydrogen_Atoms.Level(n, 2).Get_Gamma_E2()/Hydrogen_Atoms.Level(n, 2).Get_Gamma() << endl;
+//    }
     
     //=====================================================================
     // allocate memory to pass on the solution to the PDE solver
@@ -56,7 +75,12 @@ void setup_Hydrogen_atom()
     //=====================================================================
     // Load effective rates
     //=====================================================================
-    if(nShells==3) effective_rate_path=effective_rate_path_arr[0];
+    if(nShells==3) 
+    {   
+        if(!Atom_activate_HI_Quadrupole_lines) 
+            effective_rate_path=effective_rate_path_arr[0];
+        else effective_rate_path=effective_rate_path_arr[3];
+    }
     else if(nShells==4) effective_rate_path=effective_rate_path_arr[1];
     else if(nShells==10) effective_rate_path=effective_rate_path_arr[2];
     else
@@ -64,6 +88,7 @@ void setup_Hydrogen_atom()
         cerr << " setup_Hydrogen_atom :: please choose nSHI = 3, 4 or 10! Exiting... \n" << endl; 
         exit(0); 
     }
+    
     load_rates(effective_rate_path, nS_effective, Hydrogen_Atoms);
     
     //=====================================================================
@@ -72,6 +97,7 @@ void setup_Hydrogen_atom()
     Ai_df_dx.resize(get_number_of_resolved_levels());
     Bi_df_dx.resize(get_number_of_resolved_levels());
     RijVec_df_dx.clear();
+    
     for(int k=0; k<(int)Ai_df_dx.size(); k++) RijVec_df_dx.push_back(Ai_df_dx);
 
     return;

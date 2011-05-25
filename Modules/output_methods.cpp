@@ -3,6 +3,7 @@ void set_detailed_name()
 {
     detailedname="CosmoRec.";
     detailedname+="HI.nS_eff_"+int_to_string(nS_effective)+"."; 
+    if(Atom_activate_HI_Quadrupole_lines) detailedname+="HI_Q.";
     //
     detailedname+="nH_"+int_to_string(nShells)+".";
     detailedname+="nHe_"+int_to_string(nShellsHeI)+".";

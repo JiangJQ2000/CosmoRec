@@ -36,6 +36,8 @@
 #include "physical_consts.h"
 #include "routines.h"
 
+#include "Quadrupole_lines_HI.h" 
+
 //===========================================================================================================
 // net rates for Helium case
 //===========================================================================================================
@@ -426,7 +428,66 @@ int CosmoRec(int narg, char *args[])
         else{ mode=""; print_message(" Running CosmoRec."); }
     }
     else{ cerr << " Too many/few parameters " << endl; exit(1); }
-        
+ 
+/*
+    cout << scientific << A_E2_Quadrupole(5, 0, 3, 2) << endl;
+    cout << scientific << A_E2_Quadrupole(5, 0, 4, 2) << endl;
+    
+    cout << scientific << A_E2_Quadrupole(5, 1, 2, 1) << endl;
+    cout << scientific << A_E2_Quadrupole(5, 1, 3, 1) << endl;
+    cout << scientific << A_E2_Quadrupole(5, 1, 4, 1) << endl;
+    cout << scientific << A_E2_Quadrupole(5, 1, 4, 3) << endl;
+    
+    cout << scientific << A_E2_Quadrupole(5, 2, 1, 0) << endl;
+    cout << scientific << A_E2_Quadrupole(5, 2, 2, 0) << endl;
+    cout << scientific << A_E2_Quadrupole(5, 2, 3, 0) << endl;
+    cout << scientific << A_E2_Quadrupole(5, 2, 4, 0) << endl;
+    
+    cout << scientific << A_E2_Quadrupole(5, 2, 3, 2) << endl;
+    cout << scientific << A_E2_Quadrupole(5, 2, 4, 2) << endl;
+    
+    cout << scientific << A_E2_Quadrupole(5, 3, 2, 1) << endl;
+    cout << scientific << A_E2_Quadrupole(5, 3, 3, 1) << endl;
+    cout << scientific << A_E2_Quadrupole(5, 3, 4, 1) << endl;
+    cout << scientific << A_E2_Quadrupole(5, 3, 4, 3) << endl;
+
+    cout << scientific << A_E2_Quadrupole(5, 4, 3, 2) << endl;
+    cout << scientific << A_E2_Quadrupole(5, 4, 4, 2) << endl;
+
+    exit(0);
+*/
+//    int nlower=2;
+//    cout << A_E2_Quadrupole(3, 2, nlower, 0) << endl;
+//    cout << A_E2_Quadrupole(4, 0, 3, 2) << endl;
+//    cout << A_E2_Quadrupole(3, 1, 2, 1) << endl;
+//    cout << A_E2_Quadrupole(4, 1, 2, 1) << endl;
+    
+//    cout << A_E2_Quadrupole(4, 2, 2, 0) << endl;
+//    cout << endl;
+//      cout << A_E2_Quadrupole(5, 2, 4, 0) << endl;
+//    for(int n=5; n<=8; n++) cout << n << "   " << A_E2_Quadrupole(n, 2, 4, 0) << endl;
+
+//    cout << A_E2_Quadrupole(4, 2, nlower, 0) << endl;
+//    cout << A_E2_Quadrupole(5, 2, nlower, 0) << endl;
+//    cout << A_E2_Quadrupole(6, 2, nlower, 0) << endl;
+//    cout << A_E2_Quadrupole(4, 2, 2, 0) << endl;
+//    cout << A_E2_Quadrupole(4, 3, 2, 1) << endl;
+//    cout << A_E2_Quadrupole(4, 3, 3, 1) << endl;
+//    cout << A_E2_Quadrupole(4, 3, 3, 2) << endl;
+//    cout << Hydrogen_Atoms.Level(2, 1).Get_A21(1, 0) << endl;
+//    cout << Hydrogen_Atoms.Level(3, 2).Get_A21(1, 0) << endl;
+//    cout << Hydrogen_Atoms.Level(4, 2).Get_A21(1, 0) << endl;
+//    cout << Hydrogen_Atoms.Level(3, 1).Get_A21(2, 1) << endl;
+//    cout << Hydrogen_Atoms.Level(4, 1).Get_A21(2, 1) << endl;
+//    cout << Hydrogen_Atoms.Level(4, 2).Get_A21(3, 2) << endl;
+//    cout << Hydrogen_Atoms.Level(4, 0).Get_A21(3, 2) << endl;
+//    cout << Hydrogen_Atoms.Level(10, 2).Get_A21(1, 0) << endl;
+//    cout << Hydrogen_Atoms.Level(10, 2).Get_A21(2, 0) << endl;
+//    cout << Hydrogen_Atoms.Level(10, 5).Get_A21(5, 3) << endl;
+    
+    
+//    cout << " test " << Wigner_3J_Symbol(2, 2, 0, 0, 0, 0) << endl;
+    
     //========================================================================
     // just run history using the recfast module in the cosmology class
     //========================================================================

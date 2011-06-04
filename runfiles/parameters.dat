@@ -12,7 +12,7 @@
 3.04
 1.14
 
-3
+10
 400
 0.0e-24
 
@@ -27,7 +27,7 @@
 3
 
 ./outputs/
-.test.dat
+.test.nD_8.dat
 
 //=============================================================================================
 // the above parameters are (default values are given as examples)

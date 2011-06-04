@@ -246,6 +246,50 @@ namespace ODE_effective
         return;
     }
 
+    //==================================================================
+    //
+    // nD - 1s quadrupole channel (added May 2011)
+    //
+    //==================================================================
+    void evaluate_nD_1s_Q_channel(double Xnp, double Xnd, double A21, 
+                                  double &dXnp_H_dt, 
+                                  double &dXnd_H_dt)
+    {
+//        return;
+        double DR=A21*(Xnd-5.0/3.0*Xnp);
+        
+        dXnp_H_dt+= DR;
+        dXnd_H_dt+=-DR;
+        
+        return;
+    }
+    
+    void df_dXnp_evaluate_nD_1s_Q_channel(double Xnd, double A21, 
+                                          double &dXnp_H_dt, 
+                                          double &dXnd_H_dt)
+    {
+//        return;
+        double DR=-A21*5.0/3.0;
+        
+        dXnp_H_dt+= DR;
+        dXnd_H_dt+=-DR;
+        
+        return;
+    }
+    
+    void df_dXnd_evaluate_nD_1s_Q_channel(double Xnp, double A21, 
+                                          double &dXnp_H_dt, 
+                                          double &dXnd_H_dt)
+    {
+//        return;
+        double DR=A21;
+        
+        dXnp_H_dt+= DR;
+        dXnd_H_dt+=-DR;
+        
+        return;
+    }    
+        
 }   
 
 //======================================================================

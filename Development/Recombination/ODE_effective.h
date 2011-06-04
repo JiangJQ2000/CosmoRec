@@ -1,6 +1,10 @@
-//-----------------------------
+//======================================================================
 // Author Jens Chluba July 2010
-//-----------------------------
+// last modification: May 2011
+//======================================================================
+// May 2011: added simple setup for nD-1s Quadrupole line effect.
+//           The approximation of Grin et al. 2010 was used.
+//======================================================================
 #ifndef ODE_EFFECTIVE_H
 #define ODE_EFFECTIVE_H
 
@@ -56,6 +60,21 @@ namespace ODE_effective
                                        double nu21, double &dX1s_H_dt, 
                                        double &dXnp_H_dt, double w=3.0);
 
+    //==================================================================
+    // nD - 1s quadrupole channel (added May 2011)
+    //==================================================================
+    void evaluate_nD_1s_Q_channel(double Xnp, double Xnd, double A21, 
+                                  double &dXnp_H_dt, 
+                                  double &dXnd_H_dt);
+    
+    void df_dXnp_evaluate_nD_1s_Q_channel(double Xnd, double A21, 
+                                          double &dXnp_H_dt, 
+                                          double &dXnd_H_dt);
+    
+    void df_dXnd_evaluate_nD_1s_Q_channel(double Xnp, double A21, 
+                                          double &dXnp_H_dt, 
+                                          double &dXnd_H_dt);
+    
 }
 
 //======================================================================

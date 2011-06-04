@@ -257,6 +257,29 @@ void fcn_effective(double z, Data_Level_III &LIII)
     }   
     
     //==================================================================
+    // HI nD-1s Quadrupole transitions (added May 2011)
+    //==================================================================
+    if(Atom_activate_HI_Quadrupole_lines)
+    {
+        for(int k=0; k<get_number_of_resolved_levels(); k++)
+        {
+            int l=Hydrogen_Atoms.Get_l_of_Level(get_HI_index(k));
+            
+            if(l==2)
+            {
+                int n=Hydrogen_Atoms.Get_n_of_Level(get_HI_index(k));
+                
+                if(n<=nD_Quadrupole_max)
+                    ODE_effective::evaluate_nD_1s_Q_channel(Hydrogen_Atoms.X(n, 1), 
+                                                            Hydrogen_Atoms.X(n, 2), 
+                                                            Hydrogen_Atoms.Level(n, 2).Get_A21(1, 0), 
+                                                            Level_I_temp.g[iHI+Hydrogen_Atoms.Get_Level_index(n, 1)], 
+                                                            Level_I_temp.g[iHI+Hydrogen_Atoms.Get_Level_index(n, 2)]);
+            }
+        }
+    }
+
+    //==================================================================
     // these are the ones with effective rates that depend on Te
     //==================================================================    
     ODE_HI_effective::evaluate_effective_Rci_Ric_terms(z, Xe, Np, Hydrogen_Atoms, Ai_df_dx, Bi_df_dx, get_HI_index, &Level_I_temp.g[iHI]);
@@ -590,12 +613,32 @@ void jac_effective(double z, Data_Level_III &LIII, int col)
         //
         int n=Hydrogen_Atoms.Get_n_of_Level(ik);
         int l=Hydrogen_Atoms.Get_l_of_Level(ik);
+        
         if(n<=Lyn_max_parameter && l==1)
         {
             Transition_Data_A T=Hydrogen_Atoms.Level(ik).Get_Data_A(1, 0);
             ODE_effective::df_dXnp_evaluate_Ly_n_channel(z, Tg, Hydrogen_Atoms.X(0), Hydrogen_Atoms.X(ik), NH, H_z, T.A21, 
                                                          T.lambda21, T.Dnu, Level_I_temp.g[iHI], Level_I_temp.g[iHI+ik]);
+            
+            //==================================================================
+            // nD-1s quadrupole lines (added May 2011)
+            //==================================================================
+            if(Atom_activate_HI_Quadrupole_lines && n>2 && n<=nD_Quadrupole_max)
+                ODE_effective::df_dXnp_evaluate_nD_1s_Q_channel(Hydrogen_Atoms.X(n, 2), 
+                                                                Hydrogen_Atoms.Level(n, 2).Get_A21(1, 0), 
+                                                                Level_I_temp.g[iHI+Hydrogen_Atoms.Get_Level_index(n, 1)], 
+                                                                Level_I_temp.g[iHI+Hydrogen_Atoms.Get_Level_index(n, 2)]);
         }
+        
+        //==================================================================
+        // nD-1s quadrupole lines (added May 2011)
+        //==================================================================
+        if(Atom_activate_HI_Quadrupole_lines && n>2 && n<=nD_Quadrupole_max && l==2)
+            ODE_effective::df_dXnd_evaluate_nD_1s_Q_channel(Hydrogen_Atoms.X(n, 1), 
+                                                            Hydrogen_Atoms.Level(n, 2).Get_A21(1, 0), 
+                                                            Level_I_temp.g[iHI+Hydrogen_Atoms.Get_Level_index(n, 1)], 
+                                                            Level_I_temp.g[iHI+Hydrogen_Atoms.Get_Level_index(n, 2)]);
+        
         //
         compute_numerical_derivative(iHI+ik, neq, neq_HI, neq_HeI, z, Tg, NH, Level_I_temp, Level_I_temp.g);
         //

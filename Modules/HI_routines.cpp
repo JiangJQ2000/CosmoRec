@@ -12,17 +12,18 @@ int nS_effective=500;                    // can be changed with start-file
 int Lyn_max_parameter=20;
 
 //========================================================================
-// activate HI quadrupole lines or not
+// activate HI quadrupole lines
 //========================================================================
-bool Atom_activate_HI_Quadrupole_lines=0;
+bool Atom_activate_HI_Quadrupole_lines=1;
+int nD_Quadrupole_max=(int)min(8, Lyn_max_parameter);
 
 //========================================================================
 string effective_rate_path_arr[4]=
 {
-    Rec_database_path+"/Effective_Rates.HI/Effective_Rate_Tables.nS_3/",
+    Rec_database_path+"/Effective_Rates.HI/Effective_Rate_Tables.nS_3.hp/",
     Rec_database_path+"/Effective_Rates.HI/Effective_Rate_Tables.nS_4/",
     Rec_database_path+"/Effective_Rates.HI/Effective_Rate_Tables.nS_8.np_10/",
-    Rec_database_path+"/Effective_Rates.HI/Effective_Rate_Tables.nS_3.Q/"
+    Rec_database_path+"/Effective_Rates.HI/Effective_Rate_Tables.nS_3.Q.hp/"
 };
 
 string effective_rate_path;
@@ -43,6 +44,43 @@ const double zcrit=1000.0;
 int nShells=4;
 
 //========================================================================
+void compute_Q_correction_to_lifetime(int n)
+{
+    string fname="./temp/DG.Quadrupole_lines."+int_to_string(n)+".dat";
+    ofstream ofile(fname.c_str());
+    
+    for(int l=0; l<n; l++)
+        ofile << l << " " << 1.0*l/(n-1) << " " 
+              << Hydrogen_Atoms.Level(n, l).Get_Gamma_E2()/Hydrogen_Atoms.Level(n, l).Get_Gamma() << endl;
+    
+    ofile.close();
+
+    return;
+}
+
+void compute_Q_correction_to_lifetime_tot(int nmax)
+{
+    string fname="./temp/DG.Quadrupole_lines.total.dat";
+    ofstream ofile(fname.c_str());
+    
+    for(int n=5; n<=nmax; n++)
+    {
+        double rt=0, rD=0;
+        for(int l=0; l<n; l++)
+        {
+            rt+=(2.0*l+1.0)/n/n*Hydrogen_Atoms.Level(n, l).Get_Gamma();
+            rD+=(2.0*l+1.0)/n/n*Hydrogen_Atoms.Level(n, l).Get_Gamma_E1();
+        }
+            
+        ofile << n << " " << rt << " " << (rt-rD)/rt << endl;
+    }
+    
+    ofile.close();
+    
+    return;
+}
+
+//========================================================================
 // setup routines
 //========================================================================
 void setup_Hydrogen_atom()
@@ -50,6 +88,17 @@ void setup_Hydrogen_atom()
     print_message(" entering the setup for neutral hydrogen ");
     
     HAtoms=new Gas_of_Atoms(nShells, 1, 1.0, Atom_activate_HI_Quadrupole_lines, 0, 2);
+    
+//    compute_Q_correction_to_lifetime(5);
+//    compute_Q_correction_to_lifetime(10);
+//    compute_Q_correction_to_lifetime(20);
+//    compute_Q_correction_to_lifetime(50);
+//    compute_Q_correction_to_lifetime(100);
+//    compute_Q_correction_to_lifetime(150);
+//    compute_Q_correction_to_lifetime(200);
+//    compute_Q_correction_to_lifetime(250);
+//    compute_Q_correction_to_lifetime_tot(nShells);
+//    exit(0);
 
 //    cout << Hydrogen_Atoms.Level(10, 2).Get_Gamma() << " " << Hydrogen_Atoms.Level(10, 2).Get_Gamma_E2() << endl;
 //    cout << Hydrogen_Atoms.Level(20, 2).Get_Gamma() << " " << Hydrogen_Atoms.Level(20, 2).Get_Gamma_E2() << endl;

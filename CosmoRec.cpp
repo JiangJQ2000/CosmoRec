@@ -320,6 +320,7 @@ int CosmoRec()
             vector<vector<double> > DF_Ly_n;
             vector<vector<double> > DF_2_gamma_vec;
             vector<vector<double> > DF_Raman_vec;
+            vector<vector<double> > DF_nD1s_vec;
             vector<double> DI1_2s_vec;  
             
             //======================================================================
@@ -328,7 +329,8 @@ int CosmoRec()
             // preloaded.
             //======================================================================            
             compute_DPesc_with_diffusion_equation_effective(DF_vec_z, DF_Ly_n, 
-                                                            DF_2_gamma_vec, DF_Raman_vec, DI1_2s_vec, 
+                                                            DF_2_gamma_vec, DF_Raman_vec, 
+                                                            DF_nD1s_vec, DI1_2s_vec, 
                                                             min(2200.0, parameters.zstart/1.001), 
                                                             max(500.0, parameters.zend*1.001), 
                                                             ntg_max, nR_max, cosmos, 
@@ -336,7 +338,7 @@ int CosmoRec()
                                                             pass_on_the_Solution_CosmoRec,
                                                             iteration_count-1);
             
-            setup_DF_spline_data(DF_vec_z, DF_Ly_n, DF_2_gamma_vec, DF_Raman_vec);
+            setup_DF_spline_data(DF_vec_z, DF_Ly_n, DF_2_gamma_vec, DF_Raman_vec, DF_nD1s_vec);
             
             if(DI1_2s_correction_on) setup_DI1_2s_spline_data(DF_vec_z, DI1_2s_vec);
 
@@ -429,65 +431,6 @@ int CosmoRec(int narg, char *args[])
     }
     else{ cerr << " Too many/few parameters " << endl; exit(1); }
  
-/*
-    cout << scientific << A_E2_Quadrupole(5, 0, 3, 2) << endl;
-    cout << scientific << A_E2_Quadrupole(5, 0, 4, 2) << endl;
-    
-    cout << scientific << A_E2_Quadrupole(5, 1, 2, 1) << endl;
-    cout << scientific << A_E2_Quadrupole(5, 1, 3, 1) << endl;
-    cout << scientific << A_E2_Quadrupole(5, 1, 4, 1) << endl;
-    cout << scientific << A_E2_Quadrupole(5, 1, 4, 3) << endl;
-    
-    cout << scientific << A_E2_Quadrupole(5, 2, 1, 0) << endl;
-    cout << scientific << A_E2_Quadrupole(5, 2, 2, 0) << endl;
-    cout << scientific << A_E2_Quadrupole(5, 2, 3, 0) << endl;
-    cout << scientific << A_E2_Quadrupole(5, 2, 4, 0) << endl;
-    
-    cout << scientific << A_E2_Quadrupole(5, 2, 3, 2) << endl;
-    cout << scientific << A_E2_Quadrupole(5, 2, 4, 2) << endl;
-    
-    cout << scientific << A_E2_Quadrupole(5, 3, 2, 1) << endl;
-    cout << scientific << A_E2_Quadrupole(5, 3, 3, 1) << endl;
-    cout << scientific << A_E2_Quadrupole(5, 3, 4, 1) << endl;
-    cout << scientific << A_E2_Quadrupole(5, 3, 4, 3) << endl;
-
-    cout << scientific << A_E2_Quadrupole(5, 4, 3, 2) << endl;
-    cout << scientific << A_E2_Quadrupole(5, 4, 4, 2) << endl;
-
-    exit(0);
-*/
-//    int nlower=2;
-//    cout << A_E2_Quadrupole(3, 2, nlower, 0) << endl;
-//    cout << A_E2_Quadrupole(4, 0, 3, 2) << endl;
-//    cout << A_E2_Quadrupole(3, 1, 2, 1) << endl;
-//    cout << A_E2_Quadrupole(4, 1, 2, 1) << endl;
-    
-//    cout << A_E2_Quadrupole(4, 2, 2, 0) << endl;
-//    cout << endl;
-//      cout << A_E2_Quadrupole(5, 2, 4, 0) << endl;
-//    for(int n=5; n<=8; n++) cout << n << "   " << A_E2_Quadrupole(n, 2, 4, 0) << endl;
-
-//    cout << A_E2_Quadrupole(4, 2, nlower, 0) << endl;
-//    cout << A_E2_Quadrupole(5, 2, nlower, 0) << endl;
-//    cout << A_E2_Quadrupole(6, 2, nlower, 0) << endl;
-//    cout << A_E2_Quadrupole(4, 2, 2, 0) << endl;
-//    cout << A_E2_Quadrupole(4, 3, 2, 1) << endl;
-//    cout << A_E2_Quadrupole(4, 3, 3, 1) << endl;
-//    cout << A_E2_Quadrupole(4, 3, 3, 2) << endl;
-//    cout << Hydrogen_Atoms.Level(2, 1).Get_A21(1, 0) << endl;
-//    cout << Hydrogen_Atoms.Level(3, 2).Get_A21(1, 0) << endl;
-//    cout << Hydrogen_Atoms.Level(4, 2).Get_A21(1, 0) << endl;
-//    cout << Hydrogen_Atoms.Level(3, 1).Get_A21(2, 1) << endl;
-//    cout << Hydrogen_Atoms.Level(4, 1).Get_A21(2, 1) << endl;
-//    cout << Hydrogen_Atoms.Level(4, 2).Get_A21(3, 2) << endl;
-//    cout << Hydrogen_Atoms.Level(4, 0).Get_A21(3, 2) << endl;
-//    cout << Hydrogen_Atoms.Level(10, 2).Get_A21(1, 0) << endl;
-//    cout << Hydrogen_Atoms.Level(10, 2).Get_A21(2, 0) << endl;
-//    cout << Hydrogen_Atoms.Level(10, 5).Get_A21(5, 3) << endl;
-    
-    
-//    cout << " test " << Wigner_3J_Symbol(2, 2, 0, 0, 0, 0) << endl;
-    
     //========================================================================
     // just run history using the recfast module in the cosmology class
     //========================================================================

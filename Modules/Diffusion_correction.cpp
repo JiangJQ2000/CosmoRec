@@ -17,6 +17,7 @@ DPesc_splines_Data DPesc_splines_Data_Lyn[100];
 int index_2g_spline;
 int index_R_spline;
 int index_Ly_n_spline;
+int index_nD1s_spline;
 int index_all_spline;
 
 //==========================================================================================================
@@ -54,7 +55,8 @@ void setup_DF_spline_data(int n, vector<double> &DPesc_vec_z, vector<double> &DP
 void setup_DF_spline_data(vector<double> &DF_vec_z, 
                           vector<vector<double> > &DF_Ly_n_vec, 
                           vector<vector<double> > &DF_2g_vec, 
-                          vector<vector<double> > &DF_R_vec)
+                          vector<vector<double> > &DF_R_vec, 
+                          vector<vector<double> > &DF_nD1s_vec)
 {   
     index_2g_spline=2;
     //
@@ -65,7 +67,10 @@ void setup_DF_spline_data(vector<double> &DF_vec_z,
     index_Ly_n_spline=index_R_spline+DF_R_vec.size();
     //
     for(int m=0; m<(int)DF_Ly_n_vec.size(); m++) setup_DF_spline_data(m+index_Ly_n_spline, DF_vec_z, DF_Ly_n_vec[m]);
-    index_all_spline=index_Ly_n_spline+DF_Ly_n_vec.size();
+    index_nD1s_spline=index_Ly_n_spline+DF_Ly_n_vec.size();
+    //
+    for(int m=0; m<(int)DF_nD1s_vec.size(); m++) setup_DF_spline_data(m+index_nD1s_spline, DF_vec_z, DF_nD1s_vec[m]);
+    index_all_spline=index_nD1s_spline+DF_nD1s_vec.size();
     //
     DPesc_splines_are_setup=1;
 
@@ -97,6 +102,14 @@ double DF_Ly_n_spline(int i, double z)
 }
 
 //==========================================================================================================
+double DF_nD1s_spline(int i, double z)
+{
+    if(z<=DPesc_splines_Data_Lyn[index_nD1s_spline+i].zmin) return DPesc_splines_Data_Lyn[index_nD1s_spline+i].DPmin;
+    if(z>=DPesc_splines_Data_Lyn[index_nD1s_spline+i].zmax) return DPesc_splines_Data_Lyn[index_nD1s_spline+i].DPmax;
+    return calc_spline_JC(z, DPesc_splines_Data_Lyn[index_nD1s_spline+i].memindex);
+}
+
+//==========================================================================================================
 //
 // Ly-n 1+1 photon correction
 //
@@ -110,18 +123,50 @@ double compute_DR_Ly_n_func(int i, double z, double X1s, double Tg, Gas_of_Atoms
 
 void evaluate_HI_Diffusion_correction_Ly_n(double z, Gas_of_Atoms &HIA, double NH, double H_z, double Tg, double *g)
 {
-    if(index_Ly_n_spline==index_all_spline) return;
+    if(index_Ly_n_spline==index_nD1s_spline) return;
+    
+    double DRij;
+    double X1s=HIA.X(1, 0);
+    int index=1;
+    int nmax=8;
+    
+    for(int ni=3; ni<=nmax && index+index_Ly_n_spline<index_nD1s_spline; ni++)
+    {
+        DRij=compute_DR_Ly_n_func(index, z, X1s, Tg, HIA, ni);
+        g[0]+=-DRij;                          // remove electron from lower level
+        g[HIA.Get_Level_index(ni, 1)]+= DRij; // add it to -state
+        index++;
+    }
+    
+    return;
+}
+
+//==========================================================================================================
+// 
+// nD-1s quadrupole lines 1+1 photon correction (added June 2011)
+//
+//==========================================================================================================
+double compute_DR_nD1s_func(int i, double z, double X1s, double Tg, Gas_of_Atoms &HIA, int ni)
+{
+    double DRij=DF_nD1s_spline(i, z)*( HIA.X(ni, 2)/X1s/5.0-exp(-const_h_kb*HIA.Level(ni, 1).Get_Dnu_1s()/Tg) );
+    cout << z << " (ni, li) " << ni << " " << 2 << " nD-1s " << DRij << endl;    
+    return DRij;
+}
+
+void evaluate_HI_Diffusion_correction_nD1s(double z, Gas_of_Atoms &HIA, double NH, double H_z, double Tg, double *g)
+{
+    if(index_nD1s_spline==index_all_spline) return;
     
     double DRij;
     double X1s=HIA.X(1, 0);
     int index=0;
     int nmax=8;
     
-    for(int ni=2; ni<=nmax && index+index_Ly_n_spline<index_all_spline; ni++)
+    for(int ni=3; ni<=nmax && index+index_nD1s_spline<index_all_spline; ni++)
     {
-        DRij=compute_DR_Ly_n_func(index, z, X1s, Tg, HIA, ni);
+        DRij=compute_DR_nD1s_func(index, z, X1s, Tg, HIA, ni);
         g[0]+=-DRij;                          // remove electron from lower level
-        g[HIA.Get_Level_index(ni, 1)]+= DRij; // add it to -state
+        g[HIA.Get_Level_index(ni, 2)]+= DRij; // add it to -state
         index++;
     }
     
@@ -199,12 +244,14 @@ void evaluate_HI_Diffusion_correction_R(double z, Gas_of_Atoms &HIA, double NH, 
 //==========================================================================================================
 void evaluate_HI_Diffusion_correction(double z, Gas_of_Atoms &HIA, double NH, double H_z, double Tg, double *g)
 {
-    evaluate_HI_Diffusion_correction_2_gamma(z, HIA, NH, H_z, Tg, g);
-    evaluate_HI_Diffusion_correction_R      (z, HIA, NH, H_z, Tg, g);
+//    evaluate_HI_Diffusion_correction_2_gamma(z, HIA, NH, H_z, Tg, g);
+//    evaluate_HI_Diffusion_correction_R      (z, HIA, NH, H_z, Tg, g);
     evaluate_HI_Diffusion_correction_Ly_n   (z, HIA, NH, H_z, Tg, g);
+    evaluate_HI_Diffusion_correction_nD1s   (z, HIA, NH, H_z, Tg, g);
     
     return;
 }
+
 
 //==========================================================================================================
 //
@@ -271,6 +318,8 @@ double DI1_2s_spline(double z)
 //==========================================================================================================
 void evaluate_HI_DI1_DI2_correction(double z, double X1s, double X2s, double nu21, double Tg, double *g)
 {
+    return;
+    
     double x21=const_h_kb*nu21/Tg;  
     double DI1_2s=DI1_2s_spline(z);   
     DI1_2s*=X2s-X1s*exp(-x21);  

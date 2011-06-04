@@ -15,7 +15,7 @@ int Lyn_max_parameter=20;
 // activate HI quadrupole lines
 //========================================================================
 bool Atom_activate_HI_Quadrupole_lines=1;
-int nD_Quadrupole_max=(int)min(8, Lyn_max_parameter);
+int nD_Quadrupole_max=(int)min(2, Lyn_max_parameter);
 
 //========================================================================
 string effective_rate_path_arr[4]=

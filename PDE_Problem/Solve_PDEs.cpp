@@ -44,7 +44,7 @@ using namespace nsnd_2gamma_profiles;
 // flags for message output
 //
 //====================================================================================================================
-int show_messages=0;
+int show_messages=2;
 
 
 //====================================================================================================================
@@ -500,6 +500,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
                                                     vector<vector<double> > &DF_Ly_n, 
                                                     vector<vector<double> > &DF_2_gamma_vec, 
                                                     vector<vector<double> > &DF_Raman_vec, 
+                                                    vector<vector<double> > &DF_nD1s_vec, 
                                                     vector<double> &DI1_2s_vec, 
                                                     double zs, double ze, 
                                                     int nmax_2g_corrs, int nmax_R_corrs,
@@ -531,9 +532,15 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
     bool do_output=0;
     bool output_DI1=1;
     bool output_2gR=1;
-    bool write_solution_z0=0;
-    bool include_Ly_corr=0;  // ==1: include the correction from the 1+1 photon 
-                             // terms in the Ly-series. 
+    bool write_solution_z0=1;
+
+    //=========================================================================== 
+    // additional correcition terms
+    //=========================================================================== 
+    bool include_Ly_corr=1;   // ==1: include the correction from the 1+1 photon 
+                              // terms in the Ly-series. 
+    bool include_nD1s_corr=1; // ==1: include the correction from the 1+1 photon 
+                              // terms in the nD-1s quadrupole lines. 
 
     //=========================================================================== 
     int nShells=HIA.Get_nShells();
@@ -595,6 +602,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
     DF_Ly_n.clear();
     DF_2_gamma_vec.clear();
     DF_Raman_vec.clear();
+    DF_nD1s_vec.clear();
     //
     vector<double> DPesc_dum_z;
 
@@ -626,6 +634,12 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
     }
     
     //=========================================================================== 
+    // nD-1s quadrupole lines
+    //=========================================================================== 
+    if(include_nD1s_corr)
+        for(int k=0; k<Get_nmax_two_g_correction()-2; k++) DF_nD1s_vec.push_back(DPesc_dum_z); 
+    
+    //=========================================================================== 
     // load precomputed solutions (load could be avoided...)
     //=========================================================================== 
 //CC    read_Hyrec_Population_from_file(HI_Solution, cos);    
@@ -651,7 +665,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
     // outputs/names/etc
     //=========================================================================== 
     string fname, endname=exten+".it_"+int_to_string(it_num)+".dat";
-    ofstream Ly_n_file, two_g_file, Raman_file, Ifile;
+    ofstream Ly_n_file, two_g_file, Raman_file, nD1s_file, Ifile;
 
     if(output_2gR)
     {
@@ -666,6 +680,10 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
         fname=COSMORECDIR+"./temp/DPesc/DF.Raman"+endname;
         Raman_file.open(fname.c_str());
         Raman_file.precision(8);
+
+        fname=COSMORECDIR+"./temp/DPesc/DF.nD1s"+endname;
+        nD1s_file.open(fname.c_str());
+        nD1s_file.precision(8);
     }
     
     if(output_DI1 && HI_2s_1s_corr_is_on)
@@ -822,6 +840,22 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
                     }
                 }
                 
+                //===============================================================
+                // nD-1s integrals (added 04.06.2011)
+                //=============================================================== 
+                if(Get_nmax_two_g_correction()>=3 && include_nD1s_corr)
+                {
+                    count=0;
+                    for(int ni=3; ni<=Get_nmax_two_g_correction(); ni++)
+                    {
+                        DF=compute_DF_nD1s(ni, nresmax, zout, cos, HIA, SPDE_D.xarr, SPDE_D.yarr, SPDE_D.Fwork, PDE_funcs.exp_x, PDE_funcs);
+                        DF_nD1s_vec[count++].push_back(DF);
+                    }
+                }
+                
+                //===============================================================
+                // output correction integrals
+                //=============================================================== 
                 if(output_2gR)
                 {
                     Ly_n_file << zout << " ";
@@ -835,6 +869,10 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
                     Raman_file << zout << " ";
                     for(int m=0; m<(int)DF_Raman_vec.size(); m++) Raman_file << DF_Raman_vec[m].back() << " ";
                     Raman_file << endl;
+
+                    nD1s_file << zout << " ";
+                    for(int m=0; m<(int)DF_nD1s_vec.size(); m++) nD1s_file << DF_nD1s_vec[m].back() << " ";
+                    nD1s_file << endl;
                 }
             }
             
@@ -876,6 +914,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
         Ly_n_file.close();
         two_g_file.close();
         Raman_file.close();
+        nD1s_file.close();
     }
     
     //=====================================================================================

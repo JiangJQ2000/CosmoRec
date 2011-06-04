@@ -39,9 +39,10 @@ struct define_PDE_HI_runflags
     bool el_sc;           // electron scattering on/off
     bool line_em_abs;     // line emission & absorption on/off
     bool A2s1s_em_abs;    // HI 2s-1s emission & absorption on/off
+    bool nD_Quadrupole;   // HI nD-1s quadrupole lines
 };
 
-define_PDE_HI_runflags def_HI_run={1, 1, 1, 1};  // default setting
+define_PDE_HI_runflags def_HI_run={1, 1, 1, 1, 1};  // default setting
 
 //=====================================================================================
 void HI_switch_on_line_scattering(){ def_HI_run.line_sc=1; return; }
@@ -634,6 +635,7 @@ void Dp_Dnem_2gamma_update(int ni, int li, int n, double N1s, double Nj, double 
 void Dp_Dnem_function(int n, double z, double Tg, double pd_np, double nem, double N1s, double &Dp, double &Dn)
 {
     Dp=Dn=0.0;
+    return;
 
     double DRp=0.0, DRm=0.0;
     double NH=PDE_Setup_D.cosm->NH(z);
@@ -923,6 +925,64 @@ void add_Ly_n_sc_em_full(int n, double z, double nu21, double Tg, double Te, dou
 }
 
 //==================================================================================================================================
+// 
+// add emission, absorption and scattering from nD-1s quadrupole lines (added June 2011)
+//
+//==================================================================================================================================
+void add_nD_1s_sc_em_full(int n, double z, double nu21, double Tg, double Te, double Ne, double N1s, double Hz, 
+                          const vector<double> &xi, vector<double> &Ai, vector<double> &Bi, vector<double> &Ci, vector<double> &Di)
+{
+    Voigtprofile_Dawson *p=&PDE_Setup_D.HI->HI_nD1s_profile(n);
+
+    //----------------------------------------------------------
+    // nD-1s lines; scattering can be neglected
+    //----------------------------------------------------------
+    double lambda=const_cl/nu21; // lambdaj1*(nuj1/nu21)
+    double aV=p->aVoigt(Te);
+    double nun1=p->Get_nu21();
+    double DnuD_nu=p->DnuT_nu12(Te);
+    double DnuD=DnuD_nu*nun1;
+    //
+    double const_sigr=2.5*lambda*lambda*p->Get_A21()/FOURPI/DnuD;
+    
+    //----------------------------------------------------------
+    // nD-1s emission/absorption term
+    //----------------------------------------------------------
+    double x_c=const_h_kb*nun1/Tg;
+    double Dnem =PDE_Setup_D.PDE_funcs->HI_Dnem_nl(z, n, 2)*nu21;
+    //
+    double kappa_nD_1s_abs=-const_sigr*N1s*const_cl/Hz/(1.0+z); 
+    double exp_dum=exp(-x_c);
+    
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
+    for(int k=0; k<(int)xi.size(); k++) 
+    {
+        double x=xi[k];
+        
+        //------------------------------------------------------
+        // prepare for line-scattering and em/abs terms 
+        //------------------------------------------------------
+        double xD=p->nu2x(nu21*x, Te);
+        double phi_x=p->phi(xD, aV);	
+        
+        //------------------------------------------------------
+        // Source-term from emission & absorption 
+        //------------------------------------------------------
+        double exp_fac=exp_dum/PDE_Setup_D.PDE_funcs->exp_x[k];
+        double D_x=kappa_nD_1s_abs*phi_x/x/x;
+        
+        //------------------------------------------------------
+        Ci[k]+=-D_x*exp_fac;
+        Di[k]+= D_x*Dnem;
+        //------------------------------------------------------
+    }
+    
+    return;
+}
+
+//==================================================================================================================================
 //
 // Raman-scattering terms
 //
@@ -931,6 +991,7 @@ void add_nsd_1s_Raman_terms(int n, int l, double (*phi_func)(int, int), double D
                             double z, double nu21, double Tg, double N1s, double Hz, 
                             const vector<double> &xi, vector<double> &Ci, vector<double> &Di)
 {
+    return;
     //----------------------------------------------------------
     // ns/nd-1s Raman term
     //----------------------------------------------------------    
@@ -976,6 +1037,7 @@ void add_nsd_1s_2gamma_terms(int n, int l, double (*phi_func)(int, int), double 
                              double z, double nu21, double Tg, double N1s, double Hz, 
                              const vector<double> &xi, vector<double> &Ci, vector<double> &Di)
 {
+    return;
     //----------------------------------------------------------
     // ns/nd-1s 2 gamma term
     //----------------------------------------------------------    
@@ -1177,6 +1239,12 @@ void def_PDE_Lyn_and_2s1s(double z, const vector<double> &xi, vector<double> &Ai
     if(def_HI_run.A2s1s_em_abs) 
         add_nsd_1s_2gamma_terms(2, 0, phi_ns1s_2g, PDE_Setup_D.PDE_funcs->HI_Dnem_nl(z, 2, 0), z, nu21, Tg, N1s, Hz, xi, Ci, Di);
     
+    //----------------------------------------------------------
+    // include nD-1s quadrupole lines (added June 2011)
+    //----------------------------------------------------------
+    for(int n=3; def_HI_run.nD_Quadrupole && n<=(int)min(8, two_g_process_nmax); n++)
+        add_nD_1s_sc_em_full(n, z, nu21, Tg, Te, Ne, N1s, Hz, xi, Ai, Bi, Ci, Di);
+
     return;
 }
 

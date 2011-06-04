@@ -18,11 +18,18 @@ HI_nx_spline_Data Spline_for_nx_integral;
 //====================================================================================================================
 // simple functions for Sobolev approximation
 //====================================================================================================================
-double tau_S_function(int Lyn, double z, Cosmos &cos, Gas_of_Atoms &HIA)
+double tau_S_function(int Lyn, double z, double X1s, Cosmos &cos, Gas_of_Atoms &HIA)
 { 
     return 3.0*HIA.HI_Lyn_profile(Lyn).Get_A21()
               *pow(HIA.HI_Lyn_profile(Lyn).Get_lambda21(), 3)
-              *calc_HI_X1s(z)*cos.NH(z)/8.0/PI/cos.H(z); 
+              *X1s*cos.NH(z)/8.0/PI/cos.H(z); 
+}
+
+double tau_S_function_nD1s(int n, double z, double X1s, Cosmos &cos, Gas_of_Atoms &HIA)
+{ 
+    return 5.0*HIA.HI_nD1s_profile(n).Get_A21()
+              *pow(HIA.HI_nD1s_profile(n).Get_lambda21(), 3)
+              *X1s*cos.NH(z)/8.0/PI/cos.H(z); 
 }
 
 //====================================================================================================================
@@ -122,7 +129,7 @@ double compute_DF_Ly_n(int ni, int nmax, double z, Cosmos &cos, Gas_of_Atoms &HI
     //================================================================================
     // Ly-n Sobolev approximation part
     //================================================================================
-    double tau_S=tau_S_function(ni, z, cos, HIA); 
+    double tau_S=tau_S_function(ni, z, X1s, cos, HIA); 
     double PS=p_ij(tau_S), P_d=p_ij(pd*tau_S); 
     double PS_eff=pd*P_d/(1.0-(1.0-pd)*P_d);
     double DRtot=-3.0*X1s*HIA.HI_Lyn_profile(ni).Get_A21()*DnLj*(PS-PS_eff); // no-scattering correction
@@ -160,8 +167,82 @@ double compute_DF_Ly_n(int ni, int nmax, double z, Cosmos &cos, Gas_of_Atoms &HI
     r*=pd_eff*3.0*X1s*HIA.HI_Lyn_profile(ni).Get_A21()/phi_Ly_n_Dnu(ni); 
     double res=(r-DRtot)/DnLj;
     
-    if(show_messages>=2) cout << " difference:: (ni, 1)= " << ni << " Dr-Ly-n = " << r      
+    if(show_messages>=2) cout << " difference:: (ni, 1) = " << ni << " Dr-Ly-n = " << r      
                               << " DRtot= " << DRtot << " " << res << endl;
+    
+    return res;
+}
+
+//====================================================================================================================
+//
+// nD-1s 1+1 photon correction (added June 2011)
+//
+//====================================================================================================================
+double compute_DF_nD1s(int ni, int nmax, double z, Cosmos &cos, Gas_of_Atoms &HIA, 
+                       vector<double> &xarr, vector<double> &yarr, 
+                       vector<double> &Fwork, vector<double> &exp_x, 
+                       PDE_solver_functions &PDE_funcs)
+{
+    if(ni>11){ cerr << " compute_DF_Ly_n:: too many intermediate resonances..." << endl; exit(0); }
+
+    Voigtprofile_Dawson *p=&HIA.HI_nD1s_profile(ni);
+    
+    int nnu_pts=xarr.size();
+    double nui1=p->Get_nu21();
+    double nu21=HIA.Level(2 , 1).Get_Dnu_1s();
+    double Tg=cos.TCMB(z);
+    double Te=Tg*PDE_funcs.HI_rho(z);
+    //
+    double exp_i1=exp(-const_h_kb*nui1/Tg);
+    double Xnl=calc_HI_Xnl(z, ni, 2);
+    double X1s=calc_HI_X1s(z);
+    double DnLj=Xnl/X1s/5.0-exp_i1;
+    double aV  =p->aVoigt(Te);
+    
+//    double DnLnp=calc_HI_Xnl(z, ni, 1)/X1s/3.0-exp_i1;
+    
+    //==========================================================================
+    // tabulate Dn(nu) for splines
+    //==========================================================================
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
+    for(int k=0; k<nnu_pts; k++)
+    { 
+        double f_x=exp_i1*(1.0/exp_x[k]-1.0); // exp(-xi1)/npl
+        double xD=p->nu2x(nu21*xarr[k], Te);
+        
+        Fwork[k]=(yarr[k]*f_x-nu21*DnLj)*p->phi(xD, aV); 
+//        Fwork[k]=(nu21*DnLnp-nu21*DnLj)*p->phi(xD, aV); 
+    }       
+    
+    //==========================================================================
+    // setup splines
+    //==========================================================================
+    if(!DF_integrals_splines_are_set) 
+    {
+        Spline_for_nx_integral.memindex=calc_spline_coeffies_JC(nnu_pts, &xarr[0], &Fwork[0], "DF-integrals");
+        DF_integrals_splines_are_set=1;
+    }
+    else update_spline_coeffies_JC(Spline_for_nx_integral.memindex, nnu_pts, &xarr[0], &Fwork[0]);
+    
+    //==========================================================================
+    // compute integral
+    //==========================================================================
+    double r=compute_integral_over_resonances(xarr[2], xarr[nnu_pts-2], 2, nmax, nu21, HIA);
+    
+    //==========================================================================
+    r*=5.0*X1s*p->Get_A21()/p->DnuT(Te); 
+    
+//    r=-p->Get_A21()*( Xnl-5.0/3.0*calc_HI_Xnl(z, ni, 1) );
+    
+    double res=r/DnLj;
+    
+//    r=-5.0*X1s*p->Get_A21()*( DnLj-DnLnp );
+//    res=r;
+    
+    if(show_messages>=2) cout << " difference:: (ni, 2) = " << ni << " Dr-nD-1s = " << r      
+                              << " " << res << endl;
     
     return res;
 }
@@ -201,7 +282,7 @@ double compute_DF_2gamma(int ni, int li, double z, Cosmos &cos, Gas_of_Atoms &HI
         double Aik=HIA.Level(ni, li).Get_A21(n, 1);
         //
         double exp_n=exp(-const_h_kb*HIA.HI_Lyn_profile(n).Get_nu21()/Tg);
-        double tau_S_n=tau_S_function(n, z, cos, HIA);
+        double tau_S_n=tau_S_function(n, z, X1s, cos, HIA);
         //
         double pem=1.0-calc_HI_pd_nl_splines_effective(z, n, 1);
         double exp_ik=exp(-const_h_kb*nuik/Tg);
@@ -289,7 +370,7 @@ double compute_DF_Raman(int ni, int li, int nmax, double z, Cosmos &cos, Gas_of_
         double Aik=HIA.Level(n, 1).Get_A21(ni, li);
         //
         double exp_n=exp(-const_h_kb*HIA.HI_Lyn_profile(n).Get_nu21()/Tg);
-        double tau_S_n=tau_S_function(n, z, cos, HIA);
+        double tau_S_n=tau_S_function(n, z, X1s, cos, HIA);
         //
         double pem=1.0-calc_HI_pd_nl_splines_effective(z, n, 1);
         double exp_ik=exp(-const_h_kb*nuik/Tg);

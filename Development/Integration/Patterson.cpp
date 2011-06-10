@@ -254,7 +254,8 @@ int compute_integral_function_Patterson(int order, double xc, double Dx, double 
     //==============================================================================================
     // compute integral; start with smallest terms first
     //==============================================================================================
-    for(int k=(int)Patterson_fvals.size()-1; k>=0; k--) *r+=Patterson_fvals[k]*w[k];
+    // for(int k=(int)Patterson_fvals.size()-1; k>=0; k--) *r+=Patterson_fvals[k]*w[k];
+    (*r)+=DC_sumprod(&Patterson_fvals[0], w, Patterson_fvals.size());
     (*r)*=Dx;
     
     //==============================================================================================
@@ -410,7 +411,8 @@ int compute_integral_function_Patterson(int order, double xc, double Dx,
     //==============================================================================================
     // compute integral; start with smallest terms first
     //==============================================================================================
-    for(int k=(int)Patterson_fvals.size()-1; k>=0; k--) *r+=Patterson_fvals[k]*w[k];
+    // for(int k=(int)Patterson_fvals.size()-1; k>=0; k--) *r+=Patterson_fvals[k]*w[k];
+    (*r)+=DC_sumprod(&Patterson_fvals[0], w, Patterson_fvals.size());
     (*r)*=Dx;
     
     //==============================================================================================

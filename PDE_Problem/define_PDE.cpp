@@ -42,7 +42,7 @@ struct define_PDE_HI_runflags
     bool nD_Quadrupole;   // HI nD-1s quadrupole lines
 };
 
-define_PDE_HI_runflags def_HI_run={1, 1, 1, 1, 1};  // default setting
+define_PDE_HI_runflags def_HI_run={1, 1, 1, 1, 0};  // default setting
 
 //=====================================================================================
 void HI_switch_on_line_scattering(){ def_HI_run.line_sc=1; return; }

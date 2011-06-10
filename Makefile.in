@@ -40,11 +40,11 @@ LIBSGSL = -L$(GSL_LIB_PATH) -l$(GSL) -lgslcblas
 # If grace support should be used uncomment the next 3 definitions 
 # and set them accordingly.
 #===============================================================================
-#USE_GRACE   = -D GRACE_DEFINED
-#GR          = grace_np
-#GR_INC_PATH = /opt/local/include/
-#GR_LIB_PATH = /opt/local/lib/
-#LIBSGR  = -L$(GR_LIB_PATH)  -l$(GR)
+USE_GRACE   = -D GRACE_DEFINED
+GR          = grace_np
+GR_INC_PATH = /opt/local/include/
+GR_LIB_PATH = /opt/local/lib/
+LIBSGR  = -L$(GR_LIB_PATH)  -l$(GR)
 
 
 #===============================================================================

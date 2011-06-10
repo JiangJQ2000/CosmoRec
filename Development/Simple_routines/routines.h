@@ -92,4 +92,16 @@ void plot_xy_function_loglog(const vector<double> &xarr, const vector<double> &y
 //======================================================================================
 double Wigner_3J_Symbol(int j1, int j2, int j3, int m1, int m2, int m3);
 
+//======================================================================================
+// divide and conquer sum
+//======================================================================================
+double DC_sum(const double *yarr, int M);
+double DC_sum(const vector<double> &yarr);
+
+//======================================================================================
+// divide and conquer sum of product
+//======================================================================================
+double DC_sumprod(const double *yarr, const double *zarr, int M);
+double DC_sumprod(const vector<double> &yarr, const vector<double> &zarr);
+
 #endif

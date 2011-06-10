@@ -889,5 +889,69 @@ void plot_xy_function_loglog(const vector<double> &xarr, const vector<double> &y
 double Wigner_3J_Symbol(int j1, int j2, int j3, int m1, int m2, int m3)
 { return gsl_sf_coupling_3j (2*j1, 2*j2, 2*j3, 2*m1, 2*m2, 2*m3); }
 
+//======================================================================================
+// divide and conquer sum
+//======================================================================================
+double DC_sum(const double *yarr, int M)
+{
+    if(M<=8) 
+    {
+        double r=yarr[0];
+        for(int i=1; i<M; i++) r+=yarr[i];
+        return r;
+    }
+
+    int N=floor(M/2);
+    return DC_sum(&yarr[0], N)+DC_sum(&yarr[N], M-N);
+}
+
+//======================================================================================
+double DC_sum(const vector<double> &yarr)
+{
+    int M=yarr.size();
+    
+    if(M<=8) 
+    {
+        double r=yarr[0];
+        for(int i=1; i<M; i++) r+=yarr[i];
+        return r;
+    }
+
+    int N=floor(M/2);
+    return DC_sum(&yarr[0], N)+DC_sum(&yarr[N], M-N);
+}
+
+//======================================================================================
+// divide and conquer sum of product
+//======================================================================================
+double DC_sumprod(const double *yarr, const double *zarr, int M)
+{
+    if(M<=8) 
+    {
+        double r=yarr[0]*zarr[0];
+        for(int i=1; i<M; i++) r+=yarr[i]*zarr[i];
+        return r;
+    }
+
+    int N=floor(M/2);
+    return DC_sumprod(&yarr[0], &zarr[0], N)+DC_sumprod(&yarr[N], &zarr[N], M-N);
+}
+
+//======================================================================================
+double DC_sumprod(const vector<double> &yarr, const vector<double> &zarr)
+{
+    int M=yarr.size();
+    
+    if(M<=8) 
+    {
+        double r=yarr[0]*zarr[0];
+        for(int i=1; i<M; i++) r+=yarr[i]*zarr[i];
+        return r;
+    }
+
+    int N=floor(M/2);
+    return DC_sumprod(&yarr[0], &zarr[0], N)+DC_sumprod(&yarr[N], &zarr[N], M-N);
+}
+
 
 

@@ -537,9 +537,9 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
     //=========================================================================== 
     // additional correcition terms
     //=========================================================================== 
-    bool include_Ly_corr=1;   // ==1: include the correction from the 1+1 photon 
+    bool include_Ly_corr=0;   // ==1: include the correction from the 1+1 photon 
                               // terms in the Ly-series. 
-    bool include_nD1s_corr=1; // ==1: include the correction from the 1+1 photon 
+    bool include_nD1s_corr=0; // ==1: include the correction from the 1+1 photon 
                               // terms in the nD-1s quadrupole lines. 
 
     //=========================================================================== 

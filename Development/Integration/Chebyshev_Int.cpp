@@ -302,7 +302,10 @@ int Integrate_using_Chebyshev(double a, double b, double epsrel, double epsabs,
     }
     
     //==============================================================================================
-    cout << " Integral did not converge using Chebyshev rules " << a << " " << b 
+    // reaching below here means the intgration failed
+    //==============================================================================================
+    cout << " Integral did not converge using Chebyshev rules up to pmax= " << Chebyshev_pmax << "."
+         << "\n Other parameters/variables were " << a << " " << b 
          << " " << *r << " " << *neval << " mess= " << mess << endl; 
     
     return 1;           
@@ -388,7 +391,10 @@ int Integrate_using_Chebyshev(double a, double x0, double b, double epsrel, doub
     }
     
     //==============================================================================================
-    cout << " Integral did not converge using Chebyshev rules " << a << " " << x0 << " " << b 
+    // reaching below here means the intgration failed
+    //==============================================================================================
+    cout << " Integral did not converge using Chebyshev rules up to pmax= " << Chebyshev_pmax << "."
+         << "\n Other parameters/variables were " << a << " " << x0 << " " << b 
          << " " << *r << " " << *neval << " mess= " << mess << endl; 
     
     return 1;           

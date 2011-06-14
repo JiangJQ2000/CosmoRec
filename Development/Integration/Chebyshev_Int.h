@@ -3,6 +3,7 @@
 // first implementation: Jan 2010
 // last modification: June 2011
 //==================================================================================================
+// June 14th, 2011: Nested table will only be updated if more abscissae and weights are needed.
 
 #ifndef CHEBYSHEV_INT_H
 #define CHEBYSHEV_INT_H
@@ -13,12 +14,9 @@
 using namespace std;
 
 //==================================================================================================
-// computation of the abscissae and weights up to refinement level p (2^p-1 points)
-//==================================================================================================
-void compute_nested_Chebyshev_table(int pmax);
-
-//==================================================================================================
+//
 // some simple test integrands
+//
 //==================================================================================================
 double Chebyshev_test_fcn(double x);
 double Chebyshev_test_fcn_log(double lgx);

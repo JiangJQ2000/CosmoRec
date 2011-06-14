@@ -3,6 +3,7 @@
 // first implementation: Jan 2010
 // last modification: June 2011
 //==================================================================================================
+// June 14th, 2011: Nested table will only be updated if more abscissae and weights are needed.
 
 #include <iostream>
 #include <iomanip>
@@ -23,7 +24,7 @@ using namespace std;
 // parameters for integrator
 //
 //==================================================================================================
-static int Chebyshev_pmax=12;
+static int Chebyshev_pmax=16;
 
 //==================================================================================================
 //
@@ -79,7 +80,6 @@ double Chebyshev_Int_f2(double mu, Chebyshev_vars& v)
 // computations of weights & abscissae; little optimization was done here
 //
 //==================================================================================================
-static bool Chebyshev_table_is_set=0;
 vector<vector<double> > Chebyshev_w;
 vector<vector<double> > Chebyshev_xi;
 
@@ -92,38 +92,45 @@ double sum_Chebyshev_weights(int n, double theta_k)
 }
 
 //==================================================================================================
-void compute_nested_Chebyshev_table(int pmax)
+void compute_nested_Chebyshev_table(int p)
 {
-    cout << " Computing nested Table for Chebychev integration rules up to p= " << pmax << endl; 
-   
-    int mess=0;
-    Chebyshev_w.clear();
-    Chebyshev_xi.clear();
+    //==================================================================================
+    // checks whether computation is necessary
+    //==================================================================================
+    if(p<=(int)Chebyshev_w.size()-1) return;
     
-    int nmax;
+    //==================================================================================
+    int mess=0;
     vector<double> dum;
     double theta_k, tt;
     
+    cout << " Updating nested Table for Chebychev integration rules with p= " << p << endl; 
+          
     //==================================================================================
     // empty element for p=0
     //==================================================================================
-    Chebyshev_w.push_back(dum);
-    Chebyshev_xi.push_back(dum);
-    
-    if(mess>=1) cout.precision(16);
-    
-    for(int p=1; p<=pmax; p++)
+    if(Chebyshev_w.size()==0) 
     {
-        nmax=(int)pow(2.0, p)-1;
-        dum.clear();
+        Chebyshev_w.clear();
+        Chebyshev_xi.clear();
+        Chebyshev_w.push_back(dum);
+        Chebyshev_xi.push_back(dum);
+    }
+    
+    //==================================================================================
+    for(int pl=(int)Chebyshev_w.size(); pl<=p; pl++)
+    {
+        int nmax=(int)pow(2.0, pl)-1;
         
         if(mess>=1)
         {
+            cout.precision(16);
             cout << "\n nmax " << nmax << endl;
             cout << " wi " << endl;
         }
         
         //==============================================================================
+        dum.clear();
         for(int k=1; k<nmax/2+2; k++) 
         {
             theta_k=PI*k/(nmax+1);
@@ -133,12 +140,12 @@ void compute_nested_Chebyshev_table(int pmax)
         
         if(mess>=1) for(int i=0; i<(int)dum.size(); i++) cout << dum[i] << ", ";      
         Chebyshev_w.push_back(dum);
-        dum.clear();
         
         if(mess>=1) cout << "\n xi " << endl;
         
         //==============================================================================
-        if(p==1) dum.push_back(0.0);
+        dum.clear();
+        if(pl==1) dum.push_back(0.0);
         else 
         {
             for(int k=1; k<nmax/2+1; k+=2) 
@@ -151,13 +158,11 @@ void compute_nested_Chebyshev_table(int pmax)
         
         if(mess>=1) for(int i=0; i<(int)dum.size(); i++) cout << dum[i] << ", ";      
         Chebyshev_xi.push_back(dum);
-        
+
         if(mess>=1) wait_f_r("\n");
     }
-    
     if(mess>=1) wait_f_r("\n");
-    
-    Chebyshev_table_is_set=1;
+    //==================================================================================
     
     return;
 }
@@ -177,6 +182,7 @@ void compute_integral_function_Chebyshev(int p, Chebyshev_vars& v,
     //==============================================================================
     *neval=(int)pow(2.0, p)-1;
     *r=0.0;
+    compute_nested_Chebyshev_table(p);
     
     //==============================================================================
     // only add new points
@@ -248,9 +254,6 @@ int Integrate_using_Chebyshev(double a, double b, double epsrel, double epsabs,
                               double (*fptr)(double), int *neval, double *r, string mess)
 {
     int debug=0;
-    
-    //==============================================================================================
-    if(!Chebyshev_table_is_set) compute_nested_Chebyshev_table(Chebyshev_pmax);
     
     //==============================================================================================
     *r=0.0; 
@@ -327,9 +330,6 @@ int Integrate_using_Chebyshev(double a, double x0, double b, double epsrel, doub
 {
     int debug=0;
 
-    //==============================================================================================
-    if(!Chebyshev_table_is_set) compute_nested_Chebyshev_table(Chebyshev_pmax);
-    
     //==============================================================================================
     *r=0.0; 
     *neval=0;

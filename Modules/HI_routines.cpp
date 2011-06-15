@@ -14,7 +14,7 @@ int Lyn_max_parameter=20;
 //========================================================================
 // activate HI quadrupole lines
 //========================================================================
-bool Atom_activate_HI_Quadrupole_lines=1;
+bool Atom_activate_HI_Quadrupole_lines=0;
 int nD_Quadrupole_max=(int)min(2, Lyn_max_parameter);
 
 //========================================================================
@@ -51,7 +51,8 @@ void compute_Q_correction_to_lifetime(int n)
     
     for(int l=0; l<n; l++)
         ofile << l << " " << 1.0*l/(n-1) << " " 
-              << Hydrogen_Atoms.Level(n, l).Get_Gamma_E2()/Hydrogen_Atoms.Level(n, l).Get_Gamma() << endl;
+              << Hydrogen_Atoms.Level(n, l).Get_Gamma_E2()
+                /Hydrogen_Atoms.Level(n, l).Get_Gamma() << endl;
     
     ofile.close();
 

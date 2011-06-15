@@ -303,11 +303,9 @@ namespace ODE_solver_Rec
     inline double ODE_solver_df_dx_2point(const double &fp1, const double &fm1, 
                                           const double &h, double eps)
     { 
-        if(fm1==0.0) return (fp1-fm1)/(2.0*h);
-        
+        if(fm1==0.0) return (fp1-fm1)/(2.0*h);        
         double dum=fp1/fm1-1.0;
-        if(fabs(dum)<=eps) return 0.0;
-        return dum*fm1/(2.0*h); 
+        return fabs(dum)<=eps ? 0.0 : dum*fm1/(2.0*h);
     }
     
     void ODE_solver_jac_2p(int neq, int col, double z, double Dz, double *y, double *r)
@@ -643,8 +641,11 @@ namespace ODE_solver_Rec
     }
     
     //=======================================================================================
-    void ODE_Solver_set_up_solution_and_memory(ODE_solver_Solution &Sz, ODE_solver_accuracies &tols, ODE_Solver_data &ODE_Solver_info, 
-                                               void (*fcn_ptr)(int *neq, double *z, double *y, double *f, int col), bool num_jac)
+    void ODE_Solver_set_up_solution_and_memory(ODE_solver_Solution &Sz, 
+                                               ODE_solver_accuracies &tols, 
+                                               ODE_Solver_data &ODE_Solver_info, 
+                                               void (*fcn_ptr)(int *neq, double *z, double *y, double *f, int col), 
+                                               bool num_jac)
     {
         ODE_Solver_info.fcn_col_ptr=fcn_ptr;
         ODE_Solver_info.num_jac=num_jac;
@@ -765,25 +766,26 @@ namespace ODE_solver_Rec
         //====================================================================================
         double delta=1.0, a0=0.0, a1=0.0, a2=0.0, a3=0.0, a4=0.0, a5=0.0;
         double Dznp1=Snp1_guess.z-Sn.z, Dzn=0.0, Dznm1=0.0, Dznm2=0.0, Dznm3=0.0, Dznm4=0.0;
+        double rho[5]={0.0, 0.0, 0.0, 0.0, 0.0};
         int neq=Snp1_new.y.size();
         
-        if(order>=2) Dzn=Sn.z-Snm1.z;
-        if(order>=3) Dznm1=Sn.z-Snm2.z;
-        if(order>=4) Dznm2=Sn.z-Snm3.z;
-//      if(order>=5) Dznm3=Sn.z-Snm4.z;
-//      if(order>=6) Dznm4=Sn.z-Snm5.z;
-        //
-//      if(order>=6) a5=ODE_Solver_alp5(Dzn/Dznp1, Dznm1/Dznp1, Dznm2/Dznp1, Dznm3/Dznp1, Dznm4/Dznp1);
-//      if(order>=5) a4=ODE_Solver_alp4(Dzn/Dznp1, Dznm1/Dznp1, Dznm2/Dznp1, Dznm3/Dznp1, Dznm4/Dznp1, a5);
-        if(order>=4) a3=ODE_Solver_alp3(Dzn/Dznp1, Dznm1/Dznp1, Dznm2/Dznp1, Dznm3/Dznp1, Dznm4/Dznp1, a4, a5);
-        if(order>=3) a2=ODE_Solver_alp2(Dzn/Dznp1, Dznm1/Dznp1, Dznm2/Dznp1, Dznm3/Dznp1, Dznm4/Dznp1, a3, a4, a5);
-        if(order>=2) a1=ODE_Solver_alp1(Dzn/Dznp1, Dznm1/Dznp1, Dznm2/Dznp1, Dznm3/Dznp1, Dznm4/Dznp1, a2, a3, a4, a5);
+        if(order>=2){ Dzn  =Sn.z-Snm1.z; rho[0]=Dzn  /Dznp1; }
+        if(order>=3){ Dznm1=Sn.z-Snm2.z; rho[1]=Dznm1/Dznp1; }
+        if(order>=4){ Dznm2=Sn.z-Snm3.z; rho[2]=Dznm2/Dznp1; }
+        if(order>=5){ Dznm3=Sn.z-Snm4.z; rho[3]=Dznm3/Dznp1; }
+        if(order>=6){ Dznm4=Sn.z-Snm5.z; rho[4]=Dznm4/Dznp1; 
+        //    
+                     a5=ODE_Solver_alp5(rho[0], rho[1], rho[2], rho[3], rho[4]); }
+        if(order>=5) a4=ODE_Solver_alp4(rho[0], rho[1], rho[2], rho[3], rho[4], a5);
+        if(order>=4) a3=ODE_Solver_alp3(rho[0], rho[1], rho[2], rho[3], rho[4], a4, a5);
+        if(order>=3) a2=ODE_Solver_alp2(rho[0], rho[1], rho[2], rho[3], rho[4], a3, a4, a5);
+        if(order>=2) a1=ODE_Solver_alp1(rho[0], rho[1], rho[2], rho[3], rho[4], a2, a3, a4, a5);
         //
         a0=ODE_Solver_alp0(a1, a2, a3, a4, a5); 
-        delta=ODE_Solver_delta0(Dzn/Dznp1, Dznm1/Dznp1, Dznm2/Dznp1, Dznm3/Dznp1, Dznm4/Dznp1, a1, a2, a3, a4, a5);
+        delta=ODE_Solver_delta0(rho[0], rho[1], rho[2], rho[3], rho[4], a1, a2, a3, a4, a5);
         //
-//        for(int i=0; i<neq; i++) Snp1_new.y[i]=Dznp1*delta*Snp1_guess.dy[i]+a0*Sn.y[i]+a1*Snm1.y[i]+a2*Snm2.y[i]+a3*Snm3.y[i]+a4*Snm4.y[i]+a5*Snm5.y[i];        
-        for(int i=0; i<neq; i++) Snp1_new.y[i]=Dznp1*delta*Snp1_guess.dy[i]+a0*Sn.y[i]+a1*Snm1.y[i]+a2*Snm2.y[i]+a3*Snm3.y[i];      
+        for(int i=0; i<neq; i++) Snp1_new.y[i]=Dznp1*delta*Snp1_guess.dy[i]+a0*Sn.y[i]+a1*Snm1.y[i]
+                                               +a2*Snm2.y[i]+a3*Snm3.y[i]+a4*Snm4.y[i]+a5*Snm5.y[i];    
         
         return delta;   
     }
@@ -795,13 +797,16 @@ namespace ODE_solver_Rec
     double ODE_Solver_beta0(double beta1, double beta2, double beta3, double beta4, double beta5)
     { return 1.0 - beta1 - beta2 - beta3 - beta4 - beta5; }
     
-    double ODE_Solver_beta1(double r1, double r2, double r3, double r4, double r5, double beta2, double beta3, double beta4, double beta5)
+    double ODE_Solver_beta1(double r1, double r2, double r3, double r4, double r5, 
+                            double beta2, double beta3, double beta4, double beta5)
     { return -(1.0 + beta2*r2 + beta3*r3 + beta4*r4 + beta5*r5)/r1; }
     
-    double ODE_Solver_beta2(double r1, double r2, double r3, double r4, double r5, double beta3, double beta4, double beta5)
+    double ODE_Solver_beta2(double r1, double r2, double r3, double r4, double r5, 
+                            double beta3, double beta4, double beta5)
     { return -( (1.0+r1) + beta3*r3*(r1-r3) + beta4*r4*(r1-r4) + beta5*r5*(r1-r5) )/((r1-r2)*r2); }
     
-    double ODE_Solver_beta3(double r1, double r2, double r3, double r4, double r5, double beta4, double beta5)
+    double ODE_Solver_beta3(double r1, double r2, double r3, double r4, double r5, 
+                            double beta4, double beta5)
     { return ( (1.0+r1)*(1.0+r2) + beta4*r4*(r1-r4)*(r2-r4) + beta5*r5*(r1-r5)*(r2-r5) )/((r1-r3)*r3*(r3-r2)); }
     
     double ODE_Solver_beta4(double r1, double r2, double r3, double r4, double r5, double beta5)
@@ -831,24 +836,26 @@ namespace ODE_solver_Rec
         //====================================================================================
         double b0=1.0,  b1=0.0, b2=0.0, b3=0.0, b4=0.0, b5=0.0;
         double Dznp1=Snp1.z-Sn.z, Dzn=0.0, Dznm1=0.0, Dznm2=0.0, Dznm3=0.0, Dznm4=0.0;
+        double rho[5]={0.0, 0.0, 0.0, 0.0, 0.0};
         int neq=Sn.y.size();
         
-        if(order>=2) Dzn=Sn.z-Snm1.z;
-        if(order>=3) Dznm1=Sn.z-Snm2.z;
-        if(order>=4) Dznm2=Sn.z-Snm3.z;
-//        if(order>=5) Dznm3=Sn.z-Snm4.z;
-//        if(order>=6) Dznm4=Sn.z-Snm5.z;
-        //
-//      if(order>=6) b5=ODE_Solver_beta5(Dzn/Dznp1, Dznm1/Dznp1, Dznm2/Dznp1, Dznm3/Dznp1, Dznm4/Dznp1);
-//      if(order>=5) b4=ODE_Solver_beta4(Dzn/Dznp1, Dznm1/Dznp1, Dznm2/Dznp1, Dznm3/Dznp1, Dznm4/Dznp1, b5);
-        if(order>=4) b3=ODE_Solver_beta3(Dzn/Dznp1, Dznm1/Dznp1, Dznm2/Dznp1, Dznm3/Dznp1, Dznm4/Dznp1, b4, b5);
-        if(order>=3) b2=ODE_Solver_beta2(Dzn/Dznp1, Dznm1/Dznp1, Dznm2/Dznp1, Dznm3/Dznp1, Dznm4/Dznp1, b3, b4, b5);
-        if(order>=2) b1=ODE_Solver_beta1(Dzn/Dznp1, Dznm1/Dznp1, Dznm2/Dznp1, Dznm3/Dznp1, Dznm4/Dznp1, b2, b3, b4, b5);
+        if(order>=2){ Dzn  =Sn.z-Snm1.z; rho[0]=Dzn  /Dznp1; }
+        if(order>=3){ Dznm1=Sn.z-Snm2.z; rho[1]=Dznm1/Dznp1; }
+        if(order>=4){ Dznm2=Sn.z-Snm3.z; rho[2]=Dznm2/Dznp1; }
+        if(order>=5){ Dznm3=Sn.z-Snm4.z; rho[3]=Dznm3/Dznp1; }
+        if(order>=6){ Dznm4=Sn.z-Snm5.z; rho[4]=Dznm4/Dznp1; 
+        //    
+                     b5=ODE_Solver_beta5(rho[0], rho[1], rho[2], rho[3], rho[4]); }
+        if(order>=5) b4=ODE_Solver_beta4(rho[0], rho[1], rho[2], rho[3], rho[4], b5);
+        if(order>=4) b3=ODE_Solver_beta3(rho[0], rho[1], rho[2], rho[3], rho[4], b4, b5);
+        if(order>=3) b2=ODE_Solver_beta2(rho[0], rho[1], rho[2], rho[3], rho[4], b3, b4, b5);
+        if(order>=2) b1=ODE_Solver_beta1(rho[0], rho[1], rho[2], rho[3], rho[4], b2, b3, b4, b5);
         //
         b0=ODE_Solver_beta0(b1, b2, b3, b4, b5);
         //
-//        for(int i=0; i<neq; i++) Snp1.y[i]=b0*Sn.y[i]+b1*Snm1.y[i]+b2*Snm2.y[i]+b3*Snm3.y[i]+b4*Snm4.y[i]+b5*Snm5.y[i];     
-        for(int i=0; i<neq; i++) Snp1.y[i]=b0*Sn.y[i]+b1*Snm1.y[i]+b2*Snm2.y[i]+b3*Snm3.y[i];     
+        for(int i=0; i<neq; i++) Snp1.y[i]=b0*Sn.y[i]+b1*Snm1.y[i]+b2*Snm2.y[i]
+                                          +b3*Snm3.y[i]+b4*Snm4.y[i]+b5*Snm5.y[i];    
+        
         
         return; 
     }
@@ -887,7 +894,12 @@ namespace ODE_solver_Rec
                                                               const ODE_solver_Solution &Snm5, 
                                                               int messflag=1)
     {
-        int loc_order=(int) max(order, 1);
+        //--------------------------------------------------------
+        // even if higher order is used just go with fourth order
+        // for error check (added June 15)
+        //--------------------------------------------------------        
+        int loc_order=(int) min(max(order, 1), 4);
+        
         //--------------------------------------------------------
         // S contains best approximation to order 'order'
         // *Stemp will contain best approximation to order 'order-1'
@@ -954,8 +966,8 @@ namespace ODE_solver_Rec
         {
             cout << " Estimated change: ";
             cout << " order= " << order << " estimate order= " << loc_order << " current step-size: " << Dz_z 
-            << " -- new suggested step-size: " << Dz_z_new << " -- Dz= " << zin*Dz_z_new << " z= " << z 
-            << " zend= " << zend << " Dz= " << z-zend << " zin= " << zin << " Dz= " << zin-z;
+                 << " -- new suggested step-size: " << Dz_z_new << " -- Dz= " << zin*Dz_z_new << " z= " << z 
+                 << " zend= " << zend << " Dz= " << z-zend << " zin= " << zin << " Dz= " << zin-z;
             //
             if(Dz_z_new==Dz_z) cout << " -- no change " << endl;
             else if(Dz_z_new==Dz_z_max) cout << " -- maximal step-size reached " << endl;
@@ -986,7 +998,8 @@ namespace ODE_solver_Rec
                 else 
                 {
                     Dz_z/=pow(2.0, ODE_Solver_info.n_down-1); 
-                    cout << "\n Checking to decreasing the step-size by additional factor of " << pow(2.0, ODE_Solver_info.n_down-1) << endl;
+                    cout << "\n Checking to decreasing the step-size by additional factor of " 
+                         << pow(2.0, ODE_Solver_info.n_down-1) << endl;
                 }
             }
             
@@ -1186,7 +1199,7 @@ namespace ODE_solver_Rec
         double zout=zs, zin=zs, Dz_z_old;
         double Dz_z=max(1.0e-8, ODE_Solver_info.Dz_z_last), Dz_z_max;
         int redo_run=0, LAerror=0;
-        int maxorder=4;
+        int maxorder=5;
         int messflag=0;
         
         if(zs!=0.0) Dz_z_max=fabs((zend-zs)/zs);

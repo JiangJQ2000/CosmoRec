@@ -14,6 +14,8 @@ namespace nsnd_2gamma_profiles
     void test_nsnd_2gamma_stuff();  
     void init_nsnd_2gamma_profiles(int nimax=5);
 
+    double sigma_ns_1s_2gamma(int n, double y);
+    double sigma_nd_1s_2gamma(int n, double y);
     double sigma_ns_1s_2gamma_ratio(int n, double y);
     double sigma_nd_1s_2gamma_ratio(int n, double y);
 

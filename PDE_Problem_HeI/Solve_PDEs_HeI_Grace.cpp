@@ -6,7 +6,7 @@
 //==================================================================================================
 // grace output
 //==================================================================================================
-void prepare_Grace_HeI(double xmin, vector<double> &resonances)
+void prepare_Grace_HeI(double xmin, vector<double> &resonances, bool write_to_disk=0)
 {
 	if (GraceOpen(2048) == -1) 
 	{
@@ -14,18 +14,23 @@ void prepare_Grace_HeI(double xmin, vector<double> &resonances)
 		exit(-1);
 	}
 	
-	//===============================================================
+    GracePrintf("PAGE SIZE 700, 500");
+
+    //===============================================================
 	// Set output device 
 	//===============================================================
-//	GracePrintf("PAGE SIZE 1500.0, 1250.0");
-	GracePrintf("HARDCOPY DEVICE \"JPEG\"");
-//	GracePrintf("DEVICE \"JPEG\" FONT on");
-	GracePrintf("DEVICE \"JPEG\" FONT ANTIALIASING on");
-	GracePrintf("DEVICE \"JPEG\" DPI 300");
-	GracePrintf("DEVICE \"JPEG\" OP \"quality:100\"");
-//	GracePrintf("DEVICE \"JPEG\" OP \"dct:float\""); 
-//	GracePrintf("DEVICE \"JPEG\" OP \"optimize:on\""); 
-//	GracePrintf("DEVICE \"JPEG\" OP \"smoothing:10\""); 
+    if(write_to_disk)
+    {
+        //GracePrintf("PAGE SIZE 1500.0, 1250.0");
+        GracePrintf("HARDCOPY DEVICE \"JPEG\"");
+        //GracePrintf("DEVICE \"JPEG\" FONT on");
+        GracePrintf("DEVICE \"JPEG\" FONT ANTIALIASING on");
+        GracePrintf("DEVICE \"JPEG\" DPI 300");
+        GracePrintf("DEVICE \"JPEG\" OP \"quality:100\"");
+        //GracePrintf("DEVICE \"JPEG\" OP \"dct:float\""); 
+        //GracePrintf("DEVICE \"JPEG\" OP \"optimize:on\""); 
+        //GracePrintf("DEVICE \"JPEG\" OP \"smoothing:10\""); 
+    }
 
 	GracePrintf("XAXIS LABEL \"\\xn / n\\s\\021\"");
 	GracePrintf("YAXIS LABEL \"\\1x\\S\\03\\N \\xD\\1n\\s\\1x\"");
@@ -80,7 +85,7 @@ void prepare_Grace_HeI(double xmin, vector<double> &resonances)
 //==================================================================================================
 // output figure
 //==================================================================================================
-void output_Grace_HeI(double zout, 
+void output_Grace_HeI(double zout, bool write_to_disk, 
                       vector<double> &xarr, 
                       vector<double> &yarr, 
                       string exten, int output_count)
@@ -100,7 +105,7 @@ void output_Grace_HeI(double zout,
 	
 	string namef="./temp/JPEG/sol"+exten+"."+int_to_string(output_count, 5)+".jpg";
 	string command="PRINT TO \""+namef+"\"";
-	GracePrintf(command.c_str());
+	if(write_to_disk) GracePrintf(command.c_str());
 	
 	std::ostringstream strs;
 	strs.width(5);
@@ -121,7 +126,7 @@ void output_Grace_HeI(double zout,
 //==================================================================================================
 // output figure
 //==================================================================================================
-void output_Grace_HeI(double zout, 
+void output_Grace_HeI(double zout, bool write_to_disk, 
                       vector<double> &xarr, 
                       vector<double> &yarr, 
                       vector<double> &yarr2, 
@@ -157,9 +162,14 @@ void output_Grace_HeI(double zout,
 		GracePrintf("g0.s3 point %10.16f, %10.16f", xxx, yyy);
 	}
 	
-	string namef="./temp/JPEG/sol"+exten+"."+int_to_string(output_count, 5)+".jpg";
-	string command="PRINT TO \""+namef+"\"";
-	GracePrintf(command.c_str());
+    string command;
+
+    if(write_to_disk) 
+    {
+        string namef="./temp/JPEG/sol"+exten+"."+int_to_string(output_count, 5)+".jpg";
+        command="PRINT TO \""+namef+"\"";
+        GracePrintf(command.c_str());
+    }
 	
 	std::ostringstream strs;
 	strs.width(5);
@@ -168,8 +178,8 @@ void output_Grace_HeI(double zout,
 	
 	command="TITLE \"HeI spectral distortion at \\1z\\0 = "+dumstr+"\"";
 	GracePrintf(command.c_str());
-	GracePrintf("PRINT");
-	
+
+	if(write_to_disk) GracePrintf("PRINT");
 	GracePrintf("redraw");
 	
 //    wait_f_r();

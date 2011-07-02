@@ -522,7 +522,8 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
 	// output for Grace
 	//=========================================================================== 
 #ifdef GRACE_DEFINED
-	bool out_put_GRACE=0;
+	bool out_put_GRACE=1;
+    bool write_to_disk_GRACE=0;
 	int GR_output_step=1;
 #endif
     
@@ -535,7 +536,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
     bool write_solution_z0=1;
 
     //=========================================================================== 
-    // additional correcition terms
+    // additional correction terms
     //=========================================================================== 
     bool include_Ly_corr=0;   // ==1: include the correction from the 1+1 photon 
                               // terms in the Ly-series. 
@@ -702,7 +703,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
 	// prepare grace output
 	//=========================================================================== 
 #ifdef GRACE_DEFINED
-	if(out_put_GRACE) prepare_Grace(SPDE_D.xarr[0], SPDE_D.resonances);	
+	if(out_put_GRACE) prepare_Grace(SPDE_D.xarr[0], SPDE_D.resonances, write_to_disk_GRACE);	
 #endif
     
     double zin=zs, zout, dz, theta_HI_loc=0.51;
@@ -767,7 +768,8 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
 			//=================================================================== 
 #ifdef GRACE_DEFINED
 			if (!(output_count%GR_output_step) && out_put_GRACE && GraceIsOpen()) 
-				output_Grace(zout, SPDE_D.xarr, SPDE_D.yarr, exten, output_count);
+				output_Grace(zout, write_to_disk_GRACE, SPDE_D.xarr, 
+                             SPDE_D.yarr, exten, output_count);
 #endif
             
             //=================================================================== 
@@ -890,7 +892,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
     //=====================================================================================
     if(write_solution_z0)
     {
-        fname=COSMORECDIR+"./temp/DPesc/sol.z_0"+endname;
+        fname=COSMORECDIR+"./temp/DPesc/DI_nu.sol.z_0"+endname;
         ofstream ofile(fname.c_str());
         ofile.precision(10);
         

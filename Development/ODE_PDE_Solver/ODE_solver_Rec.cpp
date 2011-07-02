@@ -1,4 +1,4 @@
-//=====================================================================================================
+//==================================================================================================
 // ODE_solver routines 
 //
 // Purpose: solve a system of stiff ODEs with moderate dimension (n<~100). 
@@ -8,8 +8,12 @@
 // method. A guess for the next solution is extrapolated from the previous solutions; 
 //
 // Author: Jens Chluba with contributions from Geoff Vasil at CITA
-// Date: 12/01/2010
-//=====================================================================================================
+// First implementation: 12/01/2010
+// Last modification   : 15/06/2011
+//==================================================================================================
+// 15/06/2011: set max order to 5; This was making the code a bit faster; 
+//             tidied the code a bit;
+//==================================================================================================
 
 #include <cstdlib>
 #include <cmath>
@@ -22,7 +26,7 @@ using namespace std;
 
 int verbosity_ODE_solver=0;
 
-//=====================================================================================================
+//=======================================================================================
 namespace ODE_solver_Rec
 {
     //===================================================================================
@@ -49,6 +53,8 @@ namespace ODE_solver_Rec
         return isnan(a);
 #endif
     }
+    //===================================================================================
+
     
     //===================================================================================
     // pointers to gobal variables and memory
@@ -85,7 +91,9 @@ namespace ODE_solver_Rec
     //===================================================================================
     // compute c=A*b (i.e. matrix times vector)
     //===================================================================================
-    void A_times_b_is_c(const ODE_solver_matrix &Jac, const vector<double> &b, vector<double> &c)
+    void A_times_b_is_c(const ODE_solver_matrix &Jac, 
+                        const vector<double> &b, 
+                        vector<double> &c)
     {
         //------------------------------------------------------
         // here it is assumed that A is symmetric with dimension 
@@ -93,7 +101,8 @@ namespace ODE_solver_Rec
         //------------------------------------------------------
         for(unsigned int j=0; j<c.size(); j++) c[j]=0.0;
 
-        for(unsigned int i=0; i<Jac.A.size(); i++) c[Jac.row[i]]+= Jac.A[i] * b[Jac.col[i]];
+        for(unsigned int i=0; i<Jac.A.size(); i++) 
+            c[Jac.row[i]]+= Jac.A[i] * b[Jac.col[i]];
         
         return;
     }
@@ -103,14 +112,18 @@ namespace ODE_solver_Rec
     //===================================================================================
     void Get_inverse_diags(int dim, const ODE_solver_matrix &Jac, vector<double> &d)
     {
-        //------------------------------------------------------
+        //-----------------------------------------------------------
         // here it is assumed that A is symmetric with dimension dim
-        //------------------------------------------------------
+        //-----------------------------------------------------------
         for(int i=0; i<dim; i++)
         {
             d[i]=Jac.A[Jac.diags[i]];
             
-            if(d[i]==0){ cerr << " error in preconditioner for element: " << i << endl; exit(0); }
+            if(d[i]==0)
+            { 
+                cerr << " error in preconditioner for element: " << i << endl; 
+                exit(0); 
+            }
             else d[i]=1.0/d[i];
         }
         
@@ -145,7 +158,8 @@ namespace ODE_solver_Rec
         double resid;
         double rho_1=1.0, rho_2=1.0, alpha=1.0, beta=1.0, omega=1.0;
         //
-        vector<double> p(neq), phat(neq), s(neq), shat(neq), t(neq), v(neq), r(neq), rtilde(neq);
+        vector<double> p(neq), phat(neq), s(neq), shat(neq);
+        vector<double> t(neq), v(neq), r(neq), rtilde(neq);
         vector<double> invdiag(neq);
         
         //------------------------------------------------------
@@ -258,7 +272,8 @@ namespace ODE_solver_Rec
             cout << " BiCG flag = " << ifail << endl;
             cout << " iterations performed: " << maxit << endl;
             cout << " tolerance achieved  : " << tol << endl;
-            cout << " Something bad happened to the ODE system. Restarting solver. " << endl;
+            cout << " Something bad happened to the ODE system. Restarting solver. " 
+                 << endl;
             
             if(isnan_loc(tol)) ifail=10;
         }
@@ -308,21 +323,22 @@ namespace ODE_solver_Rec
         return fabs(dum)<=eps ? 0.0 : dum*fm1/(2.0*h);
     }
     
+    //===================================================================================
     void ODE_solver_jac_2p(int neq, int col, double z, double Dz, double *y, double *r)
     { 
-        //===========================================================================
+        //===============================================================================
         // r[i] is reset here
         // y[i] should contain the solution at z
-        //===========================================================================   
+        //===============================================================================
         double y0=y[col], Dyj=y[col]*1.0e-8, eps=1.0e-12;
         if(y0==0.0) Dyj=1.0e-8;
         
         vector<double> fp1(neq), fm1(neq);
         
-        //===========================================================================
+        //===============================================================================
         // derivatives with respect to Xj.
         // A two-point formula is used. It has accuracy O(h^2)
-        //===========================================================================
+        //===============================================================================
         // get f(yj+Dyj)
         y[col]=y0+Dyj;
         ODE_solver_f_col(neq, z, &y[0], &fp1[0], col);
@@ -332,44 +348,48 @@ namespace ODE_solver_Rec
         // restore y again
         y[col]=y0;
         
-        //===========================================================================
+        //===============================================================================
         // define numerical derivative
-        //===========================================================================
-        for(int k=0; k<neq; k++) r[k]=-Dz*ODE_solver_df_dx_2point(fp1[k], fm1[k], Dyj, eps);
+        //===============================================================================
+        for(int k=0; k<neq; k++) 
+            r[k]=-Dz*ODE_solver_df_dx_2point(fp1[k], fm1[k], Dyj, eps);
         
-        //===========================================================================
+        //===============================================================================
         // add unity to the i==j element
-        //===========================================================================
+        //===============================================================================
         r[col]+=1.0;
         
         return; 
     }
     
-    void ODE_solver_jac_user(int neq, int col, double z, double Dz, double *y, double *r)
+    //===================================================================================
+    void ODE_solver_jac_user(int neq, int col, double z, double Dz, 
+                             double *y, double *r)
     { 
         global_ODE_Solver_info_ptr_for_function->fcn_col_ptr(&neq, &z, y, r, col);
         
-        //===========================================================================
+        //===============================================================================
         // define derivative
-        //===========================================================================
+        //===============================================================================
         for(int k=0; k<neq; k++) r[k]=-Dz*r[k];
         
-        //===========================================================================
+        //===============================================================================
         // add unity to the i==j element
-        //===========================================================================
+        //===============================================================================
         r[col]+=1.0;
         
         return; 
     }
     
+    //===================================================================================
     void ODE_solver_compute_Jacobian_Matrix(double z, double Dz, int neq, double *y, 
                                             ODE_solver_matrix &Jac, int mess=0)
     {
-        //===================================================================================
+        //===============================================================================
         // z is the current redshift
         // y[] should contain the solution for which the jacobian is needed
         // Jac[] should have dimension neq*neq
-        //===================================================================================
+        //===============================================================================
         if(mess==1) cout << " entering full Jacobinan update. " << endl;
         
         Jac.A.clear();
@@ -377,14 +397,14 @@ namespace ODE_solver_Rec
         Jac.col.clear();
         Jac.diags.clear();
         
-        //===================================================================================
+        //===============================================================================
         // this vector will be used to store the jacobian after calls of f_i(X)
-        //===================================================================================
+        //===============================================================================
         vector<double> Jij(neq);
         
-        //===================================================================================
+        //===============================================================================
         // fill Matrix with values
-        //===================================================================================
+        //===============================================================================
         if(global_ODE_Solver_info_ptr_for_function->num_jac) 
         {
             for(int J=0; J<neq; J++)
@@ -423,7 +443,8 @@ namespace ODE_solver_Rec
         if(mess==1) cout << " Number of non-zero elements = " << Jac.A.size() 
                          << ". Full matrix has " << neq*neq << " elements " << endl;
         
-        if((int)Jac.diags.size()!=neq) cout << " Hmmm. That should not happen... " << endl;
+        if((int)Jac.diags.size()!=neq) 
+            cout << " Hmmm. That should not happen... " << endl;
         
         return;
     }
@@ -435,16 +456,17 @@ namespace ODE_solver_Rec
     // this function has to be called to set/reset errors
     //
     //===================================================================================
-    void ODE_Solver_set_errors(ODE_solver_accuracies &tols, ODE_Solver_data &ODE_Solver_info)
+    void ODE_Solver_set_errors(ODE_solver_accuracies &tols, 
+                               ODE_Solver_data &ODE_Solver_info)
     {
         int neq=tols.rel.size();
         
         ODE_Solver_info.abs_vector.resize(neq);
         ODE_Solver_info.rel_vector.resize(neq);
         
-        //===================================================================================
+        //===============================================================================
         // Copy absolute & relative accuracies
-        //===================================================================================
+        //===============================================================================
         ODE_Solver_info.abs_vector=tols.abs;
         ODE_Solver_info.rel_vector=tols.rel;
         
@@ -510,7 +532,7 @@ namespace ODE_solver_Rec
         return;
     }
     
-    //=====================================================================================================
+    //===================================================================================
     void clear_SolverData(ODE_Solver_data &SD)
     {
         clear_memory(SD.Stemp);
@@ -546,8 +568,10 @@ namespace ODE_solver_Rec
         return;
     }
 
-    //=====================================================================================================
-    void clear_all_memory(ODE_solver_Solution &Sz, ODE_solver_accuracies &tols, ODE_Solver_data &SD)
+    //===================================================================================
+    void clear_all_memory(ODE_solver_Solution &Sz, 
+                          ODE_solver_accuracies &tols, 
+                          ODE_Solver_data &SD)
     {
         clear_memory(Sz, tols);
         clear_SolverData(SD);
@@ -610,18 +634,20 @@ namespace ODE_solver_Rec
         ODE_Solver_info.Snm4ptr->y.resize(neq); ODE_Solver_info.Snm4ptr->dy.resize(neq);
         ODE_Solver_info.Snm5ptr->y.resize(neq); ODE_Solver_info.Snm5ptr->dy.resize(neq);
         
-        //===================================================================================
+        //===============================================================================
         // copy solution
-        //===================================================================================
+        //===============================================================================
         ODE_Solver_info.Snptr->z=Sz.z;
         ODE_Solver_info.Snptr->y=Sz.y;
         ODE_Solver_info.Snptr->dy=Sz.dy;
         
-        ODE_solver_f(neq, ODE_Solver_info.Snptr->z, &ODE_Solver_info.Snptr->y[0], &ODE_Solver_info.Snptr->dy[0]);
+        ODE_solver_f(neq, ODE_Solver_info.Snptr->z, 
+                     &ODE_Solver_info.Snptr->y[0], 
+                     &ODE_Solver_info.Snptr->dy[0]);
         
-        //===================================================================================
+        //===============================================================================
         // other data
-        //===================================================================================
+        //===============================================================================
         ODE_Solver_info.Dz_z_last=0;    
         ODE_Solver_info.zstart_solver=ODE_Solver_info.Snptr->z; 
         ODE_Solver_info.order=1;    
@@ -631,20 +657,22 @@ namespace ODE_solver_Rec
         ODE_Solver_info.n_up=0;
         ODE_Solver_info.n_down=0;
         
-        //===================================================================================
+        //===============================================================================
         // Copy absolute & relative accuracies
-        //===================================================================================
+        //===============================================================================
         ODE_Solver_set_errors(tols, ODE_Solver_info);
         
         global_ODE_Solver_info_ptr_for_function=NULL;
         return;
     }
     
-    //=======================================================================================
+    //===================================================================================
     void ODE_Solver_set_up_solution_and_memory(ODE_solver_Solution &Sz, 
                                                ODE_solver_accuracies &tols, 
                                                ODE_Solver_data &ODE_Solver_info, 
-                                               void (*fcn_ptr)(int *neq, double *z, double *y, double *f, int col), 
+                                               void (*fcn_ptr)(int *neq, double *z, 
+                                                               double *y, double *f, 
+                                                               int col), 
                                                bool num_jac)
     {
         ODE_Solver_info.fcn_col_ptr=fcn_ptr;
@@ -654,16 +682,16 @@ namespace ODE_solver_Rec
         return;
     }
     
-    //=======================================================================================
+    //===================================================================================
     //
     // time-step using Gears-method
     // order can be ==1; 2; 3; 4; 5; 6;
     //
-    //=======================================================================================
+    //===================================================================================
     
-    //=======================================================================================
+    //===================================================================================
     // aux-functions alpha_i coefficients
-    //=======================================================================================
+    //===================================================================================
     double ODE_Solver_Gears_fk1(double rk)
     { return 2.0+rk; } 
     
@@ -686,7 +714,8 @@ namespace ODE_solver_Rec
         return r-ODE_Solver_Gears_fk2(r1, r2);
     } 
     
-    inline double ODE_Solver_Gears_fk5(double r1, double r2, double r3, double r4, double rk)
+    inline double ODE_Solver_Gears_fk5(double r1, double r2, double r3, 
+                                       double r4, double rk)
     {
         double r=ODE_Solver_Gears_fk4(r1, r2, r3, r4)*ODE_Solver_Gears_fk1(rk);
         r-=(ODE_Solver_Gears_fk2(r1, r2+r3)+r2*r3)*r4;
@@ -743,7 +772,8 @@ namespace ODE_solver_Rec
     double ODE_Solver_alp5(double r1, double r2, double r3, double r4, double r5)
     { 
         double t=(1.0+r1)*(1.0+r2)*(1.0+r3)*(1.0+r4);
-        return -t*t/( r5*(r1-r5)*(r2-r5)*(r3-r5)*(r4-r5)*ODE_Solver_Gears_fk5(r1, r2, r3, r4, r5) ); 
+        return -t*t/( r5*(r1-r5)*(r2-r5)*(r3-r5)*(r4-r5)
+                    *ODE_Solver_Gears_fk5(r1, r2, r3, r4, r5) ); 
     }
     
     //===================================================================================
@@ -758,12 +788,16 @@ namespace ODE_solver_Rec
                                    const ODE_solver_Solution &Snm4, 
                                    const ODE_solver_Solution &Snm5)
     {
-        if(order<1 || order>6){ cerr << " check order for ODE_Solver_compute_ynp1 " << endl; exit(0); }
+        if(order<1 || order>6)
+        { 
+            cerr << " check order for ODE_Solver_compute_ynp1 " << endl; 
+            exit(0); 
+        }
         
-        //====================================================================================
-        // the structures yn, ynm1, ynm2 contain the information from the previous time steps
-        // the structure ynp1 contains the current version of ynp1 and dynm1
-        //====================================================================================
+        //===============================================================================
+        // the structures yn, ynm1, ynm2 contain the information from the previous time 
+        // steps the structure ynp1 contains the current version of ynp1 and dynm1
+        //===============================================================================
         double delta=1.0, a0=0.0, a1=0.0, a2=0.0, a3=0.0, a4=0.0, a5=0.0;
         double Dznp1=Snp1_guess.z-Sn.z, Dzn=0.0, Dznm1=0.0, Dznm2=0.0, Dznm3=0.0, Dznm4=0.0;
         double rho[5]={0.0, 0.0, 0.0, 0.0, 0.0};
@@ -807,10 +841,12 @@ namespace ODE_solver_Rec
     
     double ODE_Solver_beta3(double r1, double r2, double r3, double r4, double r5, 
                             double beta4, double beta5)
-    { return ( (1.0+r1)*(1.0+r2) + beta4*r4*(r1-r4)*(r2-r4) + beta5*r5*(r1-r5)*(r2-r5) )/((r1-r3)*r3*(r3-r2)); }
+    { return ( (1.0+r1)*(1.0+r2) + beta4*r4*(r1-r4)*(r2-r4) 
+                                 + beta5*r5*(r1-r5)*(r2-r5) )/((r1-r3)*r3*(r3-r2)); }
     
     double ODE_Solver_beta4(double r1, double r2, double r3, double r4, double r5, double beta5)
-    { return -( (1.0+r1)*(1.0+r2)*(1.0+r3) + beta5*r5*(r1-r5)*(r2-r5)*(r3-r5) )/((r3-r4)*r4*(r4-r1)*(r4-r2)); }
+    { return -( (1.0+r1)*(1.0+r2)*(1.0+r3) + beta5*r5*(r1-r5)*(r2-r5)*(r3-r5) )
+              /((r3-r4)*r4*(r4-r1)*(r4-r2)); }
     
     double ODE_Solver_beta5(double r1, double r2, double r3, double r4, double r5)
     { return (1.0+r1)*(1.0+r2)*(1.0+r3)*(1.0+r4)/((r2-r5)*r5*(r5-r1)*(r5-r3)*(r5-r4)); }
@@ -828,12 +864,16 @@ namespace ODE_solver_Rec
                                      const ODE_solver_Solution &Snm4, 
                                      const ODE_solver_Solution &Snm5)
     {
-        if(order<1 || order>6){ cerr << " check order for ODE_Solver_extrapolate_ynp1 " << endl; exit(0); }
+        if(order<1 || order>6)
+        { 
+            cerr << " check order for ODE_Solver_extrapolate_ynp1 " << endl; 
+            exit(0); 
+        }
         
-        //====================================================================================
-        // the structures yn, ynm1,... contain the information from the previous time steps
-        // the structure ynp1 contains the current version of ynp1 and dynm1
-        //====================================================================================
+        //================================================================================
+        // the structures yn, ynm1,... contain the information from the previous time 
+        // steps the structure ynp1 contains the current version of ynp1 and dynm1
+        //================================================================================
         double b0=1.0,  b1=0.0, b2=0.0, b3=0.0, b4=0.0, b5=0.0;
         double Dznp1=Snp1.z-Sn.z, Dzn=0.0, Dznm1=0.0, Dznm2=0.0, Dznm3=0.0, Dznm4=0.0;
         double rho[5]={0.0, 0.0, 0.0, 0.0, 0.0};
@@ -865,14 +905,17 @@ namespace ODE_solver_Rec
     // Functions for the ODE solver (error checking)
     //
     //===================================================================================
-    inline double ODE_Solver_error_check(double z, double rtol, double atol, double y, double Dy, int mflag, int component, string mess="")
+    inline double ODE_Solver_error_check(double z, double rtol, double atol, double y, 
+                                         double Dy, int mflag, int component, string mess="")
     {
         Dy=fabs(Dy);
         double err_aim=rtol*fabs(y), fac=1.0e+10;
         if(err_aim<=atol)
         { 
-            if(mflag>=1) cout << " Time-stepper: absolute error control for ( " << mess << " / component " << component << " ) at z= " 
-                << z << " and y= " << y << " |Dy|= " << Dy << " Dy_rel= " << err_aim << " Dy_abs= " << atol << endl;
+            if(mflag>=1) cout << " Time-stepper: absolute error control for ( " << mess 
+                              << " / component " << component << " ) at z= " 
+                              << z << " and y= " << y << " |Dy|= " << Dy 
+                              << " Dy_rel= " << err_aim << " Dy_abs= " << atol << endl;
             err_aim=atol;
         }
         
@@ -906,7 +949,8 @@ namespace ODE_solver_Rec
         //--------------------------------------------------------
         int neq=S.y.size();
         ODE_Solver_info.Stemp.z=z;
-        ODE_Solver_extrapolate_ynp1(order, ODE_Solver_info.Stemp, Sn, Snm1, Snm2, Snm3, Snm4, Snm5); 
+        ODE_Solver_extrapolate_ynp1(order, ODE_Solver_info.Stemp, 
+                                    Sn, Snm1, Snm2, Snm3, Snm4, Snm5); 
         
         //--------------------------------------------------------
         // compute difference
@@ -923,30 +967,39 @@ namespace ODE_solver_Rec
         else power=1.0/loc_order;
         
         double tol=1.0e-5;
+/*
         //--------------------------------------------------------
         // rho
         //--------------------------------------------------------
-/*      dum=ODE_Solver_error_check(z, tol, ODE_Solver_info.abs_vector[0], S.y[0], ODE_Solver_info.Stemp.y[0], messflag, 0, "rho");
+        dum=ODE_Solver_error_check(z, tol, ODE_Solver_info.abs_vector[0], S.y[0], 
+                                   ODE_Solver_info.Stemp.y[0], messflag, 0, "rho");
         if(fac>dum){ fac=dum; max_err_time=0; }
         
         //--------------------------------------------------------
         // Hydrogen X1s
         //--------------------------------------------------------
-        dum=ODE_Solver_error_check(z, tol, ODE_Solver_info.abs_vector[1], S.y[1], ODE_Solver_info.Stemp.y[1], messflag, 1, "HI 1s");
+        dum=ODE_Solver_error_check(z, tol, ODE_Solver_info.abs_vector[1], S.y[1], 
+                                   ODE_Solver_info.Stemp.y[1], messflag, 1, "HI 1s");
         if(fac>dum){ fac=dum; max_err_time=1; }
         // X2s
-        dum=ODE_Solver_error_check(z, tol, ODE_Solver_info.abs_vector[2], S.y[2], ODE_Solver_info.Stemp.y[2], messflag, 2, "HI 2s");
+        dum=ODE_Solver_error_check(z, tol, ODE_Solver_info.abs_vector[2], S.y[2], 
+                                   ODE_Solver_info.Stemp.y[2], messflag, 2, "HI 2s");
         if(fac>dum){ fac=dum; max_err_time=2; }
         // X2p
-        dum=ODE_Solver_error_check(z, tol, ODE_Solver_info.abs_vector[3], S.y[3], ODE_Solver_info.Stemp.y[3], messflag, 3, "HI 2p");
+        dum=ODE_Solver_error_check(z, tol, ODE_Solver_info.abs_vector[3], S.y[3], 
+                                   ODE_Solver_info.Stemp.y[3], messflag, 3, "HI 2p");
         if(fac>dum){ fac=dum; max_err_time=3; }
 */      
         for(int l=0; l<neq; l++)
         {
             if(ODE_Solver_info.rel_vector[l]!=0.0) 
             {
-//              dum=ODE_Solver_error_check(z, ODE_Solver_info.rel_vector[l], ODE_Solver_info.abs_vector[l], S.y[l], ODE_Solver_info.Stemp.y[l], messflag, l, "?");
-                dum=ODE_Solver_error_check(z, tol, ODE_Solver_info.abs_vector[l], S.y[l], ODE_Solver_info.Stemp.y[l], messflag, l, "?");
+//              dum=ODE_Solver_error_check(z, ODE_Solver_info.rel_vector[l], 
+//                                        ODE_Solver_info.abs_vector[l], S.y[l], 
+//                                        ODE_Solver_info.Stemp.y[l], messflag, l, "?");
+                
+                dum=ODE_Solver_error_check(z, tol, ODE_Solver_info.abs_vector[l], S.y[l], 
+                                           ODE_Solver_info.Stemp.y[l], messflag, l, "?");
                 if(fac>dum){ fac=dum; max_err_time=l; }
             }
         }
@@ -965,8 +1018,10 @@ namespace ODE_solver_Rec
         if(messflag==1)
         {
             cout << " Estimated change: ";
-            cout << " order= " << order << " estimate order= " << loc_order << " current step-size: " << Dz_z 
-                 << " -- new suggested step-size: " << Dz_z_new << " -- Dz= " << zin*Dz_z_new << " z= " << z 
+            cout << " order= " << order << " estimate order= " << loc_order 
+                 << " current step-size: " << Dz_z 
+                 << " -- new suggested step-size: " << Dz_z_new << " -- Dz= " << zin*Dz_z_new 
+                 << " z= " << z 
                  << " zend= " << zend << " Dz= " << z-zend << " zin= " << zin << " Dz= " << zin-z;
             //
             if(Dz_z_new==Dz_z) cout << " -- no change " << endl;
@@ -1068,7 +1123,9 @@ namespace ODE_solver_Rec
             //--------------------------------------------------------
             // redshift z==zn --> compute f_i(yguess, z)
             //--------------------------------------------------------
-            ODE_solver_f(neq, zout, &ODE_Solver_info.Sguessptr->y[0], &ODE_Solver_info.Sguessptr->dy[0]);
+            ODE_solver_f(neq, zout, 
+                         &ODE_Solver_info.Sguessptr->y[0], 
+                         &ODE_Solver_info.Sguessptr->dy[0]);
             
             //--------------------------------------------------------
             // after calling this function, ynew will contain y(yguess)
@@ -1081,7 +1138,8 @@ namespace ODE_solver_Rec
             //--------------------------------------------------------
             // this is rhs of J_F Dx = -F
             //--------------------------------------------------------
-            for(int i=0; i<neq; i++) ODE_Solver_info.F[i]=Snew->y[i]-ODE_Solver_info.Sguessptr->y[i]; 
+            for(int i=0; i<neq; i++) 
+                ODE_Solver_info.F[i]=Snew->y[i]-ODE_Solver_info.Sguessptr->y[i]; 
             
             //--------------------------------------------------------
             // compute Jacobian
@@ -1093,7 +1151,8 @@ namespace ODE_solver_Rec
             //--------------------------------------------------------
             // solve equation for dY
             //--------------------------------------------------------
-            LA_error=ODE_Solver_Solve_LA_system(*ODE_Solver_info.Jacobian_ptr, ODE_Solver_info.F, 
+            LA_error=ODE_Solver_Solve_LA_system(*ODE_Solver_info.Jacobian_ptr, 
+                                                ODE_Solver_info.F, 
                                                 ODE_Solver_info.dY, tolJac, 1);
                 
             //--------------------------------------------------------
@@ -1123,11 +1182,15 @@ namespace ODE_solver_Rec
             {
                 for(int k=0; k<neq; k++) 
                     if( ODE_Solver_info.rel_vector[k]!=0.0 && 
-                       (fabs(ODE_Solver_info.dY[k])>=max(ODE_Solver_info.rel_vector[k]*fabs(ODE_Solver_info.Sguessptr->y[k]), ODE_Solver_info.abs_vector[k]) ) )
+                       (fabs(ODE_Solver_info.dY[k])>=
+                        max(ODE_Solver_info.rel_vector[k]
+                           *fabs(ODE_Solver_info.Sguessptr->y[k]), ODE_Solver_info.abs_vector[k]) 
+                       ) )
                     { 
                         converged=0; 
                         if(mess>=2) cout << " " << k << " " << fabs(ODE_Solver_info.dY[k]) << " " 
-                                         << ODE_Solver_info.rel_vector[k]*fabs(ODE_Solver_info.Sguessptr->y[k]) << " " 
+                                         << ODE_Solver_info.rel_vector[k]
+                                            *fabs(ODE_Solver_info.Sguessptr->y[k]) << " " 
                                          << ODE_Solver_info.abs_vector[k] << endl;
                         break; 
                     }
@@ -1151,7 +1214,7 @@ namespace ODE_solver_Rec
         } 
         while(converged==0);
         
-        if(mess>=1) cout << "\n Number of Jacobian interations " << Jac_loops 
+        if(mess>=1) cout << "\n Number of Jacobian iterations " << Jac_loops 
                          << " needed for propagation from z= " << zin 
                          << " by Dz= " << zin-zout << endl;
         
@@ -1177,25 +1240,27 @@ namespace ODE_solver_Rec
     {   
         if(ODE_Solver_info.Snewptr==NULL)
         {
-            cout << " ODE_Solver_Solve_history:: please set up the memory first! Exiting" << endl;
+            cout << " ODE_Solver_Solve_history:: please set up the memory first! Exiting" 
+                 << endl;
             exit(0);
         }
         
-        //------------------------------------------------------------------------------------------------------------
-        // setting this pointer is only important for the ODE-function routine. All the other parts of the code do not 
-        // use global variables, but pass the memory along.
-        //------------------------------------------------------------------------------------------------------------
+        //---------------------------------------------------------------------------
+        // setting this pointer is only important for the ODE-function routine. All 
+        // the other parts of the code do not use global variables, but pass the 
+        // memory along.
+        //---------------------------------------------------------------------------
         global_ODE_Solver_info_ptr_for_function=&ODE_Solver_info;
         
-        //============================================================================================================
+        //===========================================================================
         // define integration direction
-        //============================================================================================================
+        //===========================================================================
         if(zs>zend) ODE_Solver_info.direction=1;
         else ODE_Solver_info.direction=-1;
         
-        //============================================================================================================
+        //===========================================================================
         // setup
-        //============================================================================================================
+        //===========================================================================
         double zout=zs, zin=zs, Dz_z_old;
         double Dz_z=max(1.0e-8, ODE_Solver_info.Dz_z_last), Dz_z_max;
         int redo_run=0, LAerror=0;
@@ -1207,15 +1272,15 @@ namespace ODE_solver_Rec
         
         Dz_z_max=10.0/zs;
         
-        //--------------------------------------------------------
+        //===========================================================================
         // for initial step reduce the accuracy
-        //--------------------------------------------------------
+        //===========================================================================
         // make sure that max order is not set larger
         ODE_Solver_info.order=(int)min(ODE_Solver_info.order, maxorder);
         
-        //--------------------------------------------------------
+        //===========================================================================
         // try some small step for very first integration
-        //--------------------------------------------------------
+        //===========================================================================
         if(ODE_Solver_info.Dz_z_last==0.0) Dz_z=ODE_Solver_info.tolSol/2.0;
         
         do{ 
@@ -1232,9 +1297,16 @@ namespace ODE_solver_Rec
                 else zout=min(ODE_Solver_info.tolSol, zend); 
             }
             
-            LAerror=ODE_Solver_compute_new_Solution(ODE_Solver_info.order, zout, ODE_Solver_info.tolSol, ODE_Solver_info, ODE_Solver_info.Snewptr, 
-                                                    *ODE_Solver_info.Snptr, *ODE_Solver_info.Snm1ptr, *ODE_Solver_info.Snm2ptr, 
-                                                    *ODE_Solver_info.Snm3ptr, *ODE_Solver_info.Snm4ptr, *ODE_Solver_info.Snm5ptr);
+            LAerror=ODE_Solver_compute_new_Solution(ODE_Solver_info.order, zout, 
+                                                    ODE_Solver_info.tolSol, 
+                                                    ODE_Solver_info, 
+                                                    ODE_Solver_info.Snewptr, 
+                                                    *ODE_Solver_info.Snptr, 
+                                                    *ODE_Solver_info.Snm1ptr, 
+                                                    *ODE_Solver_info.Snm2ptr, 
+                                                    *ODE_Solver_info.Snm3ptr, 
+                                                    *ODE_Solver_info.Snm4ptr, 
+                                                    *ODE_Solver_info.Snm5ptr);
             
             if(LAerror==1)
             {
@@ -1252,9 +1324,17 @@ namespace ODE_solver_Rec
                 //--------------------------------------------------------
                 redo_run=0;
                 Dz_z_old=Dz_z;
-                redo_run=ODE_Solver_estimate_error_and_next_possible_step_size(ODE_Solver_info.order, zin, zout, zend, Dz_z, Dz_z_max, ODE_Solver_info, 
-                                                                               *ODE_Solver_info.Snewptr, *ODE_Solver_info.Snptr, *ODE_Solver_info.Snm1ptr, *ODE_Solver_info.Snm2ptr, 
-                                                                               *ODE_Solver_info.Snm3ptr, *ODE_Solver_info.Snm4ptr, *ODE_Solver_info.Snm5ptr, messflag);
+                redo_run=ODE_Solver_estimate_error_and_next_possible_step_size(ODE_Solver_info.order, 
+                                                                               zin, zout, zend, Dz_z, 
+                                                                               Dz_z_max, ODE_Solver_info, 
+                                                                               *ODE_Solver_info.Snewptr, 
+                                                                               *ODE_Solver_info.Snptr, 
+                                                                               *ODE_Solver_info.Snm1ptr, 
+                                                                               *ODE_Solver_info.Snm2ptr, 
+                                                                               *ODE_Solver_info.Snm3ptr, 
+                                                                               *ODE_Solver_info.Snm4ptr, 
+                                                                               *ODE_Solver_info.Snm5ptr, 
+                                                                               messflag);
                 
                 //--------------------------------------------------------
                 // accepting the current step if 'redo_run==0'
@@ -1272,7 +1352,11 @@ namespace ODE_solver_Rec
                     ODE_Solver_info.Sptr=NULL;
                     ODE_Solver_info.count++;
                     
-                    if(ODE_Solver_info.count>=ODE_Solver_info.order+1){ ODE_Solver_info.order=(int)min(ODE_Solver_info.order+1, maxorder); ODE_Solver_info.count=1; }
+                    if(ODE_Solver_info.count>=ODE_Solver_info.order+1)
+                    { 
+                        ODE_Solver_info.order=(int)min(ODE_Solver_info.order+1, maxorder); 
+                        ODE_Solver_info.count=1; 
+                    }
                     //
                     zin=zout;
                 }
@@ -1282,9 +1366,9 @@ namespace ODE_solver_Rec
         }       
         while(ODE_Solver_info.direction*zout>ODE_Solver_info.direction*zend);
         
-        //--------------------------------------------------------
+        //===========================================================================
         // if run was accepted then Snptr contains new solution!!!
-        //--------------------------------------------------------
+        //===========================================================================
         ODE_Solver_info.Dz_z_last=Dz_z;
         //
         Sz.z=ODE_Solver_info.Snptr->z;

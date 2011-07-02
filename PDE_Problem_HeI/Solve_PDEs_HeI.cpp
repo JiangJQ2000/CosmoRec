@@ -376,6 +376,7 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
     //==============================================================================================
 #ifdef GRACE_DEFINED
 	bool out_put_GRACE=0;
+    bool write_to_disk_GRACE=0;
 	int GR_output_step=1;
 #endif
 
@@ -508,7 +509,7 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
 	// prepare grace output
     //==============================================================================================
 #ifdef GRACE_DEFINED
-	if(out_put_GRACE) prepare_Grace_HeI(0.5, SPDE_D_HeI.resonances);	
+	if(out_put_GRACE) prepare_Grace_HeI(0.5, SPDE_D_HeI.resonances, write_to_disk_GRACE);	
 #endif
     
     double zin=zs, zout, dz, theta_HeI_loc=0.51;
@@ -607,14 +608,17 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
                                           PDE_funcs_HeI.Kernel_minus);
 
                 if (!(output_count%GR_output_step) && out_put_GRACE && GraceIsOpen()) 
-                    output_Grace_HeI(zout, SPDE_D_HeI.xarr, SPDE_D_HeI.yarr, PDE_funcs_HeI.Kernel_plus, 
+                    output_Grace_HeI(zout, write_to_disk_GRACE, SPDE_D_HeI.xarr, 
+                                     SPDE_D_HeI.yarr, PDE_funcs_HeI.Kernel_plus, 
                                      PDE_funcs_HeI.Kernel_minus, exten, output_count);
             }
             else 
             {
                 if (!(output_count%GR_output_step) && out_put_GRACE && GraceIsOpen()) 
-                    output_Grace_HeI(zout, SPDE_D_HeI.xarr, SPDE_D_HeI.yarr, exten, output_count);
-//                output_Grace_HeI(zout, SPDE_D_HeI.xarr, SPDE_D_HeI.yarr, PDE_funcs_HeI.exp_x, 
+                    output_Grace_HeI(zout, write_to_disk_GRACE, SPDE_D_HeI.xarr, 
+                                     SPDE_D_HeI.yarr, exten, output_count);
+//                output_Grace_HeI(zout, write_to_disk_GRACE, SPDE_D_HeI.xarr, 
+//                                 SPDE_D_HeI.yarr, PDE_funcs_HeI.exp_x, 
 //                                 PDE_funcs_HeI.exp_x, exten, output_count);
             }
 #endif

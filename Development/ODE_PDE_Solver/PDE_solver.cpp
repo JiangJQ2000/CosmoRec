@@ -360,9 +360,10 @@ void compute_lambda_i_02(const double dz, const int i, const int center,
 //-------------------------------------------------------------------------------------
 // compute solution
 //
-// 24.02.2011: This routine was optimized to reduce the number of operations per call
-// 28.02.2011: Found small bug in the matrix solving part. Affected the boundary.
+// 27.04.2011: rearranged some of the evaluation to make things more compact
 // 22.04.2011: Added simple openmp support for matrix element evaluations
+// 28.02.2011: Found small bug in the matrix solving part. Affected the boundary.
+// 24.02.2011: This routine was optimized to reduce the number of operations per call
 //
 //-------------------------------------------------------------------------------------
 void Step_PDE_O2t(double theta, double zs, double ze, const vector<double> &xi, vector<double> &yi, 
@@ -404,7 +405,39 @@ void Step_PDE_O2t(double theta, double zs, double ze, const vector<double> &xi, 
     i=npxi-2;
     compute_lambda_i_02(dz*theta, i, 3, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, *PDE_D.Ci_ptr , PDE_D, PDE_D.lambda [i]);
     compute_lambda_i_02(dz*kap  , i, 3, *PDE_D.Aip_ptr,*PDE_D.Bip_ptr,*PDE_D.Cip_ptr, PDE_D, PDE_D.lambdap[i]); 
-
+    
+    //================================================================================= 
+    // initialize all b-vectors with common parts
+    //================================================================================= 
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
+    for(i=1; i<npxi-1; i++) PDE_D.bi[i]=eta*(*PDE_D.Dip_ptr)[i]-(*PDE_D.Di_ptr)[i];
+    
+    //================================================================================= 
+    i=1;
+    for(int m=0; m<5; m++) PDE_D.bi[i]+=PDE_D.lambdap[i][m]*eta*yi[i+m-1];
+    PDE_D.bi[i]-=PDE_D.lambda[i][0]*yi_low; // JC changed sign 28.02.2011
+    
+    i=2;
+    PDE_D.bi[i]-=PDE_D.lambda[i][0]*yi_low; // JC changed sign 28.02.2011
+    
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
+    for(i=2; i<npxi-2; i++) 
+    {
+        for(int m=0; m<5; m++) PDE_D.bi[i]+=PDE_D.lambdap[i][m]*eta*yi[i+m-2];
+    }
+    
+    i=npxi-3;
+    PDE_D.bi[i]-=PDE_D.lambda[i][4]*yi_up;
+    
+    i=npxi-2;
+    for(int m=0; m<5; m++) PDE_D.bi[i]+=PDE_D.lambdap[i][m]*eta*yi[i+m-3];
+    PDE_D.bi[i]-=PDE_D.lambda[i][4]*yi_up;
+    //================================================================================= 
+    
     //================================================================================= 
     // compute Ui* and bi*
     //================================================================================= 
@@ -416,11 +449,6 @@ void Step_PDE_O2t(double theta, double zs, double ze, const vector<double> &xi, 
     //=================================================================================  
     i=1;
     //
-    PDE_D.bi[i]=PDE_D.lambdap[i][0]*eta*yi[0];
-    for(int m=1; m<5; m++) PDE_D.bi[i]+=PDE_D.lambdap[i][m]*eta*yi[i+m-1];
-    PDE_D.bi[i]+=eta*(*PDE_D.Dip_ptr)[i]-(*PDE_D.Di_ptr)[i];
-    PDE_D.bi[i]-=PDE_D.lambda[i][0]*yi_low; // JC changed sign 28.02.2011
-    
     PDE_D.bi[i]/=PDE_D.lambda[i][1];
     PDE_D.Ui[i] =PDE_D.lambda[i][2]/PDE_D.lambda[i][1];
     PDE_D.Vi[i] =PDE_D.lambda[i][3]/PDE_D.lambda[i][1];
@@ -431,11 +459,6 @@ void Step_PDE_O2t(double theta, double zs, double ze, const vector<double> &xi, 
     //=================================================================================  
     i=2;
     //
-    PDE_D.bi[i]=PDE_D.lambdap[i][0]*eta*yi[0];
-    for(int m=1; m<5; m++) PDE_D.bi[i]+=PDE_D.lambdap[i][m]*eta*yi[i+m-2];
-    PDE_D.bi[i]+=eta*(*PDE_D.Dip_ptr)[i]-(*PDE_D.Di_ptr)[i];
-    PDE_D.bi[i]-=PDE_D.lambda[i][0]*yi_low; // JC changed sign 28.02.2011
-    
     dum2=PDE_D.lambda[i][2]-PDE_D.lambda[i][1]*PDE_D.Ui[i-1];
     //
     PDE_D.bi[i]-=PDE_D.lambda[i][1]*PDE_D.bi[i-1];
@@ -449,10 +472,6 @@ void Step_PDE_O2t(double theta, double zs, double ze, const vector<double> &xi, 
     //=================================================================================  
     i=3;
     //
-    PDE_D.bi[i]=PDE_D.lambdap[i][0]*eta*yi[i-2];
-    for(int m=1; m<5; m++) PDE_D.bi[i]+=PDE_D.lambdap[i][m]*eta*yi[i+m-2];
-    PDE_D.bi[i]+=eta*(*PDE_D.Dip_ptr)[i]-(*PDE_D.Di_ptr)[i];
-    
     dum1=PDE_D.lambda[i][1]-PDE_D.lambda[i][0]*PDE_D.Ui[i-2];
     dum2=PDE_D.lambda[i][2]-PDE_D.lambda[i][0]*PDE_D.Vi[i-2];
     //
@@ -473,10 +492,6 @@ void Step_PDE_O2t(double theta, double zs, double ze, const vector<double> &xi, 
     //=================================================================================  
     for(i=4; i<npxi-3; i++)
     {
-        PDE_D.bi[i]=PDE_D.lambdap[i][0]*eta*yi[i-2];
-        for(int m=1; m<5; m++) PDE_D.bi[i]+=PDE_D.lambdap[i][m]*eta*yi[i+m-2];
-        PDE_D.bi[i]+=eta*(*PDE_D.Dip_ptr)[i]-(*PDE_D.Di_ptr)[i];
-        
         dum1=PDE_D.lambda[i][1]-PDE_D.lambda[i][0]*PDE_D.Ui[i-2];
         dum2=PDE_D.lambda[i][2]-PDE_D.lambda[i][0]*PDE_D.Vi[i-2];
         //
@@ -498,11 +513,6 @@ void Step_PDE_O2t(double theta, double zs, double ze, const vector<double> &xi, 
     //=================================================================================  
     i=npxi-3;
     //
-    PDE_D.bi[i]=PDE_D.lambdap[i][0]*eta*yi[i-2];
-    for(int m=1; m<5; m++) PDE_D.bi[i]+=PDE_D.lambdap[i][m]*eta*yi[i+m-2];
-    PDE_D.bi[i]+=eta*(*PDE_D.Dip_ptr)[i]-(*PDE_D.Di_ptr)[i];
-    PDE_D.bi[i]-=PDE_D.lambda[i][4]*yi_up;
-
     dum1=PDE_D.lambda[i][1]-PDE_D.lambda[i][0]*PDE_D.Ui[i-2];
     dum2=PDE_D.lambda[i][2]-PDE_D.lambda[i][0]*PDE_D.Vi[i-2];
     //
@@ -523,11 +533,6 @@ void Step_PDE_O2t(double theta, double zs, double ze, const vector<double> &xi, 
     //=================================================================================  
     i=npxi-2;
     //
-    PDE_D.bi[i]=PDE_D.lambdap[i][0]*eta*yi[i-3];
-    for(int m=1; m<5; m++) PDE_D.bi[i]+=PDE_D.lambdap[i][m]*eta*yi[i+m-3];
-    PDE_D.bi[i]+=eta*(*PDE_D.Dip_ptr)[i]-(*PDE_D.Di_ptr)[i];
-    PDE_D.bi[i]-=PDE_D.lambda[i][4]*yi_up;
-
     dum1=PDE_D.lambda[i][1]-PDE_D.lambda[i][0]*PDE_D.Ui[i-3];
     dum2=PDE_D.lambda[i][2]-PDE_D.lambda[i][0]*PDE_D.Vi[i-3];
     dum3=PDE_D.lambda[i][3];
@@ -556,8 +561,7 @@ void Step_PDE_O2t(double theta, double zs, double ze, const vector<double> &xi, 
     //================================================================================= 
     yi[npxi-2]=PDE_D.bi[npxi-2];
     //
-    for(i=npxi-3; i>0; i--)
-        yi[i]=PDE_D.bi[i]-PDE_D.Ui[i]*yi[i+1]-PDE_D.Vi[i]*yi[i+2];
+    for(i=npxi-3; i>0; i--) yi[i]=PDE_D.bi[i]-PDE_D.Ui[i]*yi[i+1]-PDE_D.Vi[i]*yi[i+2];
     //
     yi[1]-=Zlow*yi[4];  
     

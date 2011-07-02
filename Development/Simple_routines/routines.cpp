@@ -894,7 +894,7 @@ double Wigner_3J_Symbol(int j1, int j2, int j3, int m1, int m2, int m3)
 //======================================================================================
 double DC_sum(const double *yarr, int M)
 {
-    if(M<=8) 
+    if(M<=4) 
     {
         double r=yarr[0];
         for(int i=1; i<M; i++) r+=yarr[i];
@@ -910,7 +910,7 @@ double DC_sum(const vector<double> &yarr)
 {
     int M=yarr.size();
     
-    if(M<=8) 
+    if(M<=4) 
     {
         double r=yarr[0];
         for(int i=1; i<M; i++) r+=yarr[i];
@@ -926,7 +926,7 @@ double DC_sum(const vector<double> &yarr)
 //======================================================================================
 double DC_sumprod(const double *yarr, const double *zarr, int M)
 {
-    if(M<=8) 
+    if(M<=4) 
     {
         double r=yarr[0]*zarr[0];
         for(int i=1; i<M; i++) r+=yarr[i]*zarr[i];
@@ -942,7 +942,7 @@ double DC_sumprod(const vector<double> &yarr, const vector<double> &zarr)
 {
     int M=yarr.size();
     
-    if(M<=8) 
+    if(M<=4) 
     {
         double r=yarr[0]*zarr[0];
         for(int i=1; i<M; i++) r+=yarr[i]*zarr[i];

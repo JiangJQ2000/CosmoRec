@@ -469,6 +469,30 @@ namespace nsnd_2gamma_profiles
     // access to different profiles
     //
     //======================================================================================
+    double sigma_ns_1s_2gamma(int n, double y)
+    {
+        if(n==3) return sigma_3s_1s_2gamma(y);
+        if(n==4) return sigma_4s_1s_2gamma(y);
+        if(n==5) return sigma_5s_1s_2gamma(y);
+        if(n==6) return sigma_6s_1s_2gamma(y);
+        if(n==7) return sigma_7s_1s_2gamma(y);
+        if(n==8) return sigma_8s_1s_2gamma(y);
+        
+        return 1.0;
+    }
+    
+    double sigma_nd_1s_2gamma(int n, double y)
+    {
+        if(n==3) return sigma_3d_1s_2gamma(y);
+        if(n==4) return sigma_4d_1s_2gamma(y);
+        if(n==5) return sigma_5d_1s_2gamma(y);
+        if(n==6) return sigma_6d_1s_2gamma(y);
+        if(n==7) return sigma_7d_1s_2gamma(y);
+        if(n==8) return sigma_8d_1s_2gamma(y);
+        
+        return 1.0;
+    }   
+
     double sigma_ns_1s_2gamma_ratio(int n, double y)
     {
         if(n==3) return sigma_3s_1s_2gamma_ratio(y);

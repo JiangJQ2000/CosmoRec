@@ -89,9 +89,9 @@ OBJSRecfast++ = $(DEV_DIR)/Cosmology/Recfast++/src/recombination.Recfast.o \
 #===============================================================================
 # object files
 #===============================================================================
-OBJSDEV =  $(DEV_DIR)/Simple_routines/File.o \
+OBJSDEV = $(DEV_DIR)/Simple_routines/File.o \
 	   $(DEV_DIR)/Simple_routines/routines.o \
-	   $(DEV_DIR)/Cosmology/Cosmos.o $(OBJSRecfast++) \
+	   $(DEV_DIR)/Cosmology/Cosmos.o \
 	   $(DEV_DIR)/Integration/Patterson.o \
 	   $(DEV_DIR)/Integration/Integration_routines.GSL.o \
 	   $(DEV_DIR)/Integration/Chebyshev_Int.o \
@@ -131,7 +131,7 @@ OBJSHEDIF = ./PDE_Problem_HeI/define_PDE_HeI.o \
 	    ./PDE_Problem_HeI/HeI_pd_Rp_splines_effective.o \
 	    ./PDE_Problem_HeI/Load.Populations.HeI.o 
 
-OBJS=$(OBJSDEV) $(OBJSRAMAN) $(OBJSDATA) $(OBJSHEDIF)
+OBJS= $(OBJSRecfast++) $(OBJSDEV) $(OBJSRAMAN) $(OBJSDATA) $(OBJSHEDIF)
 
 #===============================================================================
 # program 
@@ -144,11 +144,11 @@ lib: CosmoReclib
 bin: Recfast++ CosmoRec
 
 CosmoRec:  $(OBJS) CosmoRec.o main.o
-	   @echo " Linking CosmoRec binary"
+	   @echo "\n Linking CosmoRec binary\n"
 	   $(CC) $(LXXFLAGS) $(OBJS) CosmoRec.o main.o $(LIBS) -o CosmoRec
 
 CosmoReclib: $(OBJS) CosmoRec.o
-	     @echo " Creating CosmoRec library"
+	     @echo "\n Creating CosmoRec library\n"
 	     ar rvs ./libCosmoRec.a $?
 
 Recfast++: 

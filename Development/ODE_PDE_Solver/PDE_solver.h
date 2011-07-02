@@ -62,11 +62,15 @@ void reset_PDE_solver_variables();
 void setup_Lagrange_interpolation_coefficients_O1(PDE_Stepper_Data &PDE_D, vector<double> &xarr);
 void setup_Lagrange_interpolation_coefficients_O2(PDE_Stepper_Data &PDE_D, vector<double> &xarr);
 
-void Step_PDE_O1(double zs, double ze, const vector<double> &xi, vector<double> &yi, double yi_low, double yi_up, PDE_Stepper_Data &PDE_D,
-                 void (*func)(double z, const vector<double> &xi, vector<double> &Ai, vector<double> &Bi, vector<double> &Ci, vector<double> &Di));
+void Step_PDE_O1(double zs, double ze, const vector<double> &xi, vector<double> &yi, 
+                 double yi_low, double yi_up, PDE_Stepper_Data &PDE_D,
+                 void (*func)(double z, const vector<double> &xi, vector<double> &Ai, 
+                              vector<double> &Bi, vector<double> &Ci, vector<double> &Di));
 
-void Step_PDE_O2t(double theta, double zs, double ze, const vector<double> &xi, vector<double> &yi, double yi_low, double yi_up, PDE_Stepper_Data &PDE_D,
-                  void (*func)(double z, const vector<double> &xi, vector<double> &Ai, vector<double> &Bi, vector<double> &Ci, vector<double> &Di));
+void Step_PDE_O2t(double theta, double zs, double ze, const vector<double> &xi, vector<double> &yi, 
+                  double yi_low, double yi_up, PDE_Stepper_Data &PDE_D,
+                  void (*func)(double z, const vector<double> &xi, vector<double> &Ai, 
+                               vector<double> &Bi, vector<double> &Ci, vector<double> &Di));
 
 //=================================================================================================================================================
 // PDE solver with Integral part as correction 

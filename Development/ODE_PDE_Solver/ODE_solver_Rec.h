@@ -1,9 +1,20 @@
-//=====================================================================================================
-// ODE_solver header file 
+//==================================================================================================
+// ODE_solver routines 
+//
+// Purpose: solve a system of stiff ODEs with moderate dimension (n<~100). 
+// 
+// Basic Aspects: The solver is based on a 6th order Gears method (implicit && stiffly-stable) with 
+// variable time-step. The linear algebra system is solved iteratively using a biconjugate gradient 
+// method. A guess for the next solution is extrapolated from the previous solutions; 
 //
 // Author: Jens Chluba with contributions from Geoff Vasil at CITA
-// Date: 19/05/2010
-//=====================================================================================================
+// First implementation: 12/01/2010
+// Last modification   : 15/06/2011
+//==================================================================================================
+// 15/06/2011: set max order to 5; This was making the code a bit faster; 
+//             tidied the code a bit;
+//==================================================================================================
+
 #ifndef _ODE_SOLVER_REC_H_
 #define _ODE_SOLVER_REC_H_
 
@@ -17,9 +28,9 @@ namespace ODE_solver_Rec
     
     void wait_f_r_loc(string mess);
     
-    //=====================================================================================================
+    //==============================================================================================
     // Structure that contains the solution y and its derivative dy at redshift z
-    //=====================================================================================================
+    //==============================================================================================
     struct ODE_solver_Solution
     {
         double z;
@@ -27,14 +38,14 @@ namespace ODE_solver_Rec
         vector<double> dy;
     };
     
-    //=====================================================================================================
+    //==============================================================================================
     struct ODE_solver_accuracies
     {
         vector<double> rel;
         vector<double> abs;
     };
     
-    //=====================================================================================================
+    //==============================================================================================
     struct ODE_solver_matrix
     {
         vector<double> A;
@@ -43,7 +54,7 @@ namespace ODE_solver_Rec
         vector<int> diags;
     };
 
-    //=====================================================================================================
+    //==============================================================================================
     struct ODE_Solver_data
     {
         void (*fcn_col_ptr)(int *neq, double *z, double *y, double *f, int col);
@@ -69,17 +80,22 @@ namespace ODE_solver_Rec
         double direction;
     };
     
-    //=====================================================================================================
-    void allocate_memory(ODE_solver_Solution &Sz, ODE_solver_accuracies &tols, int neq);    
-    void clear_memory(ODE_solver_Solution &Sz, ODE_solver_accuracies &tols);
-    void clear_SolverData(ODE_Solver_data &SD);
-    void clear_all_memory(ODE_solver_Solution &Sz, ODE_solver_accuracies &tols, ODE_Solver_data &SD);
+    //==============================================================================================
+    void allocate_memory(ODE_solver_Solution &Sz, ODE_solver_accuracies &tols, int neq); 
     
-    //=====================================================================================================
+    void clear_memory(ODE_solver_Solution &Sz, ODE_solver_accuracies &tols);
+    
+    void clear_SolverData(ODE_Solver_data &SD);
+    
+    void clear_all_memory(ODE_solver_Solution &Sz, 
+                          ODE_solver_accuracies &tols, 
+                          ODE_Solver_data &SD);
+    
+    //==============================================================================================
     // ODE_Solver_set_up_solution_and_memory::
     //
-    // This routine has to be called before the solver is called. In particular the memory is set and the 
-    // function pointer for the ODE evaluation is given. 
+    // This routine has to be called before the solver is called. In particular the memory is set 
+    // and the function pointer for the ODE evaluation is given. 
     //
     // ODE_solver_Solution Sz.z should be set to the initial redshift;
     // ODE_solver_Solution rtol[] & atol[] should contain the relative error request;
@@ -91,25 +107,33 @@ namespace ODE_solver_Rec
     //
     // fn_ptr declares the ODE system according to y'= f(z, y);
     //
-    //=====================================================================================================
-    void ODE_Solver_set_up_solution_and_memory(ODE_solver_Solution &Sz, ODE_solver_accuracies &tols, ODE_Solver_data &ODE_Solver_info, 
-                                               void (*fcn_ptr)(int *neq, double *z, double *y, double *f, int col), bool num_jac=1);
+    //==============================================================================================
+    void ODE_Solver_set_up_solution_and_memory(ODE_solver_Solution &Sz, 
+                                               ODE_solver_accuracies &tols, 
+                                               ODE_Solver_data &ODE_Solver_info, 
+                                               void (*fcn_ptr)(int *neq, double *z, 
+                                                               double *y, double *f, int col), 
+                                               bool num_jac=1);
     
-    //=====================================================================================================
+    //==============================================================================================
     // to reset error requirements
-    //=====================================================================================================
+    //==============================================================================================
     void ODE_Solver_set_errors(ODE_solver_accuracies &tols, ODE_Solver_data &ODE_Solver_info);
     
-    //=====================================================================================================
-    // This routine has can only be called after the setup was done (ODE_Solver_set_up_solution_and_memory)
+    //==============================================================================================
+    // This routine has can only be called after the setup was done 
+    // (ODE_Solver_set_up_solution_and_memory)
     //
-    // After the cal ODE_solver_Solution Sz will contain the solution at time zend; initially Sz should contain 
-    // the solution at zs. Previous solutions will also be stored by the routine.
+    // After the cal ODE_solver_Solution Sz will contain the solution at time zend; initially Sz 
+    // should contain the solution at zs. Previous solutions will also be stored by the routine.
     //
-    //=====================================================================================================
-    int ODE_Solver_Solve_history(double zs, double zend, ODE_solver_Solution &Sz, ODE_Solver_data &ODE_Solver_info);
+    //==============================================================================================
+    int ODE_Solver_Solve_history(double zs, double zend, 
+                                 ODE_solver_Solution &Sz, 
+                                 ODE_Solver_data &ODE_Solver_info);
     
 }
 
 #endif
-
+//==================================================================================================
+//==================================================================================================

@@ -635,7 +635,7 @@ void Dp_Dnem_2gamma_update(int ni, int li, int n, double N1s, double Nj, double 
 void Dp_Dnem_function(int n, double z, double Tg, double pd_np, double nem, double N1s, double &Dp, double &Dn)
 {
     Dp=Dn=0.0;
-    return;
+//    return;
 
     double DRp=0.0, DRm=0.0;
     double NH=PDE_Setup_D.cosm->NH(z);
@@ -991,7 +991,6 @@ void add_nsd_1s_Raman_terms(int n, int l, double (*phi_func)(int, int), double D
                             double z, double nu21, double Tg, double N1s, double Hz, 
                             const vector<double> &xi, vector<double> &Ci, vector<double> &Di)
 {
-    return;
     //----------------------------------------------------------
     // ns/nd-1s Raman term
     //----------------------------------------------------------    
@@ -1037,7 +1036,6 @@ void add_nsd_1s_2gamma_terms(int n, int l, double (*phi_func)(int, int), double 
                              double z, double nu21, double Tg, double N1s, double Hz, 
                              const vector<double> &xi, vector<double> &Ci, vector<double> &Di)
 {
-    return;
     //----------------------------------------------------------
     // ns/nd-1s 2 gamma term
     //----------------------------------------------------------    

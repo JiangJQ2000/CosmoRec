@@ -1,0 +1,27 @@
+#============================================================================================
+# rules
+#============================================================================================
+all:
+	make tidy; make wipeDS; \
+    rm -rf ./CosmoRec.vX; rm -rf ./CosmoRec.vX.tar.gz; \
+    mkdir ./CosmoRec.vX; \
+    mkdir ./CosmoRec.vX/outputs; \
+    mkdir ./CosmoRec.vX/runfiles; \
+    mkdir ./CosmoRec.vX/temp; \
+    mkdir ./CosmoRec.vX/temp/Sol; \
+    mkdir ./CosmoRec.vX/temp/JPEG; \
+    cp -r ./Development ./CosmoRec.vX/.; \
+    cp -r ./Modules ./CosmoRec.vX/.; \
+    cp -r ./PDE_Problem ./CosmoRec.vX/.; \
+    cp -r ./PDE_Problem_HeI ./CosmoRec.vX/.; \
+    cp -r ./Rec_database ./CosmoRec.vX/.; \
+    cp -r ./runfiles/parameters.dat ./CosmoRec.vX/runfiles/.; \
+    cp ./Makefile ./CosmoRec.vX/.; \
+    cp ./Makefile.in ./CosmoRec.vX/.; \
+    cp ./main.cpp ./CosmoRec.vX/.; \
+    cp ./CosmoRec.cpp ./CosmoRec.vX/.; \
+    cp ./CosmoRec.h ./CosmoRec.vX/.; \
+    cp ./Readme.txt ./CosmoRec.vX/.;
+
+tarball: all
+	tar -czf CosmoRec.vX.tar.gz ./CosmoRec.vX;

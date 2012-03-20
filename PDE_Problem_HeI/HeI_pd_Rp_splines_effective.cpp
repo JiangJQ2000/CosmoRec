@@ -73,7 +73,15 @@ void calc_HeI_Rp_Rm_pd_all(double z, Gas_of_HeI_Atoms &HeIA, double Tg, double T
         if(index_HeI_i==1) pd[nr]=Rm/(const_HeI_A2s_1s+Rm);
         else pd[nr]=Rm/(HeIA.Get_A(HeIA.Get_n(index_HeI_i), HeIA.Get_l(index_HeI_i), 
                                    HeIA.Get_S(index_HeI_i), HeIA.Get_J(index_HeI_i), 1, 0, 0, 0)+Rm);
+        
+//        cout << nr << " " << pd[nr] 
+//                   << " " << HeIA.Get_n(index_HeI_i) 
+//                   << " " << HeIA.Get_l(index_HeI_i) 
+//                   << " " << HeIA.Get_S(index_HeI_i)
+//                   << " " << HeIA.Get_J(index_HeI_i) << " " << z << endl;
     }
+    
+//    wait_f_r();
 
     return;
 }

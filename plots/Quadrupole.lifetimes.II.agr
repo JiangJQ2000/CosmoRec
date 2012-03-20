@@ -54,16 +54,16 @@
 @timestamp rot 0
 @timestamp font 0
 @timestamp char size 1.000000
-@timestamp def "Wed Jun  1 09:15:54 2011"
+@timestamp def "Wed Sep 14 17:41:17 2011"
 @with string
 @    string on
 @    string loctype view
-@    string 0.317961165048, 0.872572815534
+@    string 0.278745478773, 0.870121835142
 @    string color 1
 @    string rot 0
 @    string font 0
 @    string just 0
-@    string char size 1.000000
+@    string char size 1.100000
 @    string def "Fractional contribution of E2 lines to the lifetime of the level"
 @with string
 @    string on
@@ -147,7 +147,7 @@
 @    xaxis  label "\1l"
 @    xaxis  label layout para
 @    xaxis  label place auto
-@    xaxis  label char size 1.000000
+@    xaxis  label char size 1.100000
 @    xaxis  label font 0
 @    xaxis  label color 1
 @    xaxis  label place normal
@@ -198,7 +198,7 @@
 @    yaxis  label "\xG\0\sE2\N / \xG\0\st"
 @    yaxis  label layout para
 @    yaxis  label place auto
-@    yaxis  label char size 1.000000
+@    yaxis  label char size 1.100000
 @    yaxis  label font 0
 @    yaxis  label color 1
 @    yaxis  label place normal
@@ -279,7 +279,7 @@
 @    s0 symbol skip 0
 @    s0 line type 1
 @    s0 line linestyle 3
-@    s0 line linewidth 1.0
+@    s0 line linewidth 1.5
 @    s0 line color 1
 @    s0 line pattern 1
 @    s0 baseline type 0
@@ -328,7 +328,7 @@
 @    s1 symbol skip 0
 @    s1 line type 1
 @    s1 line linestyle 5
-@    s1 line linewidth 1.0
+@    s1 line linewidth 1.5
 @    s1 line color 1
 @    s1 line pattern 1
 @    s1 baseline type 0
@@ -377,7 +377,7 @@
 @    s2 symbol skip 0
 @    s2 line type 1
 @    s2 line linestyle 8
-@    s2 line linewidth 1.0
+@    s2 line linewidth 1.5
 @    s2 line color 1
 @    s2 line pattern 1
 @    s2 baseline type 0
@@ -426,7 +426,7 @@
 @    s3 symbol skip 0
 @    s3 line type 1
 @    s3 line linestyle 7
-@    s3 line linewidth 1.0
+@    s3 line linewidth 1.5
 @    s3 line color 4
 @    s3 line pattern 1
 @    s3 baseline type 0
@@ -475,7 +475,7 @@
 @    s4 symbol skip 0
 @    s4 line type 1
 @    s4 line linestyle 2
-@    s4 line linewidth 1.0
+@    s4 line linewidth 1.5
 @    s4 line color 2
 @    s4 line pattern 1
 @    s4 baseline type 0
@@ -524,7 +524,7 @@
 @    s5 symbol skip 0
 @    s5 line type 1
 @    s5 line linestyle 1
-@    s5 line linewidth 1.0
+@    s5 line linewidth 1.5
 @    s5 line color 1
 @    s5 line pattern 1
 @    s5 baseline type 0

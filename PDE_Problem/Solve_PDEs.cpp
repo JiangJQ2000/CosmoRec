@@ -453,6 +453,48 @@ void output_solution(int output_count, string endname, double nu21, Cosmos &cos,
 }
 
 //====================================================================================================================
+void output_distortion(string fname, double nu21, double z)
+{
+    ofstream ofile(fname.c_str());
+    ofile.precision(8);
+    
+    ofile << "# HI spectral distortion at z= " << z 
+    << "\n# Columns are:"
+    << "\n# x=nu/nu21, y=Dn(x)=nu21*Dn(nu), x^3 y, nu(z), DI(z), nu(z=0) in GHz, DI(z=0)" 
+    << "\n# (nu in GHz and DI in ergs cm^-2 sr^-1 Hz^-1 sec^-1)"
+    << "\n#" << endl;
+    
+    double fac=2.0*const_h*const_cl*pow(nu21/const_cl, 3);
+    
+    for(int i=0; i<SPDE_D.npts; i++)
+    { 
+        ofile << SPDE_D.xarr[i] << " " << SPDE_D.yarr[i] << " " 
+              << SPDE_D.yarr[i]*pow(SPDE_D.xarr[i], 3) << " " 
+              // spectral distortion at zout
+              << SPDE_D.xarr[i]*nu21*1.0e-9 << " "
+              << SPDE_D.yarr[i]/nu21*fac*pow(SPDE_D.xarr[i], 3) << " "
+              // spectral distortion at z=0
+              << SPDE_D.xarr[i]*nu21*1.0e-9/(1.0+z) << " " 
+              << SPDE_D.yarr[i]/nu21*fac*pow(SPDE_D.xarr[i]/(1.0+z), 3) 
+              << endl;
+    }           
+    
+    ofile.close();  
+    
+    return;
+}
+
+
+//====================================================================================================================
+void output_distortion(int output_count, string endname, double nu21, double z)
+{
+    string fname=COSMORECDIR+"./temp/DPesc/sol.distortion."+int_to_string(output_count, 5)+endname;
+    output_distortion(fname, nu21, z);
+    
+    return;
+}
+
+//====================================================================================================================
 //
 // read HyRec solution (or any other solution) from file
 //
@@ -697,7 +739,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
     //=========================================================================== 
     // main run
     //=========================================================================== 
-    if(show_messages>=1) cout << "\n entering diffusion part " << endl << endl;
+    if(show_messages>=1) cout << "\n entering HI-diffusion part " << endl << endl;
 
 	//=========================================================================== 
 	// prepare grace output
@@ -775,8 +817,11 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
             //=================================================================== 
             // output solution
             //=================================================================== 
-            if(!(output_count%output_step) && do_output) 
-               output_solution(output_count, endname, nu21, cos, HIA, zout, nresmax, boundary_up);
+            if(!(output_count%output_step) && do_output)
+            {
+                output_solution(output_count, endname, nu21, cos, HIA, zout, nresmax, boundary_up);
+                //output_distortion(output_count, endname, nu21, zout);
+            }
  
 //CC            if(zout==zcomp)
 //CC            {    output_solution(9999, endname, nu21, cos, HIA, zout, nresmax, boundary_up); wait_f_r(); }
@@ -892,19 +937,8 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
     //=====================================================================================
     if(write_solution_z0)
     {
-        fname=COSMORECDIR+"./temp/DPesc/DI_nu.sol.z_0"+endname;
-        ofstream ofile(fname.c_str());
-        ofile.precision(10);
-        
-        for(int i=0; i<SPDE_D.npts; i++) 
-            ofile << SPDE_D.xarr[i] << " " << SPDE_D.yarr[i] << " " 
-                  << SPDE_D.yarr[i]*pow(SPDE_D.xarr[i], 3) << " " 
-                  // spectral distortion at z=0
-                  << SPDE_D.xarr[i]*nu21*1.0e-9/(1.0+ze) << " " 
-                  << SPDE_D.yarr[i]/nu21*2.0*const_h*const_cl
-                     *pow(SPDE_D.xarr[i]*nu21/const_cl/(1.0+ze), 3) << endl;
-        
-        ofile.close();      
+        fname=COSMORECDIR+"./temp/DPesc/sol.z_0"+endname;
+        output_distortion(fname, nu21, ze);
     }
     
     //=====================================================================================

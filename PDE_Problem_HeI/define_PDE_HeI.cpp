@@ -470,6 +470,8 @@ void add_Ly_n_sc_em_full_HeI(int line, double z, double nu21, double Tg, double 
     double kappa_Ly_n_abs=-pd_np*const_sigr*N1s*const_cl/Hz/(1.0+z); 
     double exp_dum=exp(-x_c);
     
+//    cout << psc_np << endl;
+    
     //----------------------------------------------------------
     // add terms
     //----------------------------------------------------------

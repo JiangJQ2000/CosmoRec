@@ -45,9 +45,9 @@ int show_messages_HeI=3;
 // settings for the grid
 //
 //====================================================================================================================
-int core_HeI=25;            // points per Doppler width in the core region; 
+int core_HeI=50;            // points per Doppler width in the core region; 
                             // For +/- 10 xD core=25 implies 500 points (which is recommended).
-int dec_HeI=50;             // points per decade; from 10^-4 --> 1 for ndec==50 gives ~ 200 points
+int dec_HeI=100;             // points per decade; from 10^-4 --> 1 for ndec==50 gives ~ 200 points
 
 double theta_HeI=0.51;
 
@@ -57,7 +57,7 @@ double theta_HeI=0.51;
 // switch on/off electron scattering kernel corrections
 //
 //====================================================================================================================
-int solve_with_Kernel=0; // ==0: no kernel correction; 
+int solve_with_Kernel=1; // ==0: no kernel correction; 
                          // ==1: kernel correction using iteration; This runmode takes rather long, but the additional
                          //      correction is small. Still with openmp support it may be reasonable to use in the 
                          //      final iteration of the PDE solver.
@@ -112,7 +112,6 @@ void switch_off_1s_2s_HeI_absorption_correction()
     compute_full_2s_1s_corr_HeI=0;
     return;
 }
-
 
 //====================================================================================================================
 //
@@ -325,15 +324,61 @@ void output_solution_HeI(int output_count, string endname, double nu21,
         double exp_fac_Tg=PDE_funcs_HeI.exp_x[i]*exp_xc;
         double exp_fac_Te=PDE_funcs_HeI.exp_x[i]*exp_xc_rho;
         
-        ofile << SPDE_D_HeI.xarr[i] << " " << HeIAtoms.nP_S_profile(2).nu2x(SPDE_D_HeI.xarr[i]*nu21, Tm) << " " 
-              << SPDE_D_HeI.yarr[i] << " " << SPDE_D_HeI.yarr[i]*pow(SPDE_D_HeI.xarr[i], 3) << " ";
+        ofile << SPDE_D_HeI.xarr[i] << " " 
+              << HeIAtoms.nP_S_profile(2).nu2x(SPDE_D_HeI.xarr[i]*nu21, Tm) << " " 
+              << SPDE_D_HeI.yarr[i] << " " 
+              << SPDE_D_HeI.yarr[i]*pow(SPDE_D_HeI.xarr[i], 3) << " ";
                 
-        ofile << SPDE_D_HeI.yarr[i] << " " << SPDE_D_HeI.yarr[i]/exp_fac_Tg << " " << SPDE_D_HeI.yarr[i]/exp_fac_Te << " "; 
+        ofile << SPDE_D_HeI.yarr[i] << " " 
+              << SPDE_D_HeI.yarr[i]/exp_fac_Tg << " " 
+              << SPDE_D_HeI.yarr[i]/exp_fac_Te << " "; 
         
         ofile << zout << endl;
     }           
     
     ofile.close();  
+    
+    return;
+}
+
+//====================================================================================================================
+void output_distortion_HeI(string fname, double nu21, double z)
+{
+    ofstream ofile(fname.c_str());
+    ofile.precision(8);
+    
+    ofile << "# HeI spectral distortion at z= " << z 
+    << "\n# Columns are:"
+    << "\n# x=nu/nu21, y=Dn(x)=nu21*Dn(nu), x^3 y, nu(z), DI(z), nu(z=0) in GHz, DI(z=0)" 
+    << "\n# (nu in GHz and DI in ergs cm^-2 sr^-1 Hz^-1 sec^-1)"
+    << "\n#" << endl;
+    
+    double fac=2.0*const_h*const_cl*pow(nu21/const_cl, 3);
+    
+    for(int i=0; i<SPDE_D_HeI.npts; i++)
+    { 
+        ofile << SPDE_D_HeI.xarr[i] << " " << SPDE_D_HeI.yarr[i] << " " 
+              << SPDE_D_HeI.yarr[i]*pow(SPDE_D_HeI.xarr[i], 3) << " " 
+              // spectral distortion at zout
+              << SPDE_D_HeI.xarr[i]*nu21*1.0e-9 << " "
+              << SPDE_D_HeI.yarr[i]/nu21*fac*pow(SPDE_D_HeI.xarr[i], 3) << " "
+              // spectral distortion at z=0
+              << SPDE_D_HeI.xarr[i]*nu21*1.0e-9/(1.0+z) << " " 
+              << SPDE_D_HeI.yarr[i]/nu21*fac*pow(SPDE_D_HeI.xarr[i]/(1.0+z), 3) 
+              << endl;
+    }           
+    
+    ofile.close();  
+    
+    return;
+}
+
+
+//====================================================================================================================
+void output_distortion_HeI(int output_count, string endname, double nu21, double z)
+{
+    string fname=COSMORECDIR+"./temp/DPesc/sol.HeI_distortion."+int_to_string(output_count, 5)+endname;
+    output_distortion_HeI(fname, nu21, z);
     
     return;
 }
@@ -351,7 +396,7 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
                                                         Cosmos &cos, 
                                                         Gas_of_HeI_Atoms &HeIAtoms,
                                                         vector<vector<double> > HeI_Solution, 
-                                                        int it_num)
+                                                        int it_num, bool last_it)
 {
     if(nHeI_Trans<2){ cerr << " Not enough helium shells. Exiting. " << endl; exit(0); }
 
@@ -361,7 +406,7 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
     //==============================================================================================
     // extension for filename
     //==============================================================================================
-    string exten=".test";
+    string exten=".no_e_sc.test.O";
 //    string exten=".movie.no_scat.all.ref";
 //    string exten=".movie.iso_Sing.ref";
 //    string exten=".movie.iso_Sing.FP.ref";
@@ -375,7 +420,7 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
 	// output for Grace (optional)
     //==============================================================================================
 #ifdef GRACE_DEFINED
-	bool out_put_GRACE=0;
+	bool out_put_GRACE=1;
     bool write_to_disk_GRACE=0;
 	int GR_output_step=1;
 #endif
@@ -383,9 +428,9 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
     //==============================================================================================
     // general flags
     //==============================================================================================
-    bool do_output=0;
-    bool write_solution_z0=0;
-    bool output_DP=0;
+    bool do_output=1;
+    bool write_solution_z0=1;
+    bool output_DP=1;
     bool output_DI1=0;
 
     //==============================================================================================
@@ -394,9 +439,9 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
     //==============================================================================================
     // step size
     //==============================================================================================
-    double dz_out=10.0;
+    double dz_out=5.0;
     int output_count=0;
-    int output_step=100;
+    int output_step=50;
     int DP_step=1;
     
     //==============================================================================================
@@ -408,9 +453,6 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
     // select lines
     //==============================================================================================
     HeI_level_indices.clear();
-
-//    HeI_level_indices.push_back(HeIAtoms.Get_Level_index(2, 1, 1, 1)); // 2^3 P - 1 S
-//    HeI_level_indices.push_back(HeIAtoms.Get_Level_index(2, 1, 0, 1)); // 2^1 P - 1 S
 
     if(nHeI_Trans>=2)
     {
@@ -437,6 +479,14 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
         }
     }    
     //==============================================================================================
+
+//    HeI_level_indices.clear();
+//    HeI_level_indices.push_back(HeIAtoms.Get_Level_index(3, 1, 0, 1)); 
+//    HeI_level_indices.push_back(HeIAtoms.Get_Level_index(2, 1, 1, 1)); 
+
+//    HeI_level_indices.push_back(HeIAtoms.Get_Level_index(2, 1, 1, 1)); // 2^3 P - 1 S
+//    HeI_level_indices.push_back(HeIAtoms.Get_Level_index(2, 1, 0, 1)); // 2^1 P - 1 S
+    
     
     //==============================================================================================
     // save resolved level indices for computation
@@ -503,7 +553,7 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
     //==============================================================================================
     // main run
     //==============================================================================================
-    if(show_messages_HeI>=1) cout << "\n entering diffusion part " << endl << endl;
+    if(show_messages_HeI>=1) cout << "\n entering HeI-diffusion part " << endl << endl;
 
     //==============================================================================================
 	// prepare grace output
@@ -513,7 +563,7 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
 #endif
     
     double zin=zs, zout, dz, theta_HeI_loc=0.51;
-    int solve_with_Kernel_loc=solve_with_Kernel;
+    int solve_with_Kernel_loc=last_it ? solve_with_Kernel : 0;
     int switched_off_kernel_treatment=100;
     do
     {
@@ -530,7 +580,7 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
         // always add some small amount of diffusion to stabilize the PDE
         //=======================================================================
         set_electron_scattering_efficiency_HeI(0.002); // 0.01 --> 10% difference for Trip; 
-                                                       // 0.001 --> very small difference; 0.0001 fine
+                                                       // 0.001 --> very small difference; 
         //set_electron_scattering_efficiency_HeI(1.0);
         
         //===================================================================
@@ -626,9 +676,13 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
             //======================================================================================
             // output solution
             //======================================================================================
-            if(!(output_count%output_step) && do_output) 
-               output_solution_HeI(output_count, endname, nu21, cos, HeIAtoms, 
-                                   zout, iresmax, boundary_up);
+            if(!(output_count%output_step) && do_output)
+            {
+                output_solution_HeI(output_count, endname, nu21, cos, HeIAtoms, 
+                                    zout, iresmax, boundary_up);
+                
+                output_distortion_HeI(output_count, endname, nu21, zout);
+            }
  
             //YH            if(zout==zcomp)
             //YH            {    output_solution(9999, endname, nu21, cos, HIA, zout, nresmax, boundary_up); wait_f_r(); }  
@@ -697,19 +751,7 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
     if(write_solution_z0)
     {
         fname=COSMORECDIR+"./temp/DPesc/sol.HeI.z_0"+endname;
-        ofstream ofile(fname.c_str());
-        ofile.precision(8);
-        
-        for(int i=0; i<SPDE_D_HeI.npts; i++) 
-            ofile << SPDE_D_HeI.xarr[i] << " " << SPDE_D_HeI.yarr[i] << " " 
-                  << SPDE_D_HeI.yarr[i]*pow(SPDE_D_HeI.xarr[i], 3) << " " 
-                  // spectral distortion at z=0
-                  << SPDE_D_HeI.xarr[i]*nu21*1.0e-9/(1.0+ze) << " " 
-                  << SPDE_D_HeI.yarr[i]/nu21*2.0*const_h*const_cl
-                     *pow(SPDE_D_HeI.xarr[i]*nu21/const_cl/(1.0+ze), 3) 
-                  << endl;
-        
-        ofile.close();      
+        output_distortion_HeI(fname, nu21, ze);
     }
         
     if(output_DI1 && HeI_2s_1s_corr_is_on) Ifile.close();

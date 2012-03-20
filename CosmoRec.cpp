@@ -359,6 +359,9 @@ int CosmoRec()
                 if(DI1_2s_correction_on_HeI) switch_on_1s_2s_HeI_correction();
                 else switch_off_1s_2s_HeI_correction();
                 
+                bool last_it=0;
+                if(iteration_count==Diff_iteration_max) last_it=1;
+                
                 compute_HeI_DPesc_with_diffusion_equation_effective(HeI_Atoms.Get_nShells(), DF_vec_z,
                                                                     DF_lines_vec, DI1_2s_vec, 
                                                                     HeI_level_indices,
@@ -367,7 +370,7 @@ int CosmoRec()
                                                                     cosmos, 
                                                                     HeI_Atoms,
                                                                     pass_on_the_Solution_CosmoRec_HeI,
-                                                                    iteration_count-1);
+                                                                    iteration_count-1, last_it);
                 
                 setup_DP_spline_data_HeI(DF_vec_z, DF_lines_vec, HeI_level_indices); 
                 
@@ -384,8 +387,6 @@ int CosmoRec()
             else addname=".final"+addname_in;
             
             print_message("starting iteration # " + int_to_string(iteration_count)); 
-            
-            //if(Diff_iteration_max>1) wait_f_r();
         }
         
         err=compute_history_with_effective_rates();  // defined in main.CosmoRec.cpp
@@ -444,7 +445,7 @@ int CosmoRec(int narg, char *args[])
     set_array_dimensions_and_parameters();
     allocate();
     set_variables();
-    
+        
     //========================================================================
     // initialise zarr (linear)
     //========================================================================

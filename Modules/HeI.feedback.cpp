@@ -430,7 +430,8 @@ double Dn_minus_HeI_feedback(int linenum, double z, double X1sHI, Gas_of_HeI_Ato
                      *(1.0-pow(nu21l/nu21u, 3))/3.0;
     
         Dnminus=Dn_minus_HeI(linenum+1, zi)*exp(-tauc);
-/*
+
+/* // testing purpose and output
         static double Dzstep=2.0, zsaved[11]={0,0,0,0,0,0,0,0,0,0,0};
         if(linenum<=11 && fabs(zi-zsaved[linenum])>=Dzstep)
         {

@@ -143,6 +143,8 @@ double compute_kernel_Integral_polint(int ix, double nu21, double Tm,
     Vars.np=np;
     void *params=&Vars;
     
+    //if(Vars.xc>=0.999) return 0.0;
+    
     double epsrel=1.0e-6, epsabs=1.0e-60;  
     
     double dx1=min(xi[np-1]-xi[ix], xi[ix]-xi[0]);

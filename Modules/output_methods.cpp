@@ -39,9 +39,14 @@ void open_files(ofstream *Xfiles, string path, int fresh=1)
     string prename=path+detailedname;
     if(write_Xe_Te_sol)
     {
-        if(iteration_count==0) Xfiles[0].open((prename+"X_Recfast"+addname).c_str(), wrmode);
-        //
+        if(iteration_count==0) 
+        {
+            Xfiles[0].open((prename+"X_Recfast"+addname).c_str(), wrmode);
+            Xfiles[0] << "# Recfast++ output. The columns are z, Xe=Ne/NH, Te\n#" << endl;
+        }
+        
         Xfiles[1].open((prename+"Xe"+addname).c_str(), wrmode);
+        Xfiles[1] << "# CosmoRec output. The columns are z, Xe=Ne/NH, Te\n#" << endl;        
     }
     
     //  Xfiles[2].open((prename+"rho"+addname).c_str(), wrmode); 

@@ -58,7 +58,7 @@ namespace ODE_solver_Rec
     struct ODE_Solver_data
     {
         void (*fcn_col_ptr)(int *neq, double *z, double *y, double *f, int col);
-        int num_jac;
+        bool num_jac;
         //
         ODE_solver_Solution Stemp;
         ODE_solver_Solution *Sptr;

@@ -20,7 +20,7 @@ int nD_Quadrupole_max=(int)min(3, Lyn_max_parameter);
 //==================================================================================================
 string effective_rate_path_arr[4]=
 {
-    Rec_database_path+"/Effective_Rates.HI/Effective_Rate_Tables.nS_3.hp/",
+    Rec_database_path+"/Effective_Rates.HI/Effective_Rate_Tables.nS_3/",
     Rec_database_path+"/Effective_Rates.HI/Effective_Rate_Tables.nS_4/",
     Rec_database_path+"/Effective_Rates.HI/Effective_Rate_Tables.nS_8.np_10/",
     Rec_database_path+"/Effective_Rates.HI/Effective_Rate_Tables.nS_3.Q.hp/"
@@ -90,7 +90,7 @@ void setup_Hydrogen_atom()
 {
     print_message(" entering the setup for neutral hydrogen ");
     
-    HAtoms=new Gas_of_Atoms(nShells, 1, 1.0, Atom_activate_HI_Quadrupole_lines, 0, 2);
+    HAtoms=new Gas_of_Atoms(nShells, 1, 1.0, Atom_activate_HI_Quadrupole_lines, 2, 2);
     
 //    compute_Q_correction_to_lifetime(5);
 //    compute_Q_correction_to_lifetime(10);

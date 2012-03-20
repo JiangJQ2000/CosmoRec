@@ -40,6 +40,6 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans,
                                                         Cosmos &cos, 
                                                         Gas_of_HeI_Atoms &HeIAtoms,
                                                         vector<vector<double> > HI_HeI_Solution, 
-                                                        int it_num);
+                                                        int it_num, bool last_it);
 
 #endif

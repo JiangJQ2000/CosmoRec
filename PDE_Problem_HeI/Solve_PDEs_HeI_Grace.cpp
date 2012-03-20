@@ -114,8 +114,8 @@ void output_Grace_HeI(double zout, bool write_to_disk,
 	
 	command="TITLE \"HeI spectral distortion at \\1z\\0 = "+dumstr+"\"";
 	GracePrintf(command.c_str());
-	GracePrintf("PRINT");
-    
+	
+    if(write_to_disk) GracePrintf("PRINT");
     GracePrintf("redraw");
 	
 //	wait_f_r();

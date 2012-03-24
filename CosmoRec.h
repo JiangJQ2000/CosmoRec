@@ -1,8 +1,13 @@
 //===========================================================================================================
-// Author: Jens Chluba 
-// last modification: Nov 2010
-// purpose: to access the main CosmoRec code
+//
+// Author: Jens Chluba
+// last modification: March 2012
+// purpose: to access main CosmoRec code
+//
 //===========================================================================================================
+// March 23rd, 2012: added runmode with helium radiative transfer module;
+// Feb   16th, 2012: added module to load precomputed recombination history (useful for runs with Camb)
+// Feb-May     2011: included HeI-diffusion correction
 
 #ifndef COSMOREC_H
 #define COSMOREC_H
@@ -31,6 +36,7 @@ int CosmoRec(int narg, char *args[]);
 // runpars[1]== 1: 2g for n<=4 & Raman for n<=3
 // runpars[1]== 2: 2g for n<=8 & Raman for n<=7
 // runpars[1]== 3: 2g for n<=8 & Raman for n<=7 + Helium feedback up to n=5 (full setting)
+// runpars[1]== 4: 2g for n<=4 & Raman for n<=3 + Helium radiative transfer up to n=5 
 //
 // The value of runpars[1] is only important for runmode 0 & 1.
 //
@@ -58,9 +64,10 @@ int CosmoRec(const int runmode, const double runpars[5],
 //===========================================================================================================
 extern "C" {
     
-    void cosmorec_fortran_(int * runmode, double * runpars, double * omega_c, double * omega_b, double * omega_k, 
-                           double * num_nu, double * h0, double * t_cmb, double * y_he, 
-                           double * za_in, double * xe_out, double * tb_out, int * len, int* label);
+    void cosmorec_calc_cpp_(int * runmode, double * runpars, 
+                            double * omega_c, double * omega_b, double * omega_k, 
+                            double * num_nu, double * h0, double * t_cmb, double * y_he, 
+                            double * za_in, double * xe_out, double * tb_out, int * len, int* label);
 }
 
 //===========================================================================================================

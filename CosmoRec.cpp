@@ -1,7 +1,13 @@
 //===========================================================================================================
+//
 // Author: Jens Chluba
-// last modification: May 2011
+// last modification: March 2012
+// purpose: to access main CosmoRec code
+//
 //===========================================================================================================
+// March 23rd, 2012: added runmode with helium radiative transfer module;
+// Feb   16th, 2012: added module to load precomputed recombination history (useful for runs with Camb)
+// Feb-May     2011: included HeI-diffusion correction
 
 //===========================================================================================================
 // Standards
@@ -338,10 +344,9 @@ int CosmoRec()
                                                             pass_on_the_Solution_CosmoRec,
                                                             iteration_count-1);
             
-            setup_DF_spline_data(DF_vec_z, DF_Ly_n, DF_2_gamma_vec, DF_Raman_vec, DF_nD1s_vec);
+            setup_DF_interpol_data(DF_vec_z, DF_Ly_n, DF_2_gamma_vec, 
+                                   DF_Raman_vec, DF_nD1s_vec, DI1_2s_vec);
             
-            if(DI1_2s_correction_on) setup_DI1_2s_spline_data(DF_vec_z, DI1_2s_vec);
-
             Diffusion_correction_is_on=1;
             
             //======================================================================
@@ -372,9 +377,7 @@ int CosmoRec()
                                                                     pass_on_the_Solution_CosmoRec_HeI,
                                                                     iteration_count-1, last_it);
                 
-                setup_DP_spline_data_HeI(DF_vec_z, DF_lines_vec, HeI_level_indices); 
-                
-                if(DI1_2s_correction_on_HeI) setup_DI1_2s_spline_data_HeI(DF_vec_z, DI1_2s_vec);
+                setup_DF_interpol_data_HeI(DF_vec_z, DF_lines_vec, DI1_2s_vec, HeI_level_indices); 
                 
                 Diffusion_correction_HeI_is_on=1;
             }
@@ -537,6 +540,41 @@ void return_solution_to_calling_program(const int nz, double *z_arr, double *Xe_
 }
 
 //===========================================================================================================
+//
+// return precomputed ionization history (added March 22, 2012)
+//
+//===========================================================================================================
+void return_pre_computed_solution_to_calling_program(const int nz, double *z_arr, 
+                                                     double *Xe_arr, double *Te_arr)
+{
+    vector<int> spline_mem_indices;
+    
+    load_data_from_file_loglog(COSMORECDIR+"./Xe.pre_calc/CosmoRec.v2.0.Xe.Yp_0.35.lscat.dat", 
+                               3, spline_mem_indices);
+    
+    //======================================================================
+    // copy output
+    //======================================================================
+    for(int i=0; i<nz; i++)
+    { 
+        if(z_arr[i]>=2980 || z_arr[i]<=200) 
+        {
+            Xe_arr[i]=cosmos.Xe_Seager(z_arr[i]);
+            Te_arr[i]=cosmos.Te(z_arr[i]);
+        }
+        else 
+        {
+            Xe_arr[i]=exp(calc_spline_JC(log(z_arr[i]), spline_mem_indices[0]));
+            Te_arr[i]=exp(calc_spline_JC(log(z_arr[i]), spline_mem_indices[1])); 
+            
+            cout << z_arr[i] << " " << Xe_arr[i] << " " << Te_arr[i] << endl;
+        }
+    }
+
+    return;
+}
+
+//===========================================================================================================
 // Just return Recfast++ output
 //===========================================================================================================
 void run_RECFAST_pp(double param[12], const int nz, double *z_arr, 
@@ -592,6 +630,7 @@ void run_RECFAST_pp(double param[12], const int nz, double *z_arr,
 // runpars[1]== 1: 2g for n<=4 & Raman for n<=3
 // runpars[1]== 2: 2g for n<=8 & Raman for n<=7
 // runpars[1]== 3: 2g for n<=8 & Raman for n<=7 + Helium feedback up to n=5 (full setting)
+// runpars[1]== 4: 2g for n<=4 & Raman for n<=3 + Helium radiative transfer up to n=5 
 //
 // The value of runpars[1] is only important for runmode 0 & 1.
 //
@@ -702,13 +741,11 @@ int CosmoRec(const int runmode, const double runpars[5],
     if((int)runpars[1]==-1){ nShells=4; ntg_max=4; nR_max=3; nShellsHeI=2; nHeFeedback=-2; flag_HI_absorption=1; }
     else if((int)runpars[1]==1){ nShells=4; ntg_max=4; nR_max=3; }
     else if((int)runpars[1]==2){ nShells=10; ntg_max=8; nR_max=7; nShellsHeI=3; nHeFeedback=0; }
-//    else if((int)runpars[1]==3){ nShells=10; ntg_max=8; nR_max=7; nShellsHeI=5; nHeFeedback=-5; }      
-    else if((int)runpars[1]==3){ nShells=10; ntg_max=8; nR_max=7; nShellsHeI=10; nHeFeedback=-10; }      
-    
-//    nShells=4; ntg_max=4; nR_max=3; nShellsHeI=2; nHeFeedback=-2; flag_HI_absorption=1;
-//    nShells=4; ntg_max=4; nR_max=0; nShellsHeI=2; nHeFeedback=-2; flag_HI_absorption=1;
-//    induced_flag=2;
-//    Diffusion_flag=1;
+    else if((int)runpars[1]==3){ nShells=10; ntg_max=8; nR_max=7; nShellsHeI=10; nHeFeedback=-10; } 
+    //======================================================================
+    // runmode with helium diffusion module
+    //======================================================================
+    else if((int)runpars[1]==4){ nShells=4; ntg_max=4; nR_max=3; nShellsHeI=5; nHeFeedback=-5; flag_HI_absorption=3; }      
     
     //======================================================================
     if(runmode==1) Diffusion_flag=0;
@@ -751,6 +788,9 @@ int CosmoRec(const int runmode, const double runpars[5],
         //========================================================================
         init_xarr(parameters.zstart, parameters.zend, zarr, parameters.nz, 0, 0);
         
+        //return_pre_computed_solution_to_calling_program(nz, z_arr, Xe_arr, Te_arr);
+        //return 0;
+        
         //======================================================================
         // enter CosmoRec
         //======================================================================
@@ -790,9 +830,13 @@ int CosmoRec(const int runmode, const double runpars[5],
 //===========================================================================================================
 extern "C" {
     
-    void cosmorec_fortran_(int * runmode, double * runpars, double * omega_c, double * omega_b, double * omega_k, 
-                           double * num_nu, double * h0, double * t_cmb, double * y_he, 
-                           double * za_in, double * xe_out, double * tb_out, int * len, int* label) {
+    using namespace std;
+    
+    void CosmoRec_calc_cpp_(int * runmode, double * runpars, 
+                            double * omega_c, double * omega_b, double * omega_k, 
+                            double * num_nu, double * h0, double * t_cmb, double * y_he, 
+                            double * za_in, double * xe_out, double * tb_out, int * len, int* label) 
+    {
         
         //======================================================================
         // Call standard CosmoRec routine

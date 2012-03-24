@@ -729,7 +729,7 @@ void add_Ly_n_sc_only(int n, double z, double nu21, double Tg, double Te, double
         //------------------------------------------------------
         double xD   =PDE_Setup_D.HI->HI_Lyn_profile(n).nu2x(nu21*x, Te);
         double phi_x=phi_Ly_n(n, k);
-        double dphi_x_dx=PDE_Setup_D.HI->HI_Lyn_profile(n).dphi_dx(xD, aV) / DnuD_nu * nun1/nu21;
+        double dphi_x_dx=PDE_Setup_D.HI->HI_Lyn_profile(n).dphi_dx(xD, aV) / DnuD_nu * nu21/nun1;
         double D_x=kappa_Ly_n_sc*phi_x;
         double dlnD_x_dx=kappa_Ly_n_sc*(phi_x*2.0/x+dphi_x_dx);
         
@@ -895,7 +895,7 @@ void add_Ly_n_sc_em_full(int n, double z, double nu21, double Tg, double Te, dou
         // line-scattering terms 
         //------------------------------------------------------
         double xD   =PDE_Setup_D.HI->HI_Lyn_profile(n).nu2x(nu21*x, Te);
-        double dphi_x_dx=PDE_Setup_D.HI->HI_Lyn_profile(n).dphi_dx(xD, aV) / DnuD_nu * nun1/nu21;
+        double dphi_x_dx=PDE_Setup_D.HI->HI_Lyn_profile(n).dphi_dx(xD, aV) / DnuD_nu * nu21/nun1;
         double D_x=kappa_Ly_n_sc*phi_x;
         double dlnD_x_dx=kappa_Ly_n_sc*(phi_x*2.0/x+dphi_x_dx);
         

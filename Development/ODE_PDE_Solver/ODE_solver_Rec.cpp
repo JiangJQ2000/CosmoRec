@@ -1264,7 +1264,7 @@ namespace ODE_solver_Rec
         double zout=zs, zin=zs, Dz_z_old;
         double Dz_z=max(1.0e-8, ODE_Solver_info.Dz_z_last), Dz_z_max;
         int redo_run=0, LAerror=0;
-        int maxorder=5;
+        int maxorder=4;
         int messflag=0;
         
         if(zs!=0.0) Dz_z_max=fabs((zend-zs)/zs);

@@ -383,7 +383,7 @@ void add_Ly_n_sc_only_HeI(int line, double z, double nu21, double Tg, double Te,
         // line-scattering terms 
         //------------------------------------------------------
         double phi_x=phi_i_HeI(line, k);
-        double dphi_x_dx=dphi_i_dx_HeI(line, k) / DnuD_nu * nun1/nu21;
+        double dphi_x_dx=dphi_i_dx_HeI(line, k) / DnuD_nu * nu21/nun1;
         double D_x=kappa_Ly_n_sc*phi_x;
         double dlnD_x_dx=kappa_Ly_n_sc*(phi_x*2.0/x+dphi_x_dx);
         
@@ -470,8 +470,6 @@ void add_Ly_n_sc_em_full_HeI(int line, double z, double nu21, double Tg, double 
     double kappa_Ly_n_abs=-pd_np*const_sigr*N1s*const_cl/Hz/(1.0+z); 
     double exp_dum=exp(-x_c);
     
-//    cout << psc_np << endl;
-    
     //----------------------------------------------------------
     // add terms
     //----------------------------------------------------------
@@ -486,7 +484,7 @@ void add_Ly_n_sc_em_full_HeI(int line, double z, double nu21, double Tg, double 
         // line-scattering terms 
         //------------------------------------------------------
         double phi_x=phi_i_HeI(line, k);
-        double dphi_x_dx=dphi_i_dx_HeI(line, k) / DnuD_nu * nun1/nu21;
+        double dphi_x_dx=dphi_i_dx_HeI(line, k) / DnuD_nu * nu21/nun1;
         double D_x=kappa_Ly_n_sc*phi_x;
         double dlnD_x_dx=kappa_Ly_n_sc*(phi_x*2.0/x+dphi_x_dx);
         

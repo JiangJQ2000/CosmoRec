@@ -1,9 +1,11 @@
 //======================================================================================
 // Author: Jens Chluba 
-// last modified: Oct 2010
+// first implementation: Jan 2002
 //
 // Purpose: collection of several simple routines
 //======================================================================================
+// Jan 2012: added simple routines to load tables of data and create splines
+// Dec 2011: added routines for Gamma and incomplete Gamma functions
 
 #include <iostream>
 #include <string>
@@ -17,6 +19,7 @@
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_spline.h>
 #include <gsl/gsl_sf_coupling.h>
+#include <gsl/gsl_sf_gamma.h>
 
 //======================================================================================
 // for xmgrace output
@@ -204,6 +207,14 @@ double erfc_JC(const double &x)
 }
 
 //======================================================================================
+double Gamma_JC(const double &x)                     // Gamma-function
+{ return gsl_sf_gamma(min(x, 500.0)); }
+
+//======================================================================================
+double Gamma_JC(const double &x, const double &a)   // incomplete Gamma-function
+{ return gsl_sf_gamma_inc(a, min(x, 500.0)); }
+
+//======================================================================================
 double max(double a, double b){ return a>b ? a : b;}
 double min(double a, double b){ return a<b ? a : b;}
 
@@ -372,6 +383,86 @@ void show_spline_memory()
     return;
 }
 
+
+//======================================================================================
+// load tables of data (added Jan 2012)
+//======================================================================================
+void load_data_from_file(string fname, int cols, vector<int> &spline_mem_indices, 
+                         bool logx, bool logy)
+{
+    cout << " load_data_from_file :: loading data from file " << fname << endl;
+    cout << " logx= " << logx << " logy= " << logy << endl;
+    
+    ifstream ifile(fname.c_str());
+    spline_mem_indices.resize(cols, -1);
+    
+    vector<double> vdum(cols);
+    vector<vector<double> > Xi_Data;
+    
+    while(ifile)
+    {
+        for(int i=0; i<cols && ifile; i++) ifile >> vdum[i]; 
+        if(ifile) Xi_Data.push_back(vdum);
+    }
+    
+    cout << " load_data_from_file :: setting up splines " << endl;
+    
+    vector<double> xarr(Xi_Data.size());
+    vector<double> yarr(Xi_Data.size());
+    
+    if(Xi_Data[0][0]<Xi_Data[1][0])
+    {       
+        
+        if(logx) for(int i=0; i< (int)Xi_Data.size(); i++) xarr[i] = log(Xi_Data[i][0]);
+        else for(int i=0; i< (int)Xi_Data.size(); i++) xarr[i] = Xi_Data[i][0];
+        
+        for(int c=1; c<cols; c++)
+        {
+            if(logy) for(int i=0; i<(int)Xi_Data.size(); i++) yarr[i] = log(Xi_Data[i][c]);
+            else for(int i=0; i<(int)Xi_Data.size(); i++) yarr[i] = Xi_Data[i][c];
+            
+            spline_mem_indices[c-1]=calc_spline_coeffies_JC((int)Xi_Data.size(), 
+                                                            &xarr[0], &yarr[0], 
+                                                            " load_data_from_file ");
+        }
+    }
+    else 
+    {
+        int nmax=Xi_Data.size()-1;
+        
+        if(logx) for(int i=0; i<(int)Xi_Data.size(); i++) xarr[nmax-i] = log(Xi_Data[i][0]);
+        else for(int i=0; i< (int)Xi_Data.size(); i++) xarr[nmax-i] = Xi_Data[i][0];
+        
+        for(int c=1; c<cols; c++)
+        {
+            if(logy) for(int i=0; i<(int)Xi_Data.size(); i++) yarr[nmax-i] = log(Xi_Data[i][c]);
+            else for(int i=0; i<(int)Xi_Data.size(); i++) yarr[nmax-i] = Xi_Data[i][c];
+            
+            spline_mem_indices[c-1]=calc_spline_coeffies_JC((int)Xi_Data.size(), 
+                                                            &xarr[0], &yarr[0], 
+                                                            " load_data_from_file ");
+        }        
+    }
+    
+    vdum.clear();
+    Xi_Data.clear();
+    xarr.clear();
+    yarr.clear();
+    
+    return;
+}
+
+void load_data_from_file_loglin(string fname, int cols, vector<int> &spline_mem_indices)
+{
+    load_data_from_file(fname, cols, spline_mem_indices, 1, 0);
+    return;
+}
+
+void load_data_from_file_loglog(string fname, int cols, vector<int> &spline_mem_indices)
+{
+    load_data_from_file(fname, cols, spline_mem_indices, 1, 1);
+    return;
+}
 
 //======================================================================================
 // npol-1 is degree of the interpolating polynomial

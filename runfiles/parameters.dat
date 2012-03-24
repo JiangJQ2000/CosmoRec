@@ -2,7 +2,7 @@
 3000
 200
 
-0.24
+0.35
 2.725	
 0.26
 0.044
@@ -26,8 +26,8 @@
 8
 7
 
-./outputs.He2012/
-.CosmoRec.v2.0.n_3.e_sc_test.dat
+./outputs.Diff/
+.Yp_0.35.no_l_sc.dat
 
 //=============================================================================================
 // the above parameters are (default values are given as examples)

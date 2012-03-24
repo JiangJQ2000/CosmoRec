@@ -9,6 +9,7 @@ all:
     mkdir ./CosmoRec.vX/runfiles; \
     mkdir ./CosmoRec.vX/temp; \
     mkdir ./CosmoRec.vX/temp/Sol; \
+    mkdir ./CosmoRec.vX/temp/DPesc; \
     mkdir ./CosmoRec.vX/temp/JPEG; \
     cp -r ./Development ./CosmoRec.vX/.; \
     cp -r ./Modules ./CosmoRec.vX/.; \

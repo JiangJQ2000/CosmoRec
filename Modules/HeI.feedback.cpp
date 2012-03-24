@@ -331,7 +331,7 @@ double FB_HeI_tau_c_HI1s_GSL(double y_em, double z_em, double z_obs, double (*fp
     //=========================================================================
     double r=0.0, r1=0.0;
     double ab, bb;
-    double epsrel=5.0e-4, epsabs=1.0e-10;
+    double epsrel=1.0e-4, epsabs=1.0e-10;
     for(int i=1; i<(int)intervals.size(); i++)
     {
         ab=intervals[i-1]; bb=intervals[i];

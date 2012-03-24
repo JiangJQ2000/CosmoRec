@@ -39,6 +39,8 @@ using namespace HI_Transition_Data;
 using namespace Raman_profiles;
 using namespace nsnd_2gamma_profiles;
 
+string HI_outputdir=COSMORECDIR+"./temp/";
+
 //====================================================================================================================
 //
 // flags for message output
@@ -198,25 +200,25 @@ void arm_PDE_solver(Cosmos &cos, Gas_of_Atoms &HIA, vector<double> &xarr, vector
         //=========================================================================== 
         init_Raman_profiles(xarr[npts-1]-1.0, Get_nmax_Raman_correction());
         //=========================================================================== 
-        //  dump_2s_1s_Raman_profile(COSMORECDIR+"./temp/test.2s.R.dat");
-        //  dump_3s_1s_Raman_profile(COSMORECDIR+"./temp/test.3s.R.dat");
-        //  dump_3d_1s_Raman_profile(COSMORECDIR+"./temp/test.3d.R.dat");
-        //  dump_4s_1s_Raman_profile(COSMORECDIR+"./temp/test.4s.R.dat");
-        //  dump_4d_1s_Raman_profile(COSMORECDIR+"./temp/test.4d.R.dat");
-        //  dump_5s_1s_Raman_profile(COSMORECDIR+"./temp/test.5s.R.dat");
-        //  dump_5d_1s_Raman_profile(COSMORECDIR+"./temp/test.5d.R.dat");
+        //  dump_2s_1s_Raman_profile(HI_outputdir+"test.2s.R.dat");
+        //  dump_3s_1s_Raman_profile(HI_outputdir+"test.3s.R.dat");
+        //  dump_3d_1s_Raman_profile(HI_outputdir+"test.3d.R.dat");
+        //  dump_4s_1s_Raman_profile(HI_outputdir+"test.4s.R.dat");
+        //  dump_4d_1s_Raman_profile(HI_outputdir+"test.4d.R.dat");
+        //  dump_5s_1s_Raman_profile(HI_outputdir+"test.5s.R.dat");
+        //  dump_5d_1s_Raman_profile(HI_outputdir+"test.5d.R.dat");
         
         init_nsnd_2gamma_profiles(Get_nmax_two_g_correction());
         //=========================================================================== 
-        //  dump_2s_1s_2gamma_profile(COSMORECDIR+"./temp/test.2s.2g.dat");
-        //  dump_3s_1s_2gamma_profile(COSMORECDIR+"./temp/test.3s.2g.dat");
-        //  dump_3d_1s_2gamma_profile(COSMORECDIR+"./temp/test.3d.2g.dat");
-        //  dump_4s_1s_2gamma_profile(COSMORECDIR+"./temp/test.4s.2g.dat");
-        //  dump_4d_1s_2gamma_profile(COSMORECDIR+"./temp/test.4d.2g.dat");
-        //  dump_5s_1s_2gamma_profile(COSMORECDIR+"./temp/test.5s.2g.dat");
-        //  dump_5d_1s_2gamma_profile(COSMORECDIR+"./temp/test.5d.2g.dat");
-        //  dump_6s_1s_2gamma_profile(COSMORECDIR+"./temp/test.6s.2g.dat");
-        //  dump_6d_1s_2gamma_profile(COSMORECDIR+"./temp/test.6d.2g.dat");
+        //  dump_2s_1s_2gamma_profile(HI_outputdir+"test.2s.2g.dat");
+        //  dump_3s_1s_2gamma_profile(HI_outputdir+"test.3s.2g.dat");
+        //  dump_3d_1s_2gamma_profile(HI_outputdir+"test.3d.2g.dat");
+        //  dump_4s_1s_2gamma_profile(HI_outputdir+"test.4s.2g.dat");
+        //  dump_4d_1s_2gamma_profile(HI_outputdir+"test.4d.2g.dat");
+        //  dump_5s_1s_2gamma_profile(HI_outputdir+"test.5s.2g.dat");
+        //  dump_5d_1s_2gamma_profile(HI_outputdir+"test.5d.2g.dat");
+        //  dump_6s_1s_2gamma_profile(HI_outputdir+"test.6s.2g.dat");
+        //  dump_6d_1s_2gamma_profile(HI_outputdir+"test.6d.2g.dat");
         
         init_profile_memory(npts, nresmax, PDE_funcs);
         
@@ -388,11 +390,11 @@ void init_Solve_PDE_Data(int nresmax, bool bound)
 void output_solution(int output_count, string endname, double nu21, Cosmos &cos, Gas_of_Atoms &HIA, 
                      double zout, int nresmax, bool boundary_up)
 {
-    string fname=COSMORECDIR+"./temp/DPesc/sol.HI."+int_to_string(output_count, 5)+endname;
+    string fname=HI_outputdir+"Sol/sol.HI."+int_to_string(output_count, 5)+endname;
     ofstream ofile(fname.c_str());
     ofile.precision(8);
     
-    fname=COSMORECDIR+"./temp/DPesc/sol.HI.approx."+int_to_string(output_count, 5)+endname;
+    fname=HI_outputdir+"Sol/sol.HI.approx."+int_to_string(output_count, 5)+endname;
     ofstream ofileappr(fname.c_str());
     ofileappr.precision(8);
     
@@ -488,7 +490,7 @@ void output_distortion(string fname, double nu21, double z)
 //====================================================================================================================
 void output_distortion(int output_count, string endname, double nu21, double z)
 {
-    string fname=COSMORECDIR+"./temp/DPesc/sol.distortion."+int_to_string(output_count, 5)+endname;
+    string fname=HI_outputdir+"Sol/sol.distortion."+int_to_string(output_count, 5)+endname;
     output_distortion(fname, nu21, z);
     
     return;
@@ -592,7 +594,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
     //=========================================================================== 
     // step size
     //=========================================================================== 
-    double dz_out=10.0;
+    double dz_out=5.0;
     int output_count=0;
     int output_step=20;
     int DF_step=1;
@@ -712,26 +714,26 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
 
     if(output_2gR)
     {
-        fname=COSMORECDIR+"./temp/DPesc/DF.Ly_n"+endname;
+        fname=HI_outputdir+"DPesc/DF.Ly_n"+endname;
         Ly_n_file.open(fname.c_str());
         Ly_n_file.precision(8);
 
-        fname=COSMORECDIR+"./temp/DPesc/DF.2_gamma"+endname;
+        fname=HI_outputdir+"DPesc/DF.2_gamma"+endname;
         two_g_file.open(fname.c_str());
         two_g_file.precision(8);
         
-        fname=COSMORECDIR+"./temp/DPesc/DF.Raman"+endname;
+        fname=HI_outputdir+"DPesc/DF.Raman"+endname;
         Raman_file.open(fname.c_str());
         Raman_file.precision(8);
 
-        fname=COSMORECDIR+"./temp/DPesc/DF.nD1s"+endname;
+        fname=HI_outputdir+"DPesc/DF.nD1s"+endname;
         nD1s_file.open(fname.c_str());
         nD1s_file.precision(8);
     }
     
     if(output_DI1 && HI_2s_1s_corr_is_on)
     {
-        fname=COSMORECDIR+"./temp/DPesc/DI1.2s1s"+endname;
+        fname=HI_outputdir+"DPesc/DI1.2s1s"+endname;
         Ifile.open(fname.c_str());
         Ifile.precision(8);
     }
@@ -838,8 +840,9 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
                 // SPDE_D.yarr is Dn_x
                 //=============================================================== 
                 if(HI_2s_1s_corr_is_on)
-                    compute_DI1_2s_and_dump_it(zout, SPDE_D.xarr, SPDE_D.yarr, HIA, cos, Ifile, DI1_2s_vec, 
-                                               SPDE_D.Fwork, PDE_funcs.exp_x, phi_ns1s_2g, PDE_funcs, output_DI1);
+                    compute_DI1_2s_and_dump_it(zout, SPDE_D.xarr, SPDE_D.yarr, HIA, cos, Ifile, 
+                                               DI1_2s_vec, SPDE_D.Fwork, PDE_funcs.exp_x, 
+                                               phi_ns1s_2g, PDE_funcs, output_DI1);
                 
                 //===============================================================
                 // Ly-n integrals (added 26.03.2011)
@@ -849,7 +852,8 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
                 if(include_Ly_corr)
                     for(int ni=2; ni<=nresmax; ni++)
                     {
-                        DF=compute_DF_Ly_n(ni, nresmax, zout, cos, HIA, SPDE_D.xarr, SPDE_D.yarr, SPDE_D.Fwork, PDE_funcs.exp_x, PDE_funcs);
+                        DF=compute_DF_Ly_n(ni, nresmax, zout, cos, HIA, SPDE_D.xarr, SPDE_D.yarr, 
+                                           SPDE_D.Fwork, PDE_funcs.exp_x, PDE_funcs);
                         DF_Ly_n[count++].push_back(DF);
                     }
                 
@@ -861,9 +865,12 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
                     count=0;
                     for(int ni=3; ni<=nresmax; ni++)
                     {
-                        DF=compute_DF_2gamma(ni, 0, zout, cos, HIA, SPDE_D.xarr, SPDE_D.yarr, SPDE_D.Fwork, PDE_funcs.exp_x, phi_ns1s_2g, PDE_funcs);
+                        DF=compute_DF_2gamma(ni, 0, zout, cos, HIA, SPDE_D.xarr, SPDE_D.yarr, 
+                                             SPDE_D.Fwork, PDE_funcs.exp_x, phi_ns1s_2g, PDE_funcs);
                         DF_2_gamma_vec[count++].push_back(DF);
-                        DF=compute_DF_2gamma(ni, 2, zout, cos, HIA, SPDE_D.xarr, SPDE_D.yarr, SPDE_D.Fwork, PDE_funcs.exp_x, phi_nd1s_2g, PDE_funcs);
+                        
+                        DF=compute_DF_2gamma(ni, 2, zout, cos, HIA, SPDE_D.xarr, SPDE_D.yarr, 
+                                             SPDE_D.Fwork, PDE_funcs.exp_x, phi_nd1s_2g, PDE_funcs);
                         DF_2_gamma_vec[count++].push_back(DF);
                     }
                 }
@@ -875,14 +882,18 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
                 {
                     count=0;
                     
-                    DF=compute_DF_Raman(2, 0, nresmax, zout, cos, HIA, SPDE_D.xarr, SPDE_D.yarr, SPDE_D.Fwork, PDE_funcs.exp_x, phi_ns1s_Raman, PDE_funcs);
+                    DF=compute_DF_Raman(2, 0, nresmax, zout, cos, HIA, SPDE_D.xarr, SPDE_D.yarr, 
+                                        SPDE_D.Fwork, PDE_funcs.exp_x, phi_ns1s_Raman, PDE_funcs);
                     DF_Raman_vec[count++].push_back(DF);
                     
                     for(int ni=3; ni<=Get_nmax_Raman_correction(); ni++)
                     {
-                        DF=compute_DF_Raman(ni, 0, nresmax, zout, cos, HIA, SPDE_D.xarr, SPDE_D.yarr, SPDE_D.Fwork, PDE_funcs.exp_x, phi_ns1s_Raman, PDE_funcs);
+                        DF=compute_DF_Raman(ni, 0, nresmax, zout, cos, HIA, SPDE_D.xarr, SPDE_D.yarr, 
+                                            SPDE_D.Fwork, PDE_funcs.exp_x, phi_ns1s_Raman, PDE_funcs);
                         DF_Raman_vec[count++].push_back(DF);
-                        DF=compute_DF_Raman(ni, 2, nresmax, zout, cos, HIA, SPDE_D.xarr, SPDE_D.yarr, SPDE_D.Fwork, PDE_funcs.exp_x, phi_nd1s_Raman, PDE_funcs);
+                        
+                        DF=compute_DF_Raman(ni, 2, nresmax, zout, cos, HIA, SPDE_D.xarr, SPDE_D.yarr, 
+                                            SPDE_D.Fwork, PDE_funcs.exp_x, phi_nd1s_Raman, PDE_funcs);
                         DF_Raman_vec[count++].push_back(DF);
                     }
                 }
@@ -895,7 +906,8 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
                     count=0;
                     for(int ni=3; ni<=Get_nmax_two_g_correction(); ni++)
                     {
-                        DF=compute_DF_nD1s(ni, nresmax, zout, cos, HIA, SPDE_D.xarr, SPDE_D.yarr, SPDE_D.Fwork, PDE_funcs.exp_x, PDE_funcs);
+                        DF=compute_DF_nD1s(ni, nresmax, zout, cos, HIA, SPDE_D.xarr, SPDE_D.yarr, 
+                                           SPDE_D.Fwork, PDE_funcs.exp_x, PDE_funcs);
                         DF_nD1s_vec[count++].push_back(DF);
                     }
                 }
@@ -937,7 +949,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
     //=====================================================================================
     if(write_solution_z0)
     {
-        fname=COSMORECDIR+"./temp/DPesc/sol.z_0"+endname;
+        fname=HI_outputdir+"Sol/sol.z_0"+endname;
         output_distortion(fname, nu21, ze);
     }
     

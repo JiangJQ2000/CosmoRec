@@ -31,6 +31,7 @@
 //====================================================================================================================
 using namespace std;
 
+string HeI_outputdir=COSMORECDIR+"./temp/";
 
 //====================================================================================================================
 //
@@ -45,9 +46,9 @@ int show_messages_HeI=3;
 // settings for the grid
 //
 //====================================================================================================================
-int core_HeI=50;            // points per Doppler width in the core region; 
+int core_HeI=25;            // points per Doppler width in the core region; 
                             // For +/- 10 xD core=25 implies 500 points (which is recommended).
-int dec_HeI=100;             // points per decade; from 10^-4 --> 1 for ndec==50 gives ~ 200 points
+int dec_HeI=50;             // points per decade; from 10^-4 --> 1 for ndec==50 gives ~ 200 points
 
 double theta_HeI=0.51;
 
@@ -57,7 +58,7 @@ double theta_HeI=0.51;
 // switch on/off electron scattering kernel corrections
 //
 //====================================================================================================================
-int solve_with_Kernel=1; // ==0: no kernel correction; 
+int solve_with_Kernel=0; // ==0: no kernel correction; 
                          // ==1: kernel correction using iteration; This runmode takes rather long, but the additional
                          //      correction is small. Still with openmp support it may be reasonable to use in the 
                          //      final iteration of the PDE solver.
@@ -305,7 +306,7 @@ void output_solution_HeI(int output_count, string endname, double nu21,
                          Cosmos &cos, Gas_of_HeI_Atoms &HeIAtoms, 
                          double zout, int iresmax, bool boundary_up)
 {
-    string fname=COSMORECDIR+"./temp/DPesc/sol.HeI."+int_to_string(output_count, 5)+endname;
+    string fname=HeI_outputdir+"Sol/sol.HeI."+int_to_string(output_count, 5)+endname;
     ofstream ofile(fname.c_str());
     ofile.precision(8);
     
@@ -377,7 +378,7 @@ void output_distortion_HeI(string fname, double nu21, double z)
 //====================================================================================================================
 void output_distortion_HeI(int output_count, string endname, double nu21, double z)
 {
-    string fname=COSMORECDIR+"./temp/DPesc/sol.HeI_distortion."+int_to_string(output_count, 5)+endname;
+    string fname=HeI_outputdir+"Sol/sol.HeI_distortion."+int_to_string(output_count, 5)+endname;
     output_distortion_HeI(fname, nu21, z);
     
     return;
@@ -406,13 +407,8 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
     //==============================================================================================
     // extension for filename
     //==============================================================================================
-    string exten=".no_e_sc.test.O";
-//    string exten=".movie.no_scat.all.ref";
-//    string exten=".movie.iso_Sing.ref";
-//    string exten=".movie.iso_Sing.FP.ref";
-//    string exten=".movie.all.e_scat.FP.no_recoil.no_boost.ref";
-//    string exten=".movie.e_sc.all_res.III";
-//    string exten=".spectrum.n_10.no_diff";
+    //string exten=".redo_Fig.5.no_D.no_P";
+    string exten=".Yp_0.4.no_e_l_scat";
      
     if(solve_with_Kernel==1) exten+=".Kernel_Int";
 
@@ -428,7 +424,7 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
     //==============================================================================================
     // general flags
     //==============================================================================================
-    bool do_output=1;
+    bool do_output=0;
     bool write_solution_z0=1;
     bool output_DP=1;
     bool output_DI1=0;
@@ -441,7 +437,7 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
     //==============================================================================================
     double dz_out=5.0;
     int output_count=0;
-    int output_step=50;
+    int output_step=25;
     int DP_step=1;
     
     //==============================================================================================
@@ -537,14 +533,14 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
     
     if(output_DP)
     {
-        fname=COSMORECDIR+"./temp/DPesc/DP.HeI"+endname;
+        fname=HeI_outputdir+"DPesc/DP.HeI"+endname;
         DPfile.open(fname.c_str());
         DPfile.precision(8);
     }
 
     if(output_DI1 && HeI_2s_1s_corr_is_on)
     {
-        fname=COSMORECDIR+"./temp/DPesc/DI1.HeI.2s1s"+endname;
+        fname=HeI_outputdir+"DPesc/DI1.HeI.2s1s"+endname;
         Ifile.open(fname.c_str());
         Ifile.precision(8);
  
@@ -581,7 +577,7 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
         //=======================================================================
         set_electron_scattering_efficiency_HeI(0.002); // 0.01 --> 10% difference for Trip; 
                                                        // 0.001 --> very small difference; 
-        //set_electron_scattering_efficiency_HeI(1.0);
+        //set_electron_scattering_efficiency_HeI(1.0); // full electron scattering with FP-approach
         
         //===================================================================
         // switch kernel treatment off at very low Xe_HeI
@@ -607,9 +603,6 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
         zout=max(ze, zin+dz);
         switched_off_kernel_treatment++;
 
-        //YH        double zcomp=1.100092E+03; // 1.300108e+03; 1.350090E+03;
-        //YH        if(zout<=zcomp && zin>=zcomp) zout=zcomp;
-        
         //==========================================================================================
         // define lower & upper boundary
         //==========================================================================================
@@ -684,9 +677,6 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
                 output_distortion_HeI(output_count, endname, nu21, zout);
             }
  
-            //YH            if(zout==zcomp)
-            //YH            {    output_solution(9999, endname, nu21, cos, HIA, zout, nresmax, boundary_up); wait_f_r(); }  
-           
             //======================================================================================
             // compute correction
             //======================================================================================
@@ -750,7 +740,7 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
     //==============================================================================================
     if(write_solution_z0)
     {
-        fname=COSMORECDIR+"./temp/DPesc/sol.HeI.z_0"+endname;
+        fname=HeI_outputdir+"Sol/sol.HeI.z_0"+endname;
         output_distortion_HeI(fname, nu21, ze);
     }
         

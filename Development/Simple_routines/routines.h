@@ -1,9 +1,11 @@
 //======================================================================================
 // Author: Jens Chluba 
-// last modified: May 2011
+// first implementation: Jan 2002
 //
 // Purpose: collection of several simple routines
 //======================================================================================
+// Jan 2012: added simple routines to load tables of data and create splines
+// Dec 2011: added routines for Gamma and incomplete Gamma functions
 
 #ifndef ROUTINES_H
 #define ROUTINES_H
@@ -20,6 +22,8 @@ using namespace std;
 double Dawson_Int(const double &x); // Dawson integral; Based on Antia
 double erf_JC(const double &x);     // Error function for a real argument
 double erfc_JC(const double &x);    // complementary Error function for a real argument
+double Gamma_JC(const double &x);                    // Gamma-function
+double Gamma_JC(const double &x, const double &a);   // incomplete Gamma-function
 
 double max(double a, double b);
 double min(double a, double b);
@@ -46,10 +50,23 @@ void free_all_splines_JC();
 void show_spline_memory();
 
 //======================================================================================
+// load tables of data (added Jan 2012)
+//======================================================================================
+void load_data_from_file(string fname, int cols, vector<int> &spline_mem_indices, 
+                         bool logx, bool logy);
+
+void load_data_from_file_loglin(string fname, int cols, vector<int> &spline_mem_indices);
+void load_data_from_file_loglog(string fname, int cols, vector<int> &spline_mem_indices);
+
+
+//======================================================================================
 // npol-1 is degree of the interpolating polynomial
 //======================================================================================
-void polint_JC(const double *xa, const double *ya, int na, const double x, int npol, double *y, double *dy);
-void polint_JC(const double *xa, const double *ya, int na, const double x, int &istart, int npol, double *y, double *dy);
+void polint_JC(const double *xa, const double *ya, int na, const double x, int npol, 
+               double *y, double *dy);
+
+void polint_JC(const double *xa, const double *ya, int na, const double x, int &istart, 
+               int npol, double *y, double *dy);
 
 //======================================================================================
 // simple grid setup
@@ -78,7 +95,8 @@ string int_to_string(int i, int ni);
 //======================================================================================
 double find_root(double (* func)(double *), double x1, double x2, double xacc);
 double find_root_brent(double (* func)(double *), double x1, double x2, double xacc);
-double find_root_brent(double (* func)(double *, void *p), void *p, double x1, double x2, double xacc);
+double find_root_brent(double (* func)(double *, void *p), void *p, 
+                       double x1, double x2, double xacc);
 
 //======================================================================================
 // for xmgrace output

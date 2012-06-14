@@ -490,7 +490,11 @@ void polint_routines(const double *xa, const double *ya, int n, const double x, 
             w=c[i+1]-d[i];
             if ((den=ho-hp) == 0.0)
             { 
-                cout << " polint error " << ho << " " << x << " " << hp << " " << i << " " << xa[i] << " " << ya[i] << " " << m << " " << xa[i+m] << " " << ya[i+m] << endl; 
+                cout << " polint error " << ho << " " << x << " " << hp << " " 
+                     << i << " " << xa[i] << " " << ya[i] << " " 
+                     << m << " " << xa[i+m] << " " << ya[i+m] 
+                     << endl; 
+                
                 wait_f_r(); 
             }
             den=w/den;
@@ -502,7 +506,8 @@ void polint_routines(const double *xa, const double *ya, int n, const double x, 
 }
 
 //======================================================================================
-void polint_JC(const double *xa, const double *ya, int na, const double x, int &istart, int npol, double *y, double *dy)
+void polint_JC(const double *xa, const double *ya, int na, const double x, 
+               int &istart, int npol, double *y, double *dy)
 {
     // npol-1 is degree of the interpolating polynomial
     long unsigned int j=istart;
@@ -521,7 +526,8 @@ void polint_JC(const double *xa, const double *ya, int na, const double x, int &
 }
 
 //======================================================================================
-void polint_JC(const double *xa, const double *ya, int na, const double x, int npol, double *y, double *dy)
+void polint_JC(const double *xa, const double *ya, int na, const double x, 
+               int npol, double *y, double *dy)
 {
     // npol-1 is degree of the interpolating polynomial
     int j=0;

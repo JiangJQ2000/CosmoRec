@@ -22,7 +22,7 @@ int CosmoRec(int narg, char *args[]);
 // 
 // runmode == 0: CosmoRec run with diffusion
 //            1: CosmoRec run without diffusion
-//            2: Recfast++ run
+//            2: Recfast++ run (equivalent of the original Recfast version)
 //            3: Recfast++ run with correction function of Chluba & Thomas, 2010
 //
 // On entry, the array z_arr should contain the redshifts at which Xe and Te are required. nz 

@@ -22,7 +22,7 @@ CHECK FOR XXXX before final release...
 //===================================================================================================================================
 // LICENCE:
 //
-// This code and all contained libraries and subroutines can be used free of charge under the condition that:
+// This code and all contained libraries and subroutines can be used free of charge provided that:
 //
 // (i) their use will be acknowledged in publications
 //
@@ -66,8 +66,6 @@ CHECK FOR XXXX before final release...
 //
 // - added simple OPENMP support for ODE and PDE solver. CosmoRec now runs in XXX
 //
-// - added interface for 'CosmoMC' support to "CosmoRec.h". Details XXX
-//
 // - radiative transfer problem for helium photons can now be explicitly solved. This module can be called instead of the simple
 //   approximate treatment of HI absorption on the escape probabilities of the main helium resonances. Furthermore, it allows
 //   computing the precise feedback between overlapping lines. The corresponding module is located in './PDE_Problem_HeI'.
@@ -81,8 +79,6 @@ CHECK FOR XXXX before final release...
 //   This option can be activated in 'Makefile.in', and outputs can be controlled from './PDE_Problem/Solve_PDEs.cpp' 
 //   and './PDE_Problem_HeI/Solve_PDEs_HeI.cpp' and their respective modules './PDE_Problem/Solve_PDEs_Grace.cpp' and 
 //   './PDE_Problem_HeI/Solve_PDEs_HeI_Grace.cpp' in the case of helium.
-//
-// - added new runmode for Recfast++ with corrections function (see 'RUNNING CosmoRec in Recfast++ mode' below). 
 //
 // Hydrogen:
 //
@@ -100,6 +96,15 @@ CHECK FOR XXXX before final release...
 // - updated the effective rates for helium. The rates for up to 10 resolved states including quadrupole lines missed one important 
 //   set of rates.
 // - helium feedback in the analytic model of Chluba & Sunyaev, MNRAS, 402, 1221Ð1248 (2010) can now be included for up to 10 shells.
+//
+//-----------------------------------------------------------------------------------------------------------------------------------
+//
+// Update (24.03.2012 | CosmoRec v1.4b)
+// 
+// - added interface for 'Camb' support to "CosmoRec.h".
+// - added new runmode for Recfast++ with corrections function (see 'RUNNING CosmoRec in Recfast++ mode' below). 
+// - small changes to ODE and PDE-solver
+// - cosmetic changes to some of the routines
 //
 //-----------------------------------------------------------------------------------------------------------------------------------
 //
@@ -254,7 +259,6 @@ is not as large. For full capabilities we recommend the full CosmoRec package.
 //===================================================================================================================================
 
 //===================================================================================================================================
-
 
 INSTALLATION:
 

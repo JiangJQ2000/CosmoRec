@@ -139,7 +139,7 @@ void init_profile_memory_HeI(int nxi, int nres, PDE_solver_functions_HeI &PDE_fu
         PDE_funcs.Voigt_profiles_Ai1s[k] =p.Get_A21();
         
         int HeI_i=get_HeI_index(PDE_funcs.res_index_of_lines[k]);
-        PDE_funcs.Voigt_profiles_w[k] = PDE_Setup_D_HeI.HeI->Get_gw(HeI_i)/PDE_Setup_D_HeI.HeI->Get_gw(0);
+        PDE_funcs.Voigt_profiles_w[k]=PDE_Setup_D_HeI.HeI->Get_gw(HeI_i)/PDE_Setup_D_HeI.HeI->Get_gw(0);
     }
     
     

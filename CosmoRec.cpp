@@ -1,10 +1,11 @@
 //===========================================================================================================
 //
 // Author: Jens Chluba
-// last modification: March 2012
+// last modification: June 2012
 // purpose: to access main CosmoRec code
 //
 //===========================================================================================================
+// June   8th, 2012: added C-version to communicate Hubble 
 // March 23rd, 2012: added runmode with helium radiative transfer module;
 // Feb   16th, 2012: added module to load precomputed recombination history (useful for runs with Camb)
 // Feb-May     2011: included HeI-diffusion correction
@@ -116,7 +117,6 @@ void print_message(string mess);
 //===========================================================================================================
 #include "./Modules/output_methods.cpp"
 
-
 //===========================================================================================================
 void print_message(string mess)
 {
@@ -198,6 +198,8 @@ void run_RECFAST(string filename, int corr_fac)
     ofile.open(name.c_str());
     ofile.precision(10); 
     
+    ofile << "# Recfast++ output. The columns are z, Xe=Ne/NH, Te\n#" << endl;
+
     for(int l=0; l<parameters.nz; l++) ofile << za[l] << " " 
                                              << cosmos.Xe_Seager(za[l]) << " " 
                                              << cosmos.Te(za[l]) << endl;
@@ -431,7 +433,7 @@ int CosmoRec(int narg, char *args[])
         mode=args[narg-2];
         if(mode=="REC") print_message(" Running Recfast++ module.");
         else if(mode=="RECcf") print_message(" Running Recfast++ module with correction function."); 
-        else{ mode=""; print_message(" Running CosmoRec."); }
+        else{ mode=""; print_message(" Runmode does not exist. Exiting"); exit(0); }
     }
     else{ cerr << " Too many/few parameters " << endl; exit(1); }
  
@@ -616,7 +618,7 @@ void run_RECFAST_pp(double param[12], const int nz, double *z_arr,
 // 
 // runmode == 0: CosmoRec run with diffusion
 //            1: CosmoRec run without diffusion
-//            2: Recfast++ run
+//            2: Recfast++ run (equivalent of the original Recfast version)
 //            3: Recfast++ run with correction function of Chluba & Thomas, 2010
 //
 // On entry, the array z_arr should contain the redshifts at which Xe and Te are required. nz 
@@ -759,11 +761,11 @@ int CosmoRec(const int runmode, const double runpars[5],
     if(!CosmoRec_is_initialized)
     {
         cout << "\n ====================================================="
-        << "===================================================== " << endl;
-        cout << " || You are entering CosmoRec v 2.0 beta (batch mode)." 
-        << " Several initializations will be run now." << endl;
+             << "===================================================== " << endl;
+        cout << " || You are entering CosmoRec "+CosmoRec_version+" (batch mode)." 
+             << " Several initializations will be executed now." << endl;
         cout << " ====================================================="
-        << "===================================================== " << endl;
+             << "===================================================== " << endl;
     }
     
     int err=0;
@@ -795,7 +797,12 @@ int CosmoRec(const int runmode, const double runpars[5],
         // enter CosmoRec
         //======================================================================
         err=CosmoRec();
-        if(err!=0){ cout << " CosmoRec:: run was not completed. Restarting Solver. " << err << endl; wait_f_r(); }
+        
+        if(err!=0)
+        { 
+            cout << " CosmoRec:: run was not completed. Restarting Solver. " << err << endl; 
+            wait_f_r(); 
+        }
     }   
     while(err!=0);
 
@@ -826,16 +833,18 @@ int CosmoRec(const int runmode, const double runpars[5],
 
 //===========================================================================================================
 // Wrap the C++ Fortran routine to be allow calling from Fortran. Arguments are as above.
+//===========================================================================================================
+// 08.06.2012: Added version to communicate Hubble 
 // Added 06.03.2011 (Richard Shaw)
 //===========================================================================================================
 extern "C" {
     
-    using namespace std;
-    
-    void CosmoRec_calc_cpp_(int * runmode, double * runpars, 
-                            double * omega_c, double * omega_b, double * omega_k, 
-                            double * num_nu, double * h0, double * t_cmb, double * y_he, 
-                            double * za_in, double * xe_out, double * tb_out, int * len, int* label) 
+    void cosmorec_calc_cpp_(const int * runmode, const double * runpars, 
+                            const double * omega_c, const double * omega_b, const double * omega_k, 
+                            const double * num_nu, const double * h0, 
+                            const double * t_cmb, const double * y_he, 
+                            double * za_in, double * xe_out, double * tb_out, 
+                            const int * len, const int* label) 
     {
         
         //======================================================================
@@ -843,8 +852,28 @@ extern "C" {
         //======================================================================
         CosmoRec(*runmode, runpars, *omega_c, *omega_b, *omega_k, *num_nu, 
                  *h0 / 100.0, *t_cmb, *y_he, *len, za_in, xe_out, tb_out, *label);
+        
+        return;
     } 
     
+    void cosmorec_calc_cpp_(const int * runmode, const double * runpars, 
+                            const double * omega_c, const double * omega_b, const double * omega_k, 
+                            const double * num_nu, const double * h0, 
+                            const double * t_cmb, const double * y_he, 
+                            const double * z_Hz, const double * Hz, const int * nz,
+                            double * za_in, double * xe_out, double * tb_out, 
+                            const int * len, const int* label) 
+    {
+        cosmos.init_Hubble(z_Hz, Hz, *nz);
+        
+        //======================================================================
+        // Call standard CosmoRec routine
+        //======================================================================
+        CosmoRec(*runmode, runpars, *omega_c, *omega_b, *omega_k, *num_nu, 
+                 *h0 / 100.0, *t_cmb, *y_he, *len, za_in, xe_out, tb_out, *label);
+        
+        return;
+    } 
 }
 
 //===========================================================================================================

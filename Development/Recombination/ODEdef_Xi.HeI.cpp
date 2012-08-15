@@ -479,7 +479,7 @@ void evaluate_HI_abs_HeI_Intercombination(const double &z, const double &XH1s,
     dXe_HeI_HI_abs_dt=Dpij*A21/(efac-1.0)*dum;
     
 //    ofstream ofile;
-//   ofile.open("./temp/DP.Trip.dat", ios_base::app);
+//    ofile.open("./temp/DP.Trip.dat", ios_base::app);
 //    ofile << z << " " << p_ij(tauS)+Dpij << " " << p_ij(tauS) << " " << Dpij << endl;
 //    ofile.close();
 

@@ -428,7 +428,7 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
     bool write_solution_z0=1;
     bool output_DP=1;
     bool output_DI1=0;
-
+    
     //==============================================================================================
     bool boundary_up=0;                          // change upper boundary condition (==0 --> Dn_x=0)
     
@@ -636,7 +636,7 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
         //==========================================================================================
         // write results only after some initial evolution
         //==========================================================================================
-        if(zout<zs-0*20.0)
+        if(zout<zs-20.0)
         {
             //======================================================================================
 			// output to grace (JPEG)

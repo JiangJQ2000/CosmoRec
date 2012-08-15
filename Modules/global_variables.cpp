@@ -28,8 +28,9 @@ int show_CosmoRec_mess=3;
 //==================================================================================================
 // output files
 //==================================================================================================
-bool write_populations=0;   // output solution for the populations of the resolved states
+bool write_populations=1;   // output solution for the populations of the resolved states
 bool write_Xe_Te_sol=1;     // output Xe & Te
+bool write_HI_distortion=1; // output approximate HI distortion (added July 2nd 2012)
 
 //==================================================================================================
 // path to the effective rate database

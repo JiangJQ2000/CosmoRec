@@ -54,10 +54,12 @@ void open_files(ofstream *Xfiles, string path, int fresh=1)
     if(write_populations) Xfiles[3].open((prename+"HI.X"+addname).c_str(), wrmode); 
 //  Xfiles[4].open((prename+"HeI.X"+addname).c_str(), wrmode); 
 //  Xfiles[5].open((prename+"HI.HeI.1s"+addname).c_str(), wrmode); 
+    Xfiles[5].open((prename+"HI_distortion"+addname).c_str(), wrmode); 
 
     if(write_Xe_Te_sol && iteration_count==0) Xfiles[0].precision(8);
     if(write_Xe_Te_sol) Xfiles[1].precision(8);
     if(write_populations) Xfiles[3].precision(12);
+    if(write_HI_distortion) Xfiles[5].precision(12);
     
     return;
 }
@@ -67,6 +69,7 @@ void close_files(ofstream *Xfiles)
     if(write_Xe_Te_sol && iteration_count==0) Xfiles[0].close();
     if(write_Xe_Te_sol) Xfiles[1].close();
     if(write_populations) Xfiles[3].close();
+    if(write_HI_distortion) Xfiles[5].close();
     
     return;
 }
@@ -129,6 +132,33 @@ void write_Xe_Te_to_file(ofstream &ofile, double zval, double Xe, double Te)
 }
 
 //--------------------------------------------------------------------------------------------
+// write spectral distortion from EMLA (added July 2nd 2012)
+//--------------------------------------------------------------------------------------------
+void write_HI_distortion_to_file(ofstream &ofile, double zval)
+{
+    if(zval>=parameters.zstart) return;
+    
+    double d1=0.0, d2=0.0;
+    Transition_Data_A T=Hydrogen_Atoms.Level(2, 1).Get_Data_A(1, 0);
+    ODE_effective::evaluate_Ly_n_channel(zval, cosmos.TCMB(zval), 
+                                         Hydrogen_Atoms.X(1, 0), Hydrogen_Atoms.X(2, 1), 
+                                         cosmos.NH(zval), cosmos.H(zval), 
+                                         T.A21, T.lambda21, T.Dnu, d1, d2);    
+
+    ofile << zval;
+    ofile << " " << d1;
+
+    d1=0.0; d2=0.0;
+    ODE_effective::evaluate_2s_two_photon_decay(zval, cosmos.TCMB(zval), 
+                                                Hydrogen_Atoms.X(0), Hydrogen_Atoms.X(1), 
+                                                Hydrogen_Atoms.Level(1).Get_Dnu_1s(), 
+                                                const_HI_A2s_1s, d1, d2);
+    ofile << " " << d1 << endl;
+    
+    return;
+}
+
+//--------------------------------------------------------------------------------------------
 void write_files(double z, ofstream *Xfiles)
 {
     if(write_Xe_Te_sol)
@@ -149,6 +179,11 @@ void write_files(double z, ofstream *Xfiles)
     //==============================================================
     if(write_populations) write_HI_X_array_to_file(Xfiles[3], z, Level_I.X, Level_I.nHIeq, Level_I.neq);
 
+    //==============================================================
+    // write spectral distortion (added July 2nd 2012)
+    //==============================================================
+    if(write_HI_distortion) write_HI_distortion_to_file(Xfiles[5], z);
+    
     //==============================================================
     // Helium populations
     //==============================================================

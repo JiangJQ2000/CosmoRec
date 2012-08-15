@@ -1,6 +1,6 @@
-//========================================================================================================
+//==================================================================================================
 // to include the distortion from HeI-lines
-//========================================================================================================
+//==================================================================================================
 struct Data_Dn
 {
     double *z; // redshift
@@ -9,15 +9,15 @@ struct Data_Dn
     double *pd; // pd(z) death probability for the level
 };
 
-//========================================================================================================
+//==================================================================================================
 // feedback all helium lines
-//========================================================================================================
+//==================================================================================================
 vector<feedback_data > HeI_Lines;
 int HeI_photons_nz;
 int HeI_photons_iznow;
 Data_Dn *HeI_photons;
 
-//========================================================================================================
+//==================================================================================================
 double interpol_HeI_Dn(double x, double *xa, double *ya, int ny)
 {  
     if(ny<=4 || x<min(xa[0], xa[ny-1]) || x>max(xa[0], xa[ny-1])) return 0.0;
@@ -32,7 +32,7 @@ double interpol_HeI_Dn(double x, double *xa, double *ya, int ny)
     return v;
 }
 
-//========================================================================================================
+//==================================================================================================
 void create_feedback_Table(int nmax, Gas_of_HeI_Atoms &HeIA)
 {
     HeI_Lines.clear();
@@ -158,9 +158,9 @@ void create_feedback_Table(int nmax, Gas_of_HeI_Atoms &HeIA)
     return;
 }
 
-//===============================================================================================
+//==================================================================================================
 // for other HeI photons
-//===============================================================================================
+//==================================================================================================
 void init_HeI_feedback(Gas_of_HeI_Atoms &HeIA, Parameters_form_initfile &params, double *za)
 {
     HeI_photons_iznow=0;
@@ -212,7 +212,7 @@ void init_HeI_feedback(Gas_of_HeI_Atoms &HeIA, Parameters_form_initfile &params,
                 HeI_photons[line].zpd[k]=za[k];
                 HeI_photons[line].Dn[k]=0.0;            
                 HeI_photons[line].pd[k]=log(1.0/(1.0+HeI_Lines[line].A21
-                                               /Bitot[get_res_index_HeI(HeI_Lines[line].upperLevel.i)]));          
+                                          /Bitot[get_res_index_HeI(HeI_Lines[line].upperLevel.i)]));          
             }
         }
     }
@@ -220,16 +220,16 @@ void init_HeI_feedback(Gas_of_HeI_Atoms &HeIA, Parameters_form_initfile &params,
     return;
 }
 
-//===============================================================================================
+//==================================================================================================
 // interpolation function
-//===============================================================================================
+//==================================================================================================
 double Dn_minus_HeI(int line, double zi)
 {   // the last point was saves at i=HeI_photons_iznow
     return interpol_HeI_Dn(zi, HeI_photons[line].z, HeI_photons[line].Dn, 
                            min(HeI_photons_nz, max(HeI_photons_iznow+2, 4)));  
 }
 
-//===============================================================================================
+//==================================================================================================
 double pd_HeI(int line, double z)
 { 
     double pd;
@@ -240,23 +240,23 @@ double pd_HeI(int line, double z)
     return pd;
 } 
 
-//===============================================================================================
+//==================================================================================================
 // feedback with tauc
-//===============================================================================================
+//==================================================================================================
 // defined a bit below (recursive)
 void update_current_feedback_functions(int line, Gas_of_HeI_Atoms &HeIA, double XHI1s, int iznow, 
                                        double znow, string mess="");
 
-//===============================================================================================
+//==================================================================================================
 double Saved_XHI1s(double z)
 { 
     int nmax=min(HeI_photons_nz, max(HeI_photons_iznow+2, 4));
     return interpol_HeI_Dn(z, HeI_photons[0].z, HeI_photons[0].Dn, nmax); 
 }
 
-//===============================================================================================
+//==================================================================================================
 // tauc-integral
-//===============================================================================================
+//==================================================================================================
 double FB_HeI_sig_HI_1s(double nu){ return HeI_Atoms.HILyc.sig_phot_ion(nu); }
 
 double FB_HeI_dtau_c_HI1s(double Dz, void *params) 
@@ -276,9 +276,9 @@ double FB_HeI_dtau_c_HI1s(double Dz, void *params)
     return sig_c*NHI1s*const_cl/( Hz*(1.0+z) );
 }
 
-//===============================================================================================
+//==================================================================================================
 // Work horse
-//===============================================================================================
+//==================================================================================================
 double FB_HeI_tau_c_HI1s_region_GSL(double (*fptr)(double, void *), double zmin, double zmax, 
                                     double x_em, double z_em, 
                                     double epsabs, double epsrel, int flag, string mess="")
@@ -306,7 +306,7 @@ double FB_HeI_tau_c_HI1s_region_GSL(double (*fptr)(double, void *), double zmin,
     return r;
 }
 
-//===============================================================================================
+//==================================================================================================
 double FB_HeI_tau_c_HI1s_GSL(double y_em, double z_em, double z_obs, double (*fptr)(double, void *))
 {
     if(z_em<=z_obs) return 0.0;
@@ -343,18 +343,18 @@ double FB_HeI_tau_c_HI1s_GSL(double y_em, double z_em, double z_obs, double (*fp
     return r;
 }
 
-//===============================================================================================
+//==================================================================================================
 // optical depth in Lyman continuum
 // flag==1 mean fnu=1; otherwise fnu!=1 is used
-//===============================================================================================
+//==================================================================================================
 double FB_HeI_tau_c_HI1s(double y_em, double z_em, double z_obs)
 { return FB_HeI_tau_c_HI1s_GSL(y_em, z_em, z_obs, FB_HeI_dtau_c_HI1s); }
 
-//===============================================================================================
+//==================================================================================================
 double DP_interpol_S(double Tg, double tauS, double eta);  // defined in P_HI_abs_tabulation.cpp
 double DP_interpol_T(double Tg, double tauS, double eta);  // defined in P_HI_abs_tabulation.cpp
 
-//===============================================================================================
+//==================================================================================================
 double Dn_HeI_effective(int linenum, double znow, double X1sHI, 
                         double Dnminus, Gas_of_HeI_Atoms &HeIA)
 {
@@ -409,7 +409,7 @@ double Dn_HeI_effective(int linenum, double znow, double X1sHI,
     return Dn_noscatt+Dn_feedback;
 }
 
-//===============================================================================================
+//==================================================================================================
 double Dn_minus_HeI_feedback(int linenum, double z, double X1sHI, Gas_of_HeI_Atoms &HeIA)
 {
     if(HeI_photons_iznow<=4) return 0.0;
@@ -477,9 +477,9 @@ double Dn_minus_HeI_feedback(int linenum, double z, double X1sHI, Gas_of_HeI_Ato
 double Dn_HeI_feedback(int linenum, double z, double X1sHI, Gas_of_HeI_Atoms &HeIA)
 { return Dn_HeI_effective(linenum, z, X1sHI, Dn_minus_HeI_feedback(linenum, z, X1sHI, HeIA), HeIA); }
 
-//===============================================================================================
+//==================================================================================================
 // feedback without tauc
-//===============================================================================================
+//==================================================================================================
 double Dn_minus_HeI_feedback_no_HI_abs(int linenum, double z, double X1sHI, Gas_of_HeI_Atoms &HeIA)
 {
     if(HeI_photons_iznow<=4) return 0.0;
@@ -506,9 +506,9 @@ double Dn_minus_HeI_feedback_no_HI_abs(int linenum, double z, double X1sHI, Gas_
 double Dn_HeI_feedback_no_HI_abs(int linenum, double z, double X1sHI, Gas_of_HeI_Atoms &HeIA)
 { return Dn_HeI_effective(linenum, z, X1sHI, Dn_minus_HeI_feedback_no_HI_abs(linenum, z, X1sHI, HeIA), HeIA); }
 
-//===============================================================================================
+//==================================================================================================
 // saving the feedback information
-//===============================================================================================
+//==================================================================================================
 void update_current_feedback_functions(int line, Gas_of_HeI_Atoms &HeIA, double XHI1s, int iznow, 
                                        double znow, string mess)
 {
@@ -601,7 +601,7 @@ void update_current_feedback_functions(int line, Gas_of_HeI_Atoms &HeIA, double 
     return;
 }
 
-//===============================================================================================
+//==================================================================================================
 void save_HeI_distortion(Gas_of_HeI_Atoms &HeIA, double XHI1s, int iznow, double znow)
 {
     //====================================================================
@@ -620,4 +620,5 @@ void save_HeI_distortion(Gas_of_HeI_Atoms &HeIA, double XHI1s, int iznow, double
     return;
 }
 
-
+//==================================================================================================
+//==================================================================================================

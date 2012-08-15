@@ -1,6 +1,6 @@
 //====================================================================================================================
 // Author Jens Chluba 
-// last modification May 2011
+// last modification Aug 2012
 //====================================================================================================================
 #include <iostream>
 #include <string>
@@ -418,22 +418,37 @@ void output_solution(int output_count, string endname, double nu21, Cosmos &cos,
         double exp_fac_Tg_2=PDE_funcs.exp_x[i]*exp_xc_2;
         double exp_fac_Te=PDE_funcs.exp_x[i]*exp_xc_rho;
         
-        ofile << SPDE_D.xarr[i] << " " << HIA.HI_Lyn_profile(2).nu2x(SPDE_D.xarr[i]*nu21, Tm) << " " << HIA.HI_Lyn_profile(3).nu2x(SPDE_D.xarr[i]*nu21, Tm) 
-              << " " << SPDE_D.yarr[i] << " " << SPDE_D.yarr[i]*pow(SPDE_D.xarr[i], 3) << " " << DnL_ref << " " << DnL_ref*exp_fac_Te << " ";
+        ofile << SPDE_D.xarr[i] 
+              << " " << HIA.HI_Lyn_profile(2).nu2x(SPDE_D.xarr[i]*nu21, Tm) 
+              << " " << HIA.HI_Lyn_profile(3).nu2x(SPDE_D.xarr[i]*nu21, Tm) 
+              << " " << SPDE_D.yarr[i] << " " << SPDE_D.yarr[i]*pow(SPDE_D.xarr[i], 3) 
+              << " " << DnL_ref << " " << DnL_ref*exp_fac_Te << " ";
         
-        double Dnu_2=Dn_nu_ref_effective(2, zout, HI_Dnem_for_nl_effective(zout, 2, 1)*nu21, HI_pd_for_nl_effective(zout, 2, 1), SPDE_D.xarr[i]*nu21, cos, HIA);
-        double Dnu_3=Dn_nu_ref_effective(3, zout, HI_Dnem_for_nl_effective(zout, 3, 1)*nu21, HI_pd_for_nl_effective(zout, 3, 1), SPDE_D.xarr[i]*nu21, cos, HIA);
+        double Dnu_2=Dn_nu_ref_effective(2, zout, HI_Dnem_for_nl_effective(zout, 2, 1)*nu21, 
+                                         HI_pd_for_nl_effective(zout, 2, 1), 
+                                         SPDE_D.xarr[i]*nu21, cos, HIA);
+        
+        double Dnu_3=Dn_nu_ref_effective(3, zout, HI_Dnem_for_nl_effective(zout, 3, 1)*nu21, 
+                                         HI_pd_for_nl_effective(zout, 3, 1), 
+                                         SPDE_D.xarr[i]*nu21, cos, HIA);
+        
         double Dnu_tot=Dn_nu_ref_effective_sum(nmax, zout, SPDE_D.xarr[i]*nu21, nu21, cos, HIA);
         
-        ofileappr << SPDE_D.xarr[i] << " " << HIA.HI_Lyn_profile(2).nu2x(SPDE_D.xarr[i]*nu21, Tm) << " " << HIA.HI_Lyn_profile(3).nu2x(SPDE_D.xarr[i]*nu21, Tm) << " " 
+        ofileappr << SPDE_D.xarr[i] 
+                  << " " << HIA.HI_Lyn_profile(2).nu2x(SPDE_D.xarr[i]*nu21, Tm) 
+                  << " " << HIA.HI_Lyn_profile(3).nu2x(SPDE_D.xarr[i]*nu21, Tm) << " " 
         //
         << Dnu_2 << " " << Dnu_3 << " " << Dnu_tot << " "
         //
-        << Dnu_2*pow(SPDE_D.xarr[i], 3) << " " << Dnu_3*pow(SPDE_D.xarr[i], 3) << " " << Dnu_tot*pow(SPDE_D.xarr[i], 3) << " "
+        << Dnu_2*pow(SPDE_D.xarr[i], 3) << " " 
+        << Dnu_3*pow(SPDE_D.xarr[i], 3) << " " 
+        << Dnu_tot*pow(SPDE_D.xarr[i], 3) << " "
         //
         << Dnu_2*exp_fac_Tg << " " << Dnu_3*exp_fac_Tg_2 << " " << zout << endl;
         
-        ofile << SPDE_D.yarr[i]/exp_fac_Te - DnL_ref << " " << SPDE_D.yarr[i] << " " << SPDE_D.yarr[i]/exp_fac_Tg << " " << SPDE_D.yarr[i]/exp_fac_Te << " "; 
+        ofile << SPDE_D.yarr[i]/exp_fac_Te - DnL_ref << " " 
+              << SPDE_D.yarr[i] << " " << SPDE_D.yarr[i]/exp_fac_Tg << " " 
+              << SPDE_D.yarr[i]/exp_fac_Te << " "; 
         
         //=======================================================
         // change in the occupation number
@@ -534,7 +549,6 @@ void read_Hyrec_Population_from_file(vector<vector<double> > &Xi_Data, Cosmos &c
     return;
 }
 
-
 //====================================================================================================================
 //
 // code with effective rates
@@ -554,6 +568,14 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
 {
     Set_Load_Populations_HI_verbosity(show_messages);
     Set_HI_pd_Rp_splines_effective_verbosity(show_messages);
+    
+    //=========================================================================== 
+    // initial settings for PDE-problem
+    //=========================================================================== 
+    HI_switch_on_line_scattering();
+    HI_switch_on_e_scattering();
+    HI_switch_on_line_em_abs();
+    HI_switch_on_2s1s();
     
     //=========================================================================== 
     // extension for filename
@@ -773,7 +795,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
         //======================================================================= 
         dz=-dz_out;
         zout=max(ze, zin+dz);
-        
+
 //CC        double zcomp=1.100092E+03; // 1.300108e+03; 1.350090E+03;
 //CC        double zcomp=1100.0;
 //CC        if(zout<=zcomp && zin>=zcomp) zout=zcomp;
@@ -786,7 +808,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
         for(i=0; i<SPDE_D.npts; i++) if(SPDE_D.xarr[i]>=xeval){ i--; break; }
         double y_lower, dydum;
         polint_JC(&SPDE_D.xarr[0], &SPDE_D.yarr[0], SPDE_D.npts, xeval, i, 6, &y_lower, &dydum);
-        double y_upper=( boundary_up ? PDE_funcs.HI_Dnem_nl(zout, nresmax+1, 1)*nu21 : 1.0e-60);
+        double y_upper=( boundary_up ? PDE_funcs.HI_Dnem_nl(zout, nresmax+1, 1)*nu21 : 0.0);
         
         //=======================================================================
         // solve PDE
@@ -794,10 +816,12 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
         if(solve_with_Kernel_HI==0) Step_PDE_O2t(theta_HI_loc, zin, zout, SPDE_D.xarr, SPDE_D.yarr, 
                                                  y_lower, y_upper, PDE_D, def_PDE_Lyn_and_2s1s);       
         
-        else if(solve_with_Kernel_HI==1) Step_PDE_O2t_Int(theta_HI_loc, 1, zin, zout, SPDE_D.xarr, SPDE_D.yarr, 
-                                                          y_lower, y_upper, PDE_D, def_PDE_Lyn_and_2s1s, 
-                                                          electron_kernel_corr_func_HI);   
-                
+        else if(solve_with_Kernel_HI==1) Step_PDE_O2t_Int(theta_HI_loc, 1, zin, zout, 
+                                                          SPDE_D.xarr, SPDE_D.yarr, 
+                                                          y_lower, y_upper, PDE_D, 
+                                                          def_PDE_Lyn_and_2s1s, 
+                                                          electron_kernel_corr_func_HI);  
+        
         if(show_messages>=3) 
             cout << " " << zs << " --> " << zout << " # " << output_count 
                  << " y_low= " << y_lower << " i= " << i << endl;

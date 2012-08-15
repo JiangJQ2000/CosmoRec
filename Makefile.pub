@@ -2,7 +2,7 @@
 # rules
 #============================================================================================
 all:
-	make tidy; make wipeDS; \
+    make tidy; make wipeDS; \
     rm -rf ./CosmoRec.vX; rm -rf ./CosmoRec.vX.tar.gz; \
     mkdir ./CosmoRec.vX; \
     mkdir ./CosmoRec.vX/outputs; \
@@ -22,7 +22,7 @@ all:
     cp ./main.cpp ./CosmoRec.vX/.; \
     cp ./CosmoRec.cpp ./CosmoRec.vX/.; \
     cp ./CosmoRec.h ./CosmoRec.vX/.; \
-    cp ./Readme.txt ./CosmoRec.vX/.;
+    cp ./README ./CosmoRec.vX/.;
 
 tarball: all
 	tar -czf CosmoRec.vX.tar.gz ./CosmoRec.vX;

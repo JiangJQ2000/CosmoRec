@@ -639,19 +639,20 @@ void Dp_Dnem_function(int n, double z, double Tg, double pd_np, double nem, doub
 
     double DRp=0.0, DRm=0.0;
     double NH=PDE_Setup_D.cosm->NH(z);
+    
     //----------------------------------------------------------
     // Raman-scatterings
     //----------------------------------------------------------
     if(Raman_process)
     {
-        if(Raman_process_nmax>=2 && n>2) 
-        	Dp_Dnem_Raman_update(2, 0, n, N1s, PDE_Setup_D.PDE_funcs->HI_Xnl(z, 2, 0)*NH, Tg, DRp, DRm);
-        
-        for(int ni=3; ni<=(int)min(7, n-1); ni++)
+        for(int ni=(int)min(7, n-1); ni>=3; ni--)
         {
             Dp_Dnem_Raman_update(ni, 0, n, N1s, PDE_Setup_D.PDE_funcs->HI_Xnl(z, ni, 0)*NH, Tg, DRp, DRm);
             Dp_Dnem_Raman_update(ni, 2, n, N1s, PDE_Setup_D.PDE_funcs->HI_Xnl(z, ni, 2)*NH, Tg, DRp, DRm);
         }   
+
+        if(Raman_process_nmax>=2 && n>2) 
+        	Dp_Dnem_Raman_update(2, 0, n, N1s, PDE_Setup_D.PDE_funcs->HI_Xnl(z, 2, 0)*NH, Tg, DRp, DRm);
     }
     
     //----------------------------------------------------------
@@ -659,11 +660,14 @@ void Dp_Dnem_function(int n, double z, double Tg, double pd_np, double nem, doub
     //----------------------------------------------------------
     if(two_g_process)
     {
-        for(int ni=n+1; ni<=(int)min(8, two_g_process_nmax); ni++)
+        double DRp2=0.0, DRm2=0.0;
+        for(int ni=(int)min(8, two_g_process_nmax); ni>=n+1; ni--)
         {
-            Dp_Dnem_2gamma_update(ni, 0, n, N1s, PDE_Setup_D.PDE_funcs->HI_Xnl(z, ni, 0)*NH, Tg, DRp, DRm);
-            Dp_Dnem_2gamma_update(ni, 2, n, N1s, PDE_Setup_D.PDE_funcs->HI_Xnl(z, ni, 2)*NH, Tg, DRp, DRm);
+            Dp_Dnem_2gamma_update(ni, 0, n, N1s, PDE_Setup_D.PDE_funcs->HI_Xnl(z, ni, 0)*NH, Tg, DRp2, DRm2);
+            Dp_Dnem_2gamma_update(ni, 2, n, N1s, PDE_Setup_D.PDE_funcs->HI_Xnl(z, ni, 2)*NH, Tg, DRp2, DRm2);
         }   
+        
+        DRp+=DRp2; DRm+=DRm2;
     }
     
     //----------------------------------------------------------
@@ -675,13 +679,15 @@ void Dp_Dnem_function(int n, double z, double Tg, double pd_np, double nem, doub
     // corrected death probability and Dnem
     //----------------------------------------------------------
     double Rm_tot=PDE_Setup_D.HI->Level(n, 1).Get_A21(1, 0)/(1.0-pd_np); // R-,tot = A + R-
-    double Rm    =Rm_tot-PDE_Setup_D.HI->Level(n, 1).Get_A21(1, 0);
+    //double Rm    =Rm_tot-PDE_Setup_D.HI->Level(n, 1).Get_A21(1, 0); // JC mod 13th Aug 2012
+    double Rm    =PDE_Setup_D.HI->Level(n, 1).Get_A21(1, 0)*pd_np/(1.0-pd_np);
     //
     Dp=DRm/Rm_tot;
     //
     double Rp=3.0*nem*N1s*Rm;
-    double nem_t=(Rp-DRp)/(Rm-DRm)/3.0/N1s;
-    Dn=nem_t-nem;
+    //double nem_t=(Rp-DRp)/(Rm-DRm)/3.0/N1s;                         // JC mod 13th Aug 2012
+    //Dn=nem_t-nem;                                                   // JC mod 13th Aug 2012
+    Dn=( (Rp-DRp) - 3.0*nem*N1s*(Rm-DRm) )/(Rm-DRm)/3.0/N1s;
 
     return;
 }
@@ -862,13 +868,13 @@ void add_Ly_n_sc_em_full(int n, double z, double nu21, double Tg, double Te, dou
         double Dp, Dn;
         Dp_Dnem_function(n, z, Tg, pd_np, Dnem/nu21+exp_dum, N1s, Dp, Dn);
         //
-        
-//        cout << z << " " << n << " " << 1.0-Dp/pd_np << " " << 1.0+Dn*nu21/Dnem << endl;
-//        ofile << z << " " << 1.0-Dp/pd_np << " " << 1.0+Dn*nu21/Dnem << endl;
-        
         kappa_Ly_n_abs*=1.0-Dp/pd_np;  
         pd_np*=1.0-Dp/pd_np;
         Dnem+=Dn*nu21;
+//        cout << z << " " << n << " " << 1.0-Dp/pd_np << " " << 1.0+Dn*nu21/Dnem << endl;
+//        ofile << z << " " << 1.0-Dp/pd_np << " " << 1.0+Dn*nu21/Dnem << " " <<  Dnem << " " << Dn 
+//                   << " " << Dnem_n_func(n, z)*nu21 << " " << pd_np << endl;
+        
     }
 
 //    ofile.close();
@@ -1245,7 +1251,6 @@ void def_PDE_Lyn_and_2s1s(double z, const vector<double> &xi, vector<double> &Ai
 
     return;
 }
-
 
 
 //==================================================================================================================================

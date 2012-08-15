@@ -1,9 +1,11 @@
-//============================================================================================================
+//==================================================================================================
 //
 // Author Jens Chluba July 2010
-// last modification: Feb 2011; added possibility to take integral part over +/-2 off-diags into account
+// last modification: Feb 2011 
 //
-//============================================================================================================
+//==================================================================================================
+// 24.02.2011: added PDE solver with Integral part as correction 
+// 01.02.2011: added possibility to take integral part over +/-2 off-diags into account
 
 #ifndef PDE_SOLVER_H
 #define PDE_SOLVER_H
@@ -60,7 +62,7 @@ struct PDE_Stepper_Data
 void init_PDE_Stepper_Data(PDE_Stepper_Data &PDE_D, int npts);
 void reset_PDE_solver_variables();
 
-//============================================================================================================
+//==================================================================================================
 void setup_Lagrange_interpolation_coefficients_O1(PDE_Stepper_Data &PDE_D, vector<double> &xarr);
 void setup_Lagrange_interpolation_coefficients_O2(PDE_Stepper_Data &PDE_D, vector<double> &xarr);
 
@@ -74,11 +76,11 @@ void Step_PDE_O2t(double theta, double zs, double ze, const vector<double> &xi, 
                   void (*func)(double z, const vector<double> &xi, vector<double> &Ai, 
                                vector<double> &Bi, vector<double> &Ci, vector<double> &Di));
 
-//============================================================================================================
+//==================================================================================================
 // PDE solver with Integral part as correction 
 // added 24.02.2011
-//============================================================================================================
-void setup_Lagrange_interpolation_coefficients_O2_Int(PDE_Stepper_Data &PDE_D, vector<double> &xarr);
+//==================================================================================================
+void setup_Lagrange_interpolation_coefficients_O2_Int(PDE_Stepper_Data &PDE_D,vector<double> &xarr);
 
 void Step_PDE_O2t_Int(double theta, int it_max, double zs, double ze, 
                       const vector<double> &xi, vector<double> &yi, 
@@ -95,6 +97,6 @@ void Step_PDE_O2t_Int(double theta, int it_max, double zs, double ze,
 
 #endif
 
-//============================================================================================================
-//============================================================================================================
+//==================================================================================================
+//==================================================================================================
 

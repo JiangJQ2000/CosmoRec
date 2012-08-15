@@ -1,0 +1,12 @@
+- max-order 5 <--> 4 in ODE_solver_Rec.cpp
+- check main.cpp
+- parameter file
+- Diffusion_correction.cpp
+- HI_routine.cpp
+- Modules & PDE_Problem & PDE_Problem_HeI
+- finish README files
+- entry in makefile.pub for lite version
+- make sure that batch0000.dat outputs are not generated
+- also when things are called from CAMB don't output any files from 
+  radiative transfer solver
+- allow output of spectrum at z=0 into main output directory

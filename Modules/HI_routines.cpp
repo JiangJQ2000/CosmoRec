@@ -83,6 +83,21 @@ void compute_Q_correction_to_lifetime_tot(int nmax)
     return;
 }
 
+void compute_Q_correction_to_lifetime()
+{
+    compute_Q_correction_to_lifetime(5);
+    compute_Q_correction_to_lifetime(10);
+    compute_Q_correction_to_lifetime(20);
+    compute_Q_correction_to_lifetime(50);
+    compute_Q_correction_to_lifetime(100);
+    compute_Q_correction_to_lifetime(150);
+    compute_Q_correction_to_lifetime(200);
+    compute_Q_correction_to_lifetime(250);
+    compute_Q_correction_to_lifetime_tot(nShells);
+        
+    return;
+}
+
 //==================================================================================================
 // setup routines
 //==================================================================================================
@@ -92,16 +107,7 @@ void setup_Hydrogen_atom()
     
     HAtoms=new Gas_of_Atoms(nShells, 1, 1.0, Atom_activate_HI_Quadrupole_lines, 2, 2);
     
-//    compute_Q_correction_to_lifetime(5);
-//    compute_Q_correction_to_lifetime(10);
-//    compute_Q_correction_to_lifetime(20);
-//    compute_Q_correction_to_lifetime(50);
-//    compute_Q_correction_to_lifetime(100);
-//    compute_Q_correction_to_lifetime(150);
-//    compute_Q_correction_to_lifetime(200);
-//    compute_Q_correction_to_lifetime(250);
-//    compute_Q_correction_to_lifetime_tot(nShells);
-//    exit(0);
+//    compute_Q_correction_to_lifetime();
     
     //==============================================================================================
     // allocate memory to pass on the solution to the PDE solver

@@ -635,7 +635,6 @@ void Dp_Dnem_2gamma_update(int ni, int li, int n, double N1s, double Nj, double 
 void Dp_Dnem_function(int n, double z, double Tg, double pd_np, double nem, double N1s, double &Dp, double &Dn)
 {
     Dp=Dn=0.0;
-//    return;
 
     double DRp=0.0, DRm=0.0;
     double NH=PDE_Setup_D.cosm->NH(z);

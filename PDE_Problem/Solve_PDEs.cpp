@@ -354,9 +354,6 @@ void init_Solve_PDE_Data(int nresmax, bool bound)
         double xmin=xmin_glob; 
         double xmax=( 1.0-1.0/(nresmax+1)/(nresmax+1) )/0.75;
   
-//        if(!bound) xmax*=1.05; // if the upper point is not used as boundary 
-//                               // condition, push this a bit farther away.
-        
         init_PDE_xarr_cores_HI(SPDE_D.xarr, xmin, xmax, SPDE_D.resonances);
         
         //==============================================================
@@ -513,44 +510,6 @@ void output_distortion(int output_count, string endname, double nu21, double z)
 
 //====================================================================================================================
 //
-// read HyRec solution (or any other solution) from file
-//
-//====================================================================================================================
-void read_Hyrec_Population_from_file(vector<vector<double> > &Xi_Data, Cosmos &cos)
-{
-    ifstream ifile("./temp/hyrec_pops.dat");
-    
-    int ncols=Xi_Data[0].size();
-    vector<double> vdum(ncols, 0.0);
-    Xi_Data.clear();
-    
-    while(ifile)
-    {
-        ifile >> vdum[0]; // z
-        ifile >> vdum[1]; // Xe
-        ifile >> vdum[2]; // X1s
-        ifile >> vdum[3]; // X2s
-        ifile >> vdum[4]; // X2p
-        ifile >> vdum[5]; // X3s
-        ifile >> vdum[6]; // X3p
-        ifile >> vdum[7]; // X3d
-        ifile >> vdum[8]; // X4s
-        ifile >> vdum[9]; // X4p
-        ifile >> vdum[10]; // X4d
-        ifile >> vdum[ncols-3]; // rho
-        
-        vdum[ncols-3]/=cos.TCMB(vdum[0]);
-
-        Xi_Data.push_back(vdum);
-    }
-    
-    cout << " read_Hyrec_Population_from_file: Number of redshift points: " << Xi_Data.size()-1 << endl;
-    
-    return;
-}
-
-//====================================================================================================================
-//
 // code with effective rates
 //
 //====================================================================================================================
@@ -580,7 +539,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
     //=========================================================================== 
     // extension for filename
     //=========================================================================== 
-    string exten=".Voigt";
+    string exten="";
 
     if(solve_with_Kernel_HI==1) exten+=".Kernel_Int";
     
@@ -597,8 +556,8 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
     // general flags
     //=========================================================================== 
     bool do_output=0;
-    bool output_DI1=1;
-    bool output_2gR=1;
+    bool output_DI1=0;
+    bool output_2gR=0;
     bool write_solution_z0=1;
 
     //=========================================================================== 
@@ -616,7 +575,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
     //=========================================================================== 
     // step size
     //=========================================================================== 
-    double dz_out=5.0;
+    double dz_out=10.0;
     int output_count=0;
     int output_step=20;
     int DF_step=1;
@@ -704,14 +663,8 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
     // nD-1s quadrupole lines
     //=========================================================================== 
     if(include_nD1s_corr)
-        for(int k=0; k<Get_nmax_two_g_correction()-2; k++) DF_nD1s_vec.push_back(DPesc_dum_z); 
-    
-    //=========================================================================== 
-    // load precomputed solutions (load could be avoided...)
-    //=========================================================================== 
-//CC    read_Hyrec_Population_from_file(HI_Solution, cos);    
-//CC    zs=HI_Solution[0][0];
-//CC    ze=HI_Solution[HI_Solution.size()-1][0];
+        for(int k=0; k<Get_nmax_two_g_correction()-2; k++) 
+            DF_nD1s_vec.push_back(DPesc_dum_z); 
     
     compute_Xi_HI_splines(zs, ze, HIA, HI_Solution);
     set_up_splines_for_HI_pd_Rp_effective(ze, zs, cos, HIA, HI_Solution);    
@@ -796,10 +749,6 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
         dz=-dz_out;
         zout=max(ze, zin+dz);
 
-//CC        double zcomp=1.100092E+03; // 1.300108e+03; 1.350090E+03;
-//CC        double zcomp=1100.0;
-//CC        if(zout<=zcomp && zin>=zcomp) zout=zcomp;
-        
         //=======================================================================
         // define lower & upper boundary
         //======================================================================= 
@@ -844,14 +793,8 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
             // output solution
             //=================================================================== 
             if(!(output_count%output_step) && do_output)
-            {
                 output_solution(output_count, endname, nu21, cos, HIA, zout, nresmax, boundary_up);
-                //output_distortion(output_count, endname, nu21, zout);
-            }
  
-//CC            if(zout==zcomp)
-//CC            {    output_solution(9999, endname, nu21, cos, HIA, zout, nresmax, boundary_up); wait_f_r(); }
-            
             //===================================================================
             // compute correction
             //=================================================================== 

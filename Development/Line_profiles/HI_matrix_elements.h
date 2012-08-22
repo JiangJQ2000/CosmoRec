@@ -1,7 +1,9 @@
-//==========================================================================================
+//==================================================================================================
 // Author Jens Chluba Aug/Sept 2010
 // purpose: explicit expression for matrix elements of the first few ns & nd-states in HI
-//==========================================================================================
+// last modification: Aug 2012
+//==================================================================================================
+// 18th Aug, 2012: checked matrix elements with Mathematica
 
 #ifndef HI_MATRIX_ELEMENTS_H
 #define HI_MATRIX_ELEMENTS_H
@@ -34,6 +36,9 @@ namespace HI_matrix_elements
     //
     double R8snp(int n);
     double R8dnp(int n);
+    //
+    double Rksnp(int k, int n);
+    double Rkdnp(int k, int n);    
     
     //======================================================================================
     // bound-free matrix elements
@@ -57,7 +62,13 @@ namespace HI_matrix_elements
     double C7d(double x);   
     //
     double C8s(double x);
-    double C8d(double x);   
+    double C8d(double x);  
+    //
+    double Cks(int k, double x);
+    double Ckd(int k, double x);
 }
 
 #endif
+
+//==================================================================================================
+//==================================================================================================

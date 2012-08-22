@@ -168,8 +168,8 @@ void setup_DF_interpol_data(vector<double> &DF_vec_z,
                             vector<vector<double> > &DF_nD1s_vec, 
                             vector<double> &DI1_2s_vec)
 {   
-    setup_DF_n_point_data(DF_vec_z, DF_Ly_n_vec, DF_2g_vec, DF_R_vec, DF_nD1s_vec, DI1_2s_vec);
-    //setup_DF_spline_data(DF_vec_z, DF_Ly_n_vec, DF_2g_vec, DF_R_vec, DF_nD1s_vec, DI1_2s_vec);
+    //setup_DF_n_point_data(DF_vec_z, DF_Ly_n_vec, DF_2g_vec, DF_R_vec, DF_nD1s_vec, DI1_2s_vec);
+    setup_DF_spline_data(DF_vec_z, DF_Ly_n_vec, DF_2g_vec, DF_R_vec, DF_nD1s_vec, DI1_2s_vec);
 
     return;
 }
@@ -184,13 +184,13 @@ double interpolate_DF(double z, int k)
     if(z<=DPesc_splines_Data_DF[k].zmin) return DPesc_splines_Data_DF[k].DPmin;
     if(z>=DPesc_splines_Data_DF[k].zmax) return DPesc_splines_Data_DF[k].DPmax;
 
+    return calc_spline_JC(z, DPesc_splines_Data_DF[k].memindex);
+
     double y, dy;
     polint_JC(&DPesc_splines_Data_DF[k].za[0], &DPesc_splines_Data_DF[k].ya[0], 
               DPesc_splines_Data_DF[k].za.size(), z, DPesc_splines_Data_DF[k].accel, 
               3, &y, &dy);
     return y;
-    
-    //return calc_spline_JC(z, DPesc_splines_Data_DF[k].memindex);
 }
 
 //==========================================================================================================

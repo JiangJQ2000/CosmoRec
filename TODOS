@@ -10,3 +10,7 @@
 - also when things are called from CAMB don't output any files from 
   radiative transfer solver
 - allow output of spectrum at z=0 into main output directory
+
+- check if it is possible to tabulate the two-photon rates only for x=0 - 0.5 and then use the symmetry
+- check if it is easy to dump the two-photon rates to the disk and then load things after the first setup was done. That saves the time to compute the two-photon profiles but i/o might still be slower.
+- make sure that const_A2s1s is used in the two-photon rate for 2s-1s

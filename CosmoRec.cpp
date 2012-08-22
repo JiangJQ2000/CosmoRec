@@ -453,7 +453,7 @@ int CosmoRec(int narg, char *args[])
         else{ mode=""; print_message(" Runmode does not exist. Exiting"); exit(0); }
     }
     else{ cerr << " Too many/few parameters " << endl; exit(1); }
- 
+    
     //========================================================================
     // just run history using the recfast module in the cosmology class
     //========================================================================
@@ -468,7 +468,7 @@ int CosmoRec(int narg, char *args[])
     set_array_dimensions_and_parameters();
     allocate();
     set_variables();
-        
+    
     //========================================================================
     // initialise zarr (linear)
     //========================================================================

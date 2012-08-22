@@ -198,27 +198,27 @@ void arm_PDE_solver(Cosmos &cos, Gas_of_Atoms &HIA, vector<double> &xarr, vector
         //=========================================================================== 
         // save ratio of Raman profiles once grid is set
         //=========================================================================== 
-        init_Raman_profiles(xarr[npts-1]-1.0, Get_nmax_Raman_correction());
+        set_verbosity_Raman(show_messages+1);
+        init_Raman_profiles();
         //=========================================================================== 
-        //  dump_2s_1s_Raman_profile(HI_outputdir+"test.2s.R.dat");
-        //  dump_3s_1s_Raman_profile(HI_outputdir+"test.3s.R.dat");
-        //  dump_3d_1s_Raman_profile(HI_outputdir+"test.3d.R.dat");
-        //  dump_4s_1s_Raman_profile(HI_outputdir+"test.4s.R.dat");
-        //  dump_4d_1s_Raman_profile(HI_outputdir+"test.4d.R.dat");
-        //  dump_5s_1s_Raman_profile(HI_outputdir+"test.5s.R.dat");
-        //  dump_5d_1s_Raman_profile(HI_outputdir+"test.5d.R.dat");
+        //dump_ns_1s_Raman_profile(2, COSMORECDIR+"./temp/test.2s.R.dat");
+        //
+        //for(int n=3; n<=Get_nmax_Raman_correction(); n++)  
+        //{
+        //    dump_ns_1s_Raman_profile(n, COSMORECDIR+"./temp/test."+int_to_string(n)+"s.R.dat");
+        //    dump_nd_1s_Raman_profile(n, COSMORECDIR+"./temp/test."+int_to_string(n)+"d.R.dat");
+        //}
         
-        init_nsnd_2gamma_profiles(Get_nmax_two_g_correction());
+        set_verbosity_2gamma(show_messages+1);
+        init_nsnd_2gamma_profiles();
         //=========================================================================== 
-        //  dump_2s_1s_2gamma_profile(HI_outputdir+"test.2s.2g.dat");
-        //  dump_3s_1s_2gamma_profile(HI_outputdir+"test.3s.2g.dat");
-        //  dump_3d_1s_2gamma_profile(HI_outputdir+"test.3d.2g.dat");
-        //  dump_4s_1s_2gamma_profile(HI_outputdir+"test.4s.2g.dat");
-        //  dump_4d_1s_2gamma_profile(HI_outputdir+"test.4d.2g.dat");
-        //  dump_5s_1s_2gamma_profile(HI_outputdir+"test.5s.2g.dat");
-        //  dump_5d_1s_2gamma_profile(HI_outputdir+"test.5d.2g.dat");
-        //  dump_6s_1s_2gamma_profile(HI_outputdir+"test.6s.2g.dat");
-        //  dump_6d_1s_2gamma_profile(HI_outputdir+"test.6d.2g.dat");
+        //dump_ns_1s_2gamma_profile(2, COSMORECDIR+"./temp/test.2s.2g.dat");
+        //
+        //for(int n=3; n<=Get_nmax_two_g_correction(); n++)  
+        //{
+        //    dump_ns_1s_2gamma_profile(n, COSMORECDIR+"./temp/test."+int_to_string(n)+"s.2g.dat");
+        //    dump_nd_1s_2gamma_profile(n, COSMORECDIR+"./temp/test."+int_to_string(n)+"d.2g.dat");
+        //}
         
         init_profile_memory(npts, nresmax, PDE_funcs);
         
@@ -255,7 +255,7 @@ void arm_PDE_solver(Cosmos &cos, Gas_of_Atoms &HIA, vector<double> &xarr, vector
         //=========================================================================== 
         if(Get_nmax_two_g_correction()>=2) 
             for(int k=0; k<npts; k++) PDE_funcs.two_g_ns_1s[0].ratio[k]=sigma_2s_1s_2gamma(xarr[k]);
-
+        
         for(int ni=3; ni<=Get_nmax_two_g_correction(); ni++)
         {
             xres_loc=(1.0-1.0/ni/ni)/0.75;
@@ -330,7 +330,7 @@ void init_Solve_PDE_Data(int nresmax, bool bound)
     { 
         cout << " init_Solve_PDE_Data :: the number of resonances has changed."
              << " Please check your code... Resetting. " << endl; 
-           
+        
         SPDE_D_is_set=0;
         PDE_funcs_are_set=0;
     } 
@@ -415,11 +415,11 @@ void output_solution(int output_count, string endname, double nu21, Cosmos &cos,
         double exp_fac_Tg_2=PDE_funcs.exp_x[i]*exp_xc_2;
         double exp_fac_Te=PDE_funcs.exp_x[i]*exp_xc_rho;
         
-        ofile << SPDE_D.xarr[i] 
-              << " " << HIA.HI_Lyn_profile(2).nu2x(SPDE_D.xarr[i]*nu21, Tm) 
-              << " " << HIA.HI_Lyn_profile(3).nu2x(SPDE_D.xarr[i]*nu21, Tm) 
-              << " " << SPDE_D.yarr[i] << " " << SPDE_D.yarr[i]*pow(SPDE_D.xarr[i], 3) 
-              << " " << DnL_ref << " " << DnL_ref*exp_fac_Te << " ";
+        ofile << SPDE_D.xarr[i] << " " 
+              << HIA.HI_Lyn_profile(2).nu2x(SPDE_D.xarr[i]*nu21, Tm) << " " 
+              << HIA.HI_Lyn_profile(3).nu2x(SPDE_D.xarr[i]*nu21, Tm) << " " 
+              << SPDE_D.yarr[i] << " " << SPDE_D.yarr[i]*pow(SPDE_D.xarr[i], 3) << " " 
+              << DnL_ref << " " << DnL_ref*exp_fac_Te << " ";
         
         double Dnu_2=Dn_nu_ref_effective(2, zout, HI_Dnem_for_nl_effective(zout, 2, 1)*nu21, 
                                          HI_pd_for_nl_effective(zout, 2, 1), 
@@ -431,9 +431,9 @@ void output_solution(int output_count, string endname, double nu21, Cosmos &cos,
         
         double Dnu_tot=Dn_nu_ref_effective_sum(nmax, zout, SPDE_D.xarr[i]*nu21, nu21, cos, HIA);
         
-        ofileappr << SPDE_D.xarr[i] 
-                  << " " << HIA.HI_Lyn_profile(2).nu2x(SPDE_D.xarr[i]*nu21, Tm) 
-                  << " " << HIA.HI_Lyn_profile(3).nu2x(SPDE_D.xarr[i]*nu21, Tm) << " " 
+        ofileappr << SPDE_D.xarr[i] << " " 
+                  << HIA.HI_Lyn_profile(2).nu2x(SPDE_D.xarr[i]*nu21, Tm) << " " 
+                  << HIA.HI_Lyn_profile(3).nu2x(SPDE_D.xarr[i]*nu21, Tm) << " " 
         //
         << Dnu_2 << " " << Dnu_3 << " " << Dnu_tot << " "
         //
@@ -547,7 +547,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
 	// output for Grace
 	//=========================================================================== 
 #ifdef GRACE_DEFINED
-	bool out_put_GRACE=1;
+	bool out_put_GRACE=0;
     bool write_to_disk_GRACE=0;
 	int GR_output_step=1;
 #endif
@@ -578,7 +578,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
     double dz_out=10.0;
     int output_count=0;
     int output_step=20;
-    int DF_step=1;
+    int DF_step=2;
     
     //=========================================================================== 
     // frequency rescaling
@@ -618,8 +618,10 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
     // has to be decreased. The precision of the output should 
     // then be like ~<0.01%.
     //=========================================================================== 
-    if(nresmax>4){ dz_out=min(dz_out, 2.0); DF_step=1; }
+    if(nresmax>4){ dz_out=min(dz_out, 2.0); DF_step=10; }
         
+    dz_out=min(dz_out, 2.0); DF_step=10;
+    
     //=========================================================================== 
     // prepare memory for back-communication
     //=========================================================================== 
@@ -733,25 +735,25 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
         // Begining with a theta~1 run stabilizes the solution at the beginning,
         // however, highest accuracy in the time-step is reached for theta ~ 0.5
         // which should be used after the initial 'burn in' phase.
-        //======================================================================= 
+        //=======================================================================
         if(zin>zs-100.0) theta_HI_loc=0.99999; 
         else theta_HI_loc=theta_HI;
 
         //=======================================================================
         // add some small amount of diffusion to stabilize the PDE
         //=======================================================================
-        if(solve_with_Kernel_HI==0) set_electron_scattering_efficiency(1.0e-2);
+        if(solve_with_Kernel_HI==0) set_electron_scattering_efficiency(1.0);
         if(solve_with_Kernel_HI==1) set_electron_scattering_efficiency(1.0e-2);
             
         //=======================================================================
         // set step-size
-        //======================================================================= 
+        //=======================================================================
         dz=-dz_out;
         zout=max(ze, zin+dz);
 
         //=======================================================================
         // define lower & upper boundary
-        //======================================================================= 
+        //=======================================================================
         double xeval=SPDE_D.xarr[0]*(1.0+zin)/(1.0+zout); // (zin > zout)
         int i;
         for(i=0; i<SPDE_D.npts; i++) if(SPDE_D.xarr[i]>=xeval){ i--; break; }
@@ -775,37 +777,37 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
             cout << " " << zs << " --> " << zout << " # " << output_count 
                  << " y_low= " << y_lower << " i= " << i << endl;
 
-        //======================================================================= 
+        //=======================================================================
         // write results only after some initial evolution
-        //======================================================================= 
+        //=======================================================================
         if(zout<zs-0.0)
         {
-			//=================================================================== 
+			//===================================================================
 			// output to grace (JPEG)
-			//=================================================================== 
+			//===================================================================
 #ifdef GRACE_DEFINED
 			if (!(output_count%GR_output_step) && out_put_GRACE && GraceIsOpen()) 
 				output_Grace(zout, write_to_disk_GRACE, SPDE_D.xarr, 
                              SPDE_D.yarr, exten, output_count);
 #endif
             
-            //=================================================================== 
+            //===================================================================
             // output solution
-            //=================================================================== 
+            //===================================================================
             if(!(output_count%output_step) && do_output)
                 output_solution(output_count, endname, nu21, cos, HIA, zout, nresmax, boundary_up);
  
             //===================================================================
             // compute correction
-            //=================================================================== 
+            //===================================================================
             if(!(output_count%DF_step))
             {
                 //===============================================================
                 DF_vec_z.push_back(zout);
                 
-                //=============================================================== 
+                //===============================================================
                 // SPDE_D.yarr is Dn_x
-                //=============================================================== 
+                //===============================================================
                 if(HI_2s_1s_corr_is_on)
                     compute_DI1_2s_and_dump_it(zout, SPDE_D.xarr, SPDE_D.yarr, HIA, cos, Ifile, 
                                                DI1_2s_vec, SPDE_D.Fwork, PDE_funcs.exp_x, 
@@ -813,7 +815,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
                 
                 //===============================================================
                 // Ly-n integrals (added 26.03.2011)
-                //=============================================================== 
+                //===============================================================
                 double DF;
                 int count=0;
                 if(include_Ly_corr)
@@ -826,7 +828,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
                 
                 //===============================================================
                 // 2-gamma integrals
-                //=============================================================== 
+                //===============================================================
                 if(Get_nmax_two_g_correction()>=3)
                 {
                     count=0;
@@ -844,7 +846,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
                 
                 //================================================================
                 // Raman integrals
-                //================================================================ 
+                //================================================================
                 if(Get_nmax_Raman_correction()>=2)
                 {
                     count=0;
@@ -867,7 +869,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
                 
                 //===============================================================
                 // nD-1s integrals (added 04.06.2011)
-                //=============================================================== 
+                //===============================================================
                 if(Get_nmax_two_g_correction()>=3 && include_nD1s_corr)
                 {
                     count=0;
@@ -881,7 +883,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
                 
                 //===============================================================
                 // output correction integrals
-                //=============================================================== 
+                //===============================================================
                 if(output_2gR)
                 {
                     Ly_n_file << zout << " ";

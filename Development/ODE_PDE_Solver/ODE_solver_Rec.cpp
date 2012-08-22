@@ -1270,7 +1270,7 @@ namespace ODE_solver_Rec
         if(zs!=0.0) Dz_z_max=fabs((zend-zs)/zs);
         else Dz_z_max=fabs(zend-zs);
         
-        Dz_z_max=5.0/zs;
+        Dz_z_max=10.0/zs;
         
         //===========================================================================
         // for initial step reduce the accuracy

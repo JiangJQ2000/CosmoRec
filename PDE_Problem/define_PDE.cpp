@@ -532,10 +532,8 @@ void update_two_g_profiles_2s1s(double z, Raman_2g_profiles &RGP)
     double exp_dum=exp(-x_c);
     int kmax=PDE_Setup_D.PDE_funcs->index_emission[0];
     
-    double renorm=1.000525217204462; // 1.000525217204462 (500); 1.000519277429459 (5000)
-    
     for(int k=0; k<kmax; k++)
-        RGP.profile[k]=RGP.ratio[k]*two_g_emission_fac(PDE_Setup_D.PDE_funcs->exp_x[k], exp_dum)/nun1/renorm;
+        RGP.profile[k]=RGP.ratio[k]*two_g_emission_fac(PDE_Setup_D.PDE_funcs->exp_x[k], exp_dum)/nun1;
     
     return;
 }
@@ -867,7 +865,7 @@ void add_Ly_n_sc_em_full(int n, double z, double nu21, double Tg, double Te, dou
         double Dp, Dn;
         Dp_Dnem_function(n, z, Tg, pd_np, Dnem/nu21+exp_dum, N1s, Dp, Dn);
         //
-        kappa_Ly_n_abs*=1.0-Dp/pd_np;  
+        kappa_Ly_n_abs*=1.0-Dp/pd_np;
         pd_np*=1.0-Dp/pd_np;
         Dnem+=Dn*nu21;
 //        cout << z << " " << n << " " << 1.0-Dp/pd_np << " " << 1.0+Dn*nu21/Dnem << endl;
@@ -894,7 +892,7 @@ void add_Ly_n_sc_em_full(int n, double z, double nu21, double Tg, double Te, dou
         //------------------------------------------------------
         // prepare for line-scattering and em/abs terms 
         //------------------------------------------------------
-        double phi_x=phi_Ly_n(n, k);	
+        double phi_x=phi_Ly_n(n, k);
         
         //------------------------------------------------------
         // line-scattering terms 
@@ -1137,7 +1135,9 @@ void plot_two_g(const vector<double> &xi, int nresmax)
 // main wrapper
 //
 //==================================================================================================================================
-void def_PDE_Lyn_and_2s1s(double z, const vector<double> &xi, vector<double> &Ai, vector<double> &Bi, vector<double> &Ci, vector<double> &Di)
+void def_PDE_Lyn_and_2s1s(double z, const vector<double> &xi, 
+                          vector<double> &Ai, vector<double> &Bi, 
+                          vector<double> &Ci, vector<double> &Di)
 {
     int nmax=PDE_Setup_D.PDE_funcs->Voigt_profiles_aV.size();
     
@@ -1167,7 +1167,7 @@ void def_PDE_Lyn_and_2s1s(double z, const vector<double> &xi, vector<double> &Ai
     update_exp_x(Tg, nu21, xi);
     
     //----------------------------------------------------------
-    // reset things 
+    // reset things
     //----------------------------------------------------------
 #ifdef OPENMP_ACTIVATED    
 #pragma omp parallel for default(shared)	
@@ -1200,7 +1200,7 @@ void def_PDE_Lyn_and_2s1s(double z, const vector<double> &xi, vector<double> &Ai
             else if(!local_line_sc && local_line_em_abs) add_Ly_n_em_only(n, z, nu21, Tg, Te, Ne, N1s, Hz, xi, Ci, Di);
         }
     }
-
+    
     //----------------------------------------------------------
     // Raman-scattering
     //----------------------------------------------------------
@@ -1233,9 +1233,9 @@ void def_PDE_Lyn_and_2s1s(double z, const vector<double> &xi, vector<double> &Ai
             add_nsd_1s_2gamma_terms(ni, 2, phi_nd1s_2g, PDE_Setup_D.PDE_funcs->HI_Dnem_nl(z, ni, 2), z, nu21, Tg, N1s, Hz, xi, Ci, Di);
         }
     }
-        
-//    if(z<=1100.0){ plot_two_g(xi, nmax); wait_f_r(z); }
-        
+    
+//  if(z<=1100.0) plot_two_g(xi, nmax);
+    
     //----------------------------------------------------------
     // Source-term 2s-1s emission and absorption
     //----------------------------------------------------------

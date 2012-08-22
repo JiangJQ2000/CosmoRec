@@ -1,8 +1,12 @@
-//======================================================================================
+//==================================================================================================
 // Author Jens Chluba Sept/Oct 2010
 // purpose: compute the first few two-photon-profiles
-// comment: a bit clunky but it works
-//======================================================================================
+// last modification: Aug 2012
+//==================================================================================================
+// 18th Aug, 2012: Mnr is now saved to disc after first setup. After that it is only loaded.
+// 17th Aug, 2012: fixed bug for Rnd->np matrix element + 3d1s profile.
+//                 changed spline-setup for non-resonant part to xmin - 0.5; 
+//                 symmetry is used for x>0.5
 
 #include <iostream>
 #include <string>
@@ -23,26 +27,30 @@ using namespace std;
 using namespace HI_matrix_elements;
 using namespace HI_Transition_Data;
 
-//======================================================================================
+//==================================================================================================
 // Atomic Data for HI atom
-//======================================================================================
+//==================================================================================================
 const double nsnd_2gamma_profiles_C_sd   =9.0/1024.0*pow(const_alpha, 6)*const_cl
-                                          *const_Ry_inf_icm/(1.0+const_me_mp);
+                                                    *const_Ry_inf_icm/(1.0+const_me_mp);
 
 const double nsnd_2gamma_profiles_nu_1sc =const_EH_inf_Hz/(1.0+const_me_mp);
 
-//======================================================================================
+//==================================================================================================
 // variables
-//======================================================================================
-const int nsnd_2gamma_profiles_nmax=500;
-const int nsnd_2gamma_profiles_xpts=2*256;
-const double nsnd_2gamma_profiles_xmin=1.0e-4;
+//==================================================================================================
+const int nsnd_2gamma_profiles_nmax=5000;
+const int nsnd_2gamma_profiles_xpts=500;  // delete the data-files when changing this parameter !
+const double nsnd_2gamma_profiles_xmin=5.0e-5;
+
+const string add_mmax=int_to_string(nsnd_2gamma_profiles_nmax);
+const string path=COSMORECDIR+"./Development/Line_profiles/two-photon-data/";
+const string ns_Mnr_filename=path+"DGamma.Mnr_ns."+add_mmax+".dat";
+const string nd_Mnr_filename=path+"DGamma.Mnr_nd."+add_mmax+".dat";
 
 struct nsnd_2gamma_profiles_Data
 {
     int xnpt;
     int memindex;
-    double xmax;
     vector<double> kappa_res;
     //
     vector<double> f_re;
@@ -50,29 +58,12 @@ struct nsnd_2gamma_profiles_Data
     vector<double> yr;
 };
 
-nsnd_2gamma_profiles_Data nsnd_2gamma_profiles_Data_2s_1s;
-//
-nsnd_2gamma_profiles_Data nsnd_2gamma_profiles_Data_3s_1s;
-nsnd_2gamma_profiles_Data nsnd_2gamma_profiles_Data_3d_1s;
-//
-nsnd_2gamma_profiles_Data nsnd_2gamma_profiles_Data_4s_1s;
-nsnd_2gamma_profiles_Data nsnd_2gamma_profiles_Data_4d_1s;
-//
-nsnd_2gamma_profiles_Data nsnd_2gamma_profiles_Data_5s_1s;
-nsnd_2gamma_profiles_Data nsnd_2gamma_profiles_Data_5d_1s;
-//
-nsnd_2gamma_profiles_Data nsnd_2gamma_profiles_Data_6s_1s;
-nsnd_2gamma_profiles_Data nsnd_2gamma_profiles_Data_6d_1s;
-//
-nsnd_2gamma_profiles_Data nsnd_2gamma_profiles_Data_7s_1s;
-nsnd_2gamma_profiles_Data nsnd_2gamma_profiles_Data_7d_1s;
-//
-nsnd_2gamma_profiles_Data nsnd_2gamma_profiles_Data_8s_1s;
-nsnd_2gamma_profiles_Data nsnd_2gamma_profiles_Data_8d_1s;
+vector<nsnd_2gamma_profiles_Data> nsnd_2gamma_profiles_Data_ns_1s(9);
+vector<nsnd_2gamma_profiles_Data> nsnd_2gamma_profiles_Data_nd_1s(9);
 
-//======================================================================================
+//==================================================================================================
 // local functions
-//======================================================================================
+//==================================================================================================
 namespace nsnd_2gamma_profiles_local 
 {
     double nuij(int n, int np)
@@ -136,23 +127,24 @@ namespace nsnd_2gamma_profiles_local
     //======================================================================================
 
     //======================================================================================
-    // ns1s, and nd1s integrals over free states
+    // ns1s and nd1s integrals over free states
     //======================================================================================
-    double (*Cj_x_ptr__)(double);
+    double (*Cj_x_ptr__)(int ni, double y);
     
     double dIntC1sCj_dx(double logx, void *p)
     {
         double *y=(double *) p;
         double x=exp(logx);
-        return x*C1s(x)*Cj_x_ptr__(x)*fn_nsnd_2gamma_cont(y[1], x, 1, y[0]);
+        int ni=y[1];
+        return x*C1s(x)*Cj_x_ptr__(ni, x)*fn_nsnd_2gamma_cont(ni, x, 1, y[0]);
     }
 
-    double IntC1sC_nsd(double y, int ni, double (*Cj_x)(double))
+    double IntC1sC_nsd(double y, int ni, double (*Cj_x)(int ni, double y))
     {
         if(y>=1.0 || y<=0.0) return 0.0;
         
         double r=0.0;
-        double a=log(1.0e-8), b=log(0.5), epsrel=1.0e-8, epsabs=1.0e-10;
+        double a=log(1.0e-8), b=log(0.5), epsrel=1.0e-8, epsabs=1.0e-16;
         double pars[]={y, ni};
         void *p=&pars;
         Cj_x_ptr__=Cj_x;
@@ -175,156 +167,50 @@ namespace nsnd_2gamma_profiles_local
     }
 
     //======================================================================================
-    //======================================================================================
-
-    //======================================================================================
-    // Matrix element ns-->np
-    //======================================================================================
-    double Matrix_element_ns_np_1s(double y, int n)
-    { return R1snp(n)*Rnsnp(n)*fn_nsnd_2gamma(n, n, 1, y); }
-
-    //======================================================================================
-    // Matrix element nd-->np
-    //======================================================================================
-    double Matrix_element_nd_np_1s(double y, int n)
-    { return R1snp(n)*Rndnp(n)*fn_nsnd_2gamma(n, n, 1, y); }
-
-    //======================================================================================
     // general Matrix element ns/d-->np
     //======================================================================================
-    double Matrix_element_j_np_1s(int n, double y, int ni, double (*Rj_np)(int))
-    { return R1snp(n)*Rj_np(n)*fn_nsnd_2gamma(ni, n, 1, y); }
+    double Matrix_element_j_np_1s(int n, double y, int ni, double (*Rj_np)(int ni, int n))
+    { return R1snp(n)*Rj_np(ni, n)*fn_nsnd_2gamma(ni, n, 1, y); }
     
-    double Matrix_element_j_1s_total_non_res(double y, int ni, double (*Rj_np)(int), 
-                                             double (*Cj)(double))
+    double Matrix_element_j_1s_total_non_res(double y, int ni, 
+                                             double (*Rj_np)(int ni, int n), 
+                                             double (*Cj)(int ni, double y))
     {
-        double r=IntC1sC_nsd(y, ni, Cj) + Matrix_element_ns_np_1s(y, ni);
+        double r=IntC1sC_nsd(y, ni, Cj);
 
-        for(int nint=nsnd_2gamma_profiles_nmax; nint>ni; nint--) 
+        for(int nint=nsnd_2gamma_profiles_nmax; nint>=ni; nint--) 
             r+=Matrix_element_j_np_1s(nint, y, ni, Rj_np);
         
         return r;
     }
+    
     //======================================================================================
+    // Matrix element Mn_ns_1s
     //======================================================================================
+    double Matrix_element_ns_1s_total_non_res(int ni, double y)
+    { return Matrix_element_j_1s_total_non_res(y, ni, Rksnp, Cks); }
 
-    //======================================================================================
-    // Matrix element Mn_2s_1s
-    //======================================================================================
-    double Matrix_element_2s_1s_total_non_res(double y)
-    { return Matrix_element_j_1s_total_non_res(y, 2, R2snp, C2s); }
-    
-    //======================================================================================
-    // Matrix element Mn_3s_1s && Mn_3d_1s
-    //======================================================================================
-    double Matrix_element_3s_1s_total_non_res(double y)
-    { return Matrix_element_j_1s_total_non_res(y, 3, R3snp, C3s); }
+    double Matrix_element_nd_1s_total_non_res(int ni, double y)
+    { return Matrix_element_j_1s_total_non_res(y, ni, Rkdnp, Ckd); }
 
-    double Matrix_element_3d_1s_total_non_res(double y)
-    { return Matrix_element_j_1s_total_non_res(y, 3, R3dnp, C3d); }
-    
-    //======================================================================================
-    // Matrix element Mn_4s_1s && M_4d_1s
-    //======================================================================================
-    double Matrix_element_4s_1s_total_non_res(double y)
-    { return Matrix_element_j_1s_total_non_res(y, 4, R4snp, C4s); }
-    
-    double Matrix_element_4d_1s_total_non_res(double y)
-    { return Matrix_element_j_1s_total_non_res(y, 4, R4dnp, C4d); }
-    
-    //======================================================================================
-    // Matrix element Mn_5s_1s && M_5d_1s
-    //======================================================================================
-    double Matrix_element_5s_1s_total_non_res(double y)
-    { return Matrix_element_j_1s_total_non_res(y, 5, R5snp, C5s); }
-    
-    double Matrix_element_5d_1s_total_non_res(double y)
-    { return Matrix_element_j_1s_total_non_res(y, 5, R5dnp, C5d); }
-    
-    //======================================================================================
-    // Matrix element Mn_6s_1s && M_6d_1s
-    //======================================================================================
-    double Matrix_element_6s_1s_total_non_res(double y)
-    { return Matrix_element_j_1s_total_non_res(y, 6, R6snp, C6s); }
-    
-    double Matrix_element_6d_1s_total_non_res(double y)
-    { return Matrix_element_j_1s_total_non_res(y, 6, R6dnp, C6d); }
-    
-    //======================================================================================
-    // Matrix element Mn_7s_1s && M_7d_1s
-    //======================================================================================
-    double Matrix_element_7s_1s_total_non_res(double y)
-    { return Matrix_element_j_1s_total_non_res(y, 7, R7snp, C7s); }
-    
-    double Matrix_element_7d_1s_total_non_res(double y)
-    { return Matrix_element_j_1s_total_non_res(y, 7, R7dnp, C7d); }
-    
-    //======================================================================================
-    // Matrix element Mn_8s_1s && M_8d_1s
-    //======================================================================================
-    double Matrix_element_8s_1s_total_non_res(double y)
-    { return Matrix_element_j_1s_total_non_res(y, 8, R8snp, C8s); }
-    
-    double Matrix_element_8d_1s_total_non_res(double y)
-    { return Matrix_element_j_1s_total_non_res(y, 8, R8dnp, C8d); }
-    
-    //======================================================================================
-    //======================================================================================
-    
     //======================================================================================
     // Matrix element using the spline functions after setup
     //======================================================================================
-    double compute_Mnr_2s_1s(double y)
-    { return calc_spline_JC(min(nsnd_2gamma_profiles_Data_2s_1s.xmax, max(nsnd_2gamma_profiles_xmin, y)), 
-                            nsnd_2gamma_profiles_Data_2s_1s.memindex)/y/(1.0-y); }
+    double compute_Mnr_ns_1s(int n, double y)
+    { 
+        if(y>0.5) return compute_Mnr_ns_1s(n, 1.0-y);
+        
+        return calc_spline_JC(max(nsnd_2gamma_profiles_xmin, y), 
+                              nsnd_2gamma_profiles_Data_ns_1s[n].memindex)/y/(1.0-y); 
+    }
     
-    double compute_Mnr_3s_1s(double y)
-    { return calc_spline_JC(min(nsnd_2gamma_profiles_Data_3s_1s.xmax, max(nsnd_2gamma_profiles_xmin, y)), 
-                            nsnd_2gamma_profiles_Data_3s_1s.memindex)/y/(1.0-y); }
-    
-    double compute_Mnr_3d_1s(double y)
-    { return calc_spline_JC(min(nsnd_2gamma_profiles_Data_3d_1s.xmax, max(nsnd_2gamma_profiles_xmin, y)), 
-                            nsnd_2gamma_profiles_Data_3d_1s.memindex)/y/(1.0-y); }
-
-    double compute_Mnr_4s_1s(double y)
-    { return calc_spline_JC(min(nsnd_2gamma_profiles_Data_4s_1s.xmax, max(nsnd_2gamma_profiles_xmin, y)), 
-                            nsnd_2gamma_profiles_Data_4s_1s.memindex)/y/(1.0-y); }
-    
-    double compute_Mnr_4d_1s(double y)
-    { return calc_spline_JC(min(nsnd_2gamma_profiles_Data_4d_1s.xmax, max(nsnd_2gamma_profiles_xmin, y)), 
-                            nsnd_2gamma_profiles_Data_4d_1s.memindex)/y/(1.0-y); }
-
-    double compute_Mnr_5s_1s(double y)
-    { return calc_spline_JC(min(nsnd_2gamma_profiles_Data_5s_1s.xmax, max(nsnd_2gamma_profiles_xmin, y)), 
-                            nsnd_2gamma_profiles_Data_5s_1s.memindex)/y/(1.0-y); }
-    
-    double compute_Mnr_5d_1s(double y)
-    { return calc_spline_JC(min(nsnd_2gamma_profiles_Data_5d_1s.xmax, max(nsnd_2gamma_profiles_xmin, y)), 
-                            nsnd_2gamma_profiles_Data_5d_1s.memindex)/y/(1.0-y); }
-
-    double compute_Mnr_6s_1s(double y)
-    { return calc_spline_JC(min(nsnd_2gamma_profiles_Data_6s_1s.xmax, max(nsnd_2gamma_profiles_xmin, y)), 
-                            nsnd_2gamma_profiles_Data_6s_1s.memindex)/y/(1.0-y); }
-    
-    double compute_Mnr_6d_1s(double y)
-    { return calc_spline_JC(min(nsnd_2gamma_profiles_Data_6d_1s.xmax, max(nsnd_2gamma_profiles_xmin, y)), 
-                            nsnd_2gamma_profiles_Data_6d_1s.memindex)/y/(1.0-y); }
-    
-    double compute_Mnr_7s_1s(double y)
-    { return calc_spline_JC(min(nsnd_2gamma_profiles_Data_7s_1s.xmax, max(nsnd_2gamma_profiles_xmin, y)), 
-                            nsnd_2gamma_profiles_Data_7s_1s.memindex)/y/(1.0-y); }
-    
-    double compute_Mnr_7d_1s(double y)
-    { return calc_spline_JC(min(nsnd_2gamma_profiles_Data_7d_1s.xmax, max(nsnd_2gamma_profiles_xmin, y)), 
-                            nsnd_2gamma_profiles_Data_7d_1s.memindex)/y/(1.0-y); }
-    
-    double compute_Mnr_8s_1s(double y)
-    { return calc_spline_JC(min(nsnd_2gamma_profiles_Data_8s_1s.xmax, max(nsnd_2gamma_profiles_xmin, y)), 
-                            nsnd_2gamma_profiles_Data_8s_1s.memindex)/y/(1.0-y); }
-    
-    double compute_Mnr_8d_1s(double y)
-    { return calc_spline_JC(min(nsnd_2gamma_profiles_Data_8d_1s.xmax, max(nsnd_2gamma_profiles_xmin, y)), 
-                            nsnd_2gamma_profiles_Data_8d_1s.memindex)/y/(1.0-y); }
+    double compute_Mnr_nd_1s(int n, double y)
+    { 
+        if(y>0.5) return compute_Mnr_nd_1s(n, 1.0-y);
+        
+        return calc_spline_JC(max(nsnd_2gamma_profiles_xmin, y), 
+                              nsnd_2gamma_profiles_Data_nd_1s[n].memindex)/y/(1.0-y); 
+    }
     
     //======================================================================================
     //======================================================================================
@@ -332,9 +218,17 @@ namespace nsnd_2gamma_profiles_local
 
 using namespace nsnd_2gamma_profiles_local;
 
+//==================================================================================================
+//==================================================================================================
 namespace nsnd_2gamma_profiles 
 {
 
+    //======================================================================================
+    // set verbosity level
+    //======================================================================================
+    int verbosity_level=1;
+    void set_verbosity_2gamma(int v){ verbosity_level=v; return; }
+    
     //======================================================================================
     // testing 
     //======================================================================================
@@ -346,120 +240,197 @@ namespace nsnd_2gamma_profiles
     //======================================================================================
     // setup routines
     //======================================================================================
-    void alloc_memory(int ni, nsnd_2gamma_profiles_Data &nsnd_2gamma_profiles_Data_i)
+    void alloc_memory(int ni, nsnd_2gamma_profiles_Data &Data_i)
     {
-        nsnd_2gamma_profiles_Data_i.kappa_res.clear();
-        nsnd_2gamma_profiles_Data_i.kappa_res.resize(ni, 0.0);
-        nsnd_2gamma_profiles_Data_i.yr.clear();
-        nsnd_2gamma_profiles_Data_i.yr.       resize(ni, 0.0);
+        Data_i.kappa_res.clear();
+        Data_i.kappa_res.resize(ni, 0.0);
+        Data_i.yr.clear();
+        Data_i.yr.       resize(ni, 0.0);
 
-        nsnd_2gamma_profiles_Data_i.f_re.resize(ni);
-        nsnd_2gamma_profiles_Data_i.f_im.resize(ni);
+        Data_i.f_re.resize(ni);
+        Data_i.f_im.resize(ni);
         
         return;
     }
     
-    void init_splines(vector<double> &xarr, vector<double> &yarr, 
-                      nsnd_2gamma_profiles_Data &nsnd_2gamma_profiles_Data_i, double (*M_nr_i)(double))
+    void init_splines(const vector<double> &xarr, vector<double> &yarr, 
+                      int ni,
+                      nsnd_2gamma_profiles_Data &Data_i, 
+                      double (*M_nr_i)(int ni, double y))
     {
-        for(int k=0; k<nsnd_2gamma_profiles_xpts; k++) yarr[k]=xarr[k]*(1.0-xarr[k])*M_nr_i(xarr[k]);
+        double fac=1.0;
+        // to ensure normalization of 2s-1s profile
+        if(ni==2) fac=sqrt(const_HI_A2s_1s/8.224873118283677); 
         
-        nsnd_2gamma_profiles_Data_i.xnpt=nsnd_2gamma_profiles_xpts;
-        nsnd_2gamma_profiles_Data_i.xmax=xarr[nsnd_2gamma_profiles_xpts-1];
-        nsnd_2gamma_profiles_Data_i.memindex=calc_spline_coeffies_JC(nsnd_2gamma_profiles_Data_i.xnpt, 
-                                                                     &xarr[0], &yarr[0], 
-                                                                     "nsnd_2gamma_profiles");
+        if(yarr.size()==0)
+            for(int k=0; k<nsnd_2gamma_profiles_xpts; k++) 
+                yarr.push_back(xarr[k]*(1.0-xarr[k])*M_nr_i(ni, xarr[k])*fac);
+        
+        Data_i.xnpt=nsnd_2gamma_profiles_xpts;
+        Data_i.memindex=calc_spline_coeffies_JC(Data_i.xnpt, 
+                                                &xarr[0], &yarr[0], 
+                                                "nsnd_2gamma_profiles");
         
         return;
     }
     
-    void init_mem_and_data(int ni, nsnd_2gamma_profiles_Data &nsnd_2gamma_profiles_Data_i, 
-                           double (*Rj_np)(int), vector<double> &xarr, vector<double> &yarr, 
-                           double (*M_nr_i)(double))
+    void init_mem_and_data(int ni, 
+                           nsnd_2gamma_profiles_Data &Data_i, 
+                           double (*Rj_np)(int ni, int n), 
+                           const vector<double> &xarr, vector<double> &yarr, 
+                           double (*M_nr_i)(int ni, double y))
     {
-        alloc_memory(ni, nsnd_2gamma_profiles_Data_i);
+        alloc_memory(ni, Data_i);
         
         for(int n=2; n<ni; n++) 
         {
-            nsnd_2gamma_profiles_Data_i.kappa_res[n]=R1snp(n)*Rj_np(n);
-            nsnd_2gamma_profiles_Data_i.yr[n]=y_res(ni, n);
+            Data_i.kappa_res[n]=R1snp(n)*Rj_np(ni, n);
+            Data_i.yr[n]=y_res(ni, n);
         }
         
-        init_splines(xarr, yarr, nsnd_2gamma_profiles_Data_i, M_nr_i);
+        init_splines(xarr, yarr, ni, Data_i, M_nr_i);
         
         return;
     }
     
     void dump_mess(string mess)
     {
-        cout << " dumping 2gamma profile for " << mess << endl;
+        if(verbosity_level>0) cout << " dumping 2gamma profile for " << mess << endl;
         return;
     }
     
     //======================================================================================
-    // setup non-resonant part of 2gamma-profile; this depends on chosen xmax
+    // i/o of Mnr
     //======================================================================================
-    void init_nsnd_2gamma_profiles(int nimax)
-    {       
-        if(nimax<2) return;
-        if(nimax>8){ cerr << "\n init_nsnd_2gamma_profiles:: two-photon profiles are only available up to nmax=8 " << endl; exit(0);}
+    int read_Mnr(double nmin, ifstream &f, vector<vector<double> > &ya)
+    {
+        double dum;
         
-        cout << "\n init_nsnd_2gamma_profiles:: Initializing ns-1s and nd-1s 2gamma-profiles up to nmax= " << nimax << endl;
+        for(int k=0; k<nsnd_2gamma_profiles_xpts; k++)
+        {
+            f >> dum;
+            
+            for(int n=nmin; n<=8; n++)
+            {
+                f >> dum;
+                ya[n].push_back(dum);
+            }
+            if(!f) return 1;
+        }
+        
+        return 0;
+    }
+
+    int read_Mnr(ifstream &fns, vector<vector<double> > &yarr_ns, 
+                 ifstream &fnd, vector<vector<double> > &yarr_nd)
+    {
+        if(read_Mnr(2, fns, yarr_ns) || read_Mnr(3, fnd, yarr_nd))
+        {
+            for(int n=0; n<=8; n++) 
+            {
+                yarr_ns[n].clear();
+                yarr_nd[n].clear();
+            }
+            
+            return 1;
+        }
+
+        return 0;
+    }
+    
+    void export_Mnr(double nmin, const vector<double> &xa, 
+                    ofstream &f, const vector<vector<double> > &ya)
+    {
+        f.precision(16);
+        for(int k=0; k<nsnd_2gamma_profiles_xpts; k++)
+        {
+            f << scientific << xa[k] << " ";
+            for(int n=nmin; n<=8; n++) f << scientific << ya[n][k] << " ";
+            f << endl;
+        }
+
+        return;
+    }
+    
+    void export_Mnr(const vector<double> xa, 
+                    ofstream &fns, const vector<vector<double> > &yarr_ns, 
+                    ofstream &fnd, const vector<vector<double> > &yarr_nd)
+    {
+        export_Mnr(2, xa, fns, yarr_ns);
+        export_Mnr(3, xa, fnd, yarr_nd);
+        return;
+    }
+
+    //======================================================================================
+    // setup non-resonant part of 2gamma-profile
+    //======================================================================================
+    void init_nsnd_2gamma_profiles()
+    {       
+        if(verbosity_level>0)
+            cout << "\n init_nsnd_2gamma_profiles::" 
+                 << " Initializing ns-1s and nd-1s 2gamma-profiles up to nmax= 8." 
+                 << "\n (the very first time might take a moment) "
+                 << endl;
 
         //======================================================================
         // setup splines for non-resonant part
         //======================================================================
         vector<double> xarr(nsnd_2gamma_profiles_xpts);
-        vector<double> yarr(nsnd_2gamma_profiles_xpts);
-        double xmax=1.0-nsnd_2gamma_profiles_xmin;
-        //
-        init_xarr(nsnd_2gamma_profiles_xmin, xmax, &xarr[0], nsnd_2gamma_profiles_xpts, 0, 0);
+        vector<vector<double> > yarr_ns(9);
+        vector<vector<double> > yarr_nd(9);
+                
+        init_xarr(nsnd_2gamma_profiles_xmin, 0.5, &xarr[0], 
+                  nsnd_2gamma_profiles_xpts, 0, 0);
 
+        //======================================================================
+        // check if transition data is there
+        //======================================================================
+        bool dump_non_res_M=1;
+        ifstream ifilens(ns_Mnr_filename.c_str());
+        ifstream ifilend(nd_Mnr_filename.c_str());
+        
+        if(ifilens && ifilend)
+            dump_non_res_M=read_Mnr(ifilens, yarr_ns, ifilend, yarr_nd);
+        
+        ifilens.close();
+        ifilend.close();
+                
         //======================================================================
         // 2s
         //======================================================================
-        init_splines(xarr, yarr, nsnd_2gamma_profiles_Data_2s_1s, Matrix_element_2s_1s_total_non_res);
+        init_splines(xarr, yarr_ns[2], 2, 
+                     nsnd_2gamma_profiles_Data_ns_1s[2], 
+                     Matrix_element_ns_1s_total_non_res);
         
         //======================================================================
         // compute all profiles splines and kappa_n
         //======================================================================
-        if(nimax>2)
+        for(int ni=3; ni<=8; ni++)
         {
-            init_mem_and_data(3, nsnd_2gamma_profiles_Data_3s_1s, R3snp, xarr, yarr, Matrix_element_3s_1s_total_non_res);
-            init_mem_and_data(3, nsnd_2gamma_profiles_Data_3d_1s, R3dnp, xarr, yarr, Matrix_element_3s_1s_total_non_res);
+            init_mem_and_data(ni, nsnd_2gamma_profiles_Data_ns_1s[ni], Rksnp, 
+                              xarr, yarr_ns[ni], 
+                              Matrix_element_ns_1s_total_non_res);
             
-            if(nimax>3)
-            {
-                init_mem_and_data(4, nsnd_2gamma_profiles_Data_4s_1s, R4snp, xarr, yarr, Matrix_element_4s_1s_total_non_res);
-                init_mem_and_data(4, nsnd_2gamma_profiles_Data_4d_1s, R4dnp, xarr, yarr, Matrix_element_4d_1s_total_non_res);
-                
-                if(nimax>4)
-                {
-                    init_mem_and_data(5, nsnd_2gamma_profiles_Data_5s_1s, R5snp, xarr, yarr, Matrix_element_5s_1s_total_non_res);
-                    init_mem_and_data(5, nsnd_2gamma_profiles_Data_5d_1s, R5dnp, xarr, yarr, Matrix_element_5d_1s_total_non_res);
-
-                    if(nimax>5)
-                    {
-                        init_mem_and_data(6, nsnd_2gamma_profiles_Data_6s_1s, R6snp, xarr, yarr, Matrix_element_6s_1s_total_non_res);
-                        init_mem_and_data(6, nsnd_2gamma_profiles_Data_6d_1s, R6dnp, xarr, yarr, Matrix_element_6d_1s_total_non_res);
-
-                        if(nimax>6)
-                        {
-                            init_mem_and_data(7, nsnd_2gamma_profiles_Data_7s_1s, R7snp, xarr, yarr, Matrix_element_7s_1s_total_non_res);
-                            init_mem_and_data(7, nsnd_2gamma_profiles_Data_7d_1s, R7dnp, xarr, yarr, Matrix_element_7d_1s_total_non_res);
-
-                            if(nimax>7)
-                            {
-                                init_mem_and_data(8, nsnd_2gamma_profiles_Data_8s_1s, R8snp, xarr, yarr, Matrix_element_8s_1s_total_non_res);
-                                init_mem_and_data(8, nsnd_2gamma_profiles_Data_8d_1s, R8dnp, xarr, yarr, Matrix_element_8d_1s_total_non_res);
-                            }
-                        }
-                    }
-                }
-            }
+            init_mem_and_data(ni, nsnd_2gamma_profiles_Data_nd_1s[ni], Rkdnp, 
+                              xarr, yarr_nd[ni], 
+                              Matrix_element_nd_1s_total_non_res);
         }
 
-        cout << " init_nsnd_2gamma_profiles:: done " << endl;
+        //======================================================================
+        // export Mnr matrix elements if required
+        //======================================================================
+        if(dump_non_res_M)
+        {
+            ofstream ofilens(ns_Mnr_filename.c_str());
+            ofstream ofilend(nd_Mnr_filename.c_str());
+            
+            export_Mnr(xarr, ofilens, yarr_ns, ofilend, yarr_nd);
+            
+            ofilens.close();
+            ofilend.close();
+        }
+        
+        if(verbosity_level>0) cout << " init_nsnd_2gamma_profiles:: done " << endl;
 
         return;
     }
@@ -469,88 +440,42 @@ namespace nsnd_2gamma_profiles
     // access to different profiles
     //
     //======================================================================================
-    double sigma_ns_1s_2gamma(int n, double y)
-    {
-        if(n==3) return sigma_3s_1s_2gamma(y);
-        if(n==4) return sigma_4s_1s_2gamma(y);
-        if(n==5) return sigma_5s_1s_2gamma(y);
-        if(n==6) return sigma_6s_1s_2gamma(y);
-        if(n==7) return sigma_7s_1s_2gamma(y);
-        if(n==8) return sigma_8s_1s_2gamma(y);
-        
-        return 1.0;
-    }
-    
-    double sigma_nd_1s_2gamma(int n, double y)
-    {
-        if(n==3) return sigma_3d_1s_2gamma(y);
-        if(n==4) return sigma_4d_1s_2gamma(y);
-        if(n==5) return sigma_5d_1s_2gamma(y);
-        if(n==6) return sigma_6d_1s_2gamma(y);
-        if(n==7) return sigma_7d_1s_2gamma(y);
-        if(n==8) return sigma_8d_1s_2gamma(y);
-        
-        return 1.0;
-    }   
-
-    double sigma_ns_1s_2gamma_ratio(int n, double y)
-    {
-        if(n==3) return sigma_3s_1s_2gamma_ratio(y);
-        if(n==4) return sigma_4s_1s_2gamma_ratio(y);
-        if(n==5) return sigma_5s_1s_2gamma_ratio(y);
-        if(n==6) return sigma_6s_1s_2gamma_ratio(y);
-        if(n==7) return sigma_7s_1s_2gamma_ratio(y);
-        if(n==8) return sigma_8s_1s_2gamma_ratio(y);
-        
-        return 1.0;
-    }
-    
-    double sigma_nd_1s_2gamma_ratio(int n, double y)
-    {
-        if(n==3) return sigma_3d_1s_2gamma_ratio(y);
-        if(n==4) return sigma_4d_1s_2gamma_ratio(y);
-        if(n==5) return sigma_5d_1s_2gamma_ratio(y);
-        if(n==6) return sigma_6d_1s_2gamma_ratio(y);
-        if(n==7) return sigma_7d_1s_2gamma_ratio(y);
-        if(n==8) return sigma_8d_1s_2gamma_ratio(y);
-        
-        return 1.0;
-    }   
 
     //======================================================================================
     //
     // different cross sections ns/d divided by Gnl(!!!)
     //
     //======================================================================================
-    double sigma_nsd_1s_res(double y, int ni, int choice, double Mnr, nsnd_2gamma_profiles_Data &nsnd_2gamma_profiles_Data_nsd_1s)
+    double sigma_nsd_1s_res(double y, int ni, int choice, double Mnr, 
+                            nsnd_2gamma_profiles_Data &Data_nsd_1s)
     { 
         double r=0.0;
 
         // prepare fn tables
         for(int n=2; n<ni; n++) 
         {
-            nsnd_2gamma_profiles_Data_nsd_1s.f_re[n]=fn_nsnd_2gamma_r(ni, n, 1, y);
-            nsnd_2gamma_profiles_Data_nsd_1s.f_im[n]=fn_nsnd_2gamma_i(ni, n, 1, y);
+            Data_nsd_1s.f_re[n]=fn_nsnd_2gamma_r(ni, n, 1, y);
+            Data_nsd_1s.f_im[n]=fn_nsnd_2gamma_i(ni, n, 1, y);
         }
         
         // resonance part
         if(choice==0 || choice==1)
             for(int n=2; n<ni; n++) 
             {
-                r+=pow(nsnd_2gamma_profiles_Data_nsd_1s.kappa_res[n], 2)*( pow(nsnd_2gamma_profiles_Data_nsd_1s.f_re[n], 2) 
-                                                                         + pow(nsnd_2gamma_profiles_Data_nsd_1s.f_im[n], 2) );
+                r+=pow(Data_nsd_1s.kappa_res[n], 2)*( pow(Data_nsd_1s.f_re[n], 2) 
+                                                    + pow(Data_nsd_1s.f_im[n], 2) );
                 
                 for(int m=2; m<n; m++) 
-                    r+=2.0*nsnd_2gamma_profiles_Data_nsd_1s.kappa_res[n]*nsnd_2gamma_profiles_Data_nsd_1s.kappa_res[m]
-                        *( nsnd_2gamma_profiles_Data_nsd_1s.f_re[n]*nsnd_2gamma_profiles_Data_nsd_1s.f_re[m] 
-                         + nsnd_2gamma_profiles_Data_nsd_1s.f_im[n]*nsnd_2gamma_profiles_Data_nsd_1s.f_im[m] );
+                    r+=2.0*Data_nsd_1s.kappa_res[n]*Data_nsd_1s.kappa_res[m]
+                        *( Data_nsd_1s.f_re[n]*Data_nsd_1s.f_re[m] 
+                         + Data_nsd_1s.f_im[n]*Data_nsd_1s.f_im[m] );
             }
         
         // interference part
         if(choice==0 || choice==2)
         {
             double r_int=0.0;
-            for(int n=2; n<ni; n++) r_int+=nsnd_2gamma_profiles_Data_nsd_1s.kappa_res[n]*nsnd_2gamma_profiles_Data_nsd_1s.f_re[n];
+            for(int n=2; n<ni; n++) r_int+=Data_nsd_1s.kappa_res[n]*Data_nsd_1s.f_re[n];
             
             r+=2.0*Mnr*r_int;
         }
@@ -559,21 +484,21 @@ namespace nsnd_2gamma_profiles
     }
 
     //======================================================================================
-    double sigma_nsd_1s_poles(double y, int ni, nsnd_2gamma_profiles_Data &nsnd_2gamma_profiles_Data_nsd_1s)
+    double sigma_nsd_1s_poles(double y, int ni, nsnd_2gamma_profiles_Data &Data_nsd_1s)
     { 
         double r=0.0;
         
         // prepare fn tables
         for(int n=2; n<ni; n++) 
         {
-            nsnd_2gamma_profiles_Data_nsd_1s.f_re[n]=fn_nsnd_2gamma_r(ni, n, 1, y);
-            nsnd_2gamma_profiles_Data_nsd_1s.f_im[n]=fn_nsnd_2gamma_i(ni, n, 1, y);
+            Data_nsd_1s.f_re[n]=fn_nsnd_2gamma_r(ni, n, 1, y);
+            Data_nsd_1s.f_im[n]=fn_nsnd_2gamma_i(ni, n, 1, y);
         }
         
         // sum of resonances
         for(int n=2; n<ni; n++) 
-            r+=pow(nsnd_2gamma_profiles_Data_nsd_1s.kappa_res[n], 2)*( pow(nsnd_2gamma_profiles_Data_nsd_1s.f_re[n], 2) 
-                                                                     + pow(nsnd_2gamma_profiles_Data_nsd_1s.f_im[n], 2) );
+            r+=pow(Data_nsd_1s.kappa_res[n], 2)*( pow(Data_nsd_1s.f_re[n], 2) 
+                                                + pow(Data_nsd_1s.f_im[n], 2) );
         
         return r*pow(y*(1.0-y), 3);
     }
@@ -581,32 +506,33 @@ namespace nsnd_2gamma_profiles
     //======================================================================================
     // total cross section
     //======================================================================================
-    double sigma_nsd_1s_nsnd_2gamma(double y, int ni, double Mnr, nsnd_2gamma_profiles_Data &nsnd_2gamma_profiles_Data_nsd_1s)
+    double sigma_nsd_1s_nsnd_2gamma(double y, int ni, double Mnr, 
+                                    nsnd_2gamma_profiles_Data &Data_nsd_1s)
     { 
         double r=Mnr*Mnr;
         
         // prepare fn tables
         for(int n=2; n<ni; n++) 
         {
-            nsnd_2gamma_profiles_Data_nsd_1s.f_re[n]=fn_nsnd_2gamma_r(ni, n, 1, y);
-            nsnd_2gamma_profiles_Data_nsd_1s.f_im[n]=fn_nsnd_2gamma_i(ni, n, 1, y);
+            Data_nsd_1s.f_re[n]=fn_nsnd_2gamma_r(ni, n, 1, y);
+            Data_nsd_1s.f_im[n]=fn_nsnd_2gamma_i(ni, n, 1, y);
         }
         
         // resonance part
         for(int n=2; n<ni; n++) 
         {
-            r+=pow(nsnd_2gamma_profiles_Data_nsd_1s.kappa_res[n], 2)*( pow(nsnd_2gamma_profiles_Data_nsd_1s.f_re[n], 2) 
-                                                                     + pow(nsnd_2gamma_profiles_Data_nsd_1s.f_im[n], 2) );
+            r+=pow(Data_nsd_1s.kappa_res[n], 2)*( pow(Data_nsd_1s.f_re[n], 2) 
+                                                + pow(Data_nsd_1s.f_im[n], 2) );
             
             for(int m=2; m<n; m++) 
-                r+=2.0*nsnd_2gamma_profiles_Data_nsd_1s.kappa_res[n]*nsnd_2gamma_profiles_Data_nsd_1s.kappa_res[m]
-                     *(nsnd_2gamma_profiles_Data_nsd_1s.f_re[n]*nsnd_2gamma_profiles_Data_nsd_1s.f_re[m] 
-                      +nsnd_2gamma_profiles_Data_nsd_1s.f_im[n]*nsnd_2gamma_profiles_Data_nsd_1s.f_im[m] );
+                r+=2.0*Data_nsd_1s.kappa_res[n]*Data_nsd_1s.kappa_res[m]
+                     *(Data_nsd_1s.f_re[n]*Data_nsd_1s.f_re[m] 
+                      +Data_nsd_1s.f_im[n]*Data_nsd_1s.f_im[m] );
         }
         
         // interference part
         double r_int=0.0;
-        for(int n=2; n<ni; n++) r_int+=nsnd_2gamma_profiles_Data_nsd_1s.kappa_res[n]*nsnd_2gamma_profiles_Data_nsd_1s.f_re[n];
+        for(int n=2; n<ni; n++) r_int+=Data_nsd_1s.kappa_res[n]*Data_nsd_1s.f_re[n];
         r+=2.0*Mnr*r_int;
         
         return r*pow(y*(1.0-y), 3);
@@ -614,12 +540,125 @@ namespace nsnd_2gamma_profiles
 
     //======================================================================================
     //
-    // different cross sections 2s
+    // different cross sections ns && nd
+    //
+    //======================================================================================
+    double sigma_ns_1s_sum_of_Lorentzians(int ni, double y)
+    { 
+        double r=0.0;
+        
+        // sum of resonances
+        for(int n=2; n<ni; n++) 
+            r+=Get_A_npks(ni, n)*Get_A_np1s(n)/(FOURPI*Get_Gamma_np(n))
+            *( 
+               Lorentzian(Get_Gamma_np(n)/nuij(ni, 1), 
+                          y-nsnd_2gamma_profiles_Data_ns_1s[ni].yr[n])
+              
+              +Lorentzian(Get_Gamma_np(n)/nuij(ni, 1), 
+                          y-(1.0-nsnd_2gamma_profiles_Data_ns_1s[ni].yr[n])) 
+              );
+        
+        return r/PI;
+    }
+    
+    double sigma_nd_1s_sum_of_Lorentzians(int ni, double y)
+    { 
+        double r=0.0;
+        
+        // sum of resonances
+        for(int n=2; n<ni; n++) 
+            r+=Get_A_npkd(ni, n)*Get_A_np1s(n)/(FOURPI*Get_Gamma_np(n))
+            *( 
+               Lorentzian(Get_Gamma_np(n)/nuij(ni, 1), 
+                          y-nsnd_2gamma_profiles_Data_nd_1s[ni].yr[n])
+              
+              +Lorentzian(Get_Gamma_np(n)/nuij(ni, 1), 
+                          y-(1.0-nsnd_2gamma_profiles_Data_nd_1s[ni].yr[n])) 
+              );
+        
+        return r/PI;
+    }
+    
+    //======================================================================================
+    // total cross section
+    //======================================================================================
+    double sigma_ns_1s_2gamma(int n, double y)
+    { 
+        if(n==2) return sigma_2s_1s_2gamma(y);
+        
+        if(y<0.0 || y>1.0 || n<2 || n>8) return 0.0;
+        return G_ns(n)*sigma_nsd_1s_nsnd_2gamma(y, n, compute_Mnr_ns_1s(n, y), 
+                                                nsnd_2gamma_profiles_Data_ns_1s[n]);
+    }
+    
+    double sigma_nd_1s_2gamma(int n, double y)
+    { 
+        if(y<0.0 || y>1.0 || n<3 || n>8) return 0.0;
+        return G_nd(n)*sigma_nsd_1s_nsnd_2gamma(y, n, compute_Mnr_nd_1s(n, y), 
+                                                nsnd_2gamma_profiles_Data_nd_1s[n]);
+    }
+    
+    double sigma_ns_1s_2gamma_ratio(int n, double y)
+    {  return sigma_ns_1s_2gamma(n, y)/sigma_ns_1s_sum_of_Lorentzians(n, y); }
+    
+    double sigma_nd_1s_2gamma_ratio(int n, double y)
+    { return sigma_nd_1s_2gamma(n, y)/sigma_nd_1s_sum_of_Lorentzians(n, y); }
+    
+    //======================================================================================
+    // plot profile for ns && nd
+    //======================================================================================
+    void dump_ns_1s_2gamma_profile(int n, string fname)
+    {
+        dump_mess(int_to_string(n)+"s-1s");
+        ofstream ofile(fname.c_str());
+        ofile.precision(10);
+        
+        int npy=80000;
+        vector<double> xarr(npy);
+        init_xarr(1.0e-4, 1.0, &xarr[0], npy, 1, 0);
+        
+        for(int k=0; k<npy; k++)
+            ofile << xarr[k] << " " 
+                  << sigma_ns_1s_2gamma(n, xarr[k]) << " " 
+                  << sigma_ns_1s_sum_of_Lorentzians(n, xarr[k]) << " " 
+                  << sigma_ns_1s_2gamma_ratio(n, xarr[k]) 
+                  << endl;
+        
+        ofile.close();
+        
+        return;
+    }
+    
+    void dump_nd_1s_2gamma_profile(int n, string fname)
+    {
+        dump_mess(int_to_string(n)+"d-1s");
+        ofstream ofile(fname.c_str());
+        ofile.precision(10);
+        
+        int npy=80000;
+        vector<double> xarr(npy);
+        init_xarr(1.0e-4, 1.0, &xarr[0], npy, 1, 0);
+        
+        for(int k=0; k<npy; k++)
+            ofile << xarr[k] << " " 
+                  << sigma_nd_1s_2gamma(n, xarr[k]) << " " 
+                  << sigma_nd_1s_sum_of_Lorentzians(n, xarr[k]) << " " 
+                  << sigma_nd_1s_2gamma_ratio(n, xarr[k]) 
+                  << endl;
+        
+        ofile.close();
+        
+        return;
+    }
+
+    //======================================================================================
+    //
+    // different cross sections of 2s-1s
     //
     //======================================================================================
     double sigma_2s_1s_non_res(double y)
     { 
-        double Mnr=compute_Mnr_2s_1s(y);
+        double Mnr=compute_Mnr_ns_1s(2, y);
         return G_ns(2)*Mnr*Mnr*pow(y*(1.0-y), 3);
     }
 
@@ -643,10 +682,13 @@ namespace nsnd_2gamma_profiles
         
         int npy=10000;
         vector<double> xarr(npy);
-        init_xarr(1.0e-4, nsnd_2gamma_profiles_Data_2s_1s.xmax, &xarr[0], npy, 1, 0);
+        init_xarr(1.0e-4, 1.0, &xarr[0], npy, 1, 0);
         
         for(int k=0; k<npy; k++)
-            ofile << xarr[k] << " " << sigma_2s_1s_2gamma(xarr[k]) << " " << sigma_2s_1s_non_res(xarr[k]) << endl;
+            ofile << xarr[k] << " " 
+                  << sigma_2s_1s_2gamma(xarr[k]) << " " 
+                  << sigma_2s_1s_non_res(xarr[k]) 
+                  << endl;
 
         ofile.close();
         
@@ -660,30 +702,24 @@ namespace nsnd_2gamma_profiles
     //======================================================================================
     double sigma_3s_1s_non_res(double y)
     { 
-        double Mnr=compute_Mnr_3s_1s(y);
+        double Mnr=compute_Mnr_ns_1s(3, y);
         return G_ns(3)*Mnr*Mnr*pow(y*(1.0-y), 3);
     }
     
     //======================================================================================
     double sigma_3s_1s_res(double y, int choice)
-    { return G_ns(3)*sigma_nsd_1s_res(y, 3, choice, compute_Mnr_3s_1s(y), nsnd_2gamma_profiles_Data_3s_1s); }
+    { 
+        return G_ns(3)*sigma_nsd_1s_res(y, 3, choice, compute_Mnr_ns_1s(3, y), 
+                                        nsnd_2gamma_profiles_Data_ns_1s[3]); 
+    }
     
     //======================================================================================
     double sigma_3s_1s_poles(double y)
-    { return G_ns(3)*sigma_nsd_1s_poles(y, 3, nsnd_2gamma_profiles_Data_3s_1s); }
+    { return G_ns(3)*sigma_nsd_1s_poles(y, 3, nsnd_2gamma_profiles_Data_ns_1s[3]); }
     
     //======================================================================================
     double sigma_3s_1s_sum_of_Lorentzians(double y)
-    { 
-        double r=0.0;
-        
-        // sum of resonances
-        for(int n=2; n<3; n++) 
-            r+=Get_A_np3s(n)*Get_A_np1s(n)/(FOURPI*Get_Gamma_np(n))*( Lorentzian(Get_Gamma_np(n)/nuij(3, 1), y-nsnd_2gamma_profiles_Data_3s_1s.yr[n])
-                                                        +Lorentzian(Get_Gamma_np(n)/nuij(3, 1), y-(1.0-nsnd_2gamma_profiles_Data_3s_1s.yr[n])) );
-        
-        return r/PI;
-    }
+    { return sigma_ns_1s_sum_of_Lorentzians(3, y); }
     
     //======================================================================================
     double sigma_3s_1s_res(double y){ return sigma_3s_1s_res(y, 0); }
@@ -691,13 +727,8 @@ namespace nsnd_2gamma_profiles
     //======================================================================================
     // total cross section
     //======================================================================================
-    double sigma_3s_1s_2gamma(double y)
-    { 
-        if(y<0.0 || y>1.0) return 0.0;
-        return G_ns(3)*sigma_nsd_1s_nsnd_2gamma(y, 3, compute_Mnr_3s_1s(y), nsnd_2gamma_profiles_Data_3s_1s);
-    }
-    
-    double sigma_3s_1s_2gamma_ratio(double y){ return sigma_3s_1s_2gamma(y)/sigma_3s_1s_sum_of_Lorentzians(y); }
+    double sigma_3s_1s_2gamma(double y){ return sigma_ns_1s_2gamma(3, y); }
+    double sigma_3s_1s_2gamma_ratio(double y){ return sigma_ns_1s_2gamma_ratio(3, y); }
     
     //======================================================================================
     // plot profile for 3s
@@ -711,13 +742,21 @@ namespace nsnd_2gamma_profiles
         int which_res=3;
         int npy=60000;
         vector<double> xarr(npy);
-        init_xarr(1.0e-4, nsnd_2gamma_profiles_Data_3s_1s.xmax, &xarr[0], npy, 1, 0);
+        init_xarr(1.0e-4, 1.0, &xarr[0], npy, 1, 0);
         
         for(int k=0; k<npy; k++)
-            ofile << xarr[k] << " " << xarr[k] /( nsnd_2gamma_profiles_Data_3s_1s.yr[which_res] ) << " " << sigma_3s_1s_2gamma(xarr[k]) << " " << sigma_3s_1s_non_res(xarr[k]) << " " 
-                  << sigma_3s_1s_res(xarr[k]) << " " << sigma_3s_1s_res(xarr[k], 1) << " " << sigma_3s_1s_res(xarr[k], 2) << " " 
-                  << sigma_3s_1s_2gamma(xarr[k])/sigma_3s_1s_poles(xarr[k]) << " " << sigma_3s_1s_poles(xarr[k]) << " "
-                  << sigma_3s_1s_2gamma(xarr[k])/sigma_3s_1s_sum_of_Lorentzians(xarr[k]) << " " << sigma_3s_1s_sum_of_Lorentzians(xarr[k]) << endl;
+            ofile << xarr[k] << " " 
+                  << xarr[k] /( nsnd_2gamma_profiles_Data_ns_1s[3].yr[which_res] ) << " " 
+                  << sigma_3s_1s_2gamma(xarr[k]) << " " 
+                  << sigma_3s_1s_non_res(xarr[k]) << " " 
+                  << sigma_3s_1s_res(xarr[k]) << " " 
+                  << sigma_3s_1s_res(xarr[k], 1) << " " 
+                  << sigma_3s_1s_res(xarr[k], 2) << " " 
+                  << sigma_3s_1s_2gamma(xarr[k])/sigma_3s_1s_poles(xarr[k]) << " " 
+                  << sigma_3s_1s_poles(xarr[k]) << " "
+                  << sigma_3s_1s_2gamma(xarr[k])/sigma_3s_1s_sum_of_Lorentzians(xarr[k]) << " " 
+                  << sigma_3s_1s_sum_of_Lorentzians(xarr[k]) 
+                  << endl;
         
         ofile.close();
         
@@ -731,30 +770,24 @@ namespace nsnd_2gamma_profiles
     //======================================================================================
     double sigma_3d_1s_non_res(double y)
     { 
-        double Mnr=compute_Mnr_3d_1s(y);
+        double Mnr=compute_Mnr_nd_1s(3, y);
         return G_nd(3)*Mnr*Mnr*pow(y*(1.0-y), 3);
     }
     
     //======================================================================================
     double sigma_3d_1s_res(double y, int choice)
-    { return G_nd(3)*sigma_nsd_1s_res(y, 3, choice, compute_Mnr_3d_1s(y), nsnd_2gamma_profiles_Data_3d_1s); }
+    { 
+        return G_nd(3)*sigma_nsd_1s_res(y, 3, choice, compute_Mnr_nd_1s(3, y), 
+                                        nsnd_2gamma_profiles_Data_nd_1s[3]); 
+    }
     
     //======================================================================================
     double sigma_3d_1s_poles(double y)
-    { return G_nd(3)*sigma_nsd_1s_poles(y, 3, nsnd_2gamma_profiles_Data_3d_1s); }
+    { return G_nd(3)*sigma_nsd_1s_poles(y, 3, nsnd_2gamma_profiles_Data_nd_1s[3]); }
     
     //======================================================================================
     double sigma_3d_1s_sum_of_Lorentzians(double y)
-    { 
-        double r=0.0;
-        
-        // sum of resonances
-        for(int n=2; n<3; n++) 
-            r+=Get_A_np3d(n)*Get_A_np1s(n)/(FOURPI*Get_Gamma_np(n))*( Lorentzian(Get_Gamma_np(n)/nuij(3, 1), y-nsnd_2gamma_profiles_Data_3d_1s.yr[n])
-                                                        +Lorentzian(Get_Gamma_np(n)/nuij(3, 1), y-(1.0-nsnd_2gamma_profiles_Data_3d_1s.yr[n])) );
-        
-        return r/PI;
-    }
+    { return sigma_nd_1s_sum_of_Lorentzians(3, y); }
     
     //======================================================================================
     double sigma_3d_1s_res(double y){ return sigma_3d_1s_res(y, 0); }
@@ -762,13 +795,8 @@ namespace nsnd_2gamma_profiles
     //======================================================================================
     // total cross section
     //======================================================================================
-    double sigma_3d_1s_2gamma(double y)
-    { 
-        if(y<0.0 || y>1.0) return 0.0;
-        return G_nd(3)*sigma_nsd_1s_nsnd_2gamma(y, 3, compute_Mnr_3d_1s(y), nsnd_2gamma_profiles_Data_3d_1s);
-    }
-    
-    double sigma_3d_1s_2gamma_ratio(double y){ return sigma_3d_1s_2gamma(y)/sigma_3d_1s_sum_of_Lorentzians(y); }
+    double sigma_3d_1s_2gamma(double y){ return sigma_nd_1s_2gamma(3, y); }
+    double sigma_3d_1s_2gamma_ratio(double y){ return sigma_nd_1s_2gamma_ratio(3, y); }
     
     //======================================================================================
     // plot profile for 3d
@@ -782,443 +810,21 @@ namespace nsnd_2gamma_profiles
         int which_res=3;
         int npy=60000;
         vector<double> xarr(npy);
-        init_xarr(1.0e-4, nsnd_2gamma_profiles_Data_3d_1s.xmax, &xarr[0], npy, 1, 0);
+        init_xarr(1.0e-4, 1.0, &xarr[0], npy, 1, 0);
         
         for(int k=0; k<npy; k++)
-            ofile << xarr[k] << " " << xarr[k] /( nsnd_2gamma_profiles_Data_3d_1s.yr[which_res] ) << " " << sigma_3d_1s_2gamma(xarr[k]) << " " << sigma_3d_1s_non_res(xarr[k]) << " " 
-                  << sigma_3d_1s_res(xarr[k]) << " " << sigma_3d_1s_res(xarr[k], 1) << " " << sigma_3d_1s_res(xarr[k], 2) << " " 
-                  << sigma_3d_1s_2gamma(xarr[k])/sigma_3d_1s_poles(xarr[k]) << " " << sigma_3d_1s_poles(xarr[k]) << " "
-                  << sigma_3d_1s_2gamma(xarr[k])/sigma_3d_1s_sum_of_Lorentzians(xarr[k]) << " " << sigma_3d_1s_sum_of_Lorentzians(xarr[k]) << endl;
-        
-        ofile.close();
-        
-        return;
-    }
-
-    //======================================================================================
-    //
-    // different cross sections 4s && 4d
-    //
-    //======================================================================================
-    double sigma_4s_1s_sum_of_Lorentzians(double y)
-    { 
-        double r=0.0;
-        
-        // sum of resonances
-        for(int n=2; n<4; n++) 
-            r+=Get_A_np4s(n)*Get_A_np1s(n)/(FOURPI*Get_Gamma_np(n))*( Lorentzian(Get_Gamma_np(n)/nuij(4, 1), y-nsnd_2gamma_profiles_Data_4s_1s.yr[n])
-                                                        +Lorentzian(Get_Gamma_np(n)/nuij(4, 1), y-(1.0-nsnd_2gamma_profiles_Data_4s_1s.yr[n])) );
-        
-        return r/PI;
-    }
-    
-    double sigma_4d_1s_sum_of_Lorentzians(double y)
-    { 
-        double r=0.0;
-        
-        // sum of resonances
-        for(int n=2; n<4; n++) 
-            r+=Get_A_np4d(n)*Get_A_np1s(n)/(FOURPI*Get_Gamma_np(n))*( Lorentzian(Get_Gamma_np(n)/nuij(4, 1), y-nsnd_2gamma_profiles_Data_4d_1s.yr[n])
-                                                        +Lorentzian(Get_Gamma_np(n)/nuij(4, 1), y-(1.0-nsnd_2gamma_profiles_Data_4d_1s.yr[n])) );
-        
-        return r/PI;
-    }
-    
-    //======================================================================================
-    // total cross section
-    //======================================================================================
-    double sigma_4s_1s_2gamma(double y)
-    { 
-        if(y<0.0 || y>1.0) return 0.0;
-        return G_ns(4)*sigma_nsd_1s_nsnd_2gamma(y, 4, compute_Mnr_4s_1s(y), nsnd_2gamma_profiles_Data_4s_1s);
-    }
-
-    double sigma_4d_1s_2gamma(double y)
-    { 
-        if(y<0.0 || y>1.0) return 0.0;
-        return G_nd(4)*sigma_nsd_1s_nsnd_2gamma(y, 4, compute_Mnr_4d_1s(y), nsnd_2gamma_profiles_Data_4d_1s);
-    }
-    
-    double sigma_4s_1s_2gamma_ratio(double y){ return sigma_4s_1s_2gamma(y)/sigma_4s_1s_sum_of_Lorentzians(y); }
-    double sigma_4d_1s_2gamma_ratio(double y){ return sigma_4d_1s_2gamma(y)/sigma_4d_1s_sum_of_Lorentzians(y); }
-    
-    //======================================================================================
-    // plot profile for 4s && 4d
-    //======================================================================================
-    void dump_4s_1s_2gamma_profile(string fname)
-    {
-        dump_mess("4s-1s");
-        ofstream ofile(fname.c_str());
-        ofile.precision(10);
-        
-        int npy=60000;
-        vector<double> xarr(npy);
-        init_xarr(1.0e-4, nsnd_2gamma_profiles_Data_4s_1s.xmax, &xarr[0], npy, 1, 0);
-        
-        for(int k=0; k<npy; k++)
-            ofile << xarr[k] << " " << sigma_4s_1s_2gamma(xarr[k]) << " " << sigma_4s_1s_sum_of_Lorentzians(xarr[k]) << " " << sigma_4s_1s_2gamma_ratio(xarr[k]) << endl;
-        
-        ofile.close();
-        
-        return;
-    }
-
-    void dump_4d_1s_2gamma_profile(string fname)
-    {
-        dump_mess("4d-1s");
-        ofstream ofile(fname.c_str());
-        ofile.precision(10);
-        
-        int npy=60000;
-        vector<double> xarr(npy);
-        init_xarr(1.0e-4, nsnd_2gamma_profiles_Data_4d_1s.xmax, &xarr[0], npy, 1, 0);
-        
-        for(int k=0; k<npy; k++)
-            ofile << xarr[k] << " " << sigma_4d_1s_2gamma(xarr[k]) << " " << sigma_4d_1s_sum_of_Lorentzians(xarr[k]) << " " << sigma_4d_1s_2gamma_ratio(xarr[k]) << endl;
-        
-        ofile.close();
-        
-        return;
-    }
-    
-    //======================================================================================
-    //
-    // different cross sections 5s && 5d
-    //
-    //======================================================================================
-    double sigma_5s_1s_sum_of_Lorentzians(double y)
-    { 
-        double r=0.0;
-        
-        // sum of resonances
-        for(int n=2; n<5; n++) 
-            r+=Get_A_np5s(n)*Get_A_np1s(n)/(FOURPI*Get_Gamma_np(n))*( Lorentzian(Get_Gamma_np(n)/nuij(5, 1), y-nsnd_2gamma_profiles_Data_5s_1s.yr[n])
-                                                        +Lorentzian(Get_Gamma_np(n)/nuij(5, 1), y-(1.0-nsnd_2gamma_profiles_Data_5s_1s.yr[n])) );
-        
-        return r/PI;
-    }
-    
-    double sigma_5d_1s_sum_of_Lorentzians(double y)
-    { 
-        double r=0.0;
-        
-        // sum of resonances
-        for(int n=2; n<5; n++) 
-            r+=Get_A_np5d(n)*Get_A_np1s(n)/(FOURPI*Get_Gamma_np(n))*( Lorentzian(Get_Gamma_np(n)/nuij(5, 1), y-nsnd_2gamma_profiles_Data_5d_1s.yr[n])
-                                                        +Lorentzian(Get_Gamma_np(n)/nuij(5, 1), y-(1.0-nsnd_2gamma_profiles_Data_5d_1s.yr[n])) );
-        
-        return r/PI;
-    }
-    
-    //======================================================================================
-    // total cross section
-    //======================================================================================
-    double sigma_5s_1s_2gamma(double y)
-    { 
-        if(y<0.0 || y>1.0) return 0.0;
-        return G_ns(5)*sigma_nsd_1s_nsnd_2gamma(y, 5, compute_Mnr_5s_1s(y), nsnd_2gamma_profiles_Data_5s_1s);
-    }
-    
-    double sigma_5d_1s_2gamma(double y)
-    { 
-        if(y<0.0 || y>1.0) return 0.0;
-        return G_nd(5)*sigma_nsd_1s_nsnd_2gamma(y, 5, compute_Mnr_5d_1s(y), nsnd_2gamma_profiles_Data_5d_1s);
-    }
-    
-    double sigma_5s_1s_2gamma_ratio(double y){ return sigma_5s_1s_2gamma(y)/sigma_5s_1s_sum_of_Lorentzians(y); }
-    double sigma_5d_1s_2gamma_ratio(double y){ return sigma_5d_1s_2gamma(y)/sigma_5d_1s_sum_of_Lorentzians(y); }
-    
-    //======================================================================================
-    // plot profile for 5s && 5d
-    //======================================================================================
-    void dump_5s_1s_2gamma_profile(string fname)
-    {
-        dump_mess("5s-1s");
-        ofstream ofile(fname.c_str());
-        ofile.precision(10);
-        
-        int npy=60000;
-        vector<double> xarr(npy);
-        init_xarr(1.0e-4, nsnd_2gamma_profiles_Data_5s_1s.xmax, &xarr[0], npy, 1, 0);
-        
-        for(int k=0; k<npy; k++)
-            ofile << xarr[k] << " " << sigma_5s_1s_2gamma(xarr[k]) << " " << sigma_5s_1s_sum_of_Lorentzians(xarr[k]) << " " << sigma_5s_1s_2gamma_ratio(xarr[k]) << endl;
-        
-        ofile.close();
-        
-        return;
-    }
-    
-    void dump_5d_1s_2gamma_profile(string fname)
-    {
-        dump_mess("5d-1s");
-        ofstream ofile(fname.c_str());
-        ofile.precision(10);
-        
-        int npy=60000;
-        vector<double> xarr(npy);
-        init_xarr(1.0e-4, nsnd_2gamma_profiles_Data_5d_1s.xmax, &xarr[0], npy, 1, 0);
-        
-        for(int k=0; k<npy; k++)
-            ofile << xarr[k] << " " << sigma_5d_1s_2gamma(xarr[k]) << " " << sigma_5d_1s_sum_of_Lorentzians(xarr[k]) << " " << sigma_5d_1s_2gamma_ratio(xarr[k]) << endl;
-        
-        ofile.close();
-        
-        return;
-    }
-
-    //======================================================================================
-    //
-    // different cross sections 6s && 6d
-    //
-    //======================================================================================
-    double sigma_6s_1s_sum_of_Lorentzians(double y)
-    { 
-        double r=0.0;
-        
-        // sum of resonances
-        for(int n=2; n<6; n++) 
-            r+=Get_A_np6s(n)*Get_A_np1s(n)/(FOURPI*Get_Gamma_np(n))*( Lorentzian(Get_Gamma_np(n)/nuij(6, 1), y-nsnd_2gamma_profiles_Data_6s_1s.yr[n])
-                                                        +Lorentzian(Get_Gamma_np(n)/nuij(6, 1), y-(1.0-nsnd_2gamma_profiles_Data_6s_1s.yr[n])) );
-        
-        return r/PI;
-    }
-    
-    double sigma_6d_1s_sum_of_Lorentzians(double y)
-    { 
-        double r=0.0;
-        
-        // sum of resonances
-        for(int n=2; n<6; n++) 
-            r+=Get_A_np6d(n)*Get_A_np1s(n)/(FOURPI*Get_Gamma_np(n))*( Lorentzian(Get_Gamma_np(n)/nuij(6, 1), y-nsnd_2gamma_profiles_Data_6d_1s.yr[n])
-                                                        +Lorentzian(Get_Gamma_np(n)/nuij(6, 1), y-(1.0-nsnd_2gamma_profiles_Data_6d_1s.yr[n])) );
-        
-        return r/PI;
-    }
-    
-    //======================================================================================
-    // total cross section
-    //======================================================================================
-    double sigma_6s_1s_2gamma(double y)
-    { 
-        if(y<0.0 || y>1.0) return 0.0;
-        return G_ns(6)*sigma_nsd_1s_nsnd_2gamma(y, 6, compute_Mnr_6s_1s(y), nsnd_2gamma_profiles_Data_6s_1s);
-    }
-    
-    double sigma_6d_1s_2gamma(double y)
-    { 
-        if(y<0.0 || y>1.0) return 0.0;
-        return G_nd(6)*sigma_nsd_1s_nsnd_2gamma(y, 6, compute_Mnr_6d_1s(y), nsnd_2gamma_profiles_Data_6d_1s);
-    }
-    
-    double sigma_6s_1s_2gamma_ratio(double y){ return sigma_6s_1s_2gamma(y)/sigma_6s_1s_sum_of_Lorentzians(y); }
-    double sigma_6d_1s_2gamma_ratio(double y){ return sigma_6d_1s_2gamma(y)/sigma_6d_1s_sum_of_Lorentzians(y); }
-    
-    //======================================================================================
-    // plot profile for 6s && 6d
-    //======================================================================================
-    void dump_6s_1s_2gamma_profile(string fname)
-    {
-        dump_mess("6s-1s");
-        ofstream ofile(fname.c_str());
-        ofile.precision(10);
-        
-        int npy=60000;
-        vector<double> xarr(npy);
-        init_xarr(1.0e-4, nsnd_2gamma_profiles_Data_6s_1s.xmax, &xarr[0], npy, 1, 0);
-        
-        for(int k=0; k<npy; k++)
-            ofile << xarr[k] << " " << sigma_6s_1s_2gamma(xarr[k]) << " " << sigma_6s_1s_sum_of_Lorentzians(xarr[k]) << " " << sigma_6s_1s_2gamma_ratio(xarr[k]) << endl;
-        
-        ofile.close();
-        
-        return;
-    }
-    
-    void dump_6d_1s_2gamma_profile(string fname)
-    {
-        dump_mess("6d-1s");
-        ofstream ofile(fname.c_str());
-        ofile.precision(10);
-        
-        int npy=60000;
-        vector<double> xarr(npy);
-        init_xarr(1.0e-4, nsnd_2gamma_profiles_Data_6d_1s.xmax, &xarr[0], npy, 1, 0);
-        
-        for(int k=0; k<npy; k++)
-            ofile << xarr[k] << " " << sigma_6d_1s_2gamma(xarr[k]) << " " << sigma_6d_1s_sum_of_Lorentzians(xarr[k]) << " " << sigma_6d_1s_2gamma_ratio(xarr[k]) << endl;
-        
-        ofile.close();
-        
-        return;
-    }
-
-    //======================================================================================
-    //
-    // different cross sections 7s && 7d
-    //
-    //======================================================================================
-    double sigma_7s_1s_sum_of_Lorentzians(double y)
-    { 
-        double r=0.0;
-        
-        // sum of resonances
-        for(int n=2; n<7; n++) 
-            r+=Get_A_np7s(n)*Get_A_np1s(n)/(FOURPI*Get_Gamma_np(n))*( Lorentzian(Get_Gamma_np(n)/nuij(7, 1), y-nsnd_2gamma_profiles_Data_7s_1s.yr[n])
-                                                        +Lorentzian(Get_Gamma_np(n)/nuij(7, 1), y-(1.0-nsnd_2gamma_profiles_Data_7s_1s.yr[n])) );
-        
-        return r/PI;
-    }
-    
-    double sigma_7d_1s_sum_of_Lorentzians(double y)
-    { 
-        double r=0.0;
-        
-        // sum of resonances
-        for(int n=2; n<7; n++) 
-            r+=Get_A_np7d(n)*Get_A_np1s(n)/(FOURPI*Get_Gamma_np(n))*( Lorentzian(Get_Gamma_np(n)/nuij(7, 1), y-nsnd_2gamma_profiles_Data_7d_1s.yr[n])
-                                                        +Lorentzian(Get_Gamma_np(n)/nuij(7, 1), y-(1.0-nsnd_2gamma_profiles_Data_7d_1s.yr[n])) );
-        
-        return r/PI;
-    }
-    
-    //======================================================================================
-    // total cross section
-    //======================================================================================
-    double sigma_7s_1s_2gamma(double y)
-    { 
-        if(y<0.0 || y>1.0) return 0.0;
-        return G_ns(7)*sigma_nsd_1s_nsnd_2gamma(y, 7, compute_Mnr_7s_1s(y), nsnd_2gamma_profiles_Data_7s_1s);
-    }
-    
-    double sigma_7d_1s_2gamma(double y)
-    { 
-        if(y<0.0 || y>1.0) return 0.0;
-        return G_nd(7)*sigma_nsd_1s_nsnd_2gamma(y, 7, compute_Mnr_7d_1s(y), nsnd_2gamma_profiles_Data_7d_1s);
-    }
-    
-    double sigma_7s_1s_2gamma_ratio(double y){ return sigma_7s_1s_2gamma(y)/sigma_7s_1s_sum_of_Lorentzians(y); }
-    double sigma_7d_1s_2gamma_ratio(double y){ return sigma_7d_1s_2gamma(y)/sigma_7d_1s_sum_of_Lorentzians(y); }
-    
-    //======================================================================================
-    // plot profile for 7s && 7d
-    //======================================================================================
-    void dump_7s_1s_2gamma_profile(string fname)
-    {
-        dump_mess("7s-1s");
-        ofstream ofile(fname.c_str());
-        ofile.precision(10);
-        
-        int npy=70000;
-        vector<double> xarr(npy);
-        init_xarr(1.0e-4, nsnd_2gamma_profiles_Data_7s_1s.xmax, &xarr[0], npy, 1, 0);
-        
-        for(int k=0; k<npy; k++)
-            ofile << xarr[k] << " " << sigma_7s_1s_2gamma(xarr[k]) << " " << sigma_7s_1s_sum_of_Lorentzians(xarr[k]) << " " << sigma_7s_1s_2gamma_ratio(xarr[k]) << endl;
-        
-        ofile.close();
-        
-        return;
-    }
-    
-    void dump_7d_1s_2gamma_profile(string fname)
-    {
-        dump_mess("7d-1s");
-        ofstream ofile(fname.c_str());
-        ofile.precision(10);
-        
-        int npy=70000;
-        vector<double> xarr(npy);
-        init_xarr(1.0e-4, nsnd_2gamma_profiles_Data_7d_1s.xmax, &xarr[0], npy, 1, 0);
-        
-        for(int k=0; k<npy; k++)
-            ofile << xarr[k] << " " << sigma_7d_1s_2gamma(xarr[k]) << " " << sigma_7d_1s_sum_of_Lorentzians(xarr[k]) << " " << sigma_7d_1s_2gamma_ratio(xarr[k]) << endl;
-        
-        ofile.close();
-        
-        return;
-    }
-
-    //======================================================================================
-    //
-    // different cross sections 8s && 8d
-    //
-    //======================================================================================
-    double sigma_8s_1s_sum_of_Lorentzians(double y)
-    { 
-        double r=0.0;
-        
-        // sum of resonances
-        for(int n=2; n<8; n++) 
-            r+=Get_A_np8s(n)*Get_A_np1s(n)/(FOURPI*Get_Gamma_np(n))*( Lorentzian(Get_Gamma_np(n)/nuij(8, 1), y-nsnd_2gamma_profiles_Data_8s_1s.yr[n])
-                                                        +Lorentzian(Get_Gamma_np(n)/nuij(8, 1), y-(1.0-nsnd_2gamma_profiles_Data_8s_1s.yr[n])) );
-        
-        return r/PI;
-    }
-    
-    double sigma_8d_1s_sum_of_Lorentzians(double y)
-    { 
-        double r=0.0;
-        
-        // sum of resonances
-        for(int n=2; n<8; n++) 
-            r+=Get_A_np8d(n)*Get_A_np1s(n)/(FOURPI*Get_Gamma_np(n))*( Lorentzian(Get_Gamma_np(n)/nuij(8, 1), y-nsnd_2gamma_profiles_Data_8d_1s.yr[n])
-                                                        +Lorentzian(Get_Gamma_np(n)/nuij(8, 1), y-(1.0-nsnd_2gamma_profiles_Data_8d_1s.yr[n])) );
-        
-        return r/PI;
-    }
-    
-    //======================================================================================
-    // total cross section
-    //======================================================================================
-    double sigma_8s_1s_2gamma(double y)
-    { 
-        if(y<0.0 || y>1.0) return 0.0;
-        return G_ns(8)*sigma_nsd_1s_nsnd_2gamma(y, 8, compute_Mnr_8s_1s(y), nsnd_2gamma_profiles_Data_8s_1s);
-    }
-    
-    double sigma_8d_1s_2gamma(double y)
-    { 
-        if(y<0.0 || y>1.0) return 0.0;
-        return G_nd(8)*sigma_nsd_1s_nsnd_2gamma(y, 8, compute_Mnr_8d_1s(y), nsnd_2gamma_profiles_Data_8d_1s);
-    }
-    
-    double sigma_8s_1s_2gamma_ratio(double y){ return sigma_8s_1s_2gamma(y)/sigma_8s_1s_sum_of_Lorentzians(y); }
-    double sigma_8d_1s_2gamma_ratio(double y){ return sigma_8d_1s_2gamma(y)/sigma_8d_1s_sum_of_Lorentzians(y); }
-    
-    //======================================================================================
-    // plot profile for 8s && 8d
-    //======================================================================================
-    void dump_8s_1s_2gamma_profile(string fname)
-    {
-        dump_mess("8s-1s");
-        ofstream ofile(fname.c_str());
-        ofile.precision(10);
-        
-        int npy=80000;
-        vector<double> xarr(npy);
-        init_xarr(1.0e-4, nsnd_2gamma_profiles_Data_8s_1s.xmax, &xarr[0], npy, 1, 0);
-        
-        for(int k=0; k<npy; k++)
-            ofile << xarr[k] << " " << sigma_8s_1s_2gamma(xarr[k]) << " " << sigma_8s_1s_sum_of_Lorentzians(xarr[k]) << " " << sigma_8s_1s_2gamma_ratio(xarr[k]) << endl;
-        
-        ofile.close();
-        
-        return;
-    }
-    
-    void dump_8d_1s_2gamma_profile(string fname)
-    {
-        dump_mess("8d-1s");
-        ofstream ofile(fname.c_str());
-        ofile.precision(10);
-        
-        int npy=80000;
-        vector<double> xarr(npy);
-        init_xarr(1.0e-4, nsnd_2gamma_profiles_Data_8d_1s.xmax, &xarr[0], npy, 1, 0);
-        
-        for(int k=0; k<npy; k++)
-            ofile << xarr[k] << " " << sigma_8d_1s_2gamma(xarr[k]) << " " << sigma_8d_1s_sum_of_Lorentzians(xarr[k]) << " " << sigma_8d_1s_2gamma_ratio(xarr[k]) << endl;
+            ofile << xarr[k] << " " 
+                  << xarr[k] /( nsnd_2gamma_profiles_Data_nd_1s[3].yr[which_res] ) << " " 
+                  << sigma_3d_1s_2gamma(xarr[k]) << " " 
+                  << sigma_3d_1s_non_res(xarr[k]) << " " 
+                  << sigma_3d_1s_res(xarr[k]) << " " 
+                  << sigma_3d_1s_res(xarr[k], 1) << " " 
+                  << sigma_3d_1s_res(xarr[k], 2) << " " 
+                  << sigma_3d_1s_2gamma(xarr[k])/sigma_3d_1s_poles(xarr[k]) << " " 
+                  << sigma_3d_1s_poles(xarr[k]) << " "
+                  << sigma_3d_1s_2gamma(xarr[k])/sigma_3d_1s_sum_of_Lorentzians(xarr[k]) << " " 
+                  << sigma_3d_1s_sum_of_Lorentzians(xarr[k]) 
+                  << endl;
         
         ofile.close();
         
@@ -1226,8 +832,5 @@ namespace nsnd_2gamma_profiles
     }
 }
 
-
-
-
-
-
+//==================================================================================================
+//==================================================================================================

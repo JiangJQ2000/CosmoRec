@@ -124,12 +124,12 @@ OBJSRAMAN = ./PDE_Problem/define_PDE.o \
 	    ./PDE_Problem/Load.Populations.HI.o 
 
 OBJSDATA = $(REC_BASE)/Effective_Rates.HI/get_effective_rates.HI.o \
-           $(REC_BASE)/Effective_Rates.HeI/get_effective_rates.HeI.o 
+           $(REC_BASE)/Effective_Rates.HeI/get_effective_rates.HeI.o
 
 OBJSHEDIF = ./PDE_Problem_HeI/define_PDE_HeI.o \
 	    ./PDE_Problem_HeI/Solve_PDEs_HeI.o \
 	    ./PDE_Problem_HeI/HeI_pd_Rp_splines_effective.o \
-	    ./PDE_Problem_HeI/Load.Populations.HeI.o 
+	    ./PDE_Problem_HeI/Load.Populations.HeI.o
 
 OBJS= $(OBJSRecfast++) $(OBJSDEV) $(OBJSRAMAN) $(OBJSDATA) $(OBJSHEDIF)
 

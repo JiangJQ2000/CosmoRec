@@ -1,8 +1,12 @@
-//======================================================================================
+//==================================================================================================
 // Author Jens Chluba Sept/Oct 2010
 // purpose: compute the first few two-photon-profiles
-// comment: a bit clunky but it works
-//======================================================================================
+// last modification: Aug 2012
+//==================================================================================================
+// 18th Aug, 2012: Mnr is now saved to disc after first setup. After that it is only loaded.
+// 17th Aug, 2012: fixed bug for Rnd->np matrix element + 3d1s profile.
+//                 changed spline-setup for non-resonant part to xmin - 0.5; 
+//                 symmetry is used for x>0.5
 
 #ifndef NSND_2GAMMA_PROFILES_H
 #define NSND_2GAMMA_PROFILES_H
@@ -11,13 +15,23 @@
 
 namespace nsnd_2gamma_profiles 
 {
+    //==================================================
+    // set verbosity level
+    //==================================================
+    void set_verbosity_2gamma(int v);
+    
     void test_nsnd_2gamma_stuff();  
-    void init_nsnd_2gamma_profiles(int nimax=5);
+    void init_nsnd_2gamma_profiles();
 
+    //==================================================
+    // ns-1s & nd-1s two-photon profile functions
+    //==================================================
     double sigma_ns_1s_2gamma(int n, double y);
     double sigma_nd_1s_2gamma(int n, double y);
     double sigma_ns_1s_2gamma_ratio(int n, double y);
     double sigma_nd_1s_2gamma_ratio(int n, double y);
+    void dump_ns_1s_2gamma_profile(int n, string fname);
+    void dump_nd_1s_2gamma_profile(int n, string fname);
 
     //==================================================
     // 2s-1s two-photon profile functions
@@ -49,61 +63,9 @@ namespace nsnd_2gamma_profiles
     double sigma_3d_1s_2gamma(double y);
     double sigma_3d_1s_2gamma_ratio(double y);
     void dump_3d_1s_2gamma_profile(string fname);
-
-    //==================================================
-    // 4s-1s and 4d-1s two-photon profile functions
-    //==================================================
-    double sigma_4s_1s_2gamma(double y);
-    double sigma_4s_1s_2gamma_ratio(double y);
-    void dump_4s_1s_2gamma_profile(string fname);
-    //
-    double sigma_4d_1s_2gamma(double y);
-    double sigma_4d_1s_2gamma_ratio(double y);
-    void dump_4d_1s_2gamma_profile(string fname);
-    
-    //==================================================
-    // 5s-1s and 5d-1s two-photon profile functions
-    //==================================================
-    double sigma_5s_1s_2gamma(double y);
-    double sigma_5s_1s_2gamma_ratio(double y);
-    void dump_5s_1s_2gamma_profile(string fname);
-    //
-    double sigma_5d_1s_2gamma(double y);
-    double sigma_5d_1s_2gamma_ratio(double y);
-    void dump_5d_1s_2gamma_profile(string fname);
-
-    //==================================================
-    // 6s-1s and 6d-1s two-photon profile functions
-    //==================================================
-    double sigma_6s_1s_2gamma(double y);
-    double sigma_6s_1s_2gamma_ratio(double y);
-    void dump_6s_1s_2gamma_profile(string fname);
-    //
-    double sigma_6d_1s_2gamma(double y);
-    double sigma_6d_1s_2gamma_ratio(double y);
-    void dump_6d_1s_2gamma_profile(string fname);
-
-    //==================================================
-    // 7s-1s and 7d-1s two-photon profile functions
-    //==================================================
-    double sigma_7s_1s_2gamma(double y);
-    double sigma_7s_1s_2gamma_ratio(double y);
-    void dump_7s_1s_2gamma_profile(string fname);
-    //
-    double sigma_7d_1s_2gamma(double y);
-    double sigma_7d_1s_2gamma_ratio(double y);
-    void dump_7d_1s_2gamma_profile(string fname);
-
-    //==================================================
-    // 8s-1s and 8d-1s two-photon profile functions
-    //==================================================
-    double sigma_8s_1s_2gamma(double y);
-    double sigma_8s_1s_2gamma_ratio(double y);
-    void dump_8s_1s_2gamma_profile(string fname);
-    //
-    double sigma_8d_1s_2gamma(double y);
-    double sigma_8d_1s_2gamma_ratio(double y);
-    void dump_8d_1s_2gamma_profile(string fname);
 }
 
 #endif
+
+//==================================================================================================
+//==================================================================================================

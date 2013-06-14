@@ -26,8 +26,6 @@ using namespace std;
 namespace ODE_solver_Rec
 {
     
-    void wait_f_r_loc(string mess);
-    
     //==============================================================================================
     // Structure that contains the solution y and its derivative dy at redshift z
     //==============================================================================================

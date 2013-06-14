@@ -1,11 +1,11 @@
-//====================================================================================================================
+//==================================================================================================
 // accuracy for integrator
-//====================================================================================================================
-double epsrel_HI=5.0e-7;
+//==================================================================================================
+double epsrel_HI=1.0e-6;
 
-//====================================================================================================================
+//==================================================================================================
 // to compute the integrals over the solution for the photon field
-//====================================================================================================================
+//==================================================================================================
 struct HI_nx_spline_Data
 {
     int memindex;
@@ -15,9 +15,9 @@ struct HI_nx_spline_Data
 bool DF_integrals_splines_are_set=0;
 HI_nx_spline_Data Spline_for_nx_integral;
 
-//====================================================================================================================
+//==================================================================================================
 // simple functions for Sobolev approximation
-//====================================================================================================================
+//==================================================================================================
 double tau_S_function(int Lyn, double z, double X1s, Cosmos &cos, Gas_of_Atoms &HIA)
 { 
     return 3.0*HIA.HI_Lyn_profile(Lyn).Get_A21()
@@ -32,11 +32,11 @@ double tau_S_function_nD1s(int n, double z, double X1s, Cosmos &cos, Gas_of_Atom
               *X1s*cos.NH(z)/8.0/PI/cos.H(z); 
 }
 
-//====================================================================================================================
+//==================================================================================================
 //
 // functions for integrals of two-gamma & Raman process & remaining 1+1 photon corrections
 //
-//====================================================================================================================
+//==================================================================================================
 double dnbar_dx_2g_R(double x){ return calc_spline_JC(x, Spline_for_nx_integral.memindex); }
 
 double calc_DF(double xmin, double xmax, double epsabs=1.0e-60)
@@ -98,11 +98,11 @@ double compute_integral_over_resonances(double xmin, double xmax,
     return r;
 } 
 
-//====================================================================================================================
+//==================================================================================================
 //
 // remaining 1+1 photon corrections
 //
-//====================================================================================================================
+//==================================================================================================
 double compute_DF_Ly_n(int ni, int nmax, double z, Cosmos &cos, Gas_of_Atoms &HIA, 
                        vector<double> &xarr, vector<double> &yarr, 
                        vector<double> &Fwork, vector<double> &exp_x, 
@@ -153,7 +153,9 @@ double compute_DF_Ly_n(int ni, int nmax, double z, Cosmos &cos, Gas_of_Atoms &HI
     //==========================================================================
     if(!DF_integrals_splines_are_set) 
     {
-        Spline_for_nx_integral.memindex=calc_spline_coeffies_JC(nnu_pts, &xarr[0], &Fwork[0], "DF-integrals");
+        Spline_for_nx_integral.memindex=calc_spline_coeffies_JC(nnu_pts, &xarr[0], 
+                                                                &Fwork[0], "DF-integrals");
+                                                                
         DF_integrals_splines_are_set=1;
     }
     else update_spline_coeffies_JC(Spline_for_nx_integral.memindex, nnu_pts, &xarr[0], &Fwork[0]);
@@ -173,11 +175,11 @@ double compute_DF_Ly_n(int ni, int nmax, double z, Cosmos &cos, Gas_of_Atoms &HI
     return res;
 }
 
-//====================================================================================================================
+//==================================================================================================
 //
 // nD-1s 1+1 photon correction (added June 2011)
 //
-//====================================================================================================================
+//==================================================================================================
 double compute_DF_nD1s(int ni, int nmax, double z, Cosmos &cos, Gas_of_Atoms &HIA, 
                        vector<double> &xarr, vector<double> &yarr, 
                        vector<double> &Fwork, vector<double> &exp_x, 
@@ -221,7 +223,9 @@ double compute_DF_nD1s(int ni, int nmax, double z, Cosmos &cos, Gas_of_Atoms &HI
     //==========================================================================
     if(!DF_integrals_splines_are_set) 
     {
-        Spline_for_nx_integral.memindex=calc_spline_coeffies_JC(nnu_pts, &xarr[0], &Fwork[0], "DF-integrals");
+        Spline_for_nx_integral.memindex=calc_spline_coeffies_JC(nnu_pts, &xarr[0], 
+                                                                &Fwork[0], "DF-integrals");
+                                                                
         DF_integrals_splines_are_set=1;
     }
     else update_spline_coeffies_JC(Spline_for_nx_integral.memindex, nnu_pts, &xarr[0], &Fwork[0]);
@@ -247,17 +251,18 @@ double compute_DF_nD1s(int ni, int nmax, double z, Cosmos &cos, Gas_of_Atoms &HI
     return res;
 }
 
-//====================================================================================================================
+//==================================================================================================
 //
 // two-gamma-process
 //
-//====================================================================================================================
+//==================================================================================================
 double compute_DF_2gamma(int ni, int li, double z, Cosmos &cos, Gas_of_Atoms &HIA, 
                          vector<double> &xarr, vector<double> &yarr, 
                          vector<double> &Fwork, vector<double> &exp_x,
-                         double (*phi_2g)(int n, int k), PDE_solver_functions &PDE_funcs)
+                         double (*phi_2g)(int n, int k), 
+                         PDE_solver_functions &PDE_funcs)
 {
-    if(ni>11){ cerr << " compute_DF_2gamma:: too many intermediate resonances..." << endl; exit(0); }
+    if(ni>11){ cerr << " compute_DF_2gamma:: too many intermediate resonances..." << endl; exit(0);}
     
     int nnu_pts=PDE_funcs.index_emission[ni-2];
     double nuik, nui1=HIA.Level(ni, li).Get_Dnu_1s();
@@ -314,7 +319,9 @@ double compute_DF_2gamma(int ni, int li, double z, Cosmos &cos, Gas_of_Atoms &HI
     //==========================================================================
     if(!DF_integrals_splines_are_set) 
     {
-        Spline_for_nx_integral.memindex=calc_spline_coeffies_JC(nnu_pts, &xarr[0], &Fwork[0], "DF-integrals");
+        Spline_for_nx_integral.memindex=calc_spline_coeffies_JC(nnu_pts, &xarr[0], 
+                                                                &Fwork[0], "DF-integrals");
+                                                                
         DF_integrals_splines_are_set=1;
     }
     else update_spline_coeffies_JC(Spline_for_nx_integral.memindex, nnu_pts, &xarr[0], &Fwork[0]);
@@ -334,17 +341,17 @@ double compute_DF_2gamma(int ni, int li, double z, Cosmos &cos, Gas_of_Atoms &HI
     return w*X1s*(r-DRtot)/DnLj;
 }
 
-//====================================================================================================================
+//==================================================================================================
 //
 // Raman-process
 //
-//====================================================================================================================
+//==================================================================================================
 double compute_DF_Raman(int ni, int li, int nmax, double z, Cosmos &cos, Gas_of_Atoms &HIA, 
                         vector<double> &xarr, vector<double> &yarr, 
                         vector<double> &Fwork, vector<double> &exp_x,
                         double (*phi_R)(int n, int k), PDE_solver_functions &PDE_funcs)
 {
-    if(nmax>10){ cerr << " compute_DF_Raman:: too many intermediate resonances..." << endl; exit(0); }
+    if(nmax>10){ cerr<< " compute_DF_Raman:: too many intermediate resonances..." << endl; exit(0);}
     
     int k0=PDE_funcs.index_emission[ni-2];
     int nnu_pts=xarr.size()-k0;
@@ -402,10 +409,13 @@ double compute_DF_Raman(int ni, int li, int nmax, double z, Cosmos &cos, Gas_of_
     //==========================================================================
     if(!DF_integrals_splines_are_set) 
     {
-        Spline_for_nx_integral.memindex=calc_spline_coeffies_JC(nnu_pts, &xarr[0+k0], &Fwork[0+k0], "DF-integrals");
+        Spline_for_nx_integral.memindex=calc_spline_coeffies_JC(nnu_pts, &xarr[0+k0], 
+                                                                &Fwork[0+k0], "DF-integrals");
+                                                                
         DF_integrals_splines_are_set=1;
     }
-    else update_spline_coeffies_JC(Spline_for_nx_integral.memindex, nnu_pts, &xarr[0+k0], &Fwork[0+k0]);
+    else update_spline_coeffies_JC(Spline_for_nx_integral.memindex, nnu_pts, 
+                                   &xarr[0+k0], &Fwork[0+k0]);
     
     //==========================================================================
     // compute integral
@@ -415,7 +425,8 @@ double compute_DF_Raman(int ni, int li, int nmax, double z, Cosmos &cos, Gas_of_
     double r=compute_integral_over_resonances(xmin, xmax, ni+1, nmax, nu21, HIA);
     
     //==========================================================================
-    if(show_messages>=2) cout << " difference:: (ni, li)= " << ni << " " << li << " Dr-Raman = " << r 
+    if(show_messages>=2) cout << " difference:: (ni, li)= " << ni << " " << li 
+                              << " Dr-Raman = " << r 
                               << " DRtot= " << DRtot << " " << w*(r-DRtot)/DnLj 
                               << " ( error-check " << DnLj/Dnem-1.0 << " )" << endl;
     
@@ -423,29 +434,30 @@ double compute_DF_Raman(int ni, int li, int nmax, double z, Cosmos &cos, Gas_of_
 }
 
 
-//====================================================================================================================
+//==================================================================================================
 //
 // DI1 output function; correction to the 2s-1s channel
 //
-//====================================================================================================================
+//==================================================================================================
 double calc_DI1_2s_Patt(HI_nx_spline_Data &SD)
 {
     //=========================================================================
     // 1s-->2s Integral; only high nu part (nu/nu21>=0.5) matters
     //=========================================================================
-    double r=0.0, epsrel=epsrel_HI, epsabs=1.0e-60;
+    double r=0.0, rel=epsrel_HI, abs=1.0e-60;
     
-    r=Integrate_using_Patterson_adaptive(max(SD.xmin, 0.5), min(SD.xmax, 1.0), epsrel, epsabs, dnbar_dx_2g_R); 
+    r=Integrate_using_Patterson_adaptive(max(SD.xmin, 0.5),min(SD.xmax, 1.0),rel,abs,dnbar_dx_2g_R); 
     
     return r/const_HI_A2s_1s;   
 }
 
-//====================================================================================================================
+//==================================================================================================
 void compute_DI1_2s_and_dump_it(double z, vector<double> &xarr, vector<double> &yarr, 
                                 Gas_of_Atoms &HIA, Cosmos &cos, 
                                 ofstream &Ifile, vector<double> &DI1_2s_vec, 
                                 vector<double> &Fwork, vector<double> &exp_x,
-                                double (*phi_2g)(int n, int k), PDE_solver_functions &PDE_funcs,
+                                double (*phi_2g)(int n, int k), 
+                                PDE_solver_functions &PDE_funcs,
                                 bool output=0)
 {
     //==========================================================================
@@ -477,7 +489,9 @@ void compute_DI1_2s_and_dump_it(double z, vector<double> &xarr, vector<double> &
     //==========================================================================
     if(!DF_integrals_splines_are_set) 
     {
-        Spline_for_nx_integral.memindex=calc_spline_coeffies_JC(nnu_pts, &xarr[0], &Fwork[0], "DF-integrals");
+        Spline_for_nx_integral.memindex=calc_spline_coeffies_JC(nnu_pts, &xarr[0], 
+                                                                &Fwork[0], "DF-integrals");
+                                                                
         DF_integrals_splines_are_set=1;
     }
     else update_spline_coeffies_JC(Spline_for_nx_integral.memindex, nnu_pts, &xarr[0], &Fwork[0]);
@@ -499,4 +513,5 @@ void compute_DI1_2s_and_dump_it(double z, vector<double> &xarr, vector<double> &
     return;
 }
 
-
+//==================================================================================================
+//==================================================================================================

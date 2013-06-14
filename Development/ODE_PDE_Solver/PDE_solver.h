@@ -14,12 +14,14 @@
 
 using namespace std;
 
+//==================================================================================================
 struct Lagrange_interpolation_coefficients
 {
     vector<vector<double> > dli_dx;
     vector<vector<double> > d2li_d2x;
 };
 
+//==================================================================================================
 struct PDE_Stepper_Data
 {
     vector<double> *ptr;    
@@ -59,6 +61,7 @@ struct PDE_Stepper_Data
     Lagrange_interpolation_coefficients LG;
 };
 
+//==================================================================================================
 void init_PDE_Stepper_Data(PDE_Stepper_Data &PDE_D, int npts);
 void reset_PDE_solver_variables();
 

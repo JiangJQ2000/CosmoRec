@@ -599,7 +599,10 @@ namespace nsnd_2gamma_profiles
     }
     
     double sigma_ns_1s_2gamma_ratio(int n, double y)
-    {  return sigma_ns_1s_2gamma(n, y)/sigma_ns_1s_sum_of_Lorentzians(n, y); }
+    {  
+        if(n==2) return 1.0;
+        return sigma_ns_1s_2gamma(n, y)/sigma_ns_1s_sum_of_Lorentzians(n, y); 
+    }
     
     double sigma_nd_1s_2gamma_ratio(int n, double y)
     { return sigma_nd_1s_2gamma(n, y)/sigma_nd_1s_sum_of_Lorentzians(n, y); }

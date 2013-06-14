@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "ODE_solver_Rec.h"
+#include "routines.h"
 
 using namespace std;
 
@@ -30,21 +31,6 @@ int verbosity_ODE_solver=0;
 namespace ODE_solver_Rec
 {
     //===================================================================================
-    void wait_f_r_loc(string mess)
-    {
-        char c;
-        if(mess!="") cout << " " << mess << endl;
-        cout << " To go on press return! " << endl;
-        cin.get(c);
-        return;
-    }
-    
-    void wait_f_r_loc()
-    {
-        wait_f_r_loc("");
-        return;
-    }
-    
     bool isnan_loc(double a)
     {
 #if defined(__APPLE__) 
@@ -1207,7 +1193,7 @@ namespace ODE_solver_Rec
                 if(Jac_loops>25) 
                 {   
                     converged=1;
-                    if(mess>=2){ cout << " Not very happy :S " << endl; wait_f_r_loc(); } 
+                    if(mess>=2){ cout << " Not very happy :S " << endl; wait_f_r(); } 
                     return 1; 
                 }
             }

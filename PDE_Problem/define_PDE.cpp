@@ -1,14 +1,15 @@
-//=====================================================================================
+//==================================================================================================
 // Author Jens Chluba July 2010
-//=====================================================================================
+// last modification: Aug 2012
+//==================================================================================================
 
-//=====================================================================================
+//==================================================================================================
 //
 // Purpose: Setup routine for PDE of form
 //
 // du/dt = A(x,t) d^2u/dx^2 + B(x,t) du/dx + C(x,t) u + D(x,t)
 //
-//=====================================================================================
+//==================================================================================================
 
 #include <iostream>
 #include <string>
@@ -28,11 +29,11 @@ using namespace std;
 
 int define_PDE_verbosity=0;
 
-//=====================================================================================
+//==================================================================================================
 //
 // run-flags
 //
-//=====================================================================================
+//==================================================================================================
 struct define_PDE_HI_runflags
 {
     bool line_sc;         // resonance scattering on/off
@@ -44,7 +45,7 @@ struct define_PDE_HI_runflags
 
 define_PDE_HI_runflags def_HI_run={1, 1, 1, 1, 0};  // default setting
 
-//=====================================================================================
+//==================================================================================================
 void HI_switch_on_line_scattering(){ def_HI_run.line_sc=1; return; }
 void HI_switch_off_line_scattering(){ def_HI_run.line_sc=0; return; }
 
@@ -57,47 +58,47 @@ void HI_switch_off_line_em_abs(){ def_HI_run.line_em_abs=0; return; }
 void HI_switch_on_2s1s(){ def_HI_run.A2s1s_em_abs=1; return; }
 void HI_switch_off_2s1s(){ def_HI_run.A2s1s_em_abs=0; return; }
 
-//=====================================================================================
+//==================================================================================================
 //
 // more delicate run-flags; These are just for detailed computations, and should
 // normally not be changed.
 //
-//=====================================================================================
+//==================================================================================================
 bool recoil_l=1;
 bool diffusion_l=1;
 //
 bool recoil_e=1;
 bool diffusion_e=1;
-//=====================================================================================
+//==================================================================================================
 
-//=====================================================================================
+//==================================================================================================
 bool two_g_process=0;
 int two_g_process_nmax=0;
 
-//=====================================================================================
+//==================================================================================================
 bool Raman_process=0;
 int Raman_process_nmax=0;
 
-//=====================================================================================
+//==================================================================================================
 bool use_full_width=1;
-//=====================================================================================
+//==================================================================================================
 
-//=====================================================================================
+//==================================================================================================
 // for numerical purposes it can be beneficial to add a very small diffusion term, to
 // damp small scale perturbations. The effect of electron scattering is very small on
 // Xe and if one does not want e-scattering be important reducing its efficiency by ~100 
 // will make it extremely insignificant but allows stabilizing the system. This can be 
 // controlled with the e_sc_efficiency parameter. ==1 means full electron scattering.
 // Default is 1.0 if this function is not called.
-//=====================================================================================
+//==================================================================================================
 double e_sc_efficiency=1.0;
 void set_electron_scattering_efficiency(double val){ e_sc_efficiency=val; return; }
 
-//=====================================================================================
+//==================================================================================================
 //
 // setting for two-photon terms
 //
-//=====================================================================================
+//==================================================================================================
 int  Get_nmax_two_g_correction(){ return two_g_process_nmax; }
 
 void switch_off_two_g_corrections()
@@ -128,11 +129,11 @@ void switch_on_two_g_corrections(int tg_nmax, int nS)
 
 
 
-//=====================================================================================
+//==================================================================================================
 //
 // setting for Raman terms
 //
-//=====================================================================================
+//==================================================================================================
 int  Get_nmax_Raman_correction(){ return Raman_process_nmax; }
 
 void switch_off_Raman_corrections()
@@ -162,11 +163,11 @@ void switch_on_Raman_corrections(int R_nmax, int nS)
 }
 
 
-//=====================================================================================
+//==================================================================================================
 //
 // PDE Data
 //
-//=====================================================================================
+//==================================================================================================
 struct PDE_Setup_Data
 {
     Cosmos *cosm;
@@ -176,9 +177,9 @@ struct PDE_Setup_Data
 
 static PDE_Setup_Data PDE_Setup_D;
 
-//=====================================================================================
+//==================================================================================================
 // memory
-//=====================================================================================
+//==================================================================================================
 void init_profile_memory(int nxi, vector<double> &VP)
 {
     VP.clear();
@@ -186,7 +187,7 @@ void init_profile_memory(int nxi, vector<double> &VP)
     return;
 }
 
-//=====================================================================================
+//==================================================================================================
 void init_profile_memory(int nxi, Raman_2g_profiles &RGP)
 {
     init_profile_memory(nxi, RGP.ratio);
@@ -194,7 +195,7 @@ void init_profile_memory(int nxi, Raman_2g_profiles &RGP)
     return;
 }
 
-//=====================================================================================
+//==================================================================================================
 void init_profile_memory(int nxi, int nres, PDE_solver_functions &PDE_funcs)
 {
     init_profile_memory(nxi, PDE_funcs.exp_x);
@@ -256,9 +257,9 @@ void init_profile_memory(int nxi, int nres, PDE_solver_functions &PDE_funcs)
     return;
 }
 
-//=====================================================================================
+//==================================================================================================
 // Setup for PDE Data
-//=====================================================================================
+//==================================================================================================
 void Setup_PDE_Data(Cosmos &cosm, Gas_of_Atoms &HIA, PDE_solver_functions &PDE_funcs)
 {
     PDE_Setup_D.cosm=&cosm;
@@ -268,10 +269,11 @@ void Setup_PDE_Data(Cosmos &cosm, Gas_of_Atoms &HIA, PDE_solver_functions &PDE_f
     return;
 }
 
-//==================================================================================================================================
+//==================================================================================================
 // scattering terms
-//==================================================================================================================================
-void add_Diff_and_recoil_f(double D_x, double dlnD_x_dx, double xifac, double &Ai, double &Bi, double &Ci)
+//==================================================================================================
+void add_Diff_and_recoil_f(double D_x, double dlnD_x_dx, double xifac, 
+                           double &Ai, double &Bi, double &Ci)
 {
     Ai+=D_x;
     Bi+=dlnD_x_dx;
@@ -294,11 +296,12 @@ void add_recoil_f(double D_x, double dlnD_x_dx, double xifac, double &Ai, double
     return;
 }
 
-//==================================================================================================================================
+//==================================================================================================
 // electron scattering terms
-//==================================================================================================================================
-void add_electron_scattering(double z, double nu21, double Te, double Ne, double Hz, const vector<double> &xi, 
-                             vector<double> &Ai, vector<double> &Bi, vector<double> &Ci)
+//==================================================================================================
+void add_electron_scattering(double z, double nu21, double Te, double Ne, double Hz, 
+                             const vector<double> &xi, vector<double> &Ai, 
+                             vector<double> &Bi, vector<double> &Ci)
 {
     //----------------------------------------------------------
     // xifac= h nu_Lya/ k Te; important for recoil term
@@ -326,9 +329,9 @@ void add_electron_scattering(double z, double nu21, double Te, double Ne, double
     return;
 }
 
-//==================================================================================================================================
+//==================================================================================================
 // Ly-n scattering and em/abs terms
-//==================================================================================================================================
+//==================================================================================================
 double pd_n_func(int n, double z)
 {
     if(n<=10) return PDE_Setup_D.PDE_funcs->HI_pd_nl(z, n, 1);
@@ -341,9 +344,9 @@ double Dnem_n_func(int n, double z)
     else{ cerr << " NOT DEFINED " << endl; exit(0); }
 }
 
-//==================================================================================================================================
+//==================================================================================================
 // exponential-factor exp(-h\nu/k Tg)
-//==================================================================================================================================
+//==================================================================================================
 void update_exp_x(double Tg, double nu21, const vector<double> &xi)
 {
 #ifdef OPENMP_ACTIVATED    
@@ -355,40 +358,41 @@ void update_exp_x(double Tg, double nu21, const vector<double> &xi)
     return;
 }
 
-//==================================================================================================================================
+//==================================================================================================
 // Ly-n Voigt profile
-//==================================================================================================================================
+//==================================================================================================
 void update_Voigt_profile_Ly_n(double z, double nu21, int n, const vector<double> &xi)
 {
     double Tm=PDE_Setup_D.PDE_funcs->HI_rho(z)*PDE_Setup_D.cosm->TCMB(z);
+    Voigtprofile_Dawson &Lyn=PDE_Setup_D.HI->HI_Lyn_profile(n);
     
     PDE_Setup_D.PDE_funcs->Voigt_profiles_pd[n-2]=pd_n_func(n, z);
-    PDE_Setup_D.PDE_funcs->Voigt_profiles_aV[n-2]=PDE_Setup_D.HI->HI_Lyn_profile(n).aVoigt(Tm);
-    PDE_Setup_D.PDE_funcs->Voigt_profiles_Dnuj1s_nuj1s[n-2]=PDE_Setup_D.HI->HI_Lyn_profile(n).DnuT_nu12(Tm);
-    //
+    PDE_Setup_D.PDE_funcs->Voigt_profiles_Dnuj1s_nuj1s[n-2]=Lyn.DnuT_nu12(Tm);
+    
     double psc_np=1.0-PDE_Setup_D.PDE_funcs->Voigt_profiles_pd[n-2];
-
-    if(use_full_width)
-        PDE_Setup_D.PDE_funcs->Voigt_profiles_aV[n-2]=PDE_Setup_D.HI->HI_Lyn_profile(n).aVoigt(Tm)
-                                                     /PDE_Setup_D.HI->HI_Lyn_profile(n).Get_Gamma()
-                                                     *PDE_Setup_D.HI->HI_Lyn_profile(n).Get_A21()/psc_np;
+    
+    if(use_full_width) PDE_Setup_D.PDE_funcs->Voigt_profiles_aV[n-2]=Lyn.aVoigt(Tm)/Lyn.Get_Gamma()
+                                                                    *Lyn.Get_A21()/psc_np;
+    else PDE_Setup_D.PDE_funcs->Voigt_profiles_aV[n-2]=Lyn.aVoigt(Tm);
         
-    //==============================================================================================================================
+    double aV=PDE_Setup_D.PDE_funcs->Voigt_profiles_aV[n-2];
+        
+    //==============================================================================================
     // Ly-n profiles
-    //==============================================================================================================================
+    //==============================================================================================
 #ifdef OPENMP_ACTIVATED    
 #pragma omp parallel for default(shared)	
 #endif	
     for(int k=0; k<(int)xi.size(); k++) 
     {
         double x=xi[k];
-        double xD=PDE_Setup_D.HI->HI_Lyn_profile(n).nu2x(nu21*x, Tm);
-        PDE_Setup_D.PDE_funcs->Voigt_profiles[n-2][k]=PDE_Setup_D.HI->HI_Lyn_profile(n).phi(xD, PDE_Setup_D.PDE_funcs->Voigt_profiles_aV[n-2]);
+        double xD=Lyn.nu2x(nu21*x, Tm);
+        PDE_Setup_D.PDE_funcs->Voigt_profiles[n-2][k]=Lyn.phi(xD, aV);
     }
     
-    //==============================================================================================================================
+    //==============================================================================================
     // corresponding low frequency profiles (only for two-photon profiles)
-    //==============================================================================================================================
+    //==============================================================================================
     if(two_g_process)
     {
 #ifdef OPENMP_ACTIVATED    
@@ -397,54 +401,57 @@ void update_Voigt_profile_Ly_n(double z, double nu21, int n, const vector<double
         for(int k=0; k<(int)xi.size(); k++) 
         {
             double x=(1.0-1.0/n/n)/0.75-xi[k];
-            double xD=PDE_Setup_D.HI->HI_Lyn_profile(n).nu2x(nu21*x, Tm);
-            PDE_Setup_D.PDE_funcs->HP_Voigt_profiles[n-2][k]=PDE_Setup_D.HI->HI_Lyn_profile(n).phi(xD, PDE_Setup_D.PDE_funcs->Voigt_profiles_aV[n-2]);
+            double xD=Lyn.nu2x(nu21*x, Tm);
+            PDE_Setup_D.PDE_funcs->HP_Voigt_profiles[n-2][k]=Lyn.phi(xD, aV);
         }
     }       
     
     return;
 }
 
-//==================================================================================================================================
+//==================================================================================================
 // access to Lyman-series properties
-//==================================================================================================================================
+//==================================================================================================
 double phi_Ly_n(int n, int k){ return PDE_Setup_D.PDE_funcs->Voigt_profiles[n-2][k]; }
 //
 double phi_Ly_n_Dnu_nu(int n){ return PDE_Setup_D.PDE_funcs->Voigt_profiles_Dnuj1s_nuj1s[n-2]; }
-double phi_Ly_n_Dnu(int n){ return phi_Ly_n_Dnu_nu(n)*PDE_Setup_D.HI->HI_Lyn_profile(n).Get_nu21(); }
+double phi_Ly_n_Dnu(int n){ return phi_Ly_n_Dnu_nu(n)*PDE_Setup_D.HI->HI_Lyn_profile(n).Get_nu21();}
 //
 double phi_Ly_n_aV(int n){ return PDE_Setup_D.PDE_funcs->Voigt_profiles_aV[n-2]; }
 double phi_Ly_n_pd(int n){ return PDE_Setup_D.PDE_funcs->Voigt_profiles_pd[n-2]; }
 //
 double phi_HP_n(int n, int k){ return PDE_Setup_D.PDE_funcs->HP_Voigt_profiles[n-2][k]; }
 
-//==================================================================================================================================
+//==================================================================================================
 //
 // Raman profiles
 //
-//==================================================================================================================================
+//==================================================================================================
 double Raman_emission_fac(double exp_x, double exp_dum)
 {
     double npl_xp=exp_x/(exp_dum-exp_x);
     return npl_xp;
 }
 
-//==============================================================================================================================
-void update_Raman_profiles_nsd_1s(double z, int ni, Raman_2g_profiles &RGP, vector<double> &Voigt_profiles_A_np_nsd)
+//==================================================================================================
+void update_Raman_profiles_nsd_1s(double z, int ni, Raman_2g_profiles &RGP, 
+                                  vector<double> &Voigt_profiles_A_np_nsd)
 {
     double nun1=PDE_Setup_D.HI->Level(ni, 0).Get_Dnu_1s();
     double Tg=PDE_Setup_D.cosm->TCMB(z);
     double x_c=const_h_kb*nun1/Tg;
     double exp_dum=exp(-x_c);
     int klow=PDE_Setup_D.PDE_funcs->index_emission[ni-2];
-    int mmax=Get_nmax_two_g_correction()-1; // always just include the resonances up ni_max for two-gamma process
+    int mmax=Get_nmax_two_g_correction()-1; // always just include the resonances up 
+                                            // ni_max for Raman-process
     if(Get_nmax_two_g_correction()==0) mmax=PDE_Setup_D.PDE_funcs->Voigt_profiles_aV.size();
         
     //-----------------------------------------------------------------------------
     // setup factors for profile conversion
     //-----------------------------------------------------------------------------
     for(int m=ni-2+1; m<mmax; m++)
-        PDE_Setup_D.PDE_funcs->dum_factors[m]=( 1.0-phi_Ly_n_pd(m+2) )*Voigt_profiles_A_np_nsd[m]/phi_Ly_n_Dnu(m+2);
+        PDE_Setup_D.PDE_funcs->dum_factors[m]=( 1.0-phi_Ly_n_pd(m+2) )
+                                                *Voigt_profiles_A_np_nsd[m]/phi_Ly_n_Dnu(m+2);
     
 #ifdef OPENMP_ACTIVATED    
 #pragma omp parallel for default(shared)	
@@ -466,11 +473,11 @@ void update_Raman_profiles_nsd_1s(double z, int ni, Raman_2g_profiles &RGP, vect
     return;
 }
 
-//==================================================================================================================================
+//==================================================================================================
 //
 // 2 gamma profiles
 //
-//==================================================================================================================================
+//==================================================================================================
 double two_g_emission_fac(double exp_mx, double exp_mx0)
 {
 //    return 1.0;
@@ -479,8 +486,9 @@ double two_g_emission_fac(double exp_mx, double exp_mx0)
     return (1.0+npl_xp)*(1.0+npl_x);
 }
 
-//==============================================================================================================================
-void update_two_g_profiles_nsd_1s(double z, int ni, Raman_2g_profiles &RGP, vector<double> &Voigt_profiles_A_np_nsd)
+//==================================================================================================
+void update_two_g_profiles_nsd_1s(double z, int ni, Raman_2g_profiles &RGP, 
+                                  vector<double> &Voigt_profiles_A_np_nsd)
 {
     if(ni<3) return;
     
@@ -494,7 +502,8 @@ void update_two_g_profiles_nsd_1s(double z, int ni, Raman_2g_profiles &RGP, vect
     // setup factors for profile conversion
     //-----------------------------------------------------------------------------
     for(int m=0; m<ni-2; m++)
-        PDE_Setup_D.PDE_funcs->dum_factors[m]=( 1.0-phi_Ly_n_pd(m+2) )*Voigt_profiles_A_np_nsd[m]/phi_Ly_n_Dnu(m+2);
+        PDE_Setup_D.PDE_funcs->dum_factors[m]=( 1.0-phi_Ly_n_pd(m+2) )
+                                                *Voigt_profiles_A_np_nsd[m]/phi_Ly_n_Dnu(m+2);
     
 #ifdef OPENMP_ACTIVATED    
 #pragma omp parallel for default(shared)	
@@ -523,7 +532,7 @@ void update_two_g_profiles_nsd_1s(double z, int ni, Raman_2g_profiles &RGP, vect
     return;
 }
 
-//==================================================================================================================================
+//==================================================================================================
 void update_two_g_profiles_2s1s(double z, Raman_2g_profiles &RGP)
 {
     double nun1=PDE_Setup_D.HI->Level(2, 0).Get_Dnu_1s();
@@ -533,16 +542,16 @@ void update_two_g_profiles_2s1s(double z, Raman_2g_profiles &RGP)
     int kmax=PDE_Setup_D.PDE_funcs->index_emission[0];
     
     for(int k=0; k<kmax; k++)
-        RGP.profile[k]=RGP.ratio[k]*two_g_emission_fac(PDE_Setup_D.PDE_funcs->exp_x[k], exp_dum)/nun1;
+        RGP.profile[k]=RGP.ratio[k]*two_g_emission_fac(PDE_Setup_D.PDE_funcs->exp_x[k],exp_dum)/nun1;
     
     return;
 }
 
-//==================================================================================================================================
+//==================================================================================================
 //
 // access to profiles
 //
-//==================================================================================================================================
+//==================================================================================================
 double phi_ns1s_2g(int n, int k)
 { return PDE_Setup_D.PDE_funcs->two_g_ns_1s[n-2].profile[k]; }
 
@@ -555,23 +564,27 @@ double phi_ns1s_Raman(int n, int k)
 double phi_nd1s_Raman(int n, int k)
 { return PDE_Setup_D.PDE_funcs->Raman_nd_1s[n-2].profile[k]; }
 
-//==================================================================================================================================
+//==================================================================================================
 //
 // ns/nd-1s Raman/2g profile
 //
-//==================================================================================================================================
+//==================================================================================================
 void update_Raman_profiles(double z)
 {
     if(Raman_process_nmax>=2)
     { 
-        update_Raman_profiles_nsd_1s(z, 2, PDE_Setup_D.PDE_funcs->Raman_ns_1s[0], PDE_Setup_D.PDE_funcs->Voigt_profiles_A_npns[0]);
+        update_Raman_profiles_nsd_1s(z, 2, PDE_Setup_D.PDE_funcs->Raman_ns_1s[0], 
+                                     PDE_Setup_D.PDE_funcs->Voigt_profiles_A_npns[0]);
         
         if(Raman_process_nmax>=3)
         { 
             for(int m=1; m<(int)PDE_Setup_D.PDE_funcs->Raman_ns_1s.size()-1; m++)
             {
-                update_Raman_profiles_nsd_1s(z, m+2, PDE_Setup_D.PDE_funcs->Raman_ns_1s[m], PDE_Setup_D.PDE_funcs->Voigt_profiles_A_npns[m]);
-                update_Raman_profiles_nsd_1s(z, m+2, PDE_Setup_D.PDE_funcs->Raman_nd_1s[m], PDE_Setup_D.PDE_funcs->Voigt_profiles_A_npnd[m]);
+                update_Raman_profiles_nsd_1s(z, m+2, PDE_Setup_D.PDE_funcs->Raman_ns_1s[m], 
+                                             PDE_Setup_D.PDE_funcs->Voigt_profiles_A_npns[m]);
+                
+                update_Raman_profiles_nsd_1s(z, m+2, PDE_Setup_D.PDE_funcs->Raman_nd_1s[m], 
+                                             PDE_Setup_D.PDE_funcs->Voigt_profiles_A_npnd[m]);
             }
         }
     }
@@ -579,7 +592,7 @@ void update_Raman_profiles(double z)
     return;
 }
 
-//==================================================================================================================================
+//==================================================================================================
 void update_2gamma_profiles(double z)
 {
     // this is always there if one entered the diffusion solver
@@ -587,19 +600,23 @@ void update_2gamma_profiles(double z)
         
     for(int m=1; m<(int)PDE_Setup_D.PDE_funcs->two_g_ns_1s.size(); m++)
     {
-        update_two_g_profiles_nsd_1s(z, m+2, PDE_Setup_D.PDE_funcs->two_g_ns_1s[m], PDE_Setup_D.PDE_funcs->Voigt_profiles_A_npns[m]);
-        update_two_g_profiles_nsd_1s(z, m+2, PDE_Setup_D.PDE_funcs->two_g_nd_1s[m], PDE_Setup_D.PDE_funcs->Voigt_profiles_A_npnd[m]);
+        update_two_g_profiles_nsd_1s(z, m+2, PDE_Setup_D.PDE_funcs->two_g_ns_1s[m], 
+                                     PDE_Setup_D.PDE_funcs->Voigt_profiles_A_npns[m]);
+        
+        update_two_g_profiles_nsd_1s(z, m+2, PDE_Setup_D.PDE_funcs->two_g_nd_1s[m], 
+                                     PDE_Setup_D.PDE_funcs->Voigt_profiles_A_npnd[m]);
     }
     
     return;
 }   
 
-//==================================================================================================================================
+//==================================================================================================
 //
 // correction to pd and Dnem; depends on two-photon and raman processes
 //
-//==================================================================================================================================
-void Dp_Dnem_Raman_update(int ni, int li, int n, double N1s, double Nj, double Tg, double &DRp, double &DRm)
+//==================================================================================================
+void Dp_Dnem_Raman_update(int ni, int li, int n, double N1s, double Nj, double Tg, 
+                          double &DRp, double &DRm)
 {
     double nuij=PDE_Setup_D.HI->Level(n, 1).Get_nu21(ni, li);
     double exp_x=exp(-const_h_kb*nuij/Tg);
@@ -612,7 +629,8 @@ void Dp_Dnem_Raman_update(int ni, int li, int n, double N1s, double Nj, double T
     return;
 }
 
-void Dp_Dnem_2gamma_update(int ni, int li, int n, double N1s, double Nj, double Tg, double &DRp, double &DRm)
+void Dp_Dnem_2gamma_update(int ni, int li, int n, double N1s, double Nj, double Tg, 
+                           double &DRp, double &DRm)
 {
     double nuij=PDE_Setup_D.HI->Level(ni, li).Get_nu21(n, 1);
     double exp_x=exp(-const_h_kb*nuij/Tg);
@@ -625,12 +643,13 @@ void Dp_Dnem_2gamma_update(int ni, int li, int n, double N1s, double Nj, double 
     return;
 }
 
-//==================================================================================================================================
+//==================================================================================================
 //
 // combined calls
 //
-//==================================================================================================================================
-void Dp_Dnem_function(int n, double z, double Tg, double pd_np, double nem, double N1s, double &Dp, double &Dn)
+//==================================================================================================
+void Dp_Dnem_function(int n, double z, double Tg, double pd_np, double nem, double N1s, 
+                      double &Dp, double &Dn)
 {
     Dp=Dn=0.0;
 
@@ -644,12 +663,16 @@ void Dp_Dnem_function(int n, double z, double Tg, double pd_np, double nem, doub
     {
         for(int ni=(int)min(7, n-1); ni>=3; ni--)
         {
-            Dp_Dnem_Raman_update(ni, 0, n, N1s, PDE_Setup_D.PDE_funcs->HI_Xnl(z, ni, 0)*NH, Tg, DRp, DRm);
-            Dp_Dnem_Raman_update(ni, 2, n, N1s, PDE_Setup_D.PDE_funcs->HI_Xnl(z, ni, 2)*NH, Tg, DRp, DRm);
+            Dp_Dnem_Raman_update(ni, 0, n, N1s, PDE_Setup_D.PDE_funcs->HI_Xnl(z, ni, 0)*NH, 
+                                 Tg, DRp, DRm);
+            
+            Dp_Dnem_Raman_update(ni, 2, n, N1s, PDE_Setup_D.PDE_funcs->HI_Xnl(z, ni, 2)*NH, 
+                                 Tg, DRp, DRm);
         }   
 
         if(Raman_process_nmax>=2 && n>2) 
-        	Dp_Dnem_Raman_update(2, 0, n, N1s, PDE_Setup_D.PDE_funcs->HI_Xnl(z, 2, 0)*NH, Tg, DRp, DRm);
+        	Dp_Dnem_Raman_update(2, 0, n, N1s, PDE_Setup_D.PDE_funcs->HI_Xnl(z, 2, 0)*NH, 
+                                 Tg, DRp, DRm);
     }
     
     //----------------------------------------------------------
@@ -660,8 +683,11 @@ void Dp_Dnem_function(int n, double z, double Tg, double pd_np, double nem, doub
         double DRp2=0.0, DRm2=0.0;
         for(int ni=(int)min(8, two_g_process_nmax); ni>=n+1; ni--)
         {
-            Dp_Dnem_2gamma_update(ni, 0, n, N1s, PDE_Setup_D.PDE_funcs->HI_Xnl(z, ni, 0)*NH, Tg, DRp2, DRm2);
-            Dp_Dnem_2gamma_update(ni, 2, n, N1s, PDE_Setup_D.PDE_funcs->HI_Xnl(z, ni, 2)*NH, Tg, DRp2, DRm2);
+            Dp_Dnem_2gamma_update(ni, 0, n, N1s, PDE_Setup_D.PDE_funcs->HI_Xnl(z, ni, 0)*NH, 
+                                  Tg, DRp2, DRm2);
+            
+            Dp_Dnem_2gamma_update(ni, 2, n, N1s, PDE_Setup_D.PDE_funcs->HI_Xnl(z, ni, 2)*NH, 
+                                  Tg, DRp2, DRm2);
         }   
         
         DRp+=DRp2; DRm+=DRm2;
@@ -689,13 +715,14 @@ void Dp_Dnem_function(int n, double z, double Tg, double pd_np, double nem, doub
     return;
 }
 
-//==================================================================================================================================
+//==================================================================================================
 //
 // PDE setup functions
 //
-//==================================================================================================================================
-void add_Ly_n_sc_only(int n, double z, double nu21, double Tg, double Te, double Ne, double N1s, double Hz, 
-                      const vector<double> &xi, vector<double> &Ai, vector<double> &Bi, vector<double> &Ci)
+//==================================================================================================
+void add_Ly_n_sc_only(int n, double z, double nu21, double Tg, double Te, double Ne, double N1s, 
+                      double Hz, const vector<double> &xi, 
+                      vector<double> &Ai, vector<double> &Bi, vector<double> &Ci)
 {
     //----------------------------------------------------------
     // xifac= h nu_Lya/ k Te; important for recoil term
@@ -712,7 +739,9 @@ void add_Ly_n_sc_only(int n, double z, double nu21, double Tg, double Te, double
     //
     double pd_np=phi_Ly_n_pd(n);
     double psc_np=1.0-pd_np;
-    double const_sigr=1.5*lambda*lambda*(PDE_Setup_D.HI->HI_Lyn_profile(n).Get_A21()/FOURPI/phi_Ly_n_Dnu(n));
+    double const_sigr=1.5*lambda*lambda*(PDE_Setup_D.HI->HI_Lyn_profile(n).Get_A21()
+                                         /FOURPI/phi_Ly_n_Dnu(n));
+    //
     double kappa_Ly_n_sc =-psc_np*const_sigr*N1s*(const_kB*Te/const_mH_gr/const_cl)/Hz/(1.0+z);
     
     void (* add_ptr_f)(double, double, double, double &, double &, double &)=NULL;  
@@ -742,16 +771,17 @@ void add_Ly_n_sc_only(int n, double z, double nu21, double Tg, double Te, double
     return;
 }
 
-//==================================================================================================================================
-void add_Ly_n_em_only(int n, double z, double nu21, double Tg, double Te, double Ne, double N1s, double Hz, 
-                      const vector<double> &xi, vector<double> &Ci, vector<double> &Di)
+//==================================================================================================
+void add_Ly_n_em_only(int n, double z, double nu21, double Tg, double Te, double Ne, double N1s, 
+                      double Hz, const vector<double> &xi, vector<double> &Ci, vector<double> &Di)
 {   
     //----------------------------------------------------------
     // Ly-n scattering
     //----------------------------------------------------------
     double lambda=const_cl/nu21; // lambdaj1*(nuj1/nu21)
     double pd_np=phi_Ly_n_pd(n);
-    double const_sigr=1.5*lambda*lambda*(PDE_Setup_D.HI->HI_Lyn_profile(n).Get_A21()/FOURPI/phi_Ly_n_Dnu(n));
+    double const_sigr=1.5*lambda*lambda*(PDE_Setup_D.HI->HI_Lyn_profile(n).Get_A21()
+                                         /FOURPI/phi_Ly_n_Dnu(n));
     
     //----------------------------------------------------------
     // Ly-n emission/absorption term
@@ -816,9 +846,11 @@ void add_Ly_n_em_only(int n, double z, double nu21, double Tg, double Te, double
     return;
 }
 
-//==================================================================================================================================
-void add_Ly_n_sc_em_full(int n, double z, double nu21, double Tg, double Te, double Ne, double N1s, double Hz, 
-                         const vector<double> &xi, vector<double> &Ai, vector<double> &Bi, vector<double> &Ci, vector<double> &Di)
+//==================================================================================================
+void add_Ly_n_sc_em_full(int n, double z, double nu21, double Tg, double Te, double Ne, double N1s, 
+                         double Hz, const vector<double> &xi, 
+                         vector<double> &Ai, vector<double> &Bi, 
+                         vector<double> &Ci, vector<double> &Di)
 {
     //----------------------------------------------------------
     // xifac= h nu_Lya/ k Te; important for recoil term
@@ -835,7 +867,9 @@ void add_Ly_n_sc_em_full(int n, double z, double nu21, double Tg, double Te, dou
     double aV=phi_Ly_n_aV(n);
     double DnuD_nu=phi_Ly_n_Dnu_nu(n);
     //
-    double const_sigr=1.5*lambda*lambda*(PDE_Setup_D.HI->HI_Lyn_profile(n).Get_A21()/FOURPI/phi_Ly_n_Dnu(n));
+    double const_sigr=1.5*lambda*lambda*(PDE_Setup_D.HI->HI_Lyn_profile(n).Get_A21()
+                                         /FOURPI/phi_Ly_n_Dnu(n));
+    
     double kappa_Ly_n_sc =-psc_np*const_sigr*N1s*(const_kB*Te/const_mH_gr/const_cl)/Hz/(1.0+z);
     
     void (* add_ptr_f)(double, double, double, double &, double &, double &)=NULL;  
@@ -927,13 +961,15 @@ void add_Ly_n_sc_em_full(int n, double z, double nu21, double Tg, double Te, dou
     return;
 }
 
-//==================================================================================================================================
+//==================================================================================================
 // 
 // add emission, absorption and scattering from nD-1s quadrupole lines (added June 2011)
 //
-//==================================================================================================================================
-void add_nD_1s_sc_em_full(int n, double z, double nu21, double Tg, double Te, double Ne, double N1s, double Hz, 
-                          const vector<double> &xi, vector<double> &Ai, vector<double> &Bi, vector<double> &Ci, vector<double> &Di)
+//==================================================================================================
+void add_nD_1s_sc_em_full(int n, double z, double nu21, double Tg, double Te, double Ne, double N1s, 
+                          double Hz, const vector<double> &xi, 
+                          vector<double> &Ai, vector<double> &Bi, 
+                          vector<double> &Ci, vector<double> &Di)
 {
     Voigtprofile_Dawson *p=&PDE_Setup_D.HI->HI_nD1s_profile(n);
 
@@ -985,11 +1021,11 @@ void add_nD_1s_sc_em_full(int n, double z, double nu21, double Tg, double Te, do
     return;
 }
 
-//==================================================================================================================================
+//==================================================================================================
 //
 // Raman-scattering terms
 //
-//==================================================================================================================================
+//==================================================================================================
 void add_nsd_1s_Raman_terms(int n, int l, double (*phi_func)(int, int), double Dnem,
                             double z, double nu21, double Tg, double N1s, double Hz, 
                             const vector<double> &xi, vector<double> &Ci, vector<double> &Di)
@@ -1030,11 +1066,11 @@ void add_nsd_1s_Raman_terms(int n, int l, double (*phi_func)(int, int), double D
     return;
 }
 
-//==================================================================================================================================
+//==================================================================================================
 //
 // 2gamma-terms
 //
-//==================================================================================================================================
+//==================================================================================================
 void add_nsd_1s_2gamma_terms(int n, int l, double (*phi_func)(int, int), double Dnem,
                              double z, double nu21, double Tg, double N1s, double Hz, 
                              const vector<double> &xi, vector<double> &Ci, vector<double> &Di)
@@ -1075,11 +1111,11 @@ void add_nsd_1s_2gamma_terms(int n, int l, double (*phi_func)(int, int), double 
     return;
 }
 
-//==================================================================================================================================
+//==================================================================================================
 //
 // simple output of profile functions
 //
-//==================================================================================================================================
+//==================================================================================================
 void plot_Raman(const vector<double> &xi)
 {
     if(Get_nmax_Raman_correction()<2) return;
@@ -1094,7 +1130,8 @@ void plot_Raman(const vector<double> &xi)
     {
         ofile << xi[k] << " " << xi[k]-1.0 << " ";
         if(Get_nmax_Raman_correction()>=2) ofile << phi_ns1s_Raman(2, k) << " ";
-        for(int m=1; m<=Get_nmax_Raman_correction()-2; m++) ofile << phi_ns1s_Raman(m+2, k) << " " << phi_nd1s_Raman(m+2, k) << " ";        
+        for(int m=1; m<=Get_nmax_Raman_correction()-2; m++) 
+            ofile << phi_ns1s_Raman(m+2, k) << " " << phi_nd1s_Raman(m+2, k) << " ";        
         ofile << endl;  
     }
     
@@ -1118,7 +1155,8 @@ void plot_two_g(const vector<double> &xi, int nresmax)
     for(int k=0; k<(int)xi.size(); k++) 
     {
         ofile << xi[k] << " " << phi_ns1s_2g(2, k) << " ";
-        for(int m=1; m<=nresmax-2; m++) ofile << phi_ns1s_2g(m+2, k) << " " << phi_nd1s_2g(m+2, k) << " ";
+        for(int m=1; m<=nresmax-2; m++) 
+            ofile << phi_ns1s_2g(m+2, k) << " " << phi_nd1s_2g(m+2, k) << " ";
         ofile << endl;  
     }
     
@@ -1130,11 +1168,11 @@ void plot_two_g(const vector<double> &xi, int nresmax)
 }   
         
 
-//==================================================================================================================================
+//==================================================================================================
 //
 // main wrapper
 //
-//==================================================================================================================================
+//==================================================================================================
 void def_PDE_Lyn_and_2s1s(double z, const vector<double> &xi, 
                           vector<double> &Ai, vector<double> &Bi, 
                           vector<double> &Ci, vector<double> &Di)
@@ -1195,9 +1233,14 @@ void def_PDE_Lyn_and_2s1s(double z, const vector<double> &xi,
         {
             update_Voigt_profile_Ly_n(z, nu21, n, xi);
             
-            if(local_line_sc && local_line_em_abs) add_Ly_n_sc_em_full(n, z, nu21, Tg, Te, Ne, N1s, Hz, xi, Ai, Bi, Ci, Di);
-            else if(local_line_sc && !local_line_em_abs) add_Ly_n_sc_only(n, z, nu21, Tg, Te, Ne, N1s, Hz, xi, Ai, Bi, Ci);
-            else if(!local_line_sc && local_line_em_abs) add_Ly_n_em_only(n, z, nu21, Tg, Te, Ne, N1s, Hz, xi, Ci, Di);
+            if(local_line_sc && local_line_em_abs) 
+                add_Ly_n_sc_em_full(n, z, nu21, Tg, Te, Ne, N1s, Hz, xi, Ai, Bi, Ci, Di);
+            
+            else if(local_line_sc && !local_line_em_abs) 
+                add_Ly_n_sc_only(n, z, nu21, Tg, Te, Ne, N1s, Hz, xi, Ai, Bi, Ci);
+            
+            else if(!local_line_sc && local_line_em_abs) 
+                add_Ly_n_em_only(n, z, nu21, Tg, Te, Ne, N1s, Hz, xi, Ci, Di);
         }
     }
     
@@ -1209,12 +1252,19 @@ void def_PDE_Lyn_and_2s1s(double z, const vector<double> &xi,
     if(Raman_process)
     {
         if(Raman_process_nmax>=2) 
-            add_nsd_1s_Raman_terms(2, 0, phi_ns1s_Raman, PDE_Setup_D.PDE_funcs->HI_Dnem_nl(z, 2, 0), z, nu21, Tg, N1s, Hz, xi, Ci, Di);
+            add_nsd_1s_Raman_terms(2, 0, phi_ns1s_Raman, 
+                                   PDE_Setup_D.PDE_funcs->HI_Dnem_nl(z, 2, 0), 
+                                   z, nu21, Tg, N1s, Hz, xi, Ci, Di);
 
         for(int ni=3; ni<=(int)min(7, Raman_process_nmax); ni++)
         {
-            add_nsd_1s_Raman_terms(ni, 0, phi_ns1s_Raman, PDE_Setup_D.PDE_funcs->HI_Dnem_nl(z, ni, 0), z, nu21, Tg, N1s, Hz, xi, Ci, Di);
-            add_nsd_1s_Raman_terms(ni, 2, phi_nd1s_Raman, PDE_Setup_D.PDE_funcs->HI_Dnem_nl(z, ni, 2), z, nu21, Tg, N1s, Hz, xi, Ci, Di);
+            add_nsd_1s_Raman_terms(ni, 0, phi_ns1s_Raman, 
+                                   PDE_Setup_D.PDE_funcs->HI_Dnem_nl(z, ni, 0), 
+                                   z, nu21, Tg, N1s, Hz, xi, Ci, Di);
+            
+            add_nsd_1s_Raman_terms(ni, 2, phi_nd1s_Raman, 
+                                   PDE_Setup_D.PDE_funcs->HI_Dnem_nl(z, ni, 2), 
+                                   z, nu21, Tg, N1s, Hz, xi, Ci, Di);
         }   
     }
     
@@ -1229,8 +1279,13 @@ void def_PDE_Lyn_and_2s1s(double z, const vector<double> &xi,
     {
         for(int ni=3; ni<=(int)min(8, two_g_process_nmax); ni++)
         {
-            add_nsd_1s_2gamma_terms(ni, 0, phi_ns1s_2g, PDE_Setup_D.PDE_funcs->HI_Dnem_nl(z, ni, 0), z, nu21, Tg, N1s, Hz, xi, Ci, Di);
-            add_nsd_1s_2gamma_terms(ni, 2, phi_nd1s_2g, PDE_Setup_D.PDE_funcs->HI_Dnem_nl(z, ni, 2), z, nu21, Tg, N1s, Hz, xi, Ci, Di);
+            add_nsd_1s_2gamma_terms(ni, 0, phi_ns1s_2g, 
+                                    PDE_Setup_D.PDE_funcs->HI_Dnem_nl(z, ni, 0), 
+                                    z, nu21, Tg, N1s, Hz, xi, Ci, Di);
+            
+            add_nsd_1s_2gamma_terms(ni, 2, phi_nd1s_2g, 
+                                    PDE_Setup_D.PDE_funcs->HI_Dnem_nl(z, ni, 2), 
+                                    z, nu21, Tg, N1s, Hz, xi, Ci, Di);
         }
     }
     
@@ -1240,7 +1295,8 @@ void def_PDE_Lyn_and_2s1s(double z, const vector<double> &xi,
     // Source-term 2s-1s emission and absorption
     //----------------------------------------------------------
     if(def_HI_run.A2s1s_em_abs) 
-        add_nsd_1s_2gamma_terms(2, 0, phi_ns1s_2g, PDE_Setup_D.PDE_funcs->HI_Dnem_nl(z, 2, 0), z, nu21, Tg, N1s, Hz, xi, Ci, Di);
+        add_nsd_1s_2gamma_terms(2, 0, phi_ns1s_2g, PDE_Setup_D.PDE_funcs->HI_Dnem_nl(z, 2, 0), 
+                                z, nu21, Tg, N1s, Hz, xi, Ci, Di);
     
     //----------------------------------------------------------
     // include nD-1s quadrupole lines (added June 2011)
@@ -1252,11 +1308,11 @@ void def_PDE_Lyn_and_2s1s(double z, const vector<double> &xi,
 }
 
 
-//==================================================================================================================================
+//==================================================================================================
 //
 // routines to account for corrections to electron scattering using Kernel
 //
-//==================================================================================================================================
+//==================================================================================================
 void electron_kernel_corr_func_HI(double z, const vector<double> &xi, 
                                   const vector<double> &yi, 
                                   vector<double> &corr_v)
@@ -1290,5 +1346,5 @@ void electron_kernel_corr_func_HI(double z, const vector<double> &xi,
     return;
 }
 
-//==================================================================================================================================
-//==================================================================================================================================
+//==================================================================================================
+//==================================================================================================

@@ -64,7 +64,7 @@
 	     If this flag is set to 0 only the initial calculation without transfer corrections
 	     will be performed
 2 	  == correction to 2s-1s channel; 0: no corr; 1: stim. 2s-1s; 2: full correction;
-3     == nS for corrections because of two-photon decays. 
+3         == nS for corrections because of two-photon decays. 
 	     If set to <3 then only the diffusion correction is included.
 2	  == nS for corrections because of Raman-scattering
 	     If set to <2 then the 1+1 Raman rates are not corrected.

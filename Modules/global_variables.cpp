@@ -15,7 +15,7 @@ bool hydrogen_and_helium_atom_are_set=0;
 //==================================================================================================
 string path, detailedname;
 string addname;
-ofstream *Xfiles=new ofstream[6];
+ofstream *Xfiles=new ofstream[8];
 vector<vector<double> > output_CosmoRec;
 vector<vector<double> > pass_on_the_Solution_CosmoRec;
 vector<vector<double> > pass_on_the_Solution_CosmoRec_HeI; //JF 
@@ -23,7 +23,7 @@ vector<vector<double> > pass_on_the_Solution_CosmoRec_HeI; //JF
 //==================================================================================================
 // level of verbosity
 //==================================================================================================
-int show_CosmoRec_mess=3;
+int show_CosmoRec_mess=0;
 
 //==================================================================================================
 // output files

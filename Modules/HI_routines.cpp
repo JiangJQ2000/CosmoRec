@@ -105,7 +105,7 @@ void setup_Hydrogen_atom()
 {
     print_message(" entering the setup for neutral hydrogen ");
     
-    HAtoms=new Gas_of_Atoms(nShells, 1, 1.0, Atom_activate_HI_Quadrupole_lines, 2, 2);
+    HAtoms=new Gas_of_Atoms(nShells, 1, 1.0, Atom_activate_HI_Quadrupole_lines, 0, -2);
     
 //    compute_Q_correction_to_lifetime();
     

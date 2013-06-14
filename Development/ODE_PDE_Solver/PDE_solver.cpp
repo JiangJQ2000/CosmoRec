@@ -27,6 +27,8 @@
 
 using namespace std;
 
+int define_PDEsolver_verbosity=0;
+
 //==================================================================================================
 //
 // global structure
@@ -185,7 +187,8 @@ void setup_Lagrange_interpolation_coefficients_O1(PDE_Stepper_Data &PDE_D, vecto
 {
     int np=xarr.size();
     
-    cout << "\n setup_Lagrange_interpolation_coefficients_O1:: setting up grid " << endl;
+    if(define_PDEsolver_verbosity>0)
+        cout << "\n setup_Lagrange_interpolation_coefficients_O1:: setting up grid " << endl;
     
     PDE_D.LG.dli_dx.clear();
     PDE_D.LG.d2li_d2x.clear();
@@ -213,7 +216,8 @@ void setup_Lagrange_interpolation_coefficients_O1(PDE_Stepper_Data &PDE_D, vecto
             PDE_D.LG.d2li_d2x[i][j]=d2li_d2x_xj(j, 1, &xarr[i-1], 3);
         }
     
-    cout << " setup_Lagrange_interpolation_coefficients_O1:: done " << endl;
+    if(define_PDEsolver_verbosity>0)
+        cout << " setup_Lagrange_interpolation_coefficients_O1:: done " << endl;
 
     return;
 }
@@ -296,7 +300,8 @@ void setup_Lagrange_interpolation_coefficients_O2(PDE_Stepper_Data &PDE_D, vecto
 {
     int np=xarr.size();
 
-    cout << "\n setup_Lagrange_interpolation_coefficients_O2:: setting up grid " << endl;
+    if(define_PDEsolver_verbosity>0)
+        cout << "\n setup_Lagrange_interpolation_coefficients_O2:: setting up grid " << endl;
     
     PDE_D.LG.dli_dx.clear();
     PDE_D.LG.d2li_d2x.clear();
@@ -344,7 +349,8 @@ void setup_Lagrange_interpolation_coefficients_O2(PDE_Stepper_Data &PDE_D, vecto
             PDE_D.LG.d2li_d2x[i][j]=d2li_d2x_xj(j, 2, &xarr[i-2], 5);
         }
 
-    cout << " setup_Lagrange_interpolation_coefficients_O2:: done " << endl;
+    if(define_PDEsolver_verbosity>0)
+        cout << " setup_Lagrange_interpolation_coefficients_O2:: done " << endl;
 
     return;
 }
@@ -612,7 +618,8 @@ void setup_Lagrange_interpolation_coefficients_O2_Int(PDE_Stepper_Data &PDE_D,
 {
     int np=xarr.size();
     
-    cout << "\n setup_Lagrange_interpolation_coefficients_O2_Int:: setting up grid " << endl;
+    if(define_PDEsolver_verbosity>0)
+        cout << "\n setup_Lagrange_interpolation_coefficients_O2_Int:: setting up grid " << endl;
     
     PDE_D.LG.dli_dx.clear();
     PDE_D.LG.d2li_d2x.clear();
@@ -662,7 +669,8 @@ void setup_Lagrange_interpolation_coefficients_O2_Int(PDE_Stepper_Data &PDE_D,
             PDE_D.LG.d2li_d2x[i][j]=d2li_d2x_xj(j, 2, &xarr[i-2], 5);
         }
     
-    cout << " setup_Lagrange_interpolation_coefficients_O2_Int:: done " << endl;
+    if(define_PDEsolver_verbosity>0)
+        cout << " setup_Lagrange_interpolation_coefficients_O2_Int:: done " << endl;
     
     return;
 }

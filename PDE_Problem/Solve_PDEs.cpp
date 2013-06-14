@@ -1,7 +1,7 @@
-//====================================================================================================================
+//==================================================================================================
 // Author Jens Chluba 
 // last modification Aug 2012
-//====================================================================================================================
+//==================================================================================================
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -10,9 +10,9 @@
 #include <stdlib.h>
 #include <sstream>
 
-//====================================================================================================================
+//==================================================================================================
 // libs and routines
-//====================================================================================================================
+//==================================================================================================
 #include "physical_consts.h"
 #include "routines.h"
 #include "Cosmos.h"
@@ -33,7 +33,7 @@
 #include "nsnd_2gamma_profiles.h"
 
 
-//====================================================================================================================
+//==================================================================================================
 using namespace std;
 using namespace HI_Transition_Data;
 using namespace Raman_profiles;
@@ -41,51 +41,50 @@ using namespace nsnd_2gamma_profiles;
 
 string HI_outputdir=COSMORECDIR+"./temp/";
 
-//====================================================================================================================
+//==================================================================================================
 //
 // flags for message output
 //
-//====================================================================================================================
+//==================================================================================================
 int show_messages=2;
 
 
-//====================================================================================================================
+//==================================================================================================
 //
 // settings for the grid
 //
-//====================================================================================================================
+//==================================================================================================
 int core_HI=25;            // points per Doppler width in the core region; 
                            // For +/- 10 xD core=25 implies 500 points (which is recommended).
 int dec_HI=50;             // points per decade; from 10^-4 --> 1 for ndec==50 gives ~ 200 points
 
 double theta_HI=0.51;
 
+int npts_2s1s=1000;        // number of points for 2s-1s two-photon part
+double xmin_glob=0.0001;
 
-//====================================================================================================================
+//==================================================================================================
 //
 // switch on/off electron scattering kernel corrections
 //
-//====================================================================================================================
+//==================================================================================================
 int solve_with_Kernel_HI=0; // ==0: no kernel correction; 
-                            // ==1: kernel correction using iteration; This runmode takes very long, and is only 
-                            //      included for completeness. The additional correction is tiny. This runmode is
-                            //      not recommended.
+                            // ==1: kernel correction using iteration; This runmode takes very long, 
+                            //      and is only included for completeness. The additional correction 
+                            //      is tiny. This runmode is not recommended.
 
 
-//====================================================================================================================
+//==================================================================================================
 //
 // setting different paramters for PDE problem regarding the HeI Singlet 2s-1s channel
 //
-//====================================================================================================================
+//==================================================================================================
 bool compute_full_2s_1s_corr=1;
 bool HI_2s_1s_corr_is_on=1;
 
-//====================================================================================================================
+//==================================================================================================
 // switch on/off HI 2s-1s channel; this overwrites all other settings for 2s-1s channel
-//====================================================================================================================
-int npts_2s1s=1000;         // number of points for 2s-1s two-photon part
-double xmin_glob=0.0001;
-
+//==================================================================================================
 void switch_off_1s_2s_correction()
 { 
     HI_switch_off_2s1s(); 
@@ -102,9 +101,9 @@ void switch_on_1s_2s_correction()
     return; 
 }
 
-//====================================================================================================================
+//==================================================================================================
 // HI 1s-2s absorption can be switched off separately with this.
-//====================================================================================================================
+//==================================================================================================
 void switch_off_1s_2s_absorption_correction()
 {
     compute_full_2s_1s_corr=0;
@@ -112,19 +111,24 @@ void switch_off_1s_2s_absorption_correction()
 }
 
 
-//====================================================================================================================
+//==================================================================================================
 //
 // important functions
 //
-//====================================================================================================================
-double HI_Dnem_for_nl_effective(double z, int n, int l){ return calc_HI_Dnem_nl_splines_effective(z, n, l); }
-double HI_pd_for_nl_effective(double z, int n, int l){ return calc_HI_pd_nl_splines_effective(z, n, l); }
+//==================================================================================================
+double HI_Dnem_for_nl_effective(double z, int n, int l)
+{ return calc_HI_Dnem_nl_splines_effective(z, n, l); }
 
-//====================================================================================================================
-double Dn_nu_ref_effective(int Lyn, double z, double Dn_ref, double pd, double nu, Cosmos &cos, Gas_of_Atoms &HIA)
+double HI_pd_for_nl_effective(double z, int n, int l)
+{ return calc_HI_pd_nl_splines_effective(z, n, l); }
+
+//==================================================================================================
+double Dn_nu_ref_effective(int Lyn, double z, double Dn_ref, double pd, double nu, 
+                           Cosmos &cos, Gas_of_Atoms &HIA)
 {
     double Tm=calc_HI_rho(z)*cos.TCMB(z);
-    double tau_d=pd*3.0*HIA.HI_Lyn_profile(Lyn).Get_A21()*pow(HIA.HI_Lyn_profile(Lyn).Get_lambda21(), 3)
+    double tau_d=pd*3.0*HIA.HI_Lyn_profile(Lyn).Get_A21()
+                   *pow(HIA.HI_Lyn_profile(Lyn).Get_lambda21(), 3)
                    *calc_HI_X1s(z)*cos.NH(z)/8.0/PI/cos.H(z);
     
     double xi_I=HIA.HI_Lyn_profile(Lyn).xi_Int(HIA.HI_Lyn_profile(Lyn).nu2x(nu, Tm), 1.0e+5, 
@@ -132,7 +136,8 @@ double Dn_nu_ref_effective(int Lyn, double z, double Dn_ref, double pd, double n
     return Dn_ref*(1.0-exp(-tau_d*xi_I));
 }
 
-double Dn_nu_ref_effective_sum(int Lyn_max, double z, double nu, double nu21, Cosmos &cos, Gas_of_Atoms &HIA)
+double Dn_nu_ref_effective_sum(int Lyn_max, double z, double nu, double nu21, 
+                               Cosmos &cos, Gas_of_Atoms &HIA)
 {
     double r=0.0;
     
@@ -145,36 +150,37 @@ double Dn_nu_ref_effective_sum(int Lyn_max, double z, double nu, double nu21, Co
 
 
 
-//====================================================================================================================
+//==================================================================================================
 //
 // different Integrals over the spectral distortion
 //
-//====================================================================================================================
+//==================================================================================================
 #include "./Solve_PDEs_integrals.cpp"
 
-//====================================================================================================================
+//==================================================================================================
 // different Grids
-//====================================================================================================================
+//==================================================================================================
 #include "./Solve_PDEs_grid.cpp"
 
-//====================================================================================================================
+//==================================================================================================
 // for xmgrace output
-//====================================================================================================================
+//==================================================================================================
 #ifdef GRACE_DEFINED
 #include "./Solve_PDEs_Grace.cpp"
 #endif
 
-//====================================================================================================================
+//==================================================================================================
 //
 // functions to setup PDESolver; this should only happen the first time
 //
-//====================================================================================================================
+//==================================================================================================
 PDE_solver_functions PDE_funcs;
 PDE_Stepper_Data PDE_D;
 bool PDE_funcs_are_set=0;
 
-//====================================================================================================================
-void arm_PDE_solver(Cosmos &cos, Gas_of_Atoms &HIA, vector<double> &xarr, vector<double> &resonances)
+//==================================================================================================
+void arm_PDE_solver(Cosmos &cos, Gas_of_Atoms &HIA, vector<double> &xarr, 
+                    vector<double> &resonances)
 {
     if(!PDE_funcs_are_set)
     {
@@ -240,8 +246,9 @@ void arm_PDE_solver(Cosmos &cos, Gas_of_Atoms &HIA, vector<double> &xarr, vector
             
             for(int k=0; k<npts; k++)
             {
-                PDE_funcs.Raman_ns_1s[ni-2].ratio[k]=sigma_ns_1s_Raman_ratio(ni, xarr[k]/xres_loc-1.0);
-                PDE_funcs.Raman_nd_1s[ni-2].ratio[k]=sigma_nd_1s_Raman_ratio(ni, xarr[k]/xres_loc-1.0);
+                double xs=xarr[k]/xres_loc-1.0;
+                PDE_funcs.Raman_ns_1s[ni-2].ratio[k]=sigma_ns_1s_Raman_ratio(ni, xs);
+                PDE_funcs.Raman_nd_1s[ni-2].ratio[k]=sigma_nd_1s_Raman_ratio(ni, xs);
             }
         }
 
@@ -254,7 +261,8 @@ void arm_PDE_solver(Cosmos &cos, Gas_of_Atoms &HIA, vector<double> &xarr, vector
         // two-photon profiles
         //=========================================================================== 
         if(Get_nmax_two_g_correction()>=2) 
-            for(int k=0; k<npts; k++) PDE_funcs.two_g_ns_1s[0].ratio[k]=sigma_2s_1s_2gamma(xarr[k]);
+            for(int k=0; k<npts; k++) 
+                PDE_funcs.two_g_ns_1s[0].ratio[k]=sigma_2s_1s_2gamma(xarr[k]);
         
         for(int ni=3; ni<=Get_nmax_two_g_correction(); ni++)
         {
@@ -262,8 +270,9 @@ void arm_PDE_solver(Cosmos &cos, Gas_of_Atoms &HIA, vector<double> &xarr, vector
         
             for(int k=0; k<npts; k++)
             {
-                PDE_funcs.two_g_ns_1s[ni-2].ratio[k]=sigma_ns_1s_2gamma_ratio(ni, xarr[k]/xres_loc);
-                PDE_funcs.two_g_nd_1s[ni-2].ratio[k]=sigma_nd_1s_2gamma_ratio(ni, xarr[k]/xres_loc);
+                double xs=xarr[k]/xres_loc;
+                PDE_funcs.two_g_ns_1s[ni-2].ratio[k]=sigma_ns_1s_2gamma_ratio(ni, xs);
+                PDE_funcs.two_g_nd_1s[ni-2].ratio[k]=sigma_nd_1s_2gamma_ratio(ni, xs);
             }
         }
 
@@ -288,7 +297,8 @@ void arm_PDE_solver(Cosmos &cos, Gas_of_Atoms &HIA, vector<double> &xarr, vector
                 PDE_funcs.Voigt_profiles_A_npnd[m][k]=Get_A_npkd(m+2, k+2);
             }
             //
-            for(; index<npts; index++) if(xarr[index]>=resonances[k]){ PDE_funcs.index_emission.push_back(index); break; }
+            for(; index<npts; index++) if(xarr[index]>=resonances[k])
+            { PDE_funcs.index_emission.push_back(index); break; }
         }   
         
         if(PDE_funcs.index_emission.size()==0) PDE_funcs.index_emission.push_back(npts);
@@ -298,8 +308,11 @@ void arm_PDE_solver(Cosmos &cos, Gas_of_Atoms &HIA, vector<double> &xarr, vector
         //=========================================================================== 
         init_PDE_Stepper_Data(PDE_D, npts);
 
-        if(solve_with_Kernel_HI==0) setup_Lagrange_interpolation_coefficients_O2(PDE_D, xarr);
-        else if(solve_with_Kernel_HI==1) setup_Lagrange_interpolation_coefficients_O2_Int(PDE_D, xarr);
+        if(solve_with_Kernel_HI==0) 
+            setup_Lagrange_interpolation_coefficients_O2(PDE_D, xarr);
+        
+        else if(solve_with_Kernel_HI==1) 
+            setup_Lagrange_interpolation_coefficients_O2_Int(PDE_D, xarr);
     
         PDE_funcs_are_set=1;
     }
@@ -309,7 +322,7 @@ void arm_PDE_solver(Cosmos &cos, Gas_of_Atoms &HIA, vector<double> &xarr, vector
     return;
 }
 
-//====================================================================================================================
+//==================================================================================================
 struct Solve_PDE_Data
 {
     int npts;
@@ -322,7 +335,7 @@ struct Solve_PDE_Data
 Solve_PDE_Data SPDE_D;
 bool SPDE_D_is_set=0;
 
-//====================================================================================================================
+//==================================================================================================
 void init_Solve_PDE_Data(int nresmax, bool bound)
 {
     //==================================================================
@@ -346,7 +359,8 @@ void init_Solve_PDE_Data(int nresmax, bool bound)
         // set resonances
         //==============================================================
         SPDE_D.nresmax=nresmax;
-        for(int n=2; n<=nresmax; n++) SPDE_D.resonances.push_back((1.0-1.0/n/n)/0.75);
+        for(int n=2; n<=nresmax; n++) 
+            SPDE_D.resonances.push_back((1.0-1.0/n/n)/0.75);
         
         //==============================================================
         // prepare grid
@@ -379,11 +393,11 @@ void init_Solve_PDE_Data(int nresmax, bool bound)
     return;
 }
 
-//====================================================================================================================
+//==================================================================================================
 //
 // to output solution for spectrum
 //
-//====================================================================================================================
+//==================================================================================================
 void output_solution(int output_count, string endname, double nu21, Cosmos &cos, Gas_of_Atoms &HIA, 
                      double zout, int nresmax, bool boundary_up)
 {
@@ -408,6 +422,8 @@ void output_solution(int output_count, string endname, double nu21, Cosmos &cos,
     double exp_xc=exp(x_c);
     double exp_xc_rho=exp(x_c/rho);
     double exp_xc_2=exp(x_c*32.0/27.0);
+    //
+    ofile << "# z= " << zout << endl;
     //
     for(int i=0; i<SPDE_D.npts; i++)
     { 
@@ -441,7 +457,7 @@ void output_solution(int output_count, string endname, double nu21, Cosmos &cos,
         << Dnu_3*pow(SPDE_D.xarr[i], 3) << " " 
         << Dnu_tot*pow(SPDE_D.xarr[i], 3) << " "
         //
-        << Dnu_2*exp_fac_Tg << " " << Dnu_3*exp_fac_Tg_2 << " " << zout << endl;
+        << Dnu_2*exp_fac_Tg << " " << Dnu_3*exp_fac_Tg_2 << endl;
         
         ofile << SPDE_D.yarr[i]/exp_fac_Te - DnL_ref << " " 
               << SPDE_D.yarr[i] << " " << SPDE_D.yarr[i]/exp_fac_Tg << " " 
@@ -466,7 +482,7 @@ void output_solution(int output_count, string endname, double nu21, Cosmos &cos,
     return;
 }
 
-//====================================================================================================================
+//==================================================================================================
 void output_distortion(string fname, double nu21, double z)
 {
     ofstream ofile(fname.c_str());
@@ -499,7 +515,7 @@ void output_distortion(string fname, double nu21, double z)
 }
 
 
-//====================================================================================================================
+//==================================================================================================
 void output_distortion(int output_count, string endname, double nu21, double z)
 {
     string fname=HI_outputdir+"Sol/sol.distortion."+int_to_string(output_count, 5)+endname;
@@ -508,11 +524,11 @@ void output_distortion(int output_count, string endname, double nu21, double z)
     return;
 }
 
-//====================================================================================================================
+//==================================================================================================
 //
 // code with effective rates
 //
-//====================================================================================================================
+//==================================================================================================
 int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z, 
                                                     vector<vector<double> > &DF_Ly_n, 
                                                     vector<vector<double> > &DF_2_gamma_vec, 
@@ -622,6 +638,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
         
     dz_out=min(dz_out, 2.0); DF_step=10;
     
+
     //=========================================================================== 
     // prepare memory for back-communication
     //=========================================================================== 
@@ -631,44 +648,36 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
     DF_2_gamma_vec.clear();
     DF_Raman_vec.clear();
     DF_nD1s_vec.clear();
-    //
-    vector<double> DPesc_dum_z;
 
     //=========================================================================== 
     // normal Ly-n integrals
     //=========================================================================== 
-    if(include_Ly_corr)
-        for(int k=0; k<=nresmax-2; k++) DF_Ly_n.push_back(DPesc_dum_z); 
-
+    if(include_Ly_corr) DF_Ly_n.resize(nresmax-1); 
+    
     //=========================================================================== 
     // only two-gamma integrals when the profile correction 
     // is switched on
     //=========================================================================== 
-    for(int k=0; k<Get_nmax_two_g_correction()-2; k++)
-    { 
-        DF_2_gamma_vec.push_back(DPesc_dum_z); 
-        DF_2_gamma_vec.push_back(DPesc_dum_z); 
-    }
+    DF_2_gamma_vec.resize(2*(Get_nmax_two_g_correction()-2));
     
     //=========================================================================== 
     // only include the Raman integrals when the profile correction 
     // is switched on
     //=========================================================================== 
-    if(Get_nmax_Raman_correction()>=2) DF_Raman_vec.push_back(DPesc_dum_z);
-    for(int k=0; k<Get_nmax_Raman_correction()-2; k++)
-    { 
-        DF_Raman_vec.push_back(DPesc_dum_z); 
-        DF_Raman_vec.push_back(DPesc_dum_z); 
-    }
+    DF_Raman_vec.resize(2*(Get_nmax_Raman_correction()-2)+1);
+    if(Get_nmax_Raman_correction()<2) DF_Raman_vec.clear();
     
     //=========================================================================== 
     // nD-1s quadrupole lines
     //=========================================================================== 
-    if(include_nD1s_corr)
-        for(int k=0; k<Get_nmax_two_g_correction()-2; k++) 
-            DF_nD1s_vec.push_back(DPesc_dum_z); 
+    if(include_nD1s_corr) DF_nD1s_vec.resize(Get_nmax_two_g_correction()-2); 
+
     
+    //=========================================================================== 
+    // load precomputed solutions
+    //=========================================================================== 
     compute_Xi_HI_splines(zs, ze, HIA, HI_Solution);
+    
     set_up_splines_for_HI_pd_Rp_effective(ze, zs, cos, HIA, HI_Solution);    
     
     //=========================================================================== 
@@ -691,9 +700,12 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
 
     if(output_2gR)
     {
-        fname=HI_outputdir+"DPesc/DF.Ly_n"+endname;
-        Ly_n_file.open(fname.c_str());
-        Ly_n_file.precision(8);
+        if(include_Ly_corr) 
+        {
+            fname=HI_outputdir+"DPesc/DF.Ly_n"+endname;
+            Ly_n_file.open(fname.c_str());
+            Ly_n_file.precision(8);
+        }
 
         fname=HI_outputdir+"DPesc/DF.2_gamma"+endname;
         two_g_file.open(fname.c_str());
@@ -887,19 +899,23 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
                 if(output_2gR)
                 {
                     Ly_n_file << zout << " ";
-                    for(int m=0; m<(int)DF_Ly_n.size(); m++) Ly_n_file << DF_Ly_n[m].back() << " ";
+                    for(int m=0; m<(int)DF_Ly_n.size(); m++) 
+                        Ly_n_file << DF_Ly_n[m].back() << " ";
                     Ly_n_file << endl;
 
                     two_g_file << zout << " ";
-                    for(int m=0; m<(int)DF_2_gamma_vec.size(); m++) two_g_file << DF_2_gamma_vec[m].back() << " ";
+                    for(int m=0; m<(int)DF_2_gamma_vec.size(); m++) 
+                        two_g_file << DF_2_gamma_vec[m].back() << " ";
                     two_g_file << endl;
-                    //
+                    
                     Raman_file << zout << " ";
-                    for(int m=0; m<(int)DF_Raman_vec.size(); m++) Raman_file << DF_Raman_vec[m].back() << " ";
+                    for(int m=0; m<(int)DF_Raman_vec.size(); m++) 
+                        Raman_file << DF_Raman_vec[m].back() << " ";
                     Raman_file << endl;
 
                     nD1s_file << zout << " ";
-                    for(int m=0; m<(int)DF_nD1s_vec.size(); m++) nD1s_file << DF_nD1s_vec[m].back() << " ";
+                    for(int m=0; m<(int)DF_nD1s_vec.size(); m++) 
+                        nD1s_file << DF_nD1s_vec[m].back() << " ";
                     nD1s_file << endl;
                 }
             }
@@ -928,7 +944,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
     if(output_DI1 && HI_2s_1s_corr_is_on) Ifile.close();
     if(output_2gR)
     {
-        Ly_n_file.close();
+        if(include_Ly_corr) Ly_n_file.close();
         two_g_file.close();
         Raman_file.close();
         nD1s_file.close();
@@ -944,4 +960,5 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
     return 0;
 }
 
-
+//==================================================================================================
+//==================================================================================================

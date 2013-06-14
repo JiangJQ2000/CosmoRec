@@ -68,7 +68,6 @@
 #include "get_effective_rates.HI.h"
 #include "get_effective_rates.HeI.h"
 
-
 //===========================================================================================================
 // namespaces that are used
 //===========================================================================================================
@@ -80,7 +79,7 @@ using namespace ODE_solver_Rec;
 void print_message(string mess);
 
 //===========================================================================================================
-// these are several Module (i.e. plugin) that are directly loaded when compiling. If these are changes one 
+// these are several Modules (i.e. plugins) that are directly loaded when compiling. If these are changed one 
 // should type "make clean" before "make"
 //===========================================================================================================
 #include "./Modules/global_variables.cpp"
@@ -756,10 +755,11 @@ int CosmoRec(const int runmode, const double runpars[5],
     //======================================================================
     // settings for non-default cases
     //======================================================================
-    if((int)runpars[1]==-1){ nShells=4; ntg_max=4; nR_max=3; nShellsHeI=2; nHeFeedback=-2; flag_HI_absorption=1; }
+    if((int)runpars[1]==-1)
+    { nShells=4; ntg_max=4; nR_max=3; nShellsHeI=2; nHeFeedback=-2; flag_HI_absorption=1; }
     else if((int)runpars[1]==1){ nShells=4; ntg_max=4; nR_max=3; }
     else if((int)runpars[1]==2){ nShells=10; ntg_max=8; nR_max=7; nShellsHeI=3; nHeFeedback=0; }
-    else if((int)runpars[1]==3){ nShells=10; ntg_max=8; nR_max=7; nShellsHeI=10; nHeFeedback=-10; } 
+    else if((int)runpars[1]==3){ nShells=10; ntg_max=8; nR_max=7; nShellsHeI=5; nHeFeedback=-5; } 
     //======================================================================
     // runmode with helium diffusion module
     //======================================================================

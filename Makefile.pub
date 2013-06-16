@@ -2,7 +2,7 @@
 # rules
 #============================================================================================
 all:
-    make tidy; make wipeDS; \
+	make tidy; make wipeDS; \
     rm -rf ./CosmoRec.vX; rm -rf ./CosmoRec.vX.tar.gz; \
     mkdir ./CosmoRec.vX; \
     mkdir ./CosmoRec.vX/outputs; \

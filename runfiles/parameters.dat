@@ -60,14 +60,14 @@
 0         == Feedback in Helium levels (positive: no HI abs between the lines
 				 	negative: with HI abs between the lines)
 
-1	  == run PDE part (1) or not (0). In the latter case only ODE system will be solved.
-	     If this flag is set to 0 only the initial calculation without transfer corrections
-	     will be performed
-2 	  == correction to 2s-1s channel; 0: no corr; 1: stim. 2s-1s; 2: full correction;
+1	      == run PDE part (1) or not (0). In the latter case only ODE system will be solved.
+             If this flag is set to 0 only the initial calculation without transfer corrections
+             will be performed
+2         == correction to 2s-1s channel; 0: no corr; 1: stim. 2s-1s; 2: full correction;
 3         == nS for corrections because of two-photon decays. 
-	     If set to <3 then only the diffusion correction is included.
-2	  == nS for corrections because of Raman-scattering
-	     If set to <2 then the 1+1 Raman rates are not corrected.
+             If set to <3 then only the diffusion correction is included.
+2         == nS for corrections because of Raman-scattering
+             If set to <2 then the 1+1 Raman rates are not corrected.
 
 ./outputs/ == path for output
 .dat       == addition to name of files at the very end

@@ -58,7 +58,7 @@
 0         == HI absorption during HeI-recombination (0: off; 1: on; 2: on with Diffusion fudge) 
 0         == spin forbidden transitions for HeI-recombination (0: off; 1: on) 
 0         == Feedback in Helium levels (positive: no HI abs between the lines
-				 	negative: with HI abs between the lines)
+                                        negative: with HI abs between the lines)
 
 1	      == run PDE part (1) or not (0). In the latter case only ODE system will be solved.
              If this flag is set to 0 only the initial calculation without transfer corrections

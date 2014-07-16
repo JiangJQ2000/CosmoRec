@@ -9,7 +9,7 @@ void set_detailed_name()
     detailedname+="nHe_"+int_to_string(nShellsHeI)+".";
     //
     if(flag_spin_forbidden==0) detailedname+="no_Intercomb.";
-    if(set_HeI_Quadrupole_lines) detailedname+="Q_lines.";
+    if(set_HeI_Quadrupole_lines) detailedname+="HeI_Q.";
     //
     if(Diffusion_correction_HeI) detailedname+="HeI_diff.";
     else

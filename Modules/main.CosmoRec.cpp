@@ -3,12 +3,12 @@ void print_var_change_message(string mess, double zs)
 {
     if(show_CosmoRec_mess<2) return;
     
-    cout << "\n ********************************************************************************************************** " << endl;
-    cout << " *                                                                                                        " << endl;
+    cout << "\n " << setfill('*') << setw(100) << "*" << endl;  
+    cout << " * " << endl;
     cout << " * " << mess << " " << zs << endl;
-    cout << " *                                                                                                        " << endl;
-    cout << " ********************************************************************************************************** " << endl;
-    
+    cout << " * " << endl;
+    cout << " " << setfill('*') << setw(100) << "*" << endl << endl;   
+
     return;
 }
 
@@ -108,7 +108,7 @@ int Xe_frac_effective_rates()
         {
             zs=zarr[i-1]; ze=zarr[i];
             
-            if( (zs<200.0 || parameters.fHe-HeI_Atoms.Xi(0)<=5.0e-7) && flag_He==1)
+            if( (zs<200.0 || parameters.fHe-HeI_Atoms.Xi(0)<=Xi_HeI_switch) && flag_He==1)
             { 
                 print_var_change_message("Xe_frac :: switching off helium at XHeII =", parameters.fHe-HeI_Atoms.Xi(0));
                 flag_He=0;
@@ -238,6 +238,4 @@ int Xe_frac_effective_rates()
 //======================================================================================
 int compute_history_with_effective_rates()
 { return Xe_frac_effective_rates(); }
-
-
 

@@ -212,5 +212,5 @@ int main(int narg, char *args[])
 { 
     return CosmoRec(narg, args); 
 //    return main_batch_mode();
-    return main_random();
+//    return main_random();
 }

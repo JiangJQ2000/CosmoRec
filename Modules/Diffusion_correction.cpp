@@ -1,8 +1,8 @@
-//==========================================================================================================
+//==================================================================================================
 //
 // Module to account for the diffusion corrections to escape probabilities
 //
-//==========================================================================================================
+//==================================================================================================
 int DPesc_splines_are_setup=0;
 
 struct DPesc_splines_Data
@@ -16,7 +16,7 @@ struct DPesc_splines_Data
 
 DPesc_splines_Data DPesc_splines_Data_DF[100];
 
-//==========================================================================================================
+//==================================================================================================
 int index_2g_spline;
 int index_R_spline;
 int index_Ly_n_spline;
@@ -25,22 +25,22 @@ int index_all_spline;
 
 #define DF_SPLINES
 
-//==========================================================================================================
+//==================================================================================================
 //
 // for module to account for the 2s-1s corrections
 //
-//==========================================================================================================
-int induced_flag=0;                 // is set according to parameter file (see ./Modules/aux_functions.cpp).
+//==================================================================================================
+int induced_flag=0;          // is set according to parameter file (see ./Modules/aux_functions.cpp)
 bool DI1_2s_correction_on=0;
 
 
-//==========================================================================================================
+//==================================================================================================
 // 
 // This part is just to set up interpolations for the computed correction functions from the 
 // diffusion code. Splines are used currently, but linear interpolation might work better 
 // when sampling in redshift is sparser.
 //
-//==========================================================================================================
+//==================================================================================================
 void setup_DF_spline_data(int n, vector<double> &DPesc_vec_z, vector<double> &DPesc_vec)
 {
     int nz=DPesc_vec_z.size();
@@ -61,8 +61,8 @@ void setup_DF_spline_data(int n, vector<double> &DPesc_vec_z, vector<double> &DP
     //
     else update_spline_coeffies_JC(DPesc_splines_Data_DF[n].memindex, nz, za, ya);                
 
-    DPesc_splines_Data_DF[n].zmin=max(400.0, DPesc_vec_z[nz-1]);
-    DPesc_splines_Data_DF[n].zmax=min(2000.0, DPesc_vec_z[0]);
+    DPesc_splines_Data_DF[n].zmin=max(Diff_corr_zmin, DPesc_vec_z[nz-1]);
+    DPesc_splines_Data_DF[n].zmax=min(Diff_corr_zmax, DPesc_vec_z[0]);
     DPesc_splines_Data_DF[n].DPmin=DPesc_splines_Data_DF[n].DPmax=0.0;
     
     delete [] za;
@@ -71,7 +71,7 @@ void setup_DF_spline_data(int n, vector<double> &DPesc_vec_z, vector<double> &DP
     return;
 }
 
-//==========================================================================================================
+//==================================================================================================
 void setup_DF_spline_data(vector<double> &DF_vec_z, 
                           vector<vector<double> > &DF_Ly_n_vec, 
                           vector<vector<double> > &DF_2g_vec, 
@@ -104,11 +104,11 @@ void setup_DF_spline_data(vector<double> &DF_vec_z,
     return;
 }
 
-//==========================================================================================================
+//==================================================================================================
 //
 // n-point interpolation option
 //
-//==========================================================================================================
+//==================================================================================================
 void setup_DF_n_point_data(int n, vector<double> &DPesc_vec_z, vector<double> &DPesc_vec)
 {
     int nz=DPesc_vec_z.size();
@@ -116,15 +116,15 @@ void setup_DF_n_point_data(int n, vector<double> &DPesc_vec_z, vector<double> &D
     DPesc_splines_Data_DF[n].za=DPesc_vec_z;
     DPesc_splines_Data_DF[n].ya=DPesc_vec;
     DPesc_splines_Data_DF[n].memindex=n;
-    DPesc_splines_Data_DF[n].zmin=max(400.0, DPesc_vec_z[nz-1]);
-    DPesc_splines_Data_DF[n].zmax=min(2000.0, DPesc_vec_z[0]);
+    DPesc_splines_Data_DF[n].zmin=max(Diff_corr_zmin, DPesc_vec_z[nz-1]);
+    DPesc_splines_Data_DF[n].zmax=min(Diff_corr_zmax, DPesc_vec_z[0]);
     DPesc_splines_Data_DF[n].DPmin=DPesc_splines_Data_DF[n].DPmax=0.0;
     DPesc_splines_Data_DF[n].accel=0;
     
     return;
 }
 
-//==========================================================================================================
+//==================================================================================================
 void setup_DF_n_point_data(vector<double> &DF_vec_z, 
                            vector<vector<double> > &DF_Ly_n_vec, 
                            vector<vector<double> > &DF_2g_vec, 
@@ -157,11 +157,11 @@ void setup_DF_n_point_data(vector<double> &DF_vec_z,
     return;
 }
 
-//==========================================================================================================
+//==================================================================================================
 //
 // Setup interpolation functions for rate corrections
 //
-//==========================================================================================================
+//==================================================================================================
 void setup_DF_interpol_data(vector<double> &DF_vec_z, 
                             vector<vector<double> > &DF_Ly_n_vec, 
                             vector<vector<double> > &DF_2g_vec, 
@@ -178,11 +178,11 @@ void setup_DF_interpol_data(vector<double> &DF_vec_z,
     return;
 }
 
-//==========================================================================================================
+//==================================================================================================
 //
 // mapping of functions
 //
-//==========================================================================================================
+//==================================================================================================
 double interpolate_DF(double z, int k)
 {
     if(z<=DPesc_splines_Data_DF[k].zmin) return DPesc_splines_Data_DF[k].DPmin;
@@ -199,19 +199,20 @@ double interpolate_DF(double z, int k)
 #endif
 }
 
-//==========================================================================================================
+//==================================================================================================
 double DF_2g_spline(int i, double z){ return interpolate_DF(z, index_2g_spline+i); }
 double DF_R_spline(int i, double z){ return interpolate_DF(z, index_R_spline+i); }
 double DF_Ly_n_spline(int i, double z){ return interpolate_DF(z, index_Ly_n_spline+i); }
 double DF_nD1s_spline(int i, double z){ return interpolate_DF(z, index_nD1s_spline+i); }
 double DI1_2s_spline(double z){ return interpolate_DF(z, 0); }
 
-//==========================================================================================================
+//==================================================================================================
 //
 // correction to 2s-1s two-photon channel
 //
-//==========================================================================================================
-void evaluate_HI_DI1_DI2_correction(double z, double X1s, double X2s, double nu21, double Tg, double *g)
+//==================================================================================================
+void evaluate_HI_DI1_DI2_correction(double z, double X1s, double X2s, double nu21, 
+                                    double Tg, double *g)
 {
     //    return;
     
@@ -228,11 +229,11 @@ void evaluate_HI_DI1_DI2_correction(double z, double X1s, double X2s, double nu2
     return;
 }
 
-//==========================================================================================================
+//==================================================================================================
 //
 // Ly-n 1+1 photon correction
 //
-//==========================================================================================================
+//==================================================================================================
 double compute_DR_Ly_n_func(int i, double z, double X1s, double Tg, Gas_of_Atoms &HIA, int ni)
 {
     double DRij=DF_Ly_n_spline(i, z)*( HIA.X(ni, 1)/X1s/3.0-exp(-const_h_kb*HIA.Level(ni, 1).Get_Dnu_1s()/Tg) );
@@ -240,7 +241,8 @@ double compute_DR_Ly_n_func(int i, double z, double X1s, double Tg, Gas_of_Atoms
     return DRij;
 }
 
-void evaluate_HI_Diffusion_correction_Ly_n(double z, Gas_of_Atoms &HIA, double NH, double H_z, double Tg, double *g)
+void evaluate_HI_Diffusion_correction_Ly_n(double z, Gas_of_Atoms &HIA, 
+                                           double NH, double H_z, double Tg, double *g)
 {
     if(index_Ly_n_spline==index_nD1s_spline) return;
     
@@ -260,43 +262,11 @@ void evaluate_HI_Diffusion_correction_Ly_n(double z, Gas_of_Atoms &HIA, double N
     return;
 }
 
-//==========================================================================================================
-// 
-// nD-1s quadrupole lines 1+1 photon correction (added June 2011)
-//
-//==========================================================================================================
-double compute_DR_nD1s_func(int i, double z, double X1s, double Tg, Gas_of_Atoms &HIA, int ni)
-{
-    double DRij=DF_nD1s_spline(i, z)*( HIA.X(ni, 2)/X1s/5.0-exp(-const_h_kb*HIA.Level(ni, 1).Get_Dnu_1s()/Tg) );
-//    cout << z << " (ni, li) " << ni << " " << 2 << " nD-1s " << DRij << endl;    
-    return DRij;
-}
-
-void evaluate_HI_Diffusion_correction_nD1s(double z, Gas_of_Atoms &HIA, double NH, double H_z, double Tg, double *g)
-{
-    if(index_nD1s_spline==index_all_spline) return;
-    
-    double DRij;
-    double X1s=HIA.X(1, 0);
-    int index=0;
-    int nmax=8;
-    
-    for(int ni=3; ni<=nmax && index+index_nD1s_spline<index_all_spline; ni++)
-    {
-        DRij=compute_DR_nD1s_func(index, z, X1s, Tg, HIA, ni);
-        g[0]+=-DRij;                          // remove electron from lower level
-        g[HIA.Get_Level_index(ni, 2)]+= DRij; // add it to -state
-        index++;
-    }
-    
-    return;
-}
-
-//==========================================================================================================
+//==================================================================================================
 //
 // two-photon correction
 //
-//==========================================================================================================
+//==================================================================================================
 double compute_DR_2g_func(int i, double z, double X1s, double Tg, Gas_of_Atoms &HIA, int ni, int li)
 {
     double DRij=DF_2g_spline(i, z)*( HIA.X(ni, li)/X1s/(2.0*li+1.0)-exp(-const_h_kb*HIA.Level(ni, li).Get_Dnu_1s()/Tg) );
@@ -304,7 +274,8 @@ double compute_DR_2g_func(int i, double z, double X1s, double Tg, Gas_of_Atoms &
     return DRij;
 }
 
-void evaluate_HI_Diffusion_correction_2_gamma(double z, Gas_of_Atoms &HIA, double NH, double H_z, double Tg, double *g)
+void evaluate_HI_Diffusion_correction_2_gamma(double z, Gas_of_Atoms &HIA, 
+                                              double NH, double H_z, double Tg, double *g)
 {
     if(index_2g_spline==index_R_spline) return;
 
@@ -326,11 +297,11 @@ void evaluate_HI_Diffusion_correction_2_gamma(double z, Gas_of_Atoms &HIA, doubl
     return;
 }
 
-//==========================================================================================================
+//==================================================================================================
 //
 // Raman correction
 //
-//==========================================================================================================
+//==================================================================================================
 double compute_DR_R_func(int i, double z, double X1s, double Tg, Gas_of_Atoms &HIA, int ni, int li)
 {
     double DRij=DF_R_spline(i, z)*( HIA.X(ni, li)/X1s/(2.0*li+1.0)-exp(-const_h_kb*HIA.Level(ni, li).Get_Dnu_1s()/Tg) );
@@ -338,7 +309,8 @@ double compute_DR_R_func(int i, double z, double X1s, double Tg, Gas_of_Atoms &H
     return DRij;
 }
 
-void evaluate_HI_Diffusion_correction_R(double z, Gas_of_Atoms &HIA, double NH, double H_z, double Tg, double *g)
+void evaluate_HI_Diffusion_correction_R(double z, Gas_of_Atoms &HIA, 
+                                        double NH, double H_z, double Tg, double *g)
 {
     if(index_R_spline==index_Ly_n_spline) return;
     
@@ -360,13 +332,47 @@ void evaluate_HI_Diffusion_correction_R(double z, Gas_of_Atoms &HIA, double NH, 
     return;
 }
 
-//==========================================================================================================
-//
-// change this part to switch play with the different correction terms; if the Ly-n correction is included
-// the Raman and two-photon correction should not be activated.
+//==================================================================================================
 // 
-//==========================================================================================================
-void evaluate_HI_Diffusion_correction(double z, Gas_of_Atoms &HIA, double NH, double H_z, double Tg, double *g)
+// nD-1s quadrupole lines 1+1 photon correction (added June 2011)
+//
+//==================================================================================================
+double compute_DR_nD1s_func(int i, double z, double X1s, double Tg, Gas_of_Atoms &HIA, int ni)
+{
+    double DRij=DF_nD1s_spline(i, z)*( HIA.X(ni, 2)/X1s/5.0-exp(-const_h_kb*HIA.Level(ni, 1).Get_Dnu_1s()/Tg) );
+    //    cout << z << " (ni, li) " << ni << " " << 2 << " nD-1s " << DRij << endl;    
+    return DRij;
+}
+
+void evaluate_HI_Diffusion_correction_nD1s(double z, Gas_of_Atoms &HIA, 
+                                           double NH, double H_z, double Tg, double *g)
+{
+    if(index_nD1s_spline==index_all_spline) return;
+    
+    double DRij;
+    double X1s=HIA.X(1, 0);
+    int index=0;
+    int nmax=8;
+    
+    for(int ni=3; ni<=nmax && index+index_nD1s_spline<index_all_spline; ni++)
+    {
+        DRij=compute_DR_nD1s_func(index, z, X1s, Tg, HIA, ni);
+        g[0]+=-DRij;                          // remove electron from lower level
+        g[HIA.Get_Level_index(ni, 2)]+= DRij; // add it to -state
+        index++;
+    }
+    
+    return;
+}
+
+//==================================================================================================
+//
+// change this part to switch play with the different correction terms; if the Ly-n correction is 
+// included the Raman and two-photon correction should not be activated.
+// 
+//==================================================================================================
+void evaluate_HI_Diffusion_correction(double z, Gas_of_Atoms &HIA, 
+                                      double NH, double H_z, double Tg, double *g)
 {
     evaluate_HI_Diffusion_correction_2_gamma(z, HIA, NH, H_z, Tg, g);
     evaluate_HI_Diffusion_correction_R      (z, HIA, NH, H_z, Tg, g);
@@ -376,5 +382,5 @@ void evaluate_HI_Diffusion_correction(double z, Gas_of_Atoms &HIA, double NH, do
     return;
 }
 
-//==========================================================================================================
-//==========================================================================================================
+//==================================================================================================
+//==================================================================================================

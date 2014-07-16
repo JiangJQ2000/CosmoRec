@@ -5,6 +5,7 @@
 // purpose: to access main CosmoRec code
 //
 //===========================================================================================================
+// June  18th, 2012: added version to communicate Hubble using pointer
 // June   8th, 2012: added version to communicate Hubble 
 // March 23rd, 2012: added runmode with helium radiative transfer module;
 // Feb   16th, 2012: added module to load precomputed recombination history (useful for runs with Camb)
@@ -76,6 +77,11 @@ using namespace ODE_HI_effective;
 using namespace ODE_solver_Rec;
 
 //===========================================================================================================
+// level of verbosity
+//===========================================================================================================
+int show_CosmoRec_mess=0;
+
+//===========================================================================================================
 void print_message(string mess);
 
 //===========================================================================================================
@@ -121,16 +127,13 @@ void print_message(string mess)
 {
     if(show_CosmoRec_mess>=0)
     {
-        cout << "\n ====================================================="
-             << "===================================================== " << endl;
+        cout << "\n " << setfill('=') << setw(100) << "=" << endl;  
         cout << " || " << mess << endl;
-        cout << " ====================================================="
-             << "===================================================== " << endl << endl;   
+        cout << " " << setfill('=') << setw(100) << "=" << endl << endl;   
     }
     
     return;
 }
-
 
 //===========================================================================================================
 //
@@ -141,7 +144,8 @@ void print_message(string mess)
 //===========================================================================================================
 // initialization
 //===========================================================================================================
-void read_startup_data_RECFAST(string filename, Parameters_form_initfile &inparams, Cosmos &cosmos, int corr_fac)
+void read_startup_data_RECFAST(string filename, Parameters_form_initfile &inparams, 
+                               Cosmos &cosmos, int corr_fac)
 {
     ifstream paramfile(filename.c_str());
     if(!paramfile) { cerr << " Error opening parameter file. Exiting. " << endl; exit(1); }
@@ -338,8 +342,8 @@ int CosmoRec()
             compute_DPesc_with_diffusion_equation_effective(DF_vec_z, DF_Ly_n, 
                                                             DF_2_gamma_vec, DF_Raman_vec, 
                                                             DF_nD1s_vec, DI1_2s_vec, 
-                                                            min(2400.0, parameters.zstart/1.002), 
-                                                            max(400.0, parameters.zend*1.002), 
+                                                            min(Diff_corr_zmax*1.25, parameters.zstart/1.002), 
+                                                            max(Diff_corr_zmin, parameters.zend*1.002), 
                                                             ntg_max, nR_max, cosmos, 
                                                             Hydrogen_Atoms, 
                                                             pass_on_the_Solution_CosmoRec,
@@ -672,7 +676,7 @@ int CosmoRec(const int runmode, const double runpars[5],
     //======================================================================
     // switch off messages 
     //======================================================================
-    show_CosmoRec_mess=3;
+    show_CosmoRec_mess=-1;
 
     //======================================================================
     // switch on/off outputs 
@@ -691,7 +695,7 @@ int CosmoRec(const int runmode, const double runpars[5],
     //======================================================================
     // general setup 
     //======================================================================
-    params[0]=5000; // number of redshift points for CosmoRec computation;
+    params[0]=3000; // number of redshift points for CosmoRec computation;
                     // for higher accuracy this number should be increased;
                     // a smaller number than ~750 is not recommended.
     params[1]=3000; // starting redshift
@@ -763,7 +767,8 @@ int CosmoRec(const int runmode, const double runpars[5],
     //======================================================================
     // runmode with helium diffusion module
     //======================================================================
-    else if((int)runpars[1]==4){ nShells=4; ntg_max=4; nR_max=3; nShellsHeI=5; nHeFeedback=-5; flag_HI_absorption=3; }      
+    else if((int)runpars[1]==4)
+    { nShells=4; ntg_max=4; nR_max=3; nShellsHeI=5; nHeFeedback=-5; flag_HI_absorption=3; }      
     
     //======================================================================
     if(runmode==1) Diffusion_flag=0;

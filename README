@@ -44,22 +44,6 @@
 
 
 //==================================================================================================
-//==================================================================================================
-//==================================================================================================
-// 							   !!!CAUTION!!!
-//
-// CosmoRec is currently under DEVELOPMENT!!! This implies that parts of the code are still rather 
-// clunky and will be modified in the near future. Furthermore, we are currently working on the 
-// final recombination code comparison. Also, the uncertainties caused by collisional processes  
-// are still under investigation. Until AFTER the code comparison the results obtained with CosmoRec 
-// should be considered as preliminary!!!
-//
-//==================================================================================================
-//==================================================================================================
-//==================================================================================================
-
-
-//==================================================================================================
 //
 // Update (XXX | CosmoRec v2.0b) [main implementations: 30.03.2011]
 // 
@@ -103,6 +87,16 @@
 //   quadrupole lines missed one important set of rates.
 // - helium feedback in the analytic model of Chluba & Sunyaev, MNRAS, 402, 1221Ð1248 (2010) can 
 //   now be included for up to 10 shells.
+//
+//--------------------------------------------------------------------------------------------------
+//
+// Update (26.07.2012 | CosmoRec v1.4.2b)
+// 
+// - updated helium atom & setup routines
+// - added possibility to set Hubble function from CAMB using function pointer
+// - fixed small problem with gsl-1.15 compatibility of spline routine
+// - added HeI rates for nHe=2 to lite-version (CAMB compatibility of lite-version)
+// - additional cosmetic changes to some of the routines
 //
 //--------------------------------------------------------------------------------------------------
 //
@@ -177,7 +171,7 @@
 //
 // Update (23.11.2010 | CosmoRec v1.2b)
 // 
-// - fixed additional memory leak using 'valgrind'
+// - fixed additional memory leaks using 'valgrind'
 // - further improved module accounting for HI continuum absorption of HeI photons. In particular 
 //   the code should now run 
 //   for a wide range of input parameters, without calling DPesc integrals explicitly.
@@ -241,7 +235,7 @@ Collisional processes were not taken into account thus far. For a more detailed 
 recombination physics see Sunyaev & Chluba 2009 and/or Rubino-Martin et al. 2010. CosmoRec was 
 introduced in Chluba & Thomas, 2010.
 
-The current version of 'CosmoRec' in batch mode runs within 1.3 seconds for standard settings. 
+The current version of 'CosmoRec' in batch mode runs within 1.3 seconds for default settings. 
 This performance was partially achieved using the effective multi-level approach, proposed by 
 Ali-Haimoud & Hirata 2010. Effective rates for both hydrogen and helium were implemented. With 
 the startup file it is currently possible to include the effective rates for up to 500 shells 

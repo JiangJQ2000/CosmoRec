@@ -55,8 +55,7 @@ struct PDE_solver_functions
     double (* HI_Xnl)(double z, int n, int l);
     double (* HI_Dnem_nl)(double z, int n, int l);
     double (* HI_pd_nl)(double z, int n, int l);
-    
-    
+        
     vector<int> index_emission; // for given n this is the index for 
                                 // two-photon emission & Raman-absorption
     int index_2;

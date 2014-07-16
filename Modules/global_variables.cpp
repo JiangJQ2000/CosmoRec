@@ -21,14 +21,9 @@ vector<vector<double> > pass_on_the_Solution_CosmoRec;
 vector<vector<double> > pass_on_the_Solution_CosmoRec_HeI; //JF 
 
 //==================================================================================================
-// level of verbosity
-//==================================================================================================
-int show_CosmoRec_mess=0;
-
-//==================================================================================================
 // output files
 //==================================================================================================
-bool write_populations=1;   // output solution for the populations of the resolved states
+bool write_populations=0;   // output solution for the populations of the resolved states
 bool write_Xe_Te_sol=1;     // output Xe & Te
 bool write_HI_distortion=1; // output approximate HI distortion (added July 2nd 2012)
 
@@ -43,6 +38,7 @@ string Rec_database_path=COSMORECDIR+COSMOREC_BASE_PATH;
 int flag_compute_Recfast_part=0;
 double ze_Recfast=0.0;
 int nz_Recfast_part=100;
+double Xi_HeI_switch=1.0e-7;
 
 //==================================================================================================
 // Variables for module that accounts for the diffusion corrections to escape probabilities
@@ -53,6 +49,9 @@ int Diffusion_flag;
 //
 int Diff_iteration_max=2, Diff_iteration_min=0;
 int iteration_count=Diff_iteration_min;
+// 
+double Diff_corr_zmin=500.0;
+double Diff_corr_zmax=2000.0;
 
 //==================================================================================================
 // Helium diffusion correction (added Feb-May 2011 by Jens Chluba & Jeffrey Fung)

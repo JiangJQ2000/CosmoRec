@@ -1,9 +1,10 @@
 //==================================================================================================
 //
 // Author Jens Chluba July 2010
-// last modification: Feb 2011 
+// last modification:  Aug 2012
 //
 //==================================================================================================
+// 27.06.2011: added PDE setup for integro-differential equation systems
 // 24.02.2011: added PDE solver with Integral part as correction 
 // 01.02.2011: added possibility to take integral part over +/-2 off-diags into account
 
@@ -14,6 +15,7 @@
 // du/dt = A(x,t) d^2u/dx^2 + B(x,t) du/dx + C(x,t) u + D(x,t)
 //
 // The mesh of grid-points given by xi[...] is not assumed to be uniform.
+//
 //==================================================================================================
 
 #include <iostream>
@@ -174,6 +176,13 @@ double d2li_d2x_xj(int i, int j, double *xarr, int np)
     return d2l_d2x;
 }
 
+//--------------------------------------------------------------------------------------------------
+void print_mess_PDE(string mess)
+{
+    if(define_PDEsolver_verbosity>0) cout << mess << endl;   
+    return;
+}
+
 //==================================================================================================
 //
 // 1. order scheme
@@ -187,8 +196,7 @@ void setup_Lagrange_interpolation_coefficients_O1(PDE_Stepper_Data &PDE_D, vecto
 {
     int np=xarr.size();
     
-    if(define_PDEsolver_verbosity>0)
-        cout << "\n setup_Lagrange_interpolation_coefficients_O1:: setting up grid " << endl;
+    print_mess_PDE("\n setup_Lagrange_interpolation_coefficients_O1:: setting up grid ");
     
     PDE_D.LG.dli_dx.clear();
     PDE_D.LG.d2li_d2x.clear();
@@ -216,8 +224,7 @@ void setup_Lagrange_interpolation_coefficients_O1(PDE_Stepper_Data &PDE_D, vecto
             PDE_D.LG.d2li_d2x[i][j]=d2li_d2x_xj(j, 1, &xarr[i-1], 3);
         }
     
-    if(define_PDEsolver_verbosity>0)
-        cout << " setup_Lagrange_interpolation_coefficients_O1:: done " << endl;
+    print_mess_PDE(" setup_Lagrange_interpolation_coefficients_O1:: done ");
 
     return;
 }
@@ -230,7 +237,7 @@ void compute_lambda_i_01(double dz, int i, vector<double> &Ai,
                          vector<double> &Bi, vector<double> &Ci, 
                          PDE_Stepper_Data &PDE_D, double *lambda)
 {       
-    for(int j=0; j<3; j++) lambda[j]=PDE_D.LG.d2li_d2x[i][j]*Ai[i] +PDE_D.LG.dli_dx[i][j]*Bi[i];
+    for(int j=0; j<3; j++) lambda[j]=PDE_D.LG.d2li_d2x[i][j]*Ai[i]+PDE_D.LG.dli_dx[i][j]*Bi[i];
     lambda[1]+=Ci[i];
     for(int j=0; j<3; j++) lambda[j]*=-dz;
     lambda[1]+=1.0;
@@ -300,8 +307,7 @@ void setup_Lagrange_interpolation_coefficients_O2(PDE_Stepper_Data &PDE_D, vecto
 {
     int np=xarr.size();
 
-    if(define_PDEsolver_verbosity>0)
-        cout << "\n setup_Lagrange_interpolation_coefficients_O2:: setting up grid " << endl;
+    print_mess_PDE("\n setup_Lagrange_interpolation_coefficients_O2:: setting up grid ");
     
     PDE_D.LG.dli_dx.clear();
     PDE_D.LG.d2li_d2x.clear();
@@ -349,8 +355,7 @@ void setup_Lagrange_interpolation_coefficients_O2(PDE_Stepper_Data &PDE_D, vecto
             PDE_D.LG.d2li_d2x[i][j]=d2li_d2x_xj(j, 2, &xarr[i-2], 5);
         }
 
-    if(define_PDEsolver_verbosity>0)
-        cout << " setup_Lagrange_interpolation_coefficients_O2:: done " << endl;
+    print_mess_PDE(" setup_Lagrange_interpolation_coefficients_O2:: done ");
 
     return;
 }
@@ -378,10 +383,13 @@ void compute_lambda_i_02(const double dz, const int i, const int center,
 // 24.02.2011: This routine was optimized to reduce the number of operations per call
 //
 //-------------------------------------------------------------------------------------
-void Step_PDE_O2t(double theta, double zs, double ze, const vector<double> &xi, vector<double> &yi, 
+void Step_PDE_O2t(double theta, double zs, double ze, 
+                  const vector<double> &xi, vector<double> &yi, 
                   double yi_low, double yi_up, PDE_Stepper_Data &PDE_D,
-                  void (*func)(double z, const vector<double> &xi, vector<double> &Ai, 
-                               vector<double> &Bi, vector<double> &Ci, vector<double> &Di))
+                  void (*func)(double z, const vector<double> &xi, 
+                               vector<double> &Ai, vector<double> &Bi, 
+                               vector<double> &Ci, vector<double> &Di),
+                  bool iteration_mode)
 {
     double kap=theta-1.0, eta=kap/theta;
     double dz=ze-zs;
@@ -402,22 +410,31 @@ void Step_PDE_O2t(double theta, double zs, double ze, const vector<double> &xi, 
     // compute all matrix elements
     //=================================================================================
     int i=1;
-    compute_lambda_i_02(dz*theta, i, 1, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, *PDE_D.Ci_ptr , PDE_D, PDE_D.lambda [i]);
-    compute_lambda_i_02(dz*kap  , i, 1, *PDE_D.Aip_ptr,*PDE_D.Bip_ptr,*PDE_D.Cip_ptr, PDE_D, PDE_D.lambdap[i]); 
+    compute_lambda_i_02(dz*theta, i, 1, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, 
+                        *PDE_D.Ci_ptr , PDE_D, PDE_D.lambda [i]);
+    
+    compute_lambda_i_02(dz*kap  , i, 1, *PDE_D.Aip_ptr,*PDE_D.Bip_ptr,
+                        *PDE_D.Cip_ptr, PDE_D, PDE_D.lambdap[i]); 
     
 #ifdef OPENMP_ACTIVATED    
 #pragma omp parallel for default(shared)	
 #endif	
     for(i=2; i<npxi-2; i++)
     {
-        compute_lambda_i_02(dz*theta, i, 2, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, *PDE_D.Ci_ptr , PDE_D, PDE_D.lambda [i]);
-        compute_lambda_i_02(dz*kap  , i, 2, *PDE_D.Aip_ptr,*PDE_D.Bip_ptr,*PDE_D.Cip_ptr, PDE_D, PDE_D.lambdap[i]); 
+        compute_lambda_i_02(dz*theta, i, 2, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, 
+                            *PDE_D.Ci_ptr , PDE_D, PDE_D.lambda [i]);
+        
+        compute_lambda_i_02(dz*kap  , i, 2, *PDE_D.Aip_ptr,*PDE_D.Bip_ptr,
+                            *PDE_D.Cip_ptr, PDE_D, PDE_D.lambdap[i]); 
     }
     
     i=npxi-2;
-    compute_lambda_i_02(dz*theta, i, 3, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, *PDE_D.Ci_ptr , PDE_D, PDE_D.lambda [i]);
-    compute_lambda_i_02(dz*kap  , i, 3, *PDE_D.Aip_ptr,*PDE_D.Bip_ptr,*PDE_D.Cip_ptr, PDE_D, PDE_D.lambdap[i]); 
+    compute_lambda_i_02(dz*theta, i, 3, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, 
+                        *PDE_D.Ci_ptr , PDE_D, PDE_D.lambda [i]);
     
+    compute_lambda_i_02(dz*kap  , i, 3, *PDE_D.Aip_ptr,*PDE_D.Bip_ptr,
+                        *PDE_D.Cip_ptr, PDE_D, PDE_D.lambdap[i]); 
+
     //================================================================================= 
     // initialize all b-vectors with common parts
     //================================================================================= 
@@ -425,15 +442,15 @@ void Step_PDE_O2t(double theta, double zs, double ze, const vector<double> &xi, 
 #pragma omp parallel for default(shared)	
 #endif	
     for(i=1; i<npxi-1; i++) PDE_D.bi[i]=eta*(*PDE_D.Dip_ptr)[i]-(*PDE_D.Di_ptr)[i];
-    
+
     //================================================================================= 
     i=1;
     for(int m=0; m<5; m++) PDE_D.bi[i]+=PDE_D.lambdap[i][m]*eta*yi[i+m-1];
     PDE_D.bi[i]-=PDE_D.lambda[i][0]*yi_low; // JC changed sign 28.02.2011
-    
+
     i=2;
     PDE_D.bi[i]-=PDE_D.lambda[i][0]*yi_low; // JC changed sign 28.02.2011
-    
+
 #ifdef OPENMP_ACTIVATED    
 #pragma omp parallel for default(shared)	
 #endif	
@@ -441,7 +458,7 @@ void Step_PDE_O2t(double theta, double zs, double ze, const vector<double> &xi, 
     {
         for(int m=0; m<5; m++) PDE_D.bi[i]+=PDE_D.lambdap[i][m]*eta*yi[i+m-2];
     }
-    
+
     i=npxi-3;
     PDE_D.bi[i]-=PDE_D.lambda[i][4]*yi_up;
     
@@ -580,23 +597,26 @@ void Step_PDE_O2t(double theta, double zs, double ze, const vector<double> &xi, 
     //================================================================================= 
     // copy old coefficients
     //================================================================================= 
-    PDE_D.ptr=PDE_D.Aip_ptr;
-    PDE_D.Aip_ptr=PDE_D.Ai_ptr;
-    PDE_D.Ai_ptr=PDE_D.ptr;
-    //
-    PDE_D.ptr=PDE_D.Bip_ptr;
-    PDE_D.Bip_ptr=PDE_D.Bi_ptr;
-    PDE_D.Bi_ptr=PDE_D.ptr;
-    //
-    PDE_D.ptr=PDE_D.Cip_ptr;
-    PDE_D.Cip_ptr=PDE_D.Ci_ptr;
-    PDE_D.Ci_ptr=PDE_D.ptr;
-    //  
-    PDE_D.ptr=PDE_D.Dip_ptr;
-    PDE_D.Dip_ptr=PDE_D.Di_ptr;
-    PDE_D.Di_ptr=PDE_D.ptr;
-    //
-    PDE_D.ptr=NULL;
+    if(!iteration_mode)
+    {
+        PDE_D.ptr=PDE_D.Aip_ptr;
+        PDE_D.Aip_ptr=PDE_D.Ai_ptr;
+        PDE_D.Ai_ptr=PDE_D.ptr;
+        //
+        PDE_D.ptr=PDE_D.Bip_ptr;
+        PDE_D.Bip_ptr=PDE_D.Bi_ptr;
+        PDE_D.Bi_ptr=PDE_D.ptr;
+        //
+        PDE_D.ptr=PDE_D.Cip_ptr;
+        PDE_D.Cip_ptr=PDE_D.Ci_ptr;
+        PDE_D.Ci_ptr=PDE_D.ptr;
+        //  
+        PDE_D.ptr=PDE_D.Dip_ptr;
+        PDE_D.Dip_ptr=PDE_D.Di_ptr;
+        PDE_D.Di_ptr=PDE_D.ptr;
+        //
+        PDE_D.ptr=NULL;
+    }
     
     return;
 }
@@ -618,8 +638,7 @@ void setup_Lagrange_interpolation_coefficients_O2_Int(PDE_Stepper_Data &PDE_D,
 {
     int np=xarr.size();
     
-    if(define_PDEsolver_verbosity>0)
-        cout << "\n setup_Lagrange_interpolation_coefficients_O2_Int:: setting up grid " << endl;
+    print_mess_PDE("\n setup_Lagrange_interpolation_coefficients_O2_Int:: setting up grid ");
     
     PDE_D.LG.dli_dx.clear();
     PDE_D.LG.d2li_d2x.clear();
@@ -669,8 +688,7 @@ void setup_Lagrange_interpolation_coefficients_O2_Int(PDE_Stepper_Data &PDE_D,
             PDE_D.LG.d2li_d2x[i][j]=d2li_d2x_xj(j, 2, &xarr[i-2], 5);
         }
     
-    if(define_PDEsolver_verbosity>0)
-        cout << " setup_Lagrange_interpolation_coefficients_O2_Int:: done " << endl;
+    print_mess_PDE(" setup_Lagrange_interpolation_coefficients_O2_Int:: done ");
     
     return;
 }
@@ -715,21 +733,30 @@ void Step_PDE_O2t_Int(double theta, int it_max, double zs, double ze,
     // compute all matrix elements
     //=================================================================================
     int i=1;
-    compute_lambda_i_02(dz*theta, i, 1, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, *PDE_D.Ci_ptr , PDE_D, PDE_D.lambda [i]);
-    compute_lambda_i_02(dz*kap  , i, 1, *PDE_D.Aip_ptr,*PDE_D.Bip_ptr,*PDE_D.Cip_ptr, PDE_D, PDE_D.lambdap[i]); 
+    compute_lambda_i_02(dz*theta, i, 1, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, 
+                        *PDE_D.Ci_ptr , PDE_D, PDE_D.lambda [i]);
+    
+    compute_lambda_i_02(dz*kap  , i, 1, *PDE_D.Aip_ptr,*PDE_D.Bip_ptr,
+                        *PDE_D.Cip_ptr, PDE_D, PDE_D.lambdap[i]); 
     
 #ifdef OPENMP_ACTIVATED    
 #pragma omp parallel for default(shared)	
 #endif	
     for(i=2; i<npxi-2; i++)
     {
-        compute_lambda_i_02(dz*theta, i, 2, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, *PDE_D.Ci_ptr , PDE_D, PDE_D.lambda [i]);
-        compute_lambda_i_02(dz*kap  , i, 2, *PDE_D.Aip_ptr,*PDE_D.Bip_ptr,*PDE_D.Cip_ptr, PDE_D, PDE_D.lambdap[i]); 
+        compute_lambda_i_02(dz*theta, i, 2, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, 
+                            *PDE_D.Ci_ptr , PDE_D, PDE_D.lambda [i]);
+        
+        compute_lambda_i_02(dz*kap  , i, 2, *PDE_D.Aip_ptr,*PDE_D.Bip_ptr,
+                            *PDE_D.Cip_ptr, PDE_D, PDE_D.lambdap[i]); 
     }
     
     i=npxi-2;
-    compute_lambda_i_02(dz*theta, i, 3, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, *PDE_D.Ci_ptr , PDE_D, PDE_D.lambda [i]);
-    compute_lambda_i_02(dz*kap  , i, 3, *PDE_D.Aip_ptr,*PDE_D.Bip_ptr,*PDE_D.Cip_ptr, PDE_D, PDE_D.lambdap[i]); 
+    compute_lambda_i_02(dz*theta, i, 3, *PDE_D.Ai_ptr, *PDE_D.Bi_ptr, 
+                        *PDE_D.Ci_ptr , PDE_D, PDE_D.lambda [i]);
+    
+    compute_lambda_i_02(dz*kap  , i, 3, *PDE_D.Aip_ptr,*PDE_D.Bip_ptr,
+                        *PDE_D.Cip_ptr, PDE_D, PDE_D.lambdap[i]); 
     
     //=================================================================================
     // compute Ui* and bi*
@@ -967,3 +994,278 @@ void Step_PDE_O2t_Int(double theta, int it_max, double zs, double ze,
     
     return;
 }
+
+
+//=====================================================================================
+//
+// 2. order scheme with correction from integral
+//
+//=====================================================================================
+
+//-------------------------------------------------------------------------------------
+// Integral aux functions
+//-------------------------------------------------------------------------------------
+double Int_fac(int j, double *xi)
+{
+    double dx=(xi[4] - xi[0]);
+    double P=-1.0/60.0;
+    for(int l=0  ; l<j; l++) P*=dx/(xi[l] - xi[j]);
+    for(int l=j+1; l<5; l++) P*=dx/(xi[l] - xi[j]);
+    return P;
+}
+
+//-------------------------------------------------------------------------------------
+// 5 point formula for x0-x4
+//-------------------------------------------------------------------------------------
+double Int_li_xj_0(double *xi)
+{ 
+    // here j=0 (0, 1, 2, 3, 4)
+    double dx1=xi[1]-xi[0];
+    double dx2=xi[2]-xi[0];
+    double dx3=xi[3]-xi[0];
+    double dx4=xi[4]-xi[0];
+    
+    double r=(3.0*dx4-5.0*(dx1+dx2+dx3));
+    r+=10.0*( dx2*dx3 + dx1*(dx2+dx3) )/dx4;
+    r-=30.0*dx1*(dx2/dx4)*(dx3/dx4);     
+    //
+    r*=Int_fac(0, xi);
+    
+    return r;
+}
+
+//-------------------------------------------------------------------------------------
+// 5 point formula for x0-x4
+//-------------------------------------------------------------------------------------
+double Int_li_xj_4(double *xi)
+{ 
+    // here j=4 (0, 1, 2, 3, 4)
+    double dx1=xi[1]-xi[0];
+    double dx2=xi[2]-xi[0];
+    double dx3=xi[3]-xi[0];
+    double dx4=xi[4]-xi[0];
+    
+    double r=12.0*dx4-15.0*(dx1+dx2+dx3);
+    r+=20.0*( dx2*dx3 + dx1*(dx2+dx3) )/dx4;
+    r-=30.0*dx1*(dx2/dx4)*(dx3/dx4);     
+    //
+    r*=-Int_fac(4, xi);
+    
+    return r;
+}
+
+//-------------------------------------------------------------------------------------
+double Int_li_xj(int j, double *xi)
+{ 
+    //=================================================================
+    if(j==0) return Int_li_xj_0(xi);
+    if(j==4) return Int_li_xj_4(xi);
+    //=================================================================
+    
+    //=================================================================
+    // here j!=0 && j!=4 and the initial point is i=1, 2, 3
+    //=================================================================
+    double dx4=xi[4]-xi[0];
+    double dx1=0.0, dx2=0.0;
+    if(j==1){ dx1=xi[2]-xi[0];  dx2=xi[3]-xi[0]; }
+    if(j==2){ dx1=xi[1]-xi[0];  dx2=xi[3]-xi[0]; }
+    if(j==3){ dx1=xi[1]-xi[0];  dx2=xi[2]-xi[0]; }
+    
+    double r=3.0*dx4-5.0*(dx1+dx2);
+    r+=10.0*dx1*(dx2/dx4);
+    //
+    r*=Int_fac(j, xi);
+    
+    return r;
+}
+
+//-------------------------------------------------------------------------------------
+// precompute coefficients
+//-------------------------------------------------------------------------------------
+void setup_Lagrange_interpolation_coefficients_O2_CODE(PDE_Stepper_Data &PDE_D, 
+                                                       vector<double> &xarr, 
+                                                       bool setup_Integral)
+{
+    int np=xarr.size();
+    
+    print_mess_PDE("\n setup_Lagrange_interpolation_coefficients_O2_CODE:: setting up grid ");
+    
+    PDE_D.LG.dli_dx.clear();
+    PDE_D.LG.d2li_d2x.clear();
+    PDE_D.dyi.resize(np+3, 0.0);
+    PDE_D.ddyi.resize(np+3, 0.0);
+    PDE_D.Hi.resize(np+3, 0.0);
+    PDE_D.Gi.resize(np+3, 0.0);
+    PDE_D.Hip.resize(np+3, 0.0);
+    PDE_D.Gip.resize(np+3, 0.0);
+    //
+    PDE_D.Hi_ptr=&PDE_D.Hi;
+    PDE_D.Gi_ptr=&PDE_D.Gi;
+    PDE_D.Hip_ptr=&PDE_D.Hip;
+    PDE_D.Gip_ptr=&PDE_D.Gip;
+
+    //====================================================================
+    // allocate memory
+    //====================================================================
+    vector<double> dum(6, 0.0);
+    
+    for(int k=0; k<np; k++)
+    {
+        PDE_D.LG.dli_dx  .push_back(dum);
+        PDE_D.LG.d2li_d2x.push_back(dum);
+    }
+    
+    //====================================================================
+    // lower boundary
+    //====================================================================
+    int i=0;
+    for(int j=0; j<5; j++)
+    {
+        PDE_D.LG.dli_dx  [i][j]=dli_dx_xj  (j, 0, &xarr[0], 5);
+        PDE_D.LG.d2li_d2x[i][j]=d2li_d2x_xj(j, 0, &xarr[0], 5);
+    }
+    
+    //====================================================================
+    // 1. interior point (lower boundary not needed)
+    //====================================================================
+    i=1;
+    for(int j=0; j<5; j++)
+    {
+        PDE_D.LG.dli_dx  [i][j]=dli_dx_xj  (j, 1, &xarr[i-1], 5);
+        PDE_D.LG.d2li_d2x[i][j]=d2li_d2x_xj(j, 1, &xarr[i-1], 5);
+    }
+    
+    //====================================================================
+    // last interior point
+    //====================================================================
+    i=np-2;
+    for(int j=0; j<5; j++)
+    {
+        PDE_D.LG.dli_dx  [i][j]=dli_dx_xj  (j, 3, &xarr[i-3], 5);
+        PDE_D.LG.d2li_d2x[i][j]=d2li_d2x_xj(j, 3, &xarr[i-3], 5);
+    }
+    
+    //====================================================================
+    // upper boundary
+    //====================================================================
+    i=np-1;
+    for(int j=0; j<5; j++)
+    {
+        PDE_D.LG.dli_dx  [i][j]=dli_dx_xj  (j, 4, &xarr[i-4], 5);
+        PDE_D.LG.d2li_d2x[i][j]=d2li_d2x_xj(j, 4, &xarr[i-4], 5);
+    }
+    
+    //====================================================================
+    // the rest
+    //====================================================================
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
+    for(i=2; i<np-2; i++)
+        for(int j=0; j<5; j++)
+        {
+            PDE_D.LG.dli_dx  [i][j]=dli_dx_xj  (j, 2, &xarr[i-2], 5);
+            PDE_D.LG.d2li_d2x[i][j]=d2li_d2x_xj(j, 2, &xarr[i-2], 5);
+        }
+    
+    //====================================================================
+    // integral over frequency domain using 5-point formula
+    //====================================================================
+    if(setup_Integral)
+    {
+        PDE_D.LG.Int_li.resize(np, 0.0);
+        
+        //================================================================
+        // internal points with 5-point formula
+        //================================================================
+        int ix;
+        for(ix=1; ix<np-5; ix+=4) 
+            for(int j=0; j<5; j++) PDE_D.LG.Int_li[ix+j]+=Int_li_xj(j, &xarr[ix]);
+
+        //================================================================
+        // finish off using simple trapeziodal rule
+        //================================================================
+        for(ix-=4; ix<np-2; ix++) PDE_D.LG.Int_li[ix]+=0.5*(xarr[ix+1]-xarr[ix]);
+    }
+
+    print_mess_PDE(" setup_Lagrange_interpolation_coefficients_O2_CODE:: done ");
+    
+    return;
+}
+
+
+
+//-------------------------------------------------------------------------------------
+// compute dy and ddy
+//-------------------------------------------------------------------------------------
+void compute_derivatives(const vector<double> &yi, 
+                         const vector<double> &Ai, const vector<double> &Bi, 
+                         PDE_Stepper_Data &PDE_D, 
+                         vector<double> &dy, vector<double> &ddy)
+{       
+    //==========================================================================
+#ifdef OPENMP_ACTIVATED    
+#pragma omp parallel for default(shared)	
+#endif	
+    for(int i=2; i<(int)yi.size()-2; i++)
+    {
+        dy[i]=ddy[i]=0.0;
+        
+        double dum1=PDE_D.LG.d2li_d2x[i][0]*Ai[i]*yi[i+0-2]
+                   +PDE_D.LG.d2li_d2x[i][4]*Ai[i]*yi[i+4-2];
+        double dum2=PDE_D.LG.d2li_d2x[i][1]*Ai[i]*yi[i+1-2]
+                   +PDE_D.LG.d2li_d2x[i][3]*Ai[i]*yi[i+3-2];
+        
+        ddy[i]=PDE_D.LG.d2li_d2x[i][2]*Ai[i]*yi[i];
+        ddy[i]+=dum2;
+        ddy[i]+=dum1;
+
+        dum1=PDE_D.LG.dli_dx[i][0]*Bi[i]*yi[i+0-2]
+            +PDE_D.LG.dli_dx[i][4]*Bi[i]*yi[i+4-2];
+        dum2=PDE_D.LG.dli_dx[i][1]*Bi[i]*yi[i+1-2]
+            +PDE_D.LG.dli_dx[i][3]*Bi[i]*yi[i+3-2];
+        
+        dy[i]=PDE_D.LG.dli_dx[i][2]*Bi[i]*yi[i];
+        dy[i]+=dum2;
+        dy[i]+=dum1;
+        
+    }
+    
+    //==========================================================================
+    // derivatives close to lower boundaries
+    //==========================================================================
+    dy[0]=ddy[0]=0.0;
+    dy[1]=ddy[1]=0.0;
+    
+    //==========================================================================
+    for(int j=0; j<5; j++)
+    {
+        ddy[0]+=PDE_D.LG.d2li_d2x[0][j]*Ai[1]*yi[j];
+        dy [0]+=PDE_D.LG.dli_dx  [0][j]*Bi[1]*yi[j];
+
+        ddy[1]+=PDE_D.LG.d2li_d2x[1][j]*Ai[1]*yi[j];
+        dy [1]+=PDE_D.LG.dli_dx  [1][j]*Bi[1]*yi[j];
+    }
+
+    //==========================================================================
+    // derivatives close to upper boundaries
+    //==========================================================================
+    int i=yi.size()-1;
+    dy[i]=ddy[i]=0.0;
+    dy[i-1]=ddy[i-1]=0.0;
+    
+    //==========================================================================
+    for(int j=0; j<5; j++)
+    {
+        ddy[i-1]+=PDE_D.LG.d2li_d2x[i-1][j]*Ai[i-1]*yi[i-4+j];
+        dy [i-1]+=PDE_D.LG.dli_dx  [i-1][j]*Bi[i-1]*yi[i-4+j];
+        ddy[i]  +=PDE_D.LG.d2li_d2x[i][j]*Ai[i]*yi[i-4+j];
+        dy [i]  +=PDE_D.LG.dli_dx  [i][j]*Bi[i]*yi[i-4+j];
+    }
+    //==========================================================================
+
+    return;
+}
+
+//==================================================================================================
+//==================================================================================================

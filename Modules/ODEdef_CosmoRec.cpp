@@ -356,7 +356,7 @@ double df_dx_2point_sym(const double &fp1, const double &fm1, const double &h, c
 void fcn_for_jacobian_eval(int jX, int neq, double DXj, double z, double Tg, 
                            double NH, Data_Level_I &LI0, double *f)
 {
-    double Te=Tg, dum;   
+    double Te=Tg;   
 
     //==============================================================================================
     // reset everything 
@@ -416,6 +416,7 @@ void fcn_for_jacobian_eval(int jX, int neq, double DXj, double z, double Tg,
             //==================================================================
             if(Diffusion_correction_HeI_is_on)
             {
+                double dum;
                 evaluate_HeI_Diffusion_correction(z, HeI_Atoms, NH, cosmos.H(z), Tg, 
                                                   &f[LI0.index_HeI], dum, f[LI0.index_HI]);
                 
@@ -826,6 +827,7 @@ void jac_effective(double z, Data_Level_III &LIII, int col)
         
         for(int k=0; k<LIII.neq; k++) LIII.g[k]=Level_I_temp.g[k]*f0[iHeI+ik]/f0[k];
     }
+    else if(flag_He==0 && col>=2+neq_HI){}
     else{ cerr << " This should not happen. Exiting. " << endl; exit(0); }
     
     return;

@@ -202,7 +202,7 @@ void arm_PDE_solver(Cosmos &cos, Gas_of_Atoms &HIA, vector<double> &xarr,
         int nresmax=resonances.size()+1;
         
         //=========================================================================== 
-        // save ratio of Raman profiles once grid is set
+        // save ratio of 2g & Raman profiles once grid is set
         //=========================================================================== 
         set_verbosity_Raman(show_messages+1);
         init_Raman_profiles();
@@ -638,7 +638,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
         
     dz_out=min(dz_out, 2.0); DF_step=10;
     
-
+    
     //=========================================================================== 
     // prepare memory for back-communication
     //=========================================================================== 
@@ -648,7 +648,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
     DF_2_gamma_vec.clear();
     DF_Raman_vec.clear();
     DF_nD1s_vec.clear();
-
+    
     //=========================================================================== 
     // normal Ly-n integrals
     //=========================================================================== 
@@ -685,22 +685,22 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
     //=========================================================================== 
     init_Solve_PDE_Data(nresmax, boundary_up);
     
-
+    
     //=========================================================================== 
     // memory for PDE Solver
     //=========================================================================== 
     arm_PDE_solver(cos, HIA, SPDE_D.xarr, SPDE_D.resonances);
             
-
+    
     //=========================================================================== 
     // outputs/names/etc
     //=========================================================================== 
     string fname, endname=exten+".it_"+int_to_string(it_num)+".dat";
     ofstream Ly_n_file, two_g_file, Raman_file, nD1s_file, Ifile;
-
+    
     if(output_2gR)
     {
-        if(include_Ly_corr) 
+        if(include_Ly_corr)
         {
             fname=HI_outputdir+"DPesc/DF.Ly_n"+endname;
             Ly_n_file.open(fname.c_str());

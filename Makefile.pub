@@ -4,9 +4,9 @@
 all:
 	make tidy; make wipeDS; \
     rm -rf ./CosmoRec.vX; rm -rf ./CosmoRec.vX.tar.gz; \
+    rm -rf ./CosmoRec.vX.lite; rm -rf ./CosmoRec.vX.lite.tar.gz; \
     mkdir ./CosmoRec.vX; \
     mkdir ./CosmoRec.vX/outputs; \
-    mkdir ./CosmoRec.vX/runfiles; \
     mkdir ./CosmoRec.vX/temp; \
     mkdir ./CosmoRec.vX/temp/Sol; \
     mkdir ./CosmoRec.vX/temp/DPesc; \
@@ -15,7 +15,9 @@ all:
     cp -r ./Modules ./CosmoRec.vX/.; \
     cp -r ./PDE_Problem ./CosmoRec.vX/.; \
     cp -r ./PDE_Problem_HeI ./CosmoRec.vX/.; \
-    cp -r ./Rec_database ./CosmoRec.vX/.; \
+    mkdir ./CosmoRec.vX/Rec_database; \
+    cp -r ./Rec_database.pub/* ./CosmoRec.vX/Rec_database/.; \
+    mkdir ./CosmoRec.vX/runfiles; \
     cp -r ./runfiles/parameters.dat ./CosmoRec.vX/runfiles/.; \
     cp ./Makefile ./CosmoRec.vX/.; \
     cp ./Makefile.in ./CosmoRec.vX/.; \
@@ -26,3 +28,12 @@ all:
 
 tarball: all
 	tar -czf CosmoRec.vX.tar.gz ./CosmoRec.vX;
+
+lite: all
+	rm -rf ./CosmoRec.vX/Rec_database; \
+    mkdir ./CosmoRec.vX/Rec_database; \
+    cp -r ./Rec_database.publite/* ./CosmoRec.vX/Rec_database/.; \
+    mv ./CosmoRec.vX/ ./CosmoRec.vX.lite/;
+
+tarlite: lite
+	tar -czf CosmoRec.vX.lite.tar.gz ./CosmoRec.vX.lite;

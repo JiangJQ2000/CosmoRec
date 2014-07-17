@@ -23,6 +23,12 @@ pub:
 
 pubtar:
 	make -f Makefile.pub tarball
+
+publite:
+	make -f Makefile.pub lite
+
+pubtarlite:
+	make -f Makefile.pub tarlite
 	
 #============================================================================================
 # rules to clean up

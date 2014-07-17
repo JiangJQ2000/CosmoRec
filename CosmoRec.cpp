@@ -203,7 +203,7 @@ void run_RECFAST(string filename, int corr_fac)
     
     ofile << "# Recfast++ output. The columns are z, Xe=Ne/NH, Te\n#" << endl;
 
-    for(int l=0; l<parameters.nz; l++) ofile << za[l] << " " 
+    for(int l=0; l<parameters.nz; l++) ofile << scientific << za[l] << " "
                                              << cosmos.Xe_Seager(za[l]) << " " 
                                              << cosmos.Te(za[l]) << endl;
     
@@ -250,7 +250,7 @@ void compute_Recfast_part(double zi, double ze, double Xe_Hi, double Xe_Hei,
     //=======================================================================================================
     for(int i=1; i<nz; i++)
     {
-        ofile << zarr[i] << " " << Xe[i] << " " << TM[i] << endl;
+        ofile << scientific << zarr[i] << " " << Xe[i] << " " << TM[i] << endl;
         write_X_Recfast_z_to_file(ofileRecfast, zarr[i], cosmos);
     }
     
@@ -392,7 +392,7 @@ int CosmoRec()
             //======================================================================
             if(iteration_count<Diff_iteration_max) 
                 addname=".it_"+int_to_string(iteration_count)+addname_in;
-            else addname=".final"+addname_in;
+            else addname=".trans"+addname_in;
             
             print_message("starting iteration # " + int_to_string(iteration_count)); 
         }

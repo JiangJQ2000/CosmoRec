@@ -22,7 +22,7 @@ int main_random()
 { 
     int nrep = 100000;    
     int runmode=0;
-    double runpars[5]={0.0, 0, 0.0, 0.0, 0.0};
+    double runpars[5]={0.0, 0, 0, 0.0, 0.0};
     
     //==============================================================================================
     double ombh2_l = 0.01;
@@ -60,30 +60,6 @@ int main_random()
     cout.precision(10); 
     clock_t seconds_start=clock(), seconds_end;
 
-/*    int runsn=10000;
-//    double *test=new double[runsn*5+5];
-    vector<vector<double> > test(runsn, vector<double> (5));
-    
-    for(int nr=0; nr<20000; nr++)
-    {
-#pragma omp parallel for default(shared)	
-        for(int i = 0; i < runsn; i++) 
-        {
-            for(int kl=0; kl<5; kl++)
-                test[i][kl]=exp(10.0*(2.0*i)/runsn);
-//                test[5*i+kl]=exp(10.0*(2.0*i)/runsn);
-        }
-    }
-    
-    seconds_end=clock();
-    double seconds_Drun=(1.0*seconds_end-seconds_start)/CLOCKS_PER_SEC;
-    cout << " The run took " << seconds_Drun << " sec. " << endl;    
-    seconds_start=seconds_end;
-    
-    cout << " **** Done. ****" << endl << endl; 
-    exit(0);
-*/    
-
     for(int i = 0; i < nrep; i++) 
     {
         cout << " **** Iteration: " << i << " ****" << endl;
@@ -103,7 +79,7 @@ int main_random()
         cout << " Nnu=  " << Nnu << endl;
         
         CosmoRec(runmode, runpars, omegac, omegab, omegak, Nnu, 
-                 h0, tcmb, yhe, nz, z_arr, Xe_arr, Te_arr, 0);
+                 h0, tcmb, yhe, nz, z_arr, Xe_arr, Te_arr, i);
         
         seconds_end=clock();
         double seconds_Drun=(1.0*seconds_end-seconds_start)/CLOCKS_PER_SEC;
@@ -133,7 +109,7 @@ int main_random()
 int main_batch_mode()
 { 
     int runmode=0, label=1;
-    double runpars[5]={0.0, 0.0, 0.0, 0.0, 0.0};
+    double runpars[5]={0.0, 0, 0, 0.0, 0.0};
     
     double omegac=0.216;
     double omegab=0.044;

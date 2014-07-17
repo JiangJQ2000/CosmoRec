@@ -1,6 +1,6 @@
-//-----------------------------
+//==================================================================================================
 // Author Jens Chluba Jan 2010
-//-----------------------------
+//==================================================================================================
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -16,10 +16,11 @@
 
 using namespace std;
 
-//----------------------------------------------------------------
+//==================================================================================================
 // routines for integration from GSL
-//----------------------------------------------------------------
-double Integrate_gk15_GSL(double a, double b, double epsrel, double epsabs, double (*fptr)(double, void *), void *para)
+//==================================================================================================
+double Integrate_gk15_GSL(double a, double b, double epsrel, double epsabs,
+                          double (*fptr)(double, void *), void *para)
 {
     if(a>=b) return 0.0;
     
@@ -38,7 +39,8 @@ double Integrate_gk15_GSL(double a, double b, double epsrel, double epsabs, doub
     return r;
 }
 
-double Integrate_gk31_GSL(double a, double b, double epsrel, double epsabs, double (*fptr)(double, void *), void *para)
+double Integrate_gk31_GSL(double a, double b, double epsrel, double epsabs, 
+                          double (*fptr)(double, void *), void *para)
 {
     if(a>=b) return 0.0;
     
@@ -57,7 +59,8 @@ double Integrate_gk31_GSL(double a, double b, double epsrel, double epsabs, doub
     return r;
 }
 
-double Integrate_gk61_GSL(double a, double b, double epsrel, double epsabs, double (*fptr)(double, void *), void *para)
+double Integrate_gk61_GSL(double a, double b, double epsrel, double epsabs, 
+                          double (*fptr)(double, void *), void *para)
 {
     if(a>=b) return 0.0;
 
@@ -76,7 +79,8 @@ double Integrate_gk61_GSL(double a, double b, double epsrel, double epsabs, doub
     return r;
 }
 
-double Integrate_gk_GSL(int key, double a, double b, double epsrel, double epsabs, double (*fptr)(double, void *), void *para)
+double Integrate_gk_GSL(int key, double a, double b, double epsrel, double epsabs, 
+                        double (*fptr)(double, void *), void *para)
 {
     if(a>=b) return 0.0;
     
@@ -94,4 +98,7 @@ double Integrate_gk_GSL(int key, double a, double b, double epsrel, double epsab
     
     return r;
 }
+
+//==================================================================================================
+//==================================================================================================
 

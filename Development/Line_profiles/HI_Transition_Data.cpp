@@ -102,7 +102,9 @@ namespace HI_Transition_Data
 
     //======================================================================================
     // A_npkd transition rates for the first nmax p-states (vacuum)
-    // rates into (!) the np-state, i.e. n<k --> Akd-->np and n>k --> 3/5*Anp->kd
+    // k>1 : rates into (!) the np-state
+    //       n<k --> Akd-->np 
+    //       n>k --> 3/5*Anp->kd
     //======================================================================================
     vector<vector<double> > A_npkd_vals;
     

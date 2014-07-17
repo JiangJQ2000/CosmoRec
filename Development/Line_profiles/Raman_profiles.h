@@ -20,11 +20,16 @@ namespace Raman_profiles
     void test_Raman_stuff();    
     void init_Raman_profiles();
 
+    //==================================================
+    // ns-1s & nd-1s Raman profile functions
+    //==================================================
     double sigma_ns_1s_Raman(int n, double y);
     double sigma_nd_1s_Raman(int n, double y);
     double sigma_ns_1s_Raman_ratio(int n, double y);
     double sigma_nd_1s_Raman_ratio(int n, double y);
-
+    void dump_ns_1s_Raman_profile(int ni, string fname);
+    void dump_nd_1s_Raman_profile(int ni, string fname);
+    
     //==================================================
     // 2s-1s Raman profile functions
     //==================================================

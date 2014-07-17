@@ -3,6 +3,7 @@
 // first implementation: Jan 2010
 // last modification: June 2011
 //==================================================================================================
+// Oct  20th, 2011: One can now give pmax (refinement level) to the integrator.
 // June 14th, 2011: Nested table will only be updated if more abscissae and weights are needed.
 
 #ifndef CHEBYSHEV_INT_H
@@ -37,6 +38,9 @@ double Chebyshev_test_fcn_log(double lgx);
 // mess: optional message label for debugging
 //==================================================================================================
 int Integrate_using_Chebyshev(double a, double b, double epsrel, double epsabs, 
+                              double (*fptr)(double), int *neval, double *r, string mess="");
+
+int Integrate_using_Chebyshev(double a, double b, int pmax, double epsrel, double epsabs, 
                               double (*fptr)(double), int *neval, double *r, string mess="");
 
 //==================================================================================================

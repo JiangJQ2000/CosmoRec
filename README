@@ -62,31 +62,39 @@
 //   './PDE_Problem_HeI/Solve_PDEs_HeI.cpp', however, note that the runtime of CosmoRec increases 
 //   significantly when this module is activated.
 //
+// Helium:
+//
+// - updated the effective rates for helium. The rates for up to 10 resolved states including 
+//   quadrupole lines missed one important set of rates ???
+// - helium feedback in the analytic model of Chluba & Sunyaev, MNRAS, 402, 1221Ð1248 (2010) can 
+//   now be included for up to 10 shells.
+//
+//--------------------------------------------------------------------------------------------------
+//
+// Update (17.07.2014 | CosmoRec v1.5b)
+// 
 // - added (optional) 'Grace' support, which can be used for runtime visualization of the PDE 
-//   solvers for hydrogen & helium. This option can be activated in 'Makefile.in', and outputs can 
-//   be controlled from './PDE_Problem/Solve_PDEs.cpp' and './PDE_Problem_HeI/Solve_PDEs_HeI.cpp' 
-//   and their respective modules './PDE_Problem/Solve_PDEs_Grace.cpp' and 
-//   './PDE_Problem_HeI/Solve_PDEs_HeI_Grace.cpp' in the case of helium.
-//
-// Hydrogen:
-//
+//   solution for hydrogen. This option can be activated in the 'Makefile.in' and outputs can 
+//   be controlled from './PDE_Problem/Solve_PDEs.cpp' and './PDE_Problem/Solve_PDEs_Grace.cpp'.
+// - thinned the effective rate tables (only for HI n=3 can one vary the number of shells that are 
+//   included for the effective rate calculation).
+// - tidied HI two-photon and Raman profile computations up (./Development/Line_profiles). 
+//   Small bug-fix for 3d1s profile, but the difference was below Planck sensitivity.
 // - 2s-1s two-photon decay previously were computed using the simple fitting formula for the 
 //   two-photon profile given by Nussbaumer & Schmutz, 1984. This has been replaced with the latest 
 //   computation of the 2s-1s two-photon profile. The normalization of the new profile can be set 
 //   in './Development/Definitions/physical_constants.h', and is currently set to 8.2206 1/sec 
-//   (Labzowsky et al. 2005).
+//   (Labzowsky et al. 2005). Difference was again below Planck sensitivity.
 // - optimized the control over the distribution of grid points in the radiative transfer problem. 
 //   The distributions of grid points is now determined using density parameters in the Doppler core 
 //   and Lorentzian wings (see './PDE_Problem/Solve_PDEs_grid.cpp' for setup of the grid and 
 //   './PDE_Problem/Solve_PDEs.cpp' for control parameters). The computation of two-photon and Raman 
-//   events for up to 8 shells was speed up in this way without loss of precision.
-//
-// Helium:
-//
-// - updated the effective rates for helium. The rates for up to 10 resolved states including 
-//   quadrupole lines missed one important set of rates.
-// - helium feedback in the analytic model of Chluba & Sunyaev, MNRAS, 402, 1221Ð1248 (2010) can 
-//   now be included for up to 10 shells.
+//   events for up to 8 shells was sped up in this way without loss of precision.
+// - tidied up and improved ODE and PDE solvers (./Development/ODE_PDE_Solver).
+// - Iterations over radiative transfer solver set to 1 (for batchmode) and 2 when calling
+//   CosmoRec directly. For higher precision, this can be changed in './CosmoRec.cpp' and
+//   './Modules/global_variables.cpp' (parameter Diff_iteration_max), respectively.
+// - PDE-setup and integration over resonances was tidied up and improved.
 //
 //--------------------------------------------------------------------------------------------------
 //
@@ -156,12 +164,12 @@
 //   now returns the electron 
 //   fraction without encountering problems for (okh2=0):  
 //
-//	0.01 <= ombh2 <= 0.04 
-//	0.05 <= omch2 <=0.22 
-//	0.6 <= h100 <= 0.8 
-//   	2.6 <= T0 <= 2.8 
-// 	0.1 <= Yp <= 0.6
-// 	1.0<= Nnu <=6.0
+//	    0.01 <= ombh2 <= 0.04
+//	    0.05 <= omch2 <= 0.22
+//	    0.6  <= h100  <= 0.8
+//   	2.6  <= T0    <= 2.8
+// 	    0.1  <= Yp    <= 0.6
+// 	    1.0  <= Nnu   <= 6.0
 //
 // - implemented additional error handling for ODE-solver.
 // - switched to 4. order in ODE-solver. This increases the stability without loss of performance.
@@ -308,7 +316,7 @@ To compile the code follow the following steps:
 
 (iii) "USE_GRACE" and variables just below this should be uncommented and adjusted to use 
       Grace-support, if runtime outputs from the PDE solvers should be generated. This is an option 
-      which by default is not activated.
+      which by default is not activated. It should also not be used when running the code with CosmoMC.
 
 (iv) type "make" to compile the code. This creates the executable: "CosmoRec"
 
@@ -333,12 +341,14 @@ file the following outputs will be generated:
 
 CosmoRec.HI.nS_eff_400.nH_3.nHe_3.HeI_feedback_nf_3.w_HI_abs.HI.X_Recfast.dat
 CosmoRec.HI.nS_eff_400.nH_3.nHe_3.HeI_feedback_nf_3.w_HI_abs.Xe.dat
-CosmoRec.HI.nS_eff_400.nH_3.nHe_3.HeI_feedback_nf_3.w_HI_abs.Xe.final.dat
+CosmoRec.HI.nS_eff_400.nH_3.nHe_3.HeI_feedback_nf_3.w_HI_abs.Xe.it_#.dat
+CosmoRec.HI.nS_eff_400.nH_3.nHe_3.HeI_feedback_nf_3.w_HI_abs.Xe.trans.dat
 
 The first file contains the Recfast++ solution in the format 'z Xe Te'. The second contains the 
 solution for Xe and Te (format 'z Xe Te') without the radiative transfer effects taken into account. 
-The last file provide the final solution for Xe and Te including all transfer effects according 
-to the settings.
+The files called "it_#" give the result with intermediate iterations of the radiative transfer correction, 
+unless in "./Modules/global_variables.cpp" the parameter "Diff_iteration_max==1". The last file provides
+the final solution for Xe and Te including all transfer effects according to the settings.
 
 //==================================================================================================
 

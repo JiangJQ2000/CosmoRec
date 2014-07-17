@@ -250,10 +250,13 @@ void compute_integral_function_Chebyshev(int p, Chebyshev_vars& v,
 //
 // mess: optional message label for debugging
 //==================================================================================================
-int Integrate_using_Chebyshev(double a, double b, double epsrel, double epsabs, 
+int Integrate_using_Chebyshev(double a, double b, int pmax, double epsrel, double epsabs, 
                               double (*fptr)(double), int *neval, double *r, string mess)
 {
     int debug=0;
+    bool error_check=1;
+    
+    if(pmax<0){ error_check=0; pmax=-pmax; }
     
     //==============================================================================================
     *r=0.0; 
@@ -284,7 +287,7 @@ int Integrate_using_Chebyshev(double a, double b, double epsrel, double epsabs,
     if(debug>=2) cout << " f(mu=0.0)= " << fi << endl << endl;
     
     double r1, Dr;
-    for(int it=2; it<=Chebyshev_pmax; it++)
+    for(int it=2; it<=pmax; it++)
     {
         compute_integral_function_Chebyshev(it, v, fvals, Chebyshev_Int_f2, neval, &r1);
         Dr= *r-r1;
@@ -293,7 +296,7 @@ int Integrate_using_Chebyshev(double a, double b, double epsrel, double epsabs,
         //==========================================================================
         // check error
         //==========================================================================
-        if(fabs(Dr)<=max(epsabs, fabs( *r)*epsrel))
+        if(fabs(Dr)<=max(epsabs, fabs( *r)*epsrel) && error_check)
         {
             if(debug>=1) cout << " result= " << *r << " neval= " << *neval << endl;
             
@@ -301,14 +304,22 @@ int Integrate_using_Chebyshev(double a, double b, double epsrel, double epsabs,
         }
     }
     
+    if(!error_check) return 1;
+    
     //==============================================================================================
     // reaching below here means the intgration failed
     //==============================================================================================
-    cout << " Integral did not converge using Chebyshev rules up to pmax= " << Chebyshev_pmax << "."
+    cout << " Integral did not converge using Chebyshev rules up to pmax= " << pmax << "."
          << "\n Other parameters/variables were " << a << " " << b 
          << " " << *r << " " << *neval << " mess= " << mess << endl; 
     
     return 1;           
+}
+
+int Integrate_using_Chebyshev(double a, double b, double epsrel, double epsabs, 
+                              double (*fptr)(double), int *neval, double *r, string mess)
+{
+    return Integrate_using_Chebyshev(a, b, Chebyshev_pmax, epsrel, epsabs, fptr, neval, r, mess);
 }
 
 //==================================================================================================

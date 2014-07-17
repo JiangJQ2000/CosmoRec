@@ -78,23 +78,23 @@ void close_files(ofstream *Xfiles)
 //--------------------------------------------------------------------------------------------
 void write_HI_HeI_1s_array_to_file(ofstream &ofile, double zval)
 {
-    ofile << zval;
-    ofile << " " << Hydrogen_Atoms.X(1, 0);
-    ofile << " " << HeI_Atoms.Xi(0) << endl;
+    ofile << scientific << zval;
+    ofile << scientific << " " << Hydrogen_Atoms.X(1, 0);
+    ofile << scientific << " " << HeI_Atoms.Xi(0) << endl;
     
     return;
 }
 
 void write_HI_X_array_to_file(ofstream &ofile, double zval, double *X, int nHIeq, int neq)
 {
-    ofile << zval;
+    ofile << scientific << zval;
     // Xe & HI Xi
-    for(int l=0; l<Level_I.nHIeq+1; l++) ofile << " " << X[l];
+    for(int l=0; l<Level_I.nHIeq+1; l++) ofile << scientific << " " << X[l];
     // rho
-    ofile << " " << X[neq-1];
+    ofile << scientific << " " << X[neq-1];
     // Xp, XeHeII
-    ofile << " " << 1.0-Hydrogen_Atoms.X_tot();
-    ofile << " " << parameters.fHe-HeI_Atoms.X_tot() << endl;
+    ofile << scientific << " " << 1.0-Hydrogen_Atoms.X_tot();
+    ofile << scientific << " " << parameters.fHe-HeI_Atoms.X_tot() << endl;
     
     return;
 }
@@ -102,9 +102,9 @@ void write_HI_X_array_to_file(ofstream &ofile, double zval, double *X, int nHIeq
 //--------------------------------------------------------------------------------------------
 void write_array_to_file(ofstream &ofile, double zval, double *X, int neq)
 {
-    ofile << zval << " " << cosmos.TCMB(zval);
+    ofile << scientific << zval << " " << cosmos.TCMB(zval);
     // write all the variables
-    for(int l=0; l<neq; l++) ofile << " " << X[l];
+    for(int l=0; l<neq; l++) ofile << scientific << " " << X[l];
     ofile << endl;
     
     return;
@@ -113,7 +113,7 @@ void write_array_to_file(ofstream &ofile, double zval, double *X, int neq)
 //--------------------------------------------------------------------------------------------
 void write_X_Recfast_z_to_file(ofstream &ofile, double zval, Cosmos &cosmos)
 {
-    ofile << zval << " " 
+    ofile << scientific << zval << " " 
           << cosmos.Xe_Seager(zval) << " " 
           << cosmos.Te(zval) << " "
 //        << cosmos.dXe_dz_Seager(zval) << " " << cosmos.X1s(zval) << " " 
@@ -126,7 +126,7 @@ void write_X_Recfast_z_to_file(ofstream &ofile, double zval, Cosmos &cosmos)
 //--------------------------------------------------------------------------------------------
 void write_Xe_Te_to_file(ofstream &ofile, double zval, double Xe, double Te)
 {
-    ofile << zval << " " << Xe << " " << Te << endl;
+    ofile << scientific << zval << " " << Xe << " " << Te << endl;
     return;
 }
 
@@ -144,15 +144,15 @@ void write_HI_distortion_to_file(ofstream &ofile, double zval)
                                          cosmos.NH(zval), cosmos.H(zval), 
                                          T.A21, T.lambda21, T.Dnu, d1, d2);    
 
-    ofile << zval;
-    ofile << " " << d1;
+    ofile << scientific << zval;
+    ofile << scientific << " " << d1;
 
     d1=0.0; d2=0.0;
     ODE_effective::evaluate_2s_two_photon_decay(zval, cosmos.TCMB(zval), 
                                                 Hydrogen_Atoms.X(0), Hydrogen_Atoms.X(1), 
                                                 Hydrogen_Atoms.Level(1).Get_Dnu_1s(), 
                                                 const_HI_A2s_1s, d1, d2);
-    ofile << " " << d1 << endl;
+    ofile << scientific << " " << d1 << endl;
     
     return;
 }

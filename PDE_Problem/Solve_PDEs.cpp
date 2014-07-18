@@ -574,7 +574,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
     bool do_output=0;
     bool output_DI1=0;
     bool output_2gR=0;
-    bool write_solution_z0=1;
+    bool write_solution_z0=0;
 
     //=========================================================================== 
     // additional correction terms

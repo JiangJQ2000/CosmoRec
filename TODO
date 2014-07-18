@@ -1,21 +1,25 @@
-June 17th:
+July 17th 2014:
+
+- check
+
+./Modules/output_methods.cpp ? distortion output really needed / any good?
+
+
+June 17th (2012?):
 
 - Check new hydrogen atom setup! 
-- the ODE solver looks outdated...
 
 - add rates for n=5
 - remove rates with different nmax for n=10 and n=4
 - add rates for DM annihilation case
 
 
-- max-order 5 <--> 4 in ODE_solver_Rec.cpp
 - check main.cpp
 - parameter file
 - Diffusion_correction.cpp
 - HI_routine.cpp
 - Modules & PDE_Problem & PDE_Problem_HeI
 - finish README files
-- entry in makefile.pub for lite version
 - make sure that batch0000.dat outputs are not generated
 - also when things are called from CAMB don't output any files from 
   radiative transfer solver

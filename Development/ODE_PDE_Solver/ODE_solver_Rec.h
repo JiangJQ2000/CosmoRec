@@ -8,9 +8,12 @@
 // method. A guess for the next solution is extrapolated from the previous solutions; 
 //
 // Author: Jens Chluba with contributions from Geoff Vasil at CITA
+//
 // First implementation: 12/01/2010
-// Last modification   : 15/06/2011
+// Last modification   : 03/01/2012
 //==================================================================================================
+// 24/08/2012: improved some of the functions and tidied the code up
+//
 // 15/06/2011: set max order to 5; This was making the code a bit faster; 
 //             tidied the code a bit;
 //==================================================================================================
@@ -25,7 +28,6 @@ using namespace std;
 
 namespace ODE_solver_Rec
 {
-    
     //==============================================================================================
     // Structure that contains the solution y and its derivative dy at redshift z
     //==============================================================================================
@@ -56,12 +58,13 @@ namespace ODE_solver_Rec
     struct ODE_Solver_data
     {
         void (*fcn_col_ptr)(int *neq, double *z, double *y, double *f, int col);
+        void (*fcn_col_para_ptr)(int *neq, double *z, double *y, double *f, int col, void *p);
         bool num_jac;
         //
         ODE_solver_Solution Stemp;
         ODE_solver_Solution *Sptr;
         ODE_solver_Solution *Snewptr, *Sguessptr;
-        ODE_solver_Solution *Snptr, *Snm1ptr, *Snm2ptr, *Snm3ptr, *Snm4ptr, *Snm5ptr;
+        ODE_solver_Solution *Snptr[6];
         //
         ODE_solver_matrix *Jacobian_ptr;
         //
@@ -76,6 +79,8 @@ namespace ODE_solver_Rec
         // counting number of significant up and down-steps
         int n_up, n_down;
         double direction;
+        // to pass on parameters for the setup
+        void *p;
     };
     
     //==============================================================================================
@@ -88,6 +93,8 @@ namespace ODE_solver_Rec
     void clear_all_memory(ODE_solver_Solution &Sz, 
                           ODE_solver_accuracies &tols, 
                           ODE_Solver_data &SD);
+    
+    void set_verbosity(int verb);
     
     //==============================================================================================
     // ODE_Solver_set_up_solution_and_memory::
@@ -110,7 +117,8 @@ namespace ODE_solver_Rec
                                                ODE_solver_accuracies &tols, 
                                                ODE_Solver_data &ODE_Solver_info, 
                                                void (*fcn_ptr)(int *neq, double *z, 
-                                                               double *y, double *f, int col), 
+                                                               double *y, double *f, 
+                                                               int col), 
                                                bool num_jac=1);
     
     //==============================================================================================
@@ -126,12 +134,13 @@ namespace ODE_solver_Rec
     // should contain the solution at zs. Previous solutions will also be stored by the routine.
     //
     //==============================================================================================
-    int ODE_Solver_Solve_history(double zs, double zend, 
+    int ODE_Solver_Solve_history(double zs, double zend,
                                  ODE_solver_Solution &Sz, 
                                  ODE_Solver_data &ODE_Solver_info);
-    
+
 }
 
 #endif
+
 //==================================================================================================
 //==================================================================================================

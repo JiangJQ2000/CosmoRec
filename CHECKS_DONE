@@ -1,0 +1,22 @@
+July 17th:
+
+===================================================================================
+- checked directories:
+
+./Development/Recombination
+./Development/Compton_Kernel
+
+./plots
+./Rec_database
+
+===================================================================================
+- approved new files:
+
+./Makefile
+./Makefile.pub
+
+./Development/Hydrogenic/Quadrupole_lines_HI.cpp
+./Development/Hydrogenic/Quadrupole_lines_HI.h
+
+===================================================================================
+

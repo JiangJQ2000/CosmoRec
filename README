@@ -62,6 +62,10 @@
 //   './PDE_Problem_HeI/Solve_PDEs_HeI.cpp', however, note that the runtime of CosmoRec increases 
 //   significantly when this module is activated.
 //
+// Hydrogen: 
+//
+// - added output of Ly-n spectral distortion
+//
 // Helium:
 //
 // - updated the effective rates for helium. The rates for up to 10 resolved states including 

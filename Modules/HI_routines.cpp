@@ -18,10 +18,11 @@ bool Atom_activate_HI_Quadrupole_lines=0;
 int nD_Quadrupole_max=(int)min(3, Lyn_max_parameter);
 
 //==================================================================================================
-string effective_rate_path_arr[4]=
+string effective_rate_path_arr[5]=
 {
     Rec_database_path+"/Effective_Rates.HI/Effective_Rate_Tables.nS_3/",
     Rec_database_path+"/Effective_Rates.HI/Effective_Rate_Tables.nS_4/",
+    Rec_database_path+"/Effective_Rates.HI/Effective_Rate_Tables.nS_5/",
     Rec_database_path+"/Effective_Rates.HI/Effective_Rate_Tables.nS_8.np_10/",
     Rec_database_path+"/Effective_Rates.HI/Effective_Rate_Tables.nS_3.Q.hp/"
 };
@@ -122,15 +123,15 @@ void setup_Hydrogen_atom()
     //==============================================================================================
     if(nShells==3) 
     {   
-        if(!Atom_activate_HI_Quadrupole_lines) 
-            effective_rate_path=effective_rate_path_arr[0];
-        else effective_rate_path=effective_rate_path_arr[3];
+        if(!Atom_activate_HI_Quadrupole_lines) effective_rate_path=effective_rate_path_arr[0];
+        else effective_rate_path=effective_rate_path_arr[4];
     }
     else if(nShells==4) effective_rate_path=effective_rate_path_arr[1];
-    else if(nShells==10) effective_rate_path=effective_rate_path_arr[2];
+    else if(nShells==5) effective_rate_path=effective_rate_path_arr[2];
+    else if(nShells==10) effective_rate_path=effective_rate_path_arr[3];
     else
     { 
-        cerr << " setup_Hydrogen_atom :: please choose nSHI = 3, 4 or 10! Exiting... \n" << endl; 
+        cerr << " setup_Hydrogen_atom :: please choose nSHI = 3, 4, 5 or 10! Exiting... \n" << endl; 
         exit(0); 
     }
     

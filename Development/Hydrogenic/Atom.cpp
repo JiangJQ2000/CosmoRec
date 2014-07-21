@@ -1,11 +1,12 @@
-//==================================================================================================
-// Author: Jens Chluba 
+//====================================================================================================================
+// Author: Jens Chluba
 //
 // first implementation: June 2005
-// last change: May 2011
-//==================================================================================================
-// May 2011: Support for electric quadrupole lines were added.
-//==================================================================================================
+// last change         : July 2014
+//====================================================================================================================
+// July 2014: tidied up the code; checked verbosity and recombination rates communication;
+// May  2011: Support for electric quadrupole lines were added.
+//====================================================================================================================
 
 #include <iostream>
 #include <string>
@@ -22,9 +23,9 @@
 
 using namespace std;
 
-//==================================================================================================
+//====================================================================================================================
 // Konstructors and Destructors for Electron_Level
-//==================================================================================================
+//====================================================================================================================
 void Electron_Level::init(int n, int l, int nm, int ZZ, double NNp, bool Qlines_on, 
                           int Rec_flag, int mflag)
 {
@@ -70,7 +71,7 @@ void Electron_Level::init(int n, int l, int nm, int ZZ, double NNp, bool Qlines_
 void Electron_Level::init(int n, int l, int nm, int ZZ, double NNp, int Rec_flag, int mflag)
 { init(n, l, nm, Z, Np, 0, Rec_flag, mflag); return; }
 
-//==================================================================================================
+//====================================================================================================================
 Electron_Level::Electron_Level(int n, int l, int nm, int Z, double Np, bool Qlines_on, 
                                int Rec_flag, int mflag)
 { init(n, l, nm, Z, Np, Qlines_on, Rec_flag, mflag); }
@@ -78,7 +79,7 @@ Electron_Level::Electron_Level(int n, int l, int nm, int Z, double Np, bool Qlin
 Electron_Level::Electron_Level(int n, int l, int nm, int Z, double Np, int Rec_flag, int mflag)
 { init(n, l, nm, Z, Np, 0, Rec_flag, mflag); }
 
-//==================================================================================================
+//====================================================================================================================
 Electron_Level::~Electron_Level()
 { 
     A_values_down_lm1.clear();
@@ -89,12 +90,12 @@ Electron_Level::~Electron_Level()
     B_values.clear(); 
 }
 
-//==================================================================================================
+//====================================================================================================================
 void Electron_Level::calculate_transition_Data()
 {
-    //---------------------------------------------
+    //-------------------------------------------------------------------------------------
     // transition data stored according to n
-    //---------------------------------------------
+    //-------------------------------------------------------------------------------------
     A_values_down_lm1.clear();
     A_values_down_lp1.clear();
     A_values_down_lm2.clear();
@@ -124,18 +125,18 @@ void Electron_Level::calculate_transition_Data()
     return;
 }
 
-//==================================================================================================
+//====================================================================================================================
 // This setup only includes dipole transition (E1)
-//==================================================================================================
+//====================================================================================================================
 void Electron_Level::calculate_transition_to_level(int n, int l)
 {
     if(n==nn || abs(ll-l)!=1 || l>=n || l < 0) return;
     
     if(n<nn)
     {
-        //---------------------------------------------
+        //-------------------------------------------------------------------------------------
         // transition data stored according to n
-        //---------------------------------------------
+        //-------------------------------------------------------------------------------------
         Transition_Data_A vA;
         vA.np=n;
         vA.lp=l;
@@ -160,9 +161,9 @@ void Electron_Level::calculate_transition_to_level(int n, int l)
     return;
 }
 
-//==================================================================================================
+//====================================================================================================================
 // This setup includes both dipole (E1) and quadrupole (E2) transitions
-//==================================================================================================
+//====================================================================================================================
 void Electron_Level::calculate_DQ_transition_to_level(int n)
 {
     if(n==nn) return;
@@ -278,7 +279,7 @@ void Electron_Level::calculate_DQ_transition_to_level(int n)
     return;
 }
 
-//==================================================================================================
+//====================================================================================================================
 void Electron_Level::display_Trans_Data(Transition_Data_A &v)
 {
     cout << "\n %==============================================================%" << endl;
@@ -304,7 +305,7 @@ void Electron_Level::display_Trans_Data(Transition_Data_B &v)
     return;
 }
 
-//==================================================================================================
+//====================================================================================================================
 void Electron_Level::display_all_Trans_Data()
 {
     if(A_values_down_lm1.size()>0)
@@ -369,19 +370,20 @@ void Electron_Level::display_all_upward_Trans_Data()
     return;
 }
 
-//==================================================================================================
+//====================================================================================================================
 // access to photoionization and recombination rates
 // Author: Jens Chluba
 // changed: 12.04.2006
-//==================================================================================================
+//====================================================================================================================
+void error_message_no_Rec_rate(string str)
+{
+    cout << " Electron_Level::" << str << ":" << " Recombination rates were not setup!!! " << endl;
+    exit(0);
+}
+
 void Electron_Level::clear_Interaction_w_photons()
 {
-    if(Recombination_flag==0)
-    { 
-        cout << " Electron_Level::clear_Interaction_w_photons:"
-             << " Recombination rates were not setup!!! " << endl; 
-        exit(0); 
-    }
+    if(Recombination_flag==0) error_message_no_Rec_rate("clear_Interaction_w_photons");
     else if(Recombination_flag==1) Interaction_with_Photons_SH_QSP.clear();
     else if(Recombination_flag==2) Interaction_with_Photons_SH.clear();
     
@@ -391,28 +393,18 @@ void Electron_Level::clear_Interaction_w_photons()
 double Electron_Level::Get_nu_ionization()
 {
     double r=0.0;
-    if(Recombination_flag==0)
-    { 
-        cout << " Electron_Level::Get_nu_ionization:"
-             << " Recombination rates were not setup!!! " << endl; 
-        exit(0); 
-    }
+    if(Recombination_flag==0) error_message_no_Rec_rate("Get_nu_ionization");
     else if(Recombination_flag==1) r=Interaction_with_Photons_SH_QSP.Get_nu_ionization();
     else if(Recombination_flag==2) r=Interaction_with_Photons_SH.Get_nu_ionization();
     
     return r;
 }        
 
-//==================================================================================================
+//====================================================================================================================
 double Electron_Level::R_nl_c(double T_g)
 {
     double r=0.0;
-    if(Recombination_flag==0)
-    { 
-        cout << " Electron_Level::R_nl_c:" 
-             << " Recombination rates were not setup!!! " << endl; 
-        exit(0); 
-    } 
+    if(Recombination_flag==0)  error_message_no_Rec_rate("R_nl_c");
     else if(Recombination_flag==1) r=Interaction_with_Photons_SH_QSP.R_nl_c_Int(T_g);
     else if(Recombination_flag==2) r=Interaction_with_Photons_SH.R_nl_c_Int(T_g);
     return r;
@@ -421,12 +413,7 @@ double Electron_Level::R_nl_c(double T_g)
 double Electron_Level::R_c_nl(double T_g, double rho)
 {
     double r=0.0;
-    if(Recombination_flag==0)
-    { 
-        cout << " Electron_Level::R_c_nl:"
-             << " Recombination rates were not setup!!! " << endl; 
-        exit(0); 
-    } 
+    if(Recombination_flag==0) error_message_no_Rec_rate("R_c_nl");
     else if(Recombination_flag==1) r=Interaction_with_Photons_SH_QSP.R_c_nl_Int(T_g, rho);
     else if(Recombination_flag==2) r=Interaction_with_Photons_SH.R_c_nl_Int(T_g, rho);
     
@@ -436,28 +423,18 @@ double Electron_Level::R_c_nl(double T_g, double rho)
 double Electron_Level::dR_c_nl_dTe(double T_g, double rho)
 {
     double r=0.0;
-    if(Recombination_flag==0)
-    { 
-        cout << " Electron_Level::dR_c_nl_dTe:"
-             << " Recombination rates were not setup!!! " << endl; 
-        exit(0); 
-    } 
+    if(Recombination_flag==0) error_message_no_Rec_rate("dR_c_nl_dTe");
     else if(Recombination_flag==1) r=Interaction_with_Photons_SH_QSP.dR_c_nl_dTe_Int(T_g, rho);
     else if(Recombination_flag==2) r=Interaction_with_Photons_SH.dR_c_nl_dTe_Int(T_g, rho);
     
     return r;
 }
 
-//==================================================================================================
+//====================================================================================================================
 double Electron_Level::sig_phot_ion_nuc()
 { 
     double r=0.0;
-    if(Recombination_flag==0)
-    { 
-        cout << " Electron_Level::sig_phot_ion_nuc:" 
-             << " Recombination rates were not setup!!! " << endl; 
-        exit(0); 
-    } 
+    if(Recombination_flag==0) error_message_no_Rec_rate("sig_phot_ion_nuc");
     else if(Recombination_flag==1) r=Interaction_with_Photons_SH_QSP.sig_phot_ion_nuc();
     else if(Recombination_flag==2) r=Interaction_with_Photons_SH.sig_phot_ion_nuc();
     
@@ -467,12 +444,7 @@ double Electron_Level::sig_phot_ion_nuc()
 double Electron_Level::sig_phot_ion(double nu)
 { 
     double r=0.0;
-    if(Recombination_flag==0)
-    { 
-        cout << " Electron_Level::sig_phot_ion:"
-             << " Recombination rates were not setup!!! " << endl; 
-        exit(0); 
-    } 
+    if(Recombination_flag==0) error_message_no_Rec_rate("sig_phot_ion");
     else if(Recombination_flag==1) r=Interaction_with_Photons_SH_QSP.sig_phot_ion(nu);
     else if(Recombination_flag==2) r=Interaction_with_Photons_SH.sig_phot_ion(nu);
     
@@ -482,19 +454,14 @@ double Electron_Level::sig_phot_ion(double nu)
 double Electron_Level::g_phot_ion(double nu)
 { 
     double r=0.0;
-    if(Recombination_flag==0)
-    { 
-        cout << " Electron_Level::g_phot_ion:" 
-             << " Recombination rates were not setup!!! " << endl; 
-        exit(0); 
-    } 
+    if(Recombination_flag==0) error_message_no_Rec_rate("g_phot_ion");
     else if(Recombination_flag==1) r=Interaction_with_Photons_SH_QSP.g_phot_ion(nu);
     else if(Recombination_flag==2) r=Interaction_with_Photons_SH.g_phot_ion(nu);
     
     return r;
 }
 
-//==================================================================================================
+//====================================================================================================================
 double Electron_Level::calculate_A_tot()
 {
     double r=0.0;
@@ -515,42 +482,34 @@ double Electron_Level::calculate_A_tot_E2()
     return r;
 }
 
-//==================================================================================================
+//====================================================================================================================
+void error_message_upper_lower_confused(int nu, int nl)
+{
+    cout << " Upper and lower levels are confused: nu: " << nu << " nl: " << nl << endl;
+    exit(0);
+}
+
 double Electron_Level::A21(double f_ul, int nu, int lu, int nl, int ll)                 // in 1/sec
 { 
-    if(nu<nl)
-    {
-        cout << " Upper and lower levels are confused: nu: " << nu << " nl: " << nl << endl;
-        exit(0);
-    }
-    
+    if(nu<nl) error_message_upper_lower_confused(nu, nl);
     return -2.0*FOURPI*const_PIe2_mec*f_ul/pow(lambda_ul(nu, nl), 2); 
 }
 
 double Electron_Level::B12(double f_lu, int nl, int nu)
 {
-    if(nl>nu)
-    {
-        cout << " Upper and lower levels are confused: nup: " << nu << " nlow: " << nl << endl;
-        exit(0);
-    }
-    return FOURPI/(nu_ul(nu, nl)*const_h)*const_PIe2_mec*f_lu; 
+    if(nl>nu) error_message_upper_lower_confused(nu, nl);
+    return FOURPI/(nu_ul(nu, nl)*const_h)*const_PIe2_mec*f_lu;
 }  
 
 double Electron_Level::B21(double f_ul, int nu, int nl)
 { 
-    if(nu<nl)
-    {
-        cout << " Upper and lower levels are confused: nup: " << nu << " nlow: " << nl << endl;
-        exit(0);
-    }
-    
-    return FOURPI/(nu_ul(nl, nu)*const_h)*const_PIe2_mec*f_ul; 
+    if(nu<nl) error_message_upper_lower_confused(nu, nl);
+    return FOURPI/(nu_ul(nl, nu)*const_h)*const_PIe2_mec*f_ul;
 }
 
-//==================================================================================================
+//====================================================================================================================
 // functions with fast access to transition data
-//==================================================================================================
+//====================================================================================================================
 const Transition_Data_A& Electron_Level::Get_Data_A(const int &np, const int &lp) const
 {
     if(np>=nn) return ZERO_Data;            // no transition to level itself
@@ -570,7 +529,7 @@ const Transition_Data_A& Electron_Level::Get_Data_A(const int &np, const int &lp
     return ZERO_Data;
 }
 
-//==================================================================================================
+//====================================================================================================================
 double Electron_Level::Get_A21(const int &np, const int &lp) const
 { return Get_Data_A(np, lp).A21; }
 
@@ -580,9 +539,9 @@ double Electron_Level::Get_nu21(const int &np, const int &lp) const
 double Electron_Level::Get_lambda21(const int &np, const int &lp) const
 { return Get_Data_A(np, lp).lambda21; }
 
-//==================================================================================================
+//====================================================================================================================
 // Konstructors and Destructors for class: Atomic_Shell
-//==================================================================================================
+//====================================================================================================================
 void Atomic_Shell::init(int n, int nm, int ZZ, double NNp, bool Qlines_on, int Rec_flag, int mflag)
 {
     Atom_activate_Quadrupole_lines=Qlines_on;
@@ -597,7 +556,7 @@ void Atomic_Shell::init(int n, int nm, int ZZ, double NNp, bool Qlines_on, int R
 void Atomic_Shell::init(int n, int nm, int ZZ, double NNp, int Rec_flag, int mflag)
 { init(n, nm, ZZ, NNp, 0, Rec_flag, mflag); return; }
 
-//==================================================================================================
+//====================================================================================================================
 Atomic_Shell::Atomic_Shell(int n, int nm, int ZZ, double NNp, bool Qlines_on, 
                            int Rec_flag, int mflag)
 { init(n, nm, ZZ, NNp, Qlines_on, Rec_flag, mflag); }
@@ -606,10 +565,10 @@ Atomic_Shell::Atomic_Shell(int n, int nm, int ZZ, double NNp, int Rec_flag, int 
 { init(n, nm, ZZ, NNp, 0, Rec_flag, mflag); }
 
 
-//==================================================================================================
+//====================================================================================================================
 Atomic_Shell::~Atomic_Shell(){ Angular_Momentum_Level.clear(); }
 
-//==================================================================================================
+//====================================================================================================================
 void Atomic_Shell::create_Electron_Levels(bool Qlines_on, int Rec_flag)
 {
     if(mess_flag>-1)
@@ -633,7 +592,7 @@ void Atomic_Shell::create_Electron_Levels(bool Qlines_on, int Rec_flag)
     return;
 }
 
-//==================================================================================================
+//====================================================================================================================
 void Atomic_Shell::display_general_data_of_level(unsigned int i)
 {
     if(i>=(unsigned int)(nn) || Angular_Momentum_Level.size()==0)
@@ -647,16 +606,16 @@ void Atomic_Shell::display_general_data_of_level(unsigned int i)
     cout << " %==============================================================%" << endl;
     cout << " Z: " << Z << " Np: " << Np << endl; 
     cout << " Dnu: " << Angular_Momentum_Level[i].Get_Dnu_1s() 
-    << " Hz, DE: " << Angular_Momentum_Level[i].Get_DE_1s() << " eV"<< endl;
+         << " Hz, DE: " << Angular_Momentum_Level[i].Get_DE_1s() << " eV"<< endl;
     cout << " A_tot: " << Angular_Momentum_Level[i].Get_A() 
-    << " sec^-1, Gamma: " << Angular_Momentum_Level[i].Get_Gamma() << " sec^-1" << endl << endl; 
+         << " sec^-1, Gamma: " << Angular_Momentum_Level[i].Get_Gamma() << " sec^-1" << endl << endl;
     
     return;
 }
 
-//==================================================================================================
+//====================================================================================================================
 // Konstructors and Destructors for Atom
-//==================================================================================================
+//====================================================================================================================
 void Atom::init(int nS, int ZZ, double NNp, bool Qlines_on, int Rec_flag, int mflag)
 {
     Atom_activate_Quadrupole_lines=Qlines_on;
@@ -674,14 +633,14 @@ void Atom::init(int nS, int ZZ, double NNp, bool Qlines_on, int Rec_flag, int mf
 void Atom::init(int nS, int ZZ, double NNp, int Rec_flag, int mflag)
 { init(nS, ZZ, NNp, 0, Rec_flag, mflag); return; }
 
-//==================================================================================================
+//====================================================================================================================
 Atom:: Atom(int nS, int ZZ, double NNp, bool Qlines_on, int Rec_flag, int mflag)
 { init(nS, ZZ, NNp, Qlines_on, Rec_flag, mflag); }
 
 Atom:: Atom(int nS, int ZZ, double NNp, int Rec_flag, int mflag)
 { init(nS, ZZ, NNp, 0, Rec_flag, mflag); }
 
-//==================================================================================================
+//====================================================================================================================
 Atom:: Atom(){}
 
 Atom::~Atom()
@@ -690,7 +649,7 @@ Atom::~Atom()
     Shell.clear();
 }
 
-//==================================================================================================
+//====================================================================================================================
 void Atom::create_Shells(bool Qlines_on, int Rec_flag)
 {
     if(mess_flag>-1)
@@ -731,7 +690,7 @@ void Atom::create_Shells(bool Qlines_on, int Rec_flag)
     return;
 }
 
-//==================================================================================================
+//====================================================================================================================
 void Atom::display_general_data_of_Shell(unsigned int i)
 {
     if(i>=(unsigned int)(nShells) || i==0 || Shell.size()==0)
@@ -745,7 +704,7 @@ void Atom::display_general_data_of_Shell(unsigned int i)
     return;
 }
 
-//==================================================================================================
+//====================================================================================================================
 void Atom::fill_Level_Map()
 {
     // free memory (if necessary)
@@ -779,13 +738,13 @@ void Atom::display_Level_Map()
     return;
 }
 
-//==================================================================================================
+//====================================================================================================================
 const Electron_Level& Atom::Level(const unsigned int &i) const
 { 
     if(i> Get_total_number_of_Levels())
     {
         cout << " Atom::Level: you are trying to access a non-existing level: " << i 
-        << " total number of levels: " << Get_total_number_of_Levels() << endl;
+             << " total number of levels: " << Get_total_number_of_Levels() << endl;
         exit(0);
     }
 
@@ -797,7 +756,7 @@ const Electron_Level& Atom::Level(const unsigned int &n, const unsigned int &l) 
     if(n==0 || n>nShells || l>=n)
     {
         cout << " Atom::Level: you are trying to access a non-existing level: " << n 
-        << ", " << l << endl;
+             << ", " << l << endl;
         exit(0);
     }
     
@@ -809,7 +768,7 @@ Electron_Level& Atom::Level(const unsigned int &i)
     if(i> Get_total_number_of_Levels())
     {
         cout << " Atom::Level: you are trying to access a non-existing level: " << i 
-        << " total number of levels: " << Get_total_number_of_Levels() << endl;
+             << " total number of levels: " << Get_total_number_of_Levels() << endl;
         exit(0);
     }
     
@@ -821,16 +780,16 @@ Electron_Level& Atom::Level(const unsigned int &n, const unsigned int &l)
     if(n==0 || n>nShells || l>=n)
     {
         cout << " Atom::Level: you are trying to access a non-existing level: " << n 
-        << ", " << l << endl;
+             << ", " << l << endl;
         exit(0);
     }
     
     return Shell[n].Angular_Momentum_Level[l]; 
 }
 
-//==================================================================================================
+//====================================================================================================================
 // Konstructors and Destructors for class: Gas_of_Atoms
-//==================================================================================================
+//====================================================================================================================
 void Gas_of_Atoms::init(int nS, int Z, double Np, bool Qlines_on, int Rec_flag, int mflag)
 { 
     Atom_activate_Quadrupole_lines=Qlines_on;
@@ -883,14 +842,14 @@ void Gas_of_Atoms::init(int nS, int Z, double Np, bool Qlines_on, int Rec_flag, 
 void Gas_of_Atoms::init(int nS, int Z, double Np, int Rec_flag, int mflag)
 { init(nS, Z, Np, 0, Rec_flag, mflag); return; }
 
-//==================================================================================================
+//====================================================================================================================
 Gas_of_Atoms::Gas_of_Atoms(int nS, int Z, double Np, bool Qlines_on, int Rec_flag, int mflag):Atom()
 { init(nS, Z, Np, Qlines_on, Rec_flag, mflag); }
 
 Gas_of_Atoms::Gas_of_Atoms(int nS, int Z, double Np, int Rec_flag, int mflag):Atom()
 { init(nS, Z, Np, 0, Rec_flag, mflag); }
 
-//==================================================================================================
+//====================================================================================================================
 Gas_of_Atoms::Gas_of_Atoms():Atom(){}
 
 Gas_of_Atoms::~Gas_of_Atoms()
@@ -901,7 +860,7 @@ Gas_of_Atoms::~Gas_of_Atoms()
     dRci_dTe_BB_vec.clear();
 }
 
-//==================================================================================================
+//====================================================================================================================
 const Voigtprofile_Dawson& Gas_of_Atoms::HI_Lyn_profile(int n) const 
 { 
     if(n>1 && n<=(int)min(Get_nShells(), 100)) return phi_HI_Lyn[n]; 
@@ -916,7 +875,7 @@ Voigtprofile_Dawson& Gas_of_Atoms::HI_Lyn_profile(int n)
     return phi_HI_Lyn[0]; 
 }
 
-//==================================================================================================
+//====================================================================================================================
 const Voigtprofile_Dawson& Gas_of_Atoms::HI_nD1s_profile(int n) const 
 { 
     if(n>2 && n<=(int)min(Get_nShells(), 100) 
@@ -933,7 +892,7 @@ Voigtprofile_Dawson& Gas_of_Atoms::HI_nD1s_profile(int n)
     return phi_HI_nD1s[0]; 
 }
 
-//==================================================================================================
+//====================================================================================================================
 double Gas_of_Atoms::compute_sigma_tot_nu_1s(double nu, double Tm)
 {
     if(Tm<=0.0) Tm=1.0e-4;
@@ -955,7 +914,7 @@ double Gas_of_Atoms::compute_sigma_tot_nu_1s(double nu, double Tm)
     return sigma;
 }
 
-//==================================================================================================
+//====================================================================================================================
 double Gas_of_Atoms::compute_sigma_tot_nu_shell(int n, double nu, double Tm)
 {
     int nShells=Get_nShells();
@@ -1020,7 +979,7 @@ double Gas_of_Atoms::compute_sigma_tot_nu_shell(int n, double nu, double Tm)
     return sigma;
 }
 
-//==================================================================================================
+//====================================================================================================================
 void Gas_of_Atoms::create_vectors_X(int imax)
 {
     vector<double> v;
@@ -1043,11 +1002,11 @@ void Gas_of_Atoms::create_vectors_X(int imax)
     return;
 }
 
-//==================================================================================================
+//====================================================================================================================
 double Gas_of_Atoms::Get_A(unsigned int n, unsigned int l, unsigned int np, unsigned int lp) const
 { return Level(n, l).Get_A21(np, lp); }
 
-//==================================================================================================
+//====================================================================================================================
 double Gas_of_Atoms::Get_population_of_level(const unsigned int &i) const
 { 
     if(i>= Get_total_number_of_Levels())
@@ -1102,7 +1061,7 @@ void Gas_of_Atoms::Set_population_of_level(const unsigned int &n, const unsigned
     return;
 }
 
-//==================================================================================================
+//====================================================================================================================
 double Gas_of_Atoms::X_tot() const
 {
     double r=0.0;
@@ -1125,9 +1084,9 @@ double Gas_of_Atoms::X_tot(int nlow) const
     return r; 
 }
 
-//==================================================================================================
+//====================================================================================================================
 // total recombination rate from nlow upwards
-//==================================================================================================
+//====================================================================================================================
 double Gas_of_Atoms::R_rec_tot_BB(int nlow, double T, double rho)       
 {
     if(nlow<1) nlow=1;
@@ -1140,9 +1099,9 @@ double Gas_of_Atoms::R_rec_tot_BB(int nlow, double T, double rho)
     return r;
 }
 
-//==================================================================================================
+//====================================================================================================================
 // total photoionization rate from nlow upwards
-//==================================================================================================
+//====================================================================================================================
 double Gas_of_Atoms::R_phot_tot_BB(int nlow, double T)                  
 {
     if(nlow<1) nlow=1;
@@ -1155,9 +1114,9 @@ double Gas_of_Atoms::R_phot_tot_BB(int nlow, double T)
     return r;
 }
 
-//==================================================================================================
+//====================================================================================================================
 // routines for numerical applications
-//==================================================================================================
+//====================================================================================================================
 void Gas_of_Atoms::clear_Interaction_w_photons()
 { 
     for(int n=1; n<=Get_nShells(); n++) 
@@ -1166,7 +1125,7 @@ void Gas_of_Atoms::clear_Interaction_w_photons()
     return;
 }
 
-//==================================================================================================
+//====================================================================================================================
 void Gas_of_Atoms::update_Ric_BB(double TT)
 {
     update_Ric_BB(1, TT);
@@ -1215,13 +1174,13 @@ void Gas_of_Atoms::update_dRci_dTe_BB(int nm, double TT, double rho)
     return;
 }
 
-//==================================================================================================
+//====================================================================================================================
 void Gas_of_Atoms::Set_Ric_rate(const unsigned int &n, const unsigned int &l, const double &Ric)
 { 
     if(n==0 || n>Ric_BB_vec.size() || l>=Ric_BB_vec[n].size())
     {
         cout << " Gas_of_Atoms::Set_Ric_rate: you are trying to access a non-existing level: " 
-        << "( " << n << ", " << l << " )" << endl;
+             << "( " << n << ", " << l << " )" << endl;
         exit(0);
     }
     
@@ -1234,7 +1193,7 @@ void Gas_of_Atoms::Set_Rci_rate(const unsigned int &n, const unsigned int &l, co
     if(n==0 || n>Rci_BB_vec.size() || l>=Rci_BB_vec[n].size())
     {
         cout << " Gas_of_Atoms::Set_Rci_rate: you are trying to access a non-existing level: " 
-        << "( " << n << ", " << l << " )" << endl;
+             << "( " << n << ", " << l << " )" << endl;
         exit(0);
     }
     
@@ -1256,13 +1215,13 @@ void Gas_of_Atoms::Set_dRci_dTe_rate(const unsigned int &n, const unsigned int &
     return;
 }
 
-//==================================================================================================
+//====================================================================================================================
 double Gas_of_Atoms::Ric_BB(unsigned int i) 
 {
     if(i>= Get_total_number_of_Levels())
     {
         cout << " Gas_of_Atoms::Ric_BB: you are trying to access a non-existing level: " << i 
-        << " total number of levels: " << Get_total_number_of_Levels() << endl;
+             << " total number of levels: " << Get_total_number_of_Levels() << endl;
         exit(0);
     }
     
@@ -1274,7 +1233,7 @@ double Gas_of_Atoms::Rci_BB(unsigned int i)
     if(i>= Get_total_number_of_Levels())
     {
         cout << " Gas_of_Atoms::Rci_BB: you are trying to access a non-existing level: " << i 
-        << " total number of levels: " << Get_total_number_of_Levels() << endl;
+             << " total number of levels: " << Get_total_number_of_Levels() << endl;
         exit(0);
     }
     
@@ -1286,7 +1245,7 @@ double Gas_of_Atoms::dRci_dTe_BB(unsigned int i)
     if(i>= Get_total_number_of_Levels())
     {
         cout << " Gas_of_Atoms::dRci_dTe_BB: you are trying to access a non-existing level: " << i 
-        << " total number of levels: " << Get_total_number_of_Levels() << endl;
+             << " total number of levels: " << Get_total_number_of_Levels() << endl;
         exit(0);
     }
     
@@ -1298,7 +1257,7 @@ double Gas_of_Atoms::Ric_BB(unsigned int n, unsigned int l)
     if(n==0 || n>Ric_BB_vec.size() || l>=Ric_BB_vec[n].size())
     {
         cout << " Gas_of_Atoms::Ric_BB: you are trying to access a non-existing level: " 
-        << "( " << n << ", " << l << " )" << endl;
+             << "( " << n << ", " << l << " )" << endl;
         exit(0);
     }
     
@@ -1310,7 +1269,7 @@ double Gas_of_Atoms::Rci_BB(unsigned int n, unsigned int l)
     if(n==0 || n>Rci_BB_vec.size() || l>=Rci_BB_vec[n].size())
     {
         cout << " Gas_of_Atoms::Rci_BB: you are trying to access a non-existing level: " 
-        << "( " << n << ", " << l << " )" << endl;
+             << "( " << n << ", " << l << " )" << endl;
         exit(0);
     }
     
@@ -1322,14 +1281,14 @@ double Gas_of_Atoms::dRci_dTe_BB(unsigned int n, unsigned int l)
     if(n==0 || n>dRci_dTe_BB_vec.size() || l>=dRci_dTe_BB_vec[n].size())
     {
         cout << " Gas_of_Atoms::dRci_dTe_BB: you are trying to access a non-existing level: " 
-        << "( " << n << ", " << l << " )" << endl;
+             << "( " << n << ", " << l << " )" << endl;
         exit(0);
     }
     
     return dRci_dTe_BB_vec[n][l]; 
 } 
 
-//==================================================================================================
+//====================================================================================================================
 double Gas_of_Atoms::R_rec_tot_BB(int nlow)          // total recombination rate from nlow upwards
 {
     if(nlow<1) nlow=1;
@@ -1352,11 +1311,11 @@ double Gas_of_Atoms::R_phot_tot_BB(int nlow)         // total photoionization ra
     return r;
 }
 
-//==================================================================================================
+//====================================================================================================================
 // Saha-relations with continuum
-//==================================================================================================
+//====================================================================================================================
 // f(T) == (Ni/[Ne Nc])_LTE
-//==================================================================================================
+//====================================================================================================================
 double Gas_of_Atoms::Ni_NeNc_LTE(unsigned int i, double TM)
 { 
     double gi=2.0*(2.0*Get_l_of_Level(i)+1.0), gc=1.0;
@@ -1381,6 +1340,5 @@ double Gas_of_Atoms::Ni_Saha(unsigned int i, double Ne, double Nc, double TM)
 double Gas_of_Atoms::Ni_Saha(unsigned int n, unsigned int l, double Ne, double Nc, double TM)
 { return Ni_Saha(Get_Level_index(n, l), Ne, Nc, TM); }
 
-//==================================================================================================
-//==================================================================================================
-
+//====================================================================================================================
+//====================================================================================================================

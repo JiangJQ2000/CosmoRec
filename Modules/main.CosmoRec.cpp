@@ -194,21 +194,7 @@ int Xe_frac_effective_rates()
             
             if(show_CosmoRec_mess>=1)
                 cout << " *----------------------------------------------------------------------------------------------------------* " << endl << endl;
-            
-/*            ofstream ofile("./outputs/pops.dat", ios_base::app);
-            ofile.precision(10);
-        
-            ofile << ze << " " << Level_I.X[0] << " " << Level_I.X[Level_I.index_HI] << " " 
-                  << Level_I.X[Level_I.index_HeI] << " " 
-                  << Level_I.X[Level_I.index_HeI+HeI_Atoms.Get_Level_index(2, 1, 0, 1)] << " " 
-                  << Level_I.X[Level_I.index_HeI+HeI_Atoms.Get_Level_index(3, 1, 0, 1)] << " " 
-                  << Level_I.X[Level_I.index_HeI+HeI_Atoms.Get_Level_index(2, 1, 1, 1)] << " " 
-                  << Level_I.X[Level_I.index_HeI+HeI_Atoms.Get_Level_index(3, 1, 1, 1)] << " " 
-                  << Level_I.X[Level_I.index_HeI+HeI_Atoms.Get_Level_index(3, 2, 0, 2)] << " " 
-                  << Level_I.X[Level_I.neq-1]*cosmos.TCMB(ze) << endl;
-            
-            ofile.close();
-*/        }
+        }
         
         if(flag_compute_Recfast_part==1 && err==0) 
         {

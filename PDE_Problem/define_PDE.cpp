@@ -480,7 +480,6 @@ void update_Raman_profiles_nsd_1s(double z, int ni, Raman_2g_profiles &RGP,
 //==================================================================================================
 double two_g_emission_fac(double exp_mx, double exp_mx0)
 {
-//    return 1.0;
     double npl_x =exp_mx/(1.0-exp_mx);
     double npl_xp=exp_mx0/(exp_mx-exp_mx0);
     return (1.0+npl_xp)*(1.0+npl_x);
@@ -887,10 +886,6 @@ void add_Ly_n_sc_em_full(int n, double z, double nu21, double Tg, double Te, dou
     double kappa_Ly_n_abs=-pd_np*const_sigr*N1s*const_cl/Hz/(1.0+z); 
     double exp_dum=exp(-x_c);
     
-//    ofstream ofile;
-//    string name="./temp/Dp_d."+int_to_string(n)+".4.dat";
-//    ofile.open(name.c_str(), ios_base::app);
-    
     //----------------------------------------------------------
     // correcting the death probability and Dnem
     //----------------------------------------------------------
@@ -902,13 +897,7 @@ void add_Ly_n_sc_em_full(int n, double z, double nu21, double Tg, double Te, dou
         kappa_Ly_n_abs*=1.0-Dp/pd_np;
         pd_np*=1.0-Dp/pd_np;
         Dnem+=Dn*nu21;
-//        cout << z << " " << n << " " << 1.0-Dp/pd_np << " " << 1.0+Dn*nu21/Dnem << endl;
-//        ofile << z << " " << 1.0-Dp/pd_np << " " << 1.0+Dn*nu21/Dnem << " " <<  Dnem << " " << Dn 
-//                   << " " << Dnem_n_func(n, z)*nu21 << " " << pd_np << endl;
-        
     }
-
-//    ofile.close();
     
     //----------------------------------------------------------
     // save info for computation of DPesc

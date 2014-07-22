@@ -50,7 +50,7 @@ int core_HeI=25;            // points per Doppler width in the core region;
                             // For +/- 10 xD core=25 implies 500 points (which is recommended).
 int dec_HeI=50;             // points per decade; from 10^-4 --> 1 for ndec==50 gives ~ 200 points
 
-double theta_HeI=0.51;
+double theta_HeI=0.55;
 
 
 //====================================================================================================================
@@ -79,8 +79,8 @@ bool HeI_2s_1s_corr_is_on=1;
 //====================================================================================================================
 // switch on/off HeI singlet 2s-1s channel; this overwrites all other settings for 2s-1s channel
 //====================================================================================================================
-int npts_2s1s_HeI=1000;     // number of points for HeI singlet 2s-1s two-photon part
-double xmin_glob_HeI=0.3;   // if 2s-1s correction is on, this should be <~0.3  
+int npts_2s1s_HeI=500;      // number of points for HeI singlet 2s-1s two-photon part
+double xmin_glob_HeI=0.2;   // if 2s-1s correction is on, this should be <~0.3
 
 //====================================================================================================================
 void switch_off_1s_2s_HeI_correction()
@@ -660,9 +660,6 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
                 if (!(output_count%GR_output_step) && out_put_GRACE && GraceIsOpen()) 
                     output_Grace_HeI(zout, write_to_disk_GRACE, SPDE_D_HeI.xarr, 
                                      SPDE_D_HeI.yarr, exten, output_count);
-//                output_Grace_HeI(zout, write_to_disk_GRACE, SPDE_D_HeI.xarr, 
-//                                 SPDE_D_HeI.yarr, PDE_funcs_HeI.exp_x, 
-//                                 PDE_funcs_HeI.exp_x, exten, output_count);
             }
 #endif
             
@@ -757,7 +754,5 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
     return 0;
 }
 
-//==================================================================================================
-//==================================================================================================
-
-
+//====================================================================================================================
+//====================================================================================================================

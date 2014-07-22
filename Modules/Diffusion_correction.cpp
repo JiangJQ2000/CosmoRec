@@ -25,6 +25,10 @@ int index_all_spline;
 
 #define DF_SPLINES
 
+//#define DIFF_CORR_STOREII   // Changes between two ways of storing the diffusion correction.
+                            // Not setting it is consistent with CosmoRec v1.5
+                            // make sure to also change this in ./PDE_Problem/Solve_PDEs_integrals.cpp
+
 //==================================================================================================
 //
 // for module to account for the 2s-1s corrections
@@ -56,8 +60,8 @@ void setup_DF_spline_data(int n, vector<double> &DPesc_vec_z, vector<double> &DP
     
     if(DPesc_splines_are_setup==0) 
         DPesc_splines_Data_DF[n].memindex=calc_spline_coeffies_JC(nz, za, ya,
-                                                                   "setup_DF_spline_data :: "
-                                                                   +int_to_string(n));   
+                                                                  "setup_DF_spline_data :: "
+                                                                  +int_to_string(n));   
     //
     else update_spline_coeffies_JC(DPesc_splines_Data_DF[n].memindex, nz, za, ya);                
 
@@ -174,7 +178,6 @@ void setup_DF_interpol_data(vector<double> &DF_vec_z,
 #else
     setup_DF_n_point_data(DF_vec_z, DF_Ly_n_vec, DF_2g_vec, DF_R_vec, DF_nD1s_vec, DI1_2s_vec);
 #endif
-    
     return;
 }
 
@@ -194,7 +197,7 @@ double interpolate_DF(double z, int k)
     double y, dy;
     polint_JC(&DPesc_splines_Data_DF[k].za[0], &DPesc_splines_Data_DF[k].ya[0], 
               DPesc_splines_Data_DF[k].za.size(), z, DPesc_splines_Data_DF[k].accel, 
-              3, &y, &dy);
+              2, &y, &dy);
     return y;
 #endif
 }
@@ -214,17 +217,19 @@ double DI1_2s_spline(double z){ return interpolate_DF(z, 0); }
 void evaluate_HI_DI1_DI2_correction(double z, double X1s, double X2s, double nu21, 
                                     double Tg, double *g)
 {
-    //    return;
-    
-    double x21=const_h_kb*nu21/Tg;  
-    double DI1_2s=DI1_2s_spline(z);   
-    DI1_2s*=X2s-X1s*exp(-x21);  
+#ifdef DIFF_CORR_STOREII
+    double x21=const_h_kb*nu21/Tg;
+    double DI1_2s=DI1_2s_spline(z)*(X2s-X1s*exp(-x21));
     double DRij=const_HI_A2s_1s*DI1_2s;
+#else
+    double DI1_2s=DI1_2s_spline(z);
+    double DRij=DI1_2s*X1s;
+#endif
     
     g[0]+=-DRij; // remove electron from 1s level
     g[1]+= DRij; // add it to 2s-state
     
-//  cout << z << " 2s-1s correction " << DRij << " DI1= " << DI1_2s << " " << exp(-x21) << endl;
+//    cout << z << " 2s-1s correction " << DRij << " DI1= " << DI1_2s << " " << exp(-x21) << endl;
     
     return;
 }
@@ -237,6 +242,7 @@ void evaluate_HI_DI1_DI2_correction(double z, double X1s, double X2s, double nu2
 double compute_DR_Ly_n_func(int i, double z, double X1s, double Tg, Gas_of_Atoms &HIA, int ni)
 {
     double DRij=DF_Ly_n_spline(i, z)*( HIA.X(ni, 1)/X1s/3.0-exp(-const_h_kb*HIA.Level(ni, 1).Get_Dnu_1s()/Tg) );
+
 //    cout << z << " (ni, li) " << ni << " " << 1 << " Ly-n " << DRij << endl;
     return DRij;
 }
@@ -269,8 +275,13 @@ void evaluate_HI_Diffusion_correction_Ly_n(double z, Gas_of_Atoms &HIA,
 //==================================================================================================
 double compute_DR_2g_func(int i, double z, double X1s, double Tg, Gas_of_Atoms &HIA, int ni, int li)
 {
+#ifdef DIFF_CORR_STOREII
     double DRij=DF_2g_spline(i, z)*( HIA.X(ni, li)/X1s/(2.0*li+1.0)-exp(-const_h_kb*HIA.Level(ni, li).Get_Dnu_1s()/Tg) );
-//  cout << z << " (ni, li) " << ni << " " << li << " 2g " << DRij << endl;
+#else
+    double DRij=X1s*DF_2g_spline(i, z);
+#endif
+    
+//    cout << z << " (ni, li) " << ni << " " << li << " 2g " << DRij << endl;
     return DRij;
 }
 
@@ -304,8 +315,13 @@ void evaluate_HI_Diffusion_correction_2_gamma(double z, Gas_of_Atoms &HIA,
 //==================================================================================================
 double compute_DR_R_func(int i, double z, double X1s, double Tg, Gas_of_Atoms &HIA, int ni, int li)
 {
+#ifdef DIFF_CORR_STOREII
     double DRij=DF_R_spline(i, z)*( HIA.X(ni, li)/X1s/(2.0*li+1.0)-exp(-const_h_kb*HIA.Level(ni, li).Get_Dnu_1s()/Tg) );
-//  cout << z << " (ni, li) " << ni << " " << li << " Raman " << DRij << endl;  
+#else
+    double DRij=X1s*DF_R_spline(i, z);
+#endif
+
+//    cout << z << " (ni, li) " << ni << " " << li << " Raman " << DRij << endl;
     return DRij;
 }
 
@@ -340,7 +356,8 @@ void evaluate_HI_Diffusion_correction_R(double z, Gas_of_Atoms &HIA,
 double compute_DR_nD1s_func(int i, double z, double X1s, double Tg, Gas_of_Atoms &HIA, int ni)
 {
     double DRij=DF_nD1s_spline(i, z)*( HIA.X(ni, 2)/X1s/5.0-exp(-const_h_kb*HIA.Level(ni, 1).Get_Dnu_1s()/Tg) );
-    //    cout << z << " (ni, li) " << ni << " " << 2 << " nD-1s " << DRij << endl;    
+
+//    cout << z << " (ni, li) " << ni << " " << 2 << " nD-1s " << DRij << endl;
     return DRij;
 }
 

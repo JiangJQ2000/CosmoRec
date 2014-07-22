@@ -430,45 +430,6 @@ double Dn_minus_HeI_feedback(int linenum, double z, double X1sHI, Gas_of_HeI_Ato
                      *(1.0-pow(nu21l/nu21u, 3))/3.0;
     
         Dnminus=Dn_minus_HeI(linenum+1, zi)*exp(-tauc);
-
-/* // testing purpose and output
-        static double Dzstep=2.0, zsaved[11]={0,0,0,0,0,0,0,0,0,0,0};
-        if(linenum<=11 && fabs(zi-zsaved[linenum])>=Dzstep)
-        {
-            //====================================================================
-            // for output
-            //====================================================================
-            double nu21=HeI_Lines[linenum].nu21;
-            double nL=HeI_Lines[linenum].lowerLevel.gw*HeIA.Xi(HeI_Lines[linenum].upperLevel.i)
-                   /( HeI_Lines[linenum].upperLevel.gw*HeIA.Xi(HeI_Lines[linenum].lowerLevel.i) );
-            nL=1.0/(1.0/nL-1.0);
-            double nPl=1.0/(exp_nu(nu21, cosmos.TCMB(z))-1.0);
-            double DnL=nL-nPl;
-            
-            //====================================================================
-            // include the absorption in the line
-            //====================================================================
-            double NH=cosmos.NH(z), H_z=cosmos.H(z);
-            double tauS=tau_S_gw(HeI_Lines[linenum].A21, HeI_Lines[linenum].lambda21, 
-                                 HeI_Lines[linenum].upperLevel.gw, 
-                                 HeIA.Xi(HeI_Lines[linenum].upperLevel.i)*NH, 
-                                 HeI_Lines[linenum].lowerLevel.gw, 
-                                 HeIA.Xi(HeI_Lines[linenum].lowerLevel.i)*NH, H_z);
-            
-            double PS=p_ij(tauS);
-            double PSeff=PS*(1.0-Dnminus/DnL);
-            double DP=0.0;
-
-            if(linenum==1) DP=DP_interpol_T(cosmos.TCMB(z), tauS, const_cl*X1sHI*cosmos.NH(z)*HeIA.HILyc.sig_phot_ion_nuc()/cosmos.H(z));
-            if(linenum==2) DP=DP_interpol_S(cosmos.TCMB(z), tauS, const_cl*X1sHI*cosmos.NH(z)*HeIA.HILyc.sig_phot_ion_nuc()/cosmos.H(z));
-            PSeff+=DP;
-            
-            zsaved[linenum]=zi;
-            ofstream ofile(("./temp/DP.line_"+int_to_string(linenum)+".dat").c_str(), ios_base::app);
-            ofile << z << " " << PSeff - PS << " " << PSeff << " " << PS << " " << DP+PS << endl;
-            ofile.close();
-        }
-*/
     }
     
     return Dnminus;

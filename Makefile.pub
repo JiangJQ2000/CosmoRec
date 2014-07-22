@@ -20,7 +20,7 @@ all:
     mkdir ./CosmoRec.vX/runfiles; \
     cp -r ./runfiles/parameters.dat ./CosmoRec.vX/runfiles/.; \
     cp ./Makefile ./CosmoRec.vX/.; \
-    cp ./Makefile.in ./CosmoRec.vX/.; \
+    cp ./Makefile.in.pub ./CosmoRec.vX/Makefile.in; \
     cp ./main.cpp ./CosmoRec.vX/.; \
     cp ./CosmoRec.cpp ./CosmoRec.vX/.; \
     cp ./CosmoRec.h ./CosmoRec.vX/.; \

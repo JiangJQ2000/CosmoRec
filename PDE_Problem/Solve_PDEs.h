@@ -1,6 +1,11 @@
 //==================================================================================================
-// Author Jens Chluba (July 2010)
+// Author Jens Chluba
+//
+// first implementation: July 2010
+// last modification   : July 2014
 //==================================================================================================
+// 04.06.2011: added nD-1s transitions to transfer problem
+// 26.03.2011: added Ly-n integrals & electron scattering Kernel support
 
 #ifndef SOLVE_PDES_H
 #define SOLVE_PDES_H

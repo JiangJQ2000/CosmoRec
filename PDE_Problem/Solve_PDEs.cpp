@@ -1,7 +1,12 @@
 //==================================================================================================
-// Author Jens Chluba 
-// last modification Aug 2012
+// Author Jens Chluba
+//
+// first implementation: July 2010
+// last modification   : July 2014
 //==================================================================================================
+// 04.06.2011: added nD-1s transitions to transfer problem
+// 26.03.2011: added Ly-n integrals & electron scattering Kernel support
+
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -25,7 +30,6 @@
 
 #include "PDE_solver.h"
 #include "define_PDE.h"
-#include "define_PDE_HeI.h"
 #include "Solve_PDEs.h"
 
 #include "HI_Transition_Data.h"
@@ -46,7 +50,7 @@ string HI_outputdir=COSMORECDIR+"./temp/";
 // flags for message output
 //
 //==================================================================================================
-int show_messages=0;
+int show_messages=-1;
 
 
 //==================================================================================================
@@ -58,10 +62,10 @@ int core_HI=25;            // points per Doppler width in the core region;
                            // For +/- 10 xD core=25 implies 500 points (which is recommended).
 int dec_HI=50;             // points per decade; from 10^-4 --> 1 for ndec==50 gives ~ 200 points
 
-double theta_HI=0.51;
+double theta_HI=0.55;
 
-int npts_2s1s=1000;        // number of points for 2s-1s two-photon part
-double xmin_glob=0.0001;
+int npts_2s1s=400;         // number of points for 2s-1s two-photon part (300-400 seems enough)
+double xmin_glob=0.005;
 
 //==================================================================================================
 //
@@ -308,10 +312,9 @@ void arm_PDE_solver(Cosmos &cos, Gas_of_Atoms &HIA, vector<double> &xarr,
         //=========================================================================== 
         init_PDE_Stepper_Data(PDE_D, npts);
 
-        if(solve_with_Kernel_HI==0) 
+        if(solve_with_Kernel_HI==0)
             setup_Lagrange_interpolation_coefficients_O2(PDE_D, xarr);
-        
-        else if(solve_with_Kernel_HI==1) 
+        else if(solve_with_Kernel_HI==1)
             setup_Lagrange_interpolation_coefficients_O2_Int(PDE_D, xarr);
     
         PDE_funcs_are_set=1;
@@ -563,7 +566,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
 	// output for Grace
 	//=========================================================================== 
 #ifdef GRACE_DEFINED
-	bool out_put_GRACE=0;
+	bool out_put_GRACE=1;
     bool write_to_disk_GRACE=0;
 	int GR_output_step=1;
 #endif
@@ -593,8 +596,13 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
     //=========================================================================== 
     double dz_out=10.0;
     int output_count=0;
-    int output_step=20;
-    int DF_step=2;
+    int output_step=10;
+    int DF_step=1;
+    
+    // the stability of the iteration depends quite a bit on this, so careful!
+    if(it_num==0){ dz_out=10.0; DF_step=1; }
+    if(it_num==1){ dz_out=8.0; DF_step=2; }
+    if(it_num==2){ dz_out=5.0; DF_step=4; }
     
     //=========================================================================== 
     // frequency rescaling
@@ -634,10 +642,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
     // has to be decreased. The precision of the output should 
     // then be like ~<0.01%.
     //=========================================================================== 
-    if(nresmax>4){ dz_out=min(dz_out, 2.0); DF_step=10; }
-        
-    dz_out=min(dz_out, 2.0); DF_step=10;
-    
+    //if(nresmax>4){ dz_out=min(dz_out, 2.0); DF_step=10; }
     
     //=========================================================================== 
     // prepare memory for back-communication
@@ -671,7 +676,6 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
     // nD-1s quadrupole lines
     //=========================================================================== 
     if(include_nD1s_corr) DF_nD1s_vec.resize(Get_nmax_two_g_correction()-2); 
-
     
     //=========================================================================== 
     // load precomputed solutions
@@ -685,12 +689,10 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
     //=========================================================================== 
     init_Solve_PDE_Data(nresmax, boundary_up);
     
-    
-    //=========================================================================== 
+    //===========================================================================
     // memory for PDE Solver
     //=========================================================================== 
     arm_PDE_solver(cos, HIA, SPDE_D.xarr, SPDE_D.resonances);
-            
     
     //=========================================================================== 
     // outputs/names/etc
@@ -739,7 +741,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
 	if(out_put_GRACE) prepare_Grace(SPDE_D.xarr[0], SPDE_D.resonances, write_to_disk_GRACE);	
 #endif
     
-    double zin=zs, zout, dz, theta_HI_loc=0.51;
+    double zin=zs, zout, dz, theta_HI_loc=theta_HI;
     do
     {
         //=======================================================================
@@ -748,15 +750,16 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
         // however, highest accuracy in the time-step is reached for theta ~ 0.5
         // which should be used after the initial 'burn in' phase.
         //=======================================================================
-        if(zin>zs-100.0) theta_HI_loc=0.99999; 
+        if(zin>zs-100.0) theta_HI_loc=0.999;
         else theta_HI_loc=theta_HI;
-
+        //theta_HI_loc=theta_HI;
+        
         //=======================================================================
         // add some small amount of diffusion to stabilize the PDE
         //=======================================================================
         if(solve_with_Kernel_HI==0) set_electron_scattering_efficiency(1.0);
         if(solve_with_Kernel_HI==1) set_electron_scattering_efficiency(1.0e-2);
-            
+        
         //=======================================================================
         // set step-size
         //=======================================================================
@@ -792,7 +795,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
         //=======================================================================
         // write results only after some initial evolution
         //=======================================================================
-        if(zout<zs-0.0)
+        if(zout<zs-10.0)
         {
 			//===================================================================
 			// output to grace (JPEG)

@@ -1,7 +1,11 @@
 //==================================================================================================
 // accuracy for integrator
 //==================================================================================================
-double epsrel_HI=1.0e-6;
+double epsrel_HI=1.0e-5;
+
+//#define DIFF_CORR_STOREII   // Changes between two ways of storing the diffusion correction.
+                            // Not setting it is consistent with CosmoRec v1.5
+                            // make sure to also change this in ./Modules/Diffusion_correction.cpp
 
 //==================================================================================================
 // to compute the integrals over the solution for the photon field
@@ -201,8 +205,6 @@ double compute_DF_nD1s(int ni, int nmax, double z, Cosmos &cos, Gas_of_Atoms &HI
     double DnLj=Xnl/X1s/5.0-exp_i1;
     double aV  =p->aVoigt(Te);
     
-//    double DnLnp=calc_HI_Xnl(z, ni, 1)/X1s/3.0-exp_i1;
-    
     //==========================================================================
     // tabulate Dn(nu) for splines
     //==========================================================================
@@ -215,7 +217,6 @@ double compute_DF_nD1s(int ni, int nmax, double z, Cosmos &cos, Gas_of_Atoms &HI
         double xD=p->nu2x(nu21*xarr[k], Te);
         
         Fwork[k]=(yarr[k]*f_x-nu21*DnLj)*p->phi(xD, aV); 
-//        Fwork[k]=(nu21*DnLnp-nu21*DnLj)*p->phi(xD, aV); 
     }       
     
     //==========================================================================
@@ -238,12 +239,7 @@ double compute_DF_nD1s(int ni, int nmax, double z, Cosmos &cos, Gas_of_Atoms &HI
     //==========================================================================
     r*=5.0*X1s*p->Get_A21()/p->DnuT(Te); 
     
-//    r=-p->Get_A21()*( Xnl-5.0/3.0*calc_HI_Xnl(z, ni, 1) );
-    
     double res=r/DnLj;
-    
-//    r=-5.0*X1s*p->Get_A21()*( DnLj-DnLnp );
-//    res=r;
     
     if(show_messages>=2) cout << " difference:: (ni, 2) = " << ni << " Dr-nD-1s = " << r      
                               << " " << res << endl;
@@ -338,7 +334,11 @@ double compute_DF_2gamma(int ni, int li, double z, Cosmos &cos, Gas_of_Atoms &HI
                               << " DRtot= " << DRtot << " " << w*(r-DRtot)/DnLj 
                               << " ( error-check " << DnLj/Dnem-1.0 << " )" << endl;
     
+#ifdef DIFF_CORR_STOREII
     return w*X1s*(r-DRtot)/DnLj;
+#else
+    return w*(r-DRtot);
+#endif
 }
 
 //==================================================================================================
@@ -430,7 +430,11 @@ double compute_DF_Raman(int ni, int li, int nmax, double z, Cosmos &cos, Gas_of_
                               << " DRtot= " << DRtot << " " << w*(r-DRtot)/DnLj 
                               << " ( error-check " << DnLj/Dnem-1.0 << " )" << endl;
     
+#ifdef DIFF_CORR_STOREII
     return w*X1s*(r-DRtot)/DnLj;
+#else
+    return w*(r-DRtot);
+#endif
 }
 
 
@@ -448,7 +452,7 @@ double calc_DI1_2s_Patt(HI_nx_spline_Data &SD)
     
     r=Integrate_using_Patterson_adaptive(max(SD.xmin, 0.5),min(SD.xmax, 1.0),rel,abs,dnbar_dx_2g_R); 
     
-    return r/const_HI_A2s_1s;   
+    return r/const_HI_A2s_1s;
 }
 
 //==================================================================================================
@@ -500,7 +504,15 @@ void compute_DI1_2s_and_dump_it(double z, vector<double> &xarr, vector<double> &
     // compute integrals
     //==========================================================================
     double DI1=calc_DI1_2s_Patt(Spline_for_nx_integral);
+
+#ifdef DIFF_CORR_STOREII
     DI1=DI1/Dnem+1.0;
+#else
+    double Xnl=calc_HI_Xnl(z, 2, 0);
+    double X1s=calc_HI_X1s(z);
+    double DnLj=Xnl/X1s-exp_i1;
+    DI1=const_HI_A2s_1s*(DI1+DnLj);
+#endif
     
     if(show_messages>=2) cout << " 2s-1s-2g " << z << " DI1= " << DI1 << endl;
     if(output) Ifile << z << " " << DI1 << endl;

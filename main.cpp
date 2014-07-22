@@ -22,7 +22,7 @@ int main_random()
 { 
     int nrep = 100000;    
     int runmode=0;
-    double runpars[5]={0.0, 0, 0, 0.0, 0.0};
+    double runpars[5]={0.0, 0, 1, 0.0, 0.0};
     
     //==============================================================================================
     double ombh2_l = 0.01;
@@ -79,7 +79,7 @@ int main_random()
         cout << " Nnu=  " << Nnu << endl;
         
         CosmoRec(runmode, runpars, omegac, omegab, omegak, Nnu, 
-                 h0, tcmb, yhe, nz, z_arr, Xe_arr, Te_arr, i);
+                 h0, tcmb, yhe, nz, z_arr, Xe_arr, Te_arr, 0);
         
         seconds_end=clock();
         double seconds_Drun=(1.0*seconds_end-seconds_start)/CLOCKS_PER_SEC;
@@ -186,7 +186,7 @@ int main_batch_mode()
 //==================================================================================================
 int main(int narg, char *args[])
 { 
-    return CosmoRec(narg, args); 
+//    return CosmoRec(narg, args);
 //    return main_batch_mode();
-//    return main_random();
+    return main_random();
 }

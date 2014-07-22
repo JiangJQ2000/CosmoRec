@@ -17,12 +17,16 @@ do we want HI distortion output support?
 - approved new files:
 
 ./Makefile
+./Makefile.in
 ./Makefile.pub
 
 ./Modules/aux_functions.cpp
 ./Modules/global_variables.cpp
 ./Modules/output_methods.cpp
 ./Modules/ODEdef_CosmoRec.cpp
+./Modules/HI_routines.cpp
+./Modules/HeI_routines.cpp
+
 
 ===================================================================================
 

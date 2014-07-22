@@ -1,15 +1,18 @@
 //===========================================================================================================
 //
 // Author: Jens Chluba
-// last modification: June 2012
+// first implementation: April 2010
+// last modification   : July  2014
 // purpose: to access main CosmoRec code
 //
 //===========================================================================================================
-// June  18th, 2012: added version to communicate Hubble using pointer
-// June   8th, 2012: added version to communicate Hubble 
-// March 23rd, 2012: added runmode with helium radiative transfer module;
-// Feb   16th, 2012: added module to load precomputed recombination history (useful for runs with Camb)
-// Feb-May     2011: included HeI-diffusion correction
+// 16.07.2014: default runmode for batch version with Diff_iteration_max=1 and nShellsHeI=2
+// 17.06.2013: small cosmetic changes
+// 18.06.2012: added C-version to communicate Hubble pointer
+// 08.06.2012: added version to communicate Hubble
+// 23.03.2012: added runmode with helium radiative transfer module;
+// 16.02.2012: added module to load precomputed recombination history (useful for runs with Camb)
+// 02-05.2011: included HeI-diffusion correction
 
 //===========================================================================================================
 // Standards
@@ -561,41 +564,6 @@ void return_solution_to_calling_program(const int nz, double *z_arr, double *Xe_
 }
 
 //===========================================================================================================
-//
-// return precomputed ionization history (added March 22, 2012)
-//
-//===========================================================================================================
-void return_pre_computed_solution_to_calling_program(const int nz, double *z_arr, 
-                                                     double *Xe_arr, double *Te_arr)
-{
-    vector<int> spline_mem_indices;
-    
-    load_data_from_file_loglog(COSMORECDIR+"./Xe.pre_calc/CosmoRec.v2.0.Xe.Yp_0.35.lscat.dat", 
-                               3, spline_mem_indices);
-    
-    //======================================================================
-    // copy output
-    //======================================================================
-    for(int i=0; i<nz; i++)
-    { 
-        if(z_arr[i]>=2980 || z_arr[i]<=200) 
-        {
-            Xe_arr[i]=cosmos.Xe_Seager(z_arr[i]);
-            Te_arr[i]=cosmos.Te(z_arr[i]);
-        }
-        else 
-        {
-            Xe_arr[i]=exp(calc_spline_JC(log(z_arr[i]), spline_mem_indices[0]));
-            Te_arr[i]=exp(calc_spline_JC(log(z_arr[i]), spline_mem_indices[1])); 
-            
-            cout << z_arr[i] << " " << Xe_arr[i] << " " << Te_arr[i] << endl;
-        }
-    }
-
-    return;
-}
-
-//===========================================================================================================
 // Just return Recfast++ output
 //===========================================================================================================
 void run_RECFAST_pp(double param[12], const int nz, double *z_arr, 
@@ -741,7 +709,7 @@ int CosmoRec(const int runmode, const double runpars[5],
     nS_effective=500;
     fDM_CosmoRec=runpars[0];
     
-    nShellsHeI=3;
+    nShellsHeI=2;
     flag_HI_absorption=2;
     flag_spin_forbidden=1;
     nHeFeedback=0;
@@ -754,8 +722,10 @@ int CosmoRec(const int runmode, const double runpars[5],
     //======================================================================
     // number of iterations over HI & HeI diffusion problem
     //======================================================================
-    Diff_iteration_max=2;
-
+    Diff_iteration_max=1;   // For the default setting 1 iteration is enough
+                            // In the other runmodes 2 should be better, but
+                            // it slows the code down roughly by 2.
+    
     //======================================================================
     // settings for non-default cases
     //======================================================================
@@ -764,6 +734,7 @@ int CosmoRec(const int runmode, const double runpars[5],
     else if((int)runpars[1]==1){ nShells=4; ntg_max=4; nR_max=3; }
     else if((int)runpars[1]==2){ nShells=10; ntg_max=8; nR_max=7; nShellsHeI=3; nHeFeedback=0; }
     else if((int)runpars[1]==3){ nShells=10; ntg_max=8; nR_max=7; nShellsHeI=5; nHeFeedback=-5; } 
+    
     //======================================================================
     // runmode with helium diffusion module
     //======================================================================
@@ -810,9 +781,6 @@ int CosmoRec(const int runmode, const double runpars[5],
         // initialise zarr (only has to be done once...)
         //========================================================================
         init_xarr(parameters.zstart, parameters.zend, zarr, parameters.nz, 0, 0);
-        
-        //return_pre_computed_solution_to_calling_program(nz, z_arr, Xe_arr, Te_arr);
-        //return 0;
         
         //======================================================================
         // enter CosmoRec

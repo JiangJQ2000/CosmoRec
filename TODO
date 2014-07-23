@@ -1,36 +1,3 @@
-July 17th 2014:
+22 July 2014: 
 
-- check
-
-./Modules/output_methods.cpp ? distortion output really needed / any good?
-
-
-June 17th (2012?):
-
-- Check new hydrogen atom setup! 
-
-- add rates for n=5
-- remove rates with different nmax for n=10 and n=4
-- add rates for DM annihilation case
-
-
-- check main.cpp
-- parameter file
-- Diffusion_correction.cpp
-- HI_routine.cpp
-- Modules & PDE_Problem & PDE_Problem_HeI
-- finish README files
-- make sure that batch0000.dat outputs are not generated
-- also when things are called from CAMB don't output any files from 
-  radiative transfer solver
-- allow output of spectrum at z=0 into main output directory
-
-- check if it is possible to tabulate the two-photon rates only for x=0 - 0.5 and then use the symmetry
-- check if it is easy to dump the two-photon rates to the disk and then load things after the first setup was done. That saves the time to compute the two-photon profiles but i/o might still be slower.
-- make sure that const_A2s1s is used in the two-photon rate for 2s-1s
-
-
-- for lite-version only give rates with nS = max, but give all the options for choosing the resolved states. That makes things simpler.
-- make runmode that uses helium diffusion code but not maximal settings for all hydrogen stuff (will be faster)
-- nSHelium default from nS=2 to 3?
-
+Add possibility to change A2s1s rate?

@@ -149,8 +149,7 @@ double compute_DP_HeI(int line, double z, double nu21, Cosmos &cos, Gas_of_HeI_A
                                                                // the computational domain.
     Peff+=Pd_t-Pd_part;                                        // correct for difference to total Pd;
                                                                // At low z this can be a ~0.5 % difference.
-
-    double Pesc=pd*Peff/(1.0-p_sc*Peff);    
+    double Pesc=pd*Peff/(1.0-p_sc*Peff);
     
     if(show_messages_HeI>=2) cout << " line = " << line << " z= " << z << " DR = " << r 
                                   << " Pesc = " << Pesc << " PS= " << PS 

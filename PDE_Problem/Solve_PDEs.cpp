@@ -600,9 +600,9 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
     int DF_step=1;
     
     // the stability of the iteration depends quite a bit on this, so careful!
-    if(it_num==0){ dz_out=10.0; DF_step=1; }
-    if(it_num==1){ dz_out=8.0; DF_step=2; }
-    if(it_num==2){ dz_out=5.0; DF_step=4; }
+    //if(it_num==0){ dz_out=10.0; DF_step=1; }
+    //if(it_num==1){ dz_out=5.0; DF_step=2; }
+    //if(it_num==2){ dz_out=2.5; DF_step=4; }
     
     //=========================================================================== 
     // frequency rescaling
@@ -681,8 +681,8 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
     // load precomputed solutions
     //=========================================================================== 
     compute_Xi_HI_splines(zs, ze, HIA, HI_Solution);
-    
-    set_up_splines_for_HI_pd_Rp_effective(ze, zs, cos, HIA, HI_Solution);    
+
+    set_up_splines_for_HI_pd_Rp_effective(ze, zs, cos, HIA, HI_Solution);
     
     //=========================================================================== 
     // memory for Solve_PDE

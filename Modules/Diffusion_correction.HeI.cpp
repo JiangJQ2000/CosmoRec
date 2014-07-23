@@ -45,7 +45,7 @@ void setup_DP_spline_data_HeI(int n, vector<double> &DPesc_vec_z, vector<double>
     else update_spline_coeffies_JC(DPesc_splines_Data_HeI[n].memindex, nz, za, ya);                
 
     DPesc_splines_Data_HeI[n].zmin=max(1300.0, DPesc_vec_z[nz-1]);
-    DPesc_splines_Data_HeI[n].zmax=min(3000.0, DPesc_vec_z[0]);
+    DPesc_splines_Data_HeI[n].zmax=min(3200.0, DPesc_vec_z[0]);
     DPesc_splines_Data_HeI[n].DPmin=DPesc_splines_Data_HeI[n].DPmax=0.0;
     
     delete [] za;
@@ -77,9 +77,9 @@ void setup_DP_spline_data_HeI(vector<double> &DF_vec_z,
 //
 //====================================================================================================================
 void setup_DF_interpol_data_HeI(vector<double> &DF_vec_z, 
-                              vector<vector<double> > &DF_vec, 
-                              vector<double> &DI1_2s_vec,
-                              vector<int> &HeI_level_indices)
+                                vector<vector<double> > &DF_vec,
+                                vector<double> &DI1_2s_vec,
+                                vector<int> &HeI_level_indices)
 {
     setup_DP_spline_data_HeI(DF_vec_z, DF_vec, DI1_2s_vec, HeI_level_indices);
     
@@ -111,8 +111,7 @@ double DI1_2s_spline_HeI(double z){ return interpolate_DF_HeI(z, 49); }
 void evaluate_HeI_DI1_DI2_correction(double z, double X1s, double X2s, double nu21, double Tg, double *g)
 {
     double x21=const_h_kb*nu21/Tg;  
-    double DI1_2s=DI1_2s_spline_HeI(z);   
-    DI1_2s*=X2s-X1s*exp(-x21);  
+    double DI1_2s=(DI1_2s_correction_on_HeI==1 ? DI1_2s_spline_HeI(z) : 0.0)*(X2s-X1s*exp(-x21));
     double DRij=const_HeI_A2s_1s*DI1_2s;
     
     g[0]+=-DRij; // remove electron from 1s level

@@ -168,6 +168,7 @@ void load_rates(string path, int nShell_max, Gas_of_HeI_Atoms &HeIA)
     string fname=effective_rate_path + "res_state_list.dat";
     vector<int> res_Level_indices;
     res_state_D_HeI.clear();
+    resolved_level_map_HeI.clear();
     
     cout << "\n load_rates::Loading effective Rate data (HeI) " << endl;
     

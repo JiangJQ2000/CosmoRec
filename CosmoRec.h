@@ -6,6 +6,7 @@
 // purpose: to access main CosmoRec code
 //
 //===========================================================================================================
+// 22.07.2014: new He-diffusion runmodes (runpars[1]== 4, 5, 6)
 // 16.07.2014: default runmode for batch version with Diff_iteration_max=1 and nShellsHeI=2
 // 17.06.2013: small cosmetic changes
 // 18.06.2012: added C-version to communicate Hubble pointer
@@ -24,13 +25,13 @@ int CosmoRec(int narg, char *args[]);
 
 //===========================================================================================================
 // to call CosmoRec with a list of parameters in batch mode (e.g. when calling it from CosmoMC).
-// 
+//
 // runmode == 0: CosmoRec run with diffusion
 //            1: CosmoRec run without diffusion
 //            2: Recfast++ run (equivalent of the original Recfast version)
 //            3: Recfast++ run with correction function of Chluba & Thomas, 2010
 //
-// On entry, the array z_arr should contain the redshifts at which Xe and Te are required. nz 
+// On entry, the array z_arr should contain the redshifts at which Xe and Te are required. nz
 // determines the number of redshift points. Xe_arr and Te_arr will contain the solution on exit.
 //
 // Furthermore, runpars[0] defines the dark matter annihilation efficiency in eV/s.
@@ -40,23 +41,25 @@ int CosmoRec(int narg, char *args[]);
 // runpars[1]== 0: default setting
 // runpars[1]== 1: 2g for n<=4 & Raman for n<=3
 // runpars[1]== 2: 2g for n<=8 & Raman for n<=7
-// runpars[1]== 3: 2g for n<=8 & Raman for n<=7 + Helium feedback up to n=5 (full setting)
-// runpars[1]== 4: 2g for n<=4 & Raman for n<=3 + Helium radiative transfer up to n=5 
+// runpars[1]== 3: 2g for n<=8 & Raman for n<=7 + Helium feedback up to n=5
+// runpars[1]== 4: default setting              + Helium radiative transfer
+// runpars[1]== 5: 2g for n<=4 & Raman for n<=3 + Helium radiative transfer up to n=3
+// runpars[1]== 6: 2g for n<=4 & Raman for n<=3 + Helium radiative transfer up to n=5 (full setting)
 //
 // The value of runpars[1] is only important for runmode 0 & 1.
 //
-// CosmoRec can be set to output the ionization history & electron temperature, solutions for 
-// the populations of the resolved levels, and some information about the Cosmology (usually 
-// directed into the directory "./outputs/"). This can cause problems when using CosmoRec 
+// CosmoRec can be set to output the ionization history & electron temperature, solutions for
+// the populations of the resolved levels, and some information about the Cosmology (usually
+// directed into the directory "./outputs/"). This can cause problems when using CosmoRec
 // with a parallel CosmoMC, however, it possible to control the outputs through runpars[2]:
-// 
+//
 // runpars[2]==0: don't write out anything (default).
 // runpars[2]==1: write out only the recombination history.
 // runpars[2]==2: write out the recombination history, and the cosmology.
 // runpars[2]==3: write out the recombination history, populations, and the cosmology.
 //
 //===========================================================================================================
-int CosmoRec(const int runmode, const double runpars[5], 
+int CosmoRec(const int runmode, const double runpars[5],
              const double omegac, const double omegab, 
              const double omegak, const double Nnu,  
              const double h0, const double tcmb, const double yhe, 

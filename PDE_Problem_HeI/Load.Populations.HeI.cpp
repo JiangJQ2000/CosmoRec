@@ -74,13 +74,12 @@ void compute_Xi_HeI_splines(double zs, double ze,
     // check if the number of levels or redshift-points has changes
     //==============================================================================
     if(Load_Populations_HeI_spline_memory_was_allocated)
-        if((int)HeI_Xi_spline.size()!=nres) clear_Xi_HeI();
-    
+        if((int)HeI_Xi_spline.size()!=nres) clear_Xi_HeI();    
     
     //==============================================================================
     // check if redshift ranges is withing bounds
     //==============================================================================
-    if(zs/1.0001>HeI_Get_z(0, X_Data) || ze*1.0001<HeI_Get_z(nz-1, X_Data))
+    if(zs>HeI_Get_z(0, X_Data) || ze<HeI_Get_z(nz-1, X_Data))
     { 
         cerr << " compute_Xi_HeI_splines: check redshift range " << zs << " " 
              << ze << " " << HeI_Get_z(0, X_Data) << " " 

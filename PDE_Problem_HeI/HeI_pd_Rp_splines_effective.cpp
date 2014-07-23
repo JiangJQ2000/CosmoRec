@@ -5,6 +5,8 @@
 //          Also note that here calc_Xi and all other splines are using the resolved level index 
 //          instead of the HeI-level index!
 //===========================================================================================================
+// 22.07.2014: restart of spline setup if number of redshift points changes
+// 22.07.2014: changed setup routine for splines (smaller buffer region)
 
 #include <iostream>
 #include <string>
@@ -73,15 +75,7 @@ void calc_HeI_Rp_Rm_pd_all(double z, Gas_of_HeI_Atoms &HeIA, double Tg, double T
         if(index_HeI_i==1) pd[nr]=Rm/(const_HeI_A2s_1s+Rm);
         else pd[nr]=Rm/(HeIA.Get_A(HeIA.Get_n(index_HeI_i), HeIA.Get_l(index_HeI_i), 
                                    HeIA.Get_S(index_HeI_i), HeIA.Get_J(index_HeI_i), 1, 0, 0, 0)+Rm);
-        
-//        cout << nr << " " << pd[nr] 
-//                   << " " << HeIA.Get_n(index_HeI_i) 
-//                   << " " << HeIA.Get_l(index_HeI_i) 
-//                   << " " << HeIA.Get_S(index_HeI_i)
-//                   << " " << HeIA.Get_J(index_HeI_i) << " " << z << endl;
     }
-    
-//    wait_f_r();
 
     return;
 }
@@ -97,8 +91,8 @@ struct HeI_Rp_pd_eff_Data
     int memindex;
 };
 
-vector<HeI_Rp_pd_eff_Data > HeI_pd_eff_Data;
-vector<HeI_Rp_pd_eff_Data > HeI_Dnem_eff_Data;
+vector<HeI_Rp_pd_eff_Data> HeI_pd_eff_Data;
+vector<HeI_Rp_pd_eff_Data> HeI_Dnem_eff_Data;
 
 //===========================================================================================================
 void clear_HeI_pd_Rp_effective_splines()
@@ -138,32 +132,28 @@ void set_up_splines_for_HeI_pd_Rp_effective(double zend, double zstart,
     //===========================================================================
     if(HeI_pd_Rp_splines_effective_spline_memory_was_allocated)
     {
-        if(ntot+1!=(int)HeI_pd_eff_Data.size()) clear_HeI_pd_Rp_effective_splines();
+        if(ntot+1!=(int)HeI_pd_eff_Data.size())
+        { 
+            clear_HeI_pd_Rp_effective_splines();
+            HeI_pd_eff_Data.resize(ntot+1);
+            HeI_Dnem_eff_Data.resize(ntot+1);
+        }            
     }
     else 
     {
-        //=======================================================================
-        // prepare spline data
-        //=======================================================================
-        HeI_pd_eff_Data.clear();
-        HeI_Dnem_eff_Data.clear();
         HeI_pd_eff_Data.resize(ntot+1);
         HeI_Dnem_eff_Data.resize(ntot+1);
-        
-        //=======================================================================
-        // allocate memory for pd && Rp-values
-        //=======================================================================
+    }   
+    
+    //===========================================================================
+    // check if the number of redshift points has changed
+    //===========================================================================
+    if(nz!=(int)HeI_pd_eff_Data[0].Rp.size())
         for(int i=0; i<ntot+1; i++)
         { 
             HeI_pd_eff_Data[i].Rp.resize(nz); 
             HeI_Dnem_eff_Data[i].Rp.resize(nz); 
         }
-    }   
-    
-    //===========================================================================
-    // fill z-array (z0 < z1 < ... < zn)
-    //===========================================================================
-    init_xarr(zend/1.01, zstart*1.01, Rp_zarr, nz, 0, 0);
     
     if(HeI_pd_Rp_splines_effective_verbose>=1) cout << endl;
 
@@ -269,7 +259,7 @@ void set_up_splines_for_HeI_pd_Rp_effective(double zend, double zstart,
     
     if(HeI_pd_Rp_splines_effective_verbose>=1) 
         cout << " set_up_splines_for_HeI_pd_Rp:: splines done." << endl; 
-    
+
     return;
 }
 
@@ -282,7 +272,7 @@ void set_up_splines_for_HeI_pd_Rp_effective(double zend, double zstart, Cosmos &
     //===========================================================================
     // fill z-array (z0 < z1 < ... < zn)
     //===========================================================================
-    init_xarr(zend/1.01, zstart*1.01, Rp_zarr, nz, 0, 0);
+    init_xarr(zend/1.0001, zstart*1.0001, Rp_zarr, nz, 1, 0);
     
     //===========================================================================
     // compute splines
@@ -308,7 +298,7 @@ void set_up_splines_for_HeI_pd_Rp_effective(double zend, double zstart,
     for(int k=0; k<nmax; k++)
     {
         double z=X_Data[k][0];
-        if(z>=zend/1.01 && z<=zstart*1.01) Rp_zarr[nmax-1-k]=z;
+        if(z>=zend/1.0001 && z<=zstart*1.0001) Rp_zarr[nmax-1-k]=z;
     }
     
     for(int k=0; k<nmax; k++)
@@ -320,8 +310,8 @@ void set_up_splines_for_HeI_pd_Rp_effective(double zend, double zstart,
     //===========================================================================
     // fill z-array (z0 < z1 < ... < zn)
     //===========================================================================
-    init_xarr(zend/1.01, zstart*1.01, &Rp_zarr[0], nz, 0, 0);
-    
+    init_xarr(zend/1.0001, zstart*1.0001, &Rp_zarr[0], nz, 0, 0);
+
     //===========================================================================
     // compute splines
     //===========================================================================
@@ -353,4 +343,3 @@ double calc_HeI_Dnem_i_splines_effective(double z, int ires)
 
 //===========================================================================================================
 //===========================================================================================================
-

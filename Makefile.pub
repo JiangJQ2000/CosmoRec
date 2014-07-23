@@ -19,6 +19,7 @@ all:
     cp -r ./Rec_database.pub/* ./CosmoRec.vX/Rec_database/.; \
     mkdir ./CosmoRec.vX/runfiles; \
     cp -r ./runfiles/parameters.dat ./CosmoRec.vX/runfiles/.; \
+    cp -r ./runfiles/parameters.HeI_diff.dat ./CosmoRec.vX/runfiles/.; \
     cp ./Makefile ./CosmoRec.vX/.; \
     cp ./Makefile.in.pub ./CosmoRec.vX/Makefile.in; \
     cp ./main.cpp ./CosmoRec.vX/.; \

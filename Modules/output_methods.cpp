@@ -55,7 +55,7 @@ void open_files(ofstream *Xfiles, string path, int fresh=1)
     if(write_populations) Xfiles[3].open((prename+"HI.X"+addname).c_str(), wrmode); 
 //  Xfiles[4].open((prename+"HeI.X"+addname).c_str(), wrmode); 
 //  Xfiles[5].open((prename+"HI.HeI.1s"+addname).c_str(), wrmode); 
-    Xfiles[5].open((prename+"HI_distortion"+addname).c_str(), wrmode); 
+    if(write_HI_distortion) Xfiles[5].open((prename+"HI_distortion"+addname).c_str(), wrmode); 
 
     if(write_Xe_Te_sol && iteration_count==0) Xfiles[0].precision(8);
     if(write_Xe_Te_sol) Xfiles[1].precision(8);

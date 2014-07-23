@@ -2,6 +2,8 @@
 // Author Jens Chluba May 2009
 // comment: HI populations have to be pre-loaded; Also the effective rates have to be initialized
 //===========================================================================================================
+// 22.07.2014: restart of spline setup if number of redshift points changes
+// 22.07.2014: changed setup routine for splines (smaller buffer region)
 
 #ifndef HI_PD_RP_SPLINES_EFFECTIVE_H
 #define HI_PD_RP_SPLINES_EFFECTIVE_H
@@ -34,3 +36,6 @@ double calc_HI_Dnem_nl_splines_effective(double z, int n, int l);
 double calc_HI_Dnem_i_splines_effective(double z, int i);
 
 #endif
+
+//===========================================================================================================
+//===========================================================================================================

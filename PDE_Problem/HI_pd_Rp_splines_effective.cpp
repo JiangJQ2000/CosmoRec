@@ -2,6 +2,8 @@
 // Author Jens Chluba May 2009
 // comment: HI populations have to be pre-loaded; Also the effective rates have to be initialized
 //===========================================================================================================
+// 22.07.2014: restart of spline setup if number of redshift points changes
+// 22.07.2014: changed setup routine for splines (smaller buffer region)
 
 #include <iostream>
 #include <string>
@@ -93,8 +95,8 @@ struct HI_Rp_pd_eff_Data
     int memindex;
 };
 
-vector<HI_Rp_pd_eff_Data > HI_pd_eff_Data;
-vector<HI_Rp_pd_eff_Data > HI_Dnem_eff_Data;
+vector<HI_Rp_pd_eff_Data> HI_pd_eff_Data;
+vector<HI_Rp_pd_eff_Data> HI_Dnem_eff_Data;
 
 //===========================================================================================================
 void clear_HI_pd_Rp_effective_splines()
@@ -134,28 +136,29 @@ void set_up_splines_for_HI_pd_Rp_effective(double zend, double zstart,
     //===========================================================================
     if(HI_pd_Rp_splines_effective_spline_memory_was_allocated)
     {
-        if(ntot+1!=(int)HI_pd_eff_Data.size()) clear_HI_pd_Rp_effective_splines();
+        if(ntot+1!=(int)HI_pd_eff_Data.size())
+        {
+            clear_HI_pd_Rp_effective_splines();
+            HI_pd_eff_Data.resize(ntot+1);
+            HI_Dnem_eff_Data.resize(ntot+1);
+        }
     }
     else 
     {
-        //=======================================================================
-        // prepare spline data
-        //=======================================================================
-        HI_pd_eff_Data.clear();
-        HI_Dnem_eff_Data.clear();
         HI_pd_eff_Data.resize(ntot+1);
         HI_Dnem_eff_Data.resize(ntot+1);
-        
-        //=======================================================================
-        // allocate memory for pd && Rp-values
-        //=======================================================================
+    }
+    
+    //===========================================================================
+    // check if the number of redshift points has changed
+    //===========================================================================
+    if(nz!=(int)HI_pd_eff_Data[0].Rp.size())
         for(int i=0; i<ntot+1; i++)
         { 
             HI_pd_eff_Data[i].Rp.resize(nz); 
             HI_Dnem_eff_Data[i].Rp.resize(nz); 
         }
-    }   
-    
+        
     if(HI_pd_Rp_splines_effective_verbose>=1) cout << endl;
 
     //===========================================================================
@@ -302,7 +305,7 @@ void set_up_splines_for_HI_pd_Rp_effective(double zend, double zstart, Cosmos &c
     //===========================================================================
     // fill z-array (z0 < z1 < ... < zn)
     //===========================================================================
-    init_xarr(zend/1.01, zstart*1.01, Rp_zarr, nz, 0, 0);
+    init_xarr(zend/1.0001, zstart*1.0001, Rp_zarr, nz, 0, 0);
     
     //===========================================================================
     // compute splines
@@ -328,7 +331,7 @@ void set_up_splines_for_HI_pd_Rp_effective(double zend, double zstart,
     for(int k=0; k<nmax; k++)
     {
         double z=X_Data[k][0];
-        if(z>=zend/1.01 && z<=zstart*1.01) Rp_zarr[nmax-1-k]=z;
+        if(z>=zend/1.0001 && z<=zstart*1.0001) Rp_zarr[nmax-1-k]=z;
     }
 
     for(int k=0; k<nmax; k++)
@@ -340,7 +343,7 @@ void set_up_splines_for_HI_pd_Rp_effective(double zend, double zstart,
     //===========================================================================
     // fill z-array (z0 < z1 < ... < zn)
     //===========================================================================
-    init_xarr(zend/1.01, zstart*1.01, &Rp_zarr[0], nz, 0, 0);
+    init_xarr(zend/1.0001, zstart*1.0001, &Rp_zarr[0], nz, 0, 0);
     
     //===========================================================================
     // compute splines

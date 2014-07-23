@@ -6,6 +6,7 @@
 // purpose: to access main CosmoRec code
 //
 //===========================================================================================================
+// 22.07.2014: new He-diffusion runmodes (runpars[1]== 4, 5, 6)
 // 16.07.2014: default runmode for batch version with Diff_iteration_max=1 and nShellsHeI=2
 // 17.06.2013: small cosmetic changes
 // 18.06.2012: added C-version to communicate Hubble pointer
@@ -352,7 +353,7 @@ int CosmoRec()
                                                             pass_on_the_Solution_CosmoRec,
                                                             iteration_count-1);
             
-            setup_DF_interpol_data(DF_vec_z, DF_Ly_n, DF_2_gamma_vec, 
+            setup_DF_interpol_data(DF_vec_z, DF_Ly_n, DF_2_gamma_vec,
                                    DF_Raman_vec, DF_nD1s_vec, DI1_2s_vec);
             
             Diffusion_correction_is_on=1;
@@ -362,12 +363,11 @@ int CosmoRec()
             // added Feb-May 2011 (Jens Chluba & Jeffrey Fung)
             //======================================================================            
             if(Diffusion_correction_HeI)
+            //if(Diffusion_correction_HeI && iteration_count==Diff_iteration_max)
             {
                 if(show_CosmoRec_mess>=0) cout << "\n Entering HeI-diffusion part " << endl; 
 
-                vector<vector<double> > DF_lines_vec; 
-                vector<double> DI1_2s_vec;  
-                vector<int> HeI_level_indices; 
+                vector<int> HeI_level_indices;
 
                 if(DI1_2s_correction_on_HeI) switch_on_1s_2s_HeI_correction();
                 else switch_off_1s_2s_HeI_correction();
@@ -376,16 +376,16 @@ int CosmoRec()
                 if(iteration_count==Diff_iteration_max) last_it=1;
                 
                 compute_HeI_DPesc_with_diffusion_equation_effective(HeI_Atoms.Get_nShells(), DF_vec_z,
-                                                                    DF_lines_vec, DI1_2s_vec, 
+                                                                    DF_Ly_n, DI1_2s_vec,
                                                                     HeI_level_indices,
-                                                                    min(3400.0, parameters.zstart/1.01), 
-                                                                    HeI_was_switched_off_at_z*1.01,
+                                                                    min(3200.0, parameters.zstart/1.002),
+                                                                    HeI_was_switched_off_at_z*1.002,
                                                                     cosmos, 
                                                                     HeI_Atoms,
                                                                     pass_on_the_Solution_CosmoRec_HeI,
                                                                     iteration_count-1, last_it);
                 
-                setup_DF_interpol_data_HeI(DF_vec_z, DF_lines_vec, DI1_2s_vec, HeI_level_indices); 
+                setup_DF_interpol_data_HeI(DF_vec_z, DF_Ly_n, DI1_2s_vec, HeI_level_indices);
                 
                 Diffusion_correction_HeI_is_on=1;
             }
@@ -618,8 +618,10 @@ void run_RECFAST_pp(double param[12], const int nz, double *z_arr,
 // runpars[1]== 0: default setting
 // runpars[1]== 1: 2g for n<=4 & Raman for n<=3
 // runpars[1]== 2: 2g for n<=8 & Raman for n<=7
-// runpars[1]== 3: 2g for n<=8 & Raman for n<=7 + Helium feedback up to n=5 (full setting)
-// runpars[1]== 4: 2g for n<=4 & Raman for n<=3 + Helium radiative transfer up to n=5 
+// runpars[1]== 3: 2g for n<=8 & Raman for n<=7 + Helium feedback up to n=5
+// runpars[1]== 4: default setting              + Helium radiative transfer
+// runpars[1]== 5: 2g for n<=4 & Raman for n<=3 + Helium radiative transfer up to n=3
+// runpars[1]== 6: 2g for n<=4 & Raman for n<=3 + Helium radiative transfer up to n=5 (full setting)
 //
 // The value of runpars[1] is only important for runmode 0 & 1.
 //
@@ -738,8 +740,9 @@ int CosmoRec(const int runmode, const double runpars[5],
     //======================================================================
     // runmode with helium diffusion module
     //======================================================================
-    else if((int)runpars[1]==4)
-    { nShells=4; ntg_max=4; nR_max=3; nShellsHeI=5; nHeFeedback=-5; flag_HI_absorption=3; }      
+    else if((int)runpars[1]==4){ nHeFeedback=-2; flag_HI_absorption=3; }
+    else if((int)runpars[1]==5){ nShells=4; ntg_max=4; nR_max=3; nShellsHeI=3; nHeFeedback=-3; flag_HI_absorption=3; }
+    else if((int)runpars[1]==6){ nShells=4; ntg_max=4; nR_max=3; nShellsHeI=5; nHeFeedback=-5; flag_HI_absorption=3; }
     
     //======================================================================
     if(runmode==1) Diffusion_flag=0;

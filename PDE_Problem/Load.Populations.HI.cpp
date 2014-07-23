@@ -114,14 +114,13 @@ void compute_Xi_HI_splines(double zs, double ze, Gas_of_Atoms &H_Atoms,
     //==============================================================================
     if(Load_Populations_HI_spline_memory_was_allocated)
         if(HI_Xi_spline.size()!=X_Data[0].size()-3) clear_Xi_HI();
-    
-    
+
     //==============================================================================
     // check if redshift ranges is withing bounds
     //==============================================================================
-    if(zs/1.0001>HI_Get_z(0, X_Data) || ze*1.0001<HI_Get_z(nz-1, X_Data))
+    if(zs>HI_Get_z(0, X_Data) || ze<HI_Get_z(nz-1, X_Data))
     { 
-        cerr << " compute_Xi_HI_splines: check redshift range " << zs << " " 
+        cerr << " compute_Xi_HI_splines: check redshift range " << zs << " "
              << ze << " " << HI_Get_z(0, X_Data) << " " 
              << HI_Get_z(nz-1, X_Data) << endl; 
         exit(0); 
@@ -219,3 +218,6 @@ void clear_Xi_HI()
     
     return;
 }
+
+//==================================================================================
+//==================================================================================

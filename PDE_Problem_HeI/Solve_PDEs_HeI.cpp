@@ -38,7 +38,7 @@ string HeI_outputdir=COSMORECDIR+"./temp/";
 // flags for message output and aVoigt setting
 //
 //====================================================================================================================
-int show_messages_HeI=3;
+int show_messages_HeI=-1;
 
 
 //====================================================================================================================
@@ -79,8 +79,8 @@ bool HeI_2s_1s_corr_is_on=1;
 //====================================================================================================================
 // switch on/off HeI singlet 2s-1s channel; this overwrites all other settings for 2s-1s channel
 //====================================================================================================================
-int npts_2s1s_HeI=500;      // number of points for HeI singlet 2s-1s two-photon part
-double xmin_glob_HeI=0.2;   // if 2s-1s correction is on, this should be <~0.3
+int npts_2s1s_HeI=500;        // number of points for HeI singlet 2s-1s two-photon part
+double xmin_glob_HeI=0.005;   // if 2s-1s correction is on, this should be <~0.3
 
 //====================================================================================================================
 void switch_off_1s_2s_HeI_correction()
@@ -88,7 +88,7 @@ void switch_off_1s_2s_HeI_correction()
     HeI_switch_off_2s1s(); 
     HeI_2s_1s_corr_is_on=0; 
     
-    npts_2s1s_HeI=400;
+    npts_2s1s_HeI=250;
     xmin_glob_HeI=0.8;
     
     return; 
@@ -99,8 +99,8 @@ void switch_on_1s_2s_HeI_correction()
     HeI_switch_on_2s1s(); 
     HeI_2s_1s_corr_is_on=1; 
     
-    npts_2s1s_HeI=1000;
-    xmin_glob_HeI=0.3;
+    npts_2s1s_HeI=500;
+    xmin_glob_HeI=0.005;
     
     return; 
 }
@@ -407,16 +407,15 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
     //==============================================================================================
     // extension for filename
     //==============================================================================================
-    //string exten=".redo_Fig.5.no_D.no_P";
-    string exten=".Yp_0.4.no_e_l_scat";
-     
+    string exten="";
+    
     if(solve_with_Kernel==1) exten+=".Kernel_Int";
 
     //==============================================================================================
 	// output for Grace (optional)
     //==============================================================================================
 #ifdef GRACE_DEFINED
-	bool out_put_GRACE=1;
+	bool out_put_GRACE=0;
     bool write_to_disk_GRACE=0;
 	int GR_output_step=1;
 #endif
@@ -425,8 +424,8 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
     // general flags
     //==============================================================================================
     bool do_output=0;
-    bool write_solution_z0=1;
-    bool output_DP=1;
+    bool write_solution_z0=0;
+    bool output_DP=0;
     bool output_DI1=0;
     
     //==============================================================================================
@@ -435,11 +434,16 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
     //==============================================================================================
     // step size
     //==============================================================================================
-    double dz_out=5.0;
+    double dz_out=10.0;
     int output_count=0;
-    int output_step=25;
+    int output_step=10;
     int DP_step=1;
     
+    // the stability of the iteration depends quite a bit on this, so careful!
+    //if(it_num==0){ dz_out=10.0; DP_step=1; }
+    //if(it_num==1){ dz_out=5.0; DP_step=2; }
+    //if(it_num==2){ dz_out=2.5; DP_step=4; }
+
     //==============================================================================================
     // frequency rescaling x==nu/nu21
     //==============================================================================================
@@ -475,7 +479,6 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
         }
     }    
     //==============================================================================================
-
 //    HeI_level_indices.clear();
 //    HeI_level_indices.push_back(HeIAtoms.Get_Level_index(3, 1, 0, 1)); 
 //    HeI_level_indices.push_back(HeIAtoms.Get_Level_index(2, 1, 1, 1)); 
@@ -512,8 +515,9 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
     //==============================================================================================
     // load precomputed solutions (load could be avoided...)
     //==============================================================================================
-    compute_Xi_HeI_splines(zs, ze, HeIAtoms, HeI_Solution); 
-    set_up_splines_for_HeI_pd_Rp_effective(ze, zs, cos, HeIAtoms);    
+    compute_Xi_HeI_splines(zs, ze, HeIAtoms, HeI_Solution);
+    
+    set_up_splines_for_HeI_pd_Rp_effective(ze, zs, cos, HeIAtoms, HeI_Solution);
     
     //==============================================================================================
     // memory for Solve_PDE
@@ -558,7 +562,7 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
 	if(out_put_GRACE) prepare_Grace_HeI(0.5, SPDE_D_HeI.resonances, write_to_disk_GRACE);	
 #endif
     
-    double zin=zs, zout, dz, theta_HeI_loc=0.51;
+    double zin=zs, zout, dz, theta_HeI_loc=theta_HeI;
     int solve_with_Kernel_loc=last_it ? solve_with_Kernel : 0;
     int switched_off_kernel_treatment=100;
     do
@@ -569,15 +573,16 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
         // however, highest accuracy in the time-step is reached for theta ~ 0.5
         // which should be used after the initial 'burn in' phase.
         //======================================================================= 
-        if(zin>zs-20.0) theta_HeI_loc=0.999; 
+        if(zin>zs-100.0) theta_HeI_loc=0.999;
         else theta_HeI_loc=theta_HeI;
+        //theta_HeI_loc=theta_HeI;
 
         //=======================================================================
         // always add some small amount of diffusion to stabilize the PDE
         //=======================================================================
-        set_electron_scattering_efficiency_HeI(0.002); // 0.01 --> 10% difference for Trip; 
+        set_electron_scattering_efficiency_HeI(1.0);   // full electron scattering with FP-approach
+        //set_electron_scattering_efficiency_HeI(0.002); // 0.01 --> 10% difference for Trip;
                                                        // 0.001 --> very small difference; 
-        //set_electron_scattering_efficiency_HeI(1.0); // full electron scattering with FP-approach
         
         //===================================================================
         // switch kernel treatment off at very low Xe_HeI
@@ -610,10 +615,7 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
         int i;
         for(i=0; i<SPDE_D_HeI.npts; i++) if(SPDE_D_HeI.xarr[i]>=xeval){ i--; break; }
         double y_lower, dydum;
-        
-        polint_JC(&SPDE_D_HeI.xarr[0], &SPDE_D_HeI.yarr[0], SPDE_D_HeI.npts, 
-                  xeval, i, 6, &y_lower, &dydum);
-        
+        polint_JC(&SPDE_D_HeI.xarr[0], &SPDE_D_HeI.yarr[0], SPDE_D_HeI.npts, xeval, i, 6, &y_lower, &dydum);
         double y_upper=( boundary_up ? PDE_funcs_HeI.HeI_Dnem_i(zout, lines[iresmax])*nu21 : 0.0);
         
         //==========================================================================================
@@ -662,7 +664,6 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
                                      SPDE_D_HeI.yarr, exten, output_count);
             }
 #endif
-            
             //======================================================================================
             // output solution
             //======================================================================================

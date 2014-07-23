@@ -1,6 +1,6 @@
 //==================================================================================================
 //
-// 'CosmoRec' beta version 2.0 (June 15, 2011)						   		            
+// 'CosmoRec' beta version 2.0 (June 22, 2011)
 //
 //==================================================================================================
 //
@@ -26,14 +26,15 @@
 //
 // (ii) the following papers are cited:
 //
-//	 	Chluba & Thomas, 2010, MNRAS, 412, 748-764
-//	 	Ali-Haimoud & Hirata, 2010, Phys.Rev.D, 82, 063521
+//	 	Chluba & Thomas , 2010, MNRAS, 412, 748-764
+//	 	Chluba & Sunyaev, 2006, A&A, 446, 39-42
 //
 //      and 
 //
 //	 	Chluba, Vasil & Dursi, 2010, MNRAS, 407, 599-612
 // 		Switzer & Hirata, 2008, Phys.Rev.D. 77, 083006
 //	 	Grin & Hirata, 2010, Phys.Rev.D, 81, 083005
+//	 	Ali-Haimoud & Hirata, 2010, Phys.Rev.D, 82, 063521
 // 		Rubino-Martin et al., 2010, 403, 439-452
 //
 // 	are considered for citation.
@@ -45,12 +46,18 @@
 
 //==================================================================================================
 //
-// Update (XXX | CosmoRec v2.0b) [main implementations: 30.03.2011]
+// Update (22.07.2014 | CosmoRec v2.0b) [main implementations: Feb & March 2011 and July 2014]
 // 
-// main new features: 
+// - added simple OPENMP support for ODE and PDE solver.
+// - memory checked with valgrind.
+// 
+// Hydrogen specific:
+// - Hydrogen nD-1s line corrections can be activated (default off; changes needed in 
+//   './PDE_Problem/Solve_PDEs.cpp' and './Modules/Diffusion_correction.cpp').
+// - HI diffusion correction can be added in two parametrizations ('./Modules/Diffusion_correction.cpp').
+// - hydrogen quadrupole lines can be activated (default off; changes need in './Modules/HI_routines.cpp')
 //
-// - added simple OPENMP support for ODE and PDE solver. 
-//
+// Helium specific:
 // - radiative transfer problem for helium photons can now be explicitly solved. This module can be 
 //   called instead of the simple approximate treatment of HI absorption on the escape probabilities 
 //   of the main helium resonances. Furthermore, it allows computing the precise feedback between 
@@ -61,16 +68,8 @@
 //   Compton kernel. The corresponding parameters have to be set in 
 //   './PDE_Problem_HeI/Solve_PDEs_HeI.cpp', however, note that the runtime of CosmoRec increases 
 //   significantly when this module is activated.
-//
-// Hydrogen: 
-//
-// - added output of Ly-n spectral distortion
-//
-// Helium:
-//
-// - updated the effective rates for helium. The rates for up to 10 resolved states including 
-//   quadrupole lines missed one important set of rates ???
-// - helium feedback in the analytic model of Chluba & Sunyaev, MNRAS, 402, 1221Ð1248 (2010) can 
+// - new helium runmodes that can be changed when calling from CosmoMC.
+// - helium feedback in the analytic model of Chluba & Sunyaev, MNRAS, 402, 1221Ð1248 (2010) can
 //   now be included for up to 10 shells.
 //
 //--------------------------------------------------------------------------------------------------

@@ -8,13 +8,13 @@
 //===========================================================================================================
 // 23.07.2014: added possibility to change A2s1s two-photon decay rate
 // 22.07.2014: new He-diffusion runmodes (runpars[1]== 4, 5, 6)
+// 17.07.2014: included HeI-diffusion correction (most of the coding done 02-05.2011)
 // 16.07.2014: default runmode for batch version with Diff_iteration_max=1 and nShellsHeI=2
 // 17.06.2013: small cosmetic changes
 // 18.06.2012: added C-version to communicate Hubble pointer
 // 08.06.2012: added version to communicate Hubble
 // 23.03.2012: added runmode with helium radiative transfer module;
 // 16.02.2012: added module to load precomputed recombination history (useful for runs with Camb)
-// 02-05.2011: included HeI-diffusion correction
 
 //===========================================================================================================
 // Standards

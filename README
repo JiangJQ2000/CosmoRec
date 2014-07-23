@@ -52,6 +52,7 @@
 // - memory checked with valgrind.
 // 
 // Hydrogen specific:
+// - added possibility to change A2s1s two-photon decay rate
 // - Hydrogen nD-1s line corrections can be activated (default off; changes needed in 
 //   './PDE_Problem/Solve_PDEs.cpp' and './Modules/Diffusion_correction.cpp').
 // - HI diffusion correction can be added in two parametrizations ('./Modules/Diffusion_correction.cpp').

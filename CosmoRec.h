@@ -6,6 +6,7 @@
 // purpose: to access main CosmoRec code
 //
 //===========================================================================================================
+// 23.07.2014: added possibility to change A2s1s two-photon decay rate
 // 22.07.2014: new He-diffusion runmodes (runpars[1]== 4, 5, 6)
 // 16.07.2014: default runmode for batch version with Diff_iteration_max=1 and nShellsHeI=2
 // 17.06.2013: small cosmetic changes
@@ -57,6 +58,9 @@ int CosmoRec(int narg, char *args[]);
 // runpars[2]==1: write out only the recombination history.
 // runpars[2]==2: write out the recombination history, and the cosmology.
 // runpars[2]==3: write out the recombination history, populations, and the cosmology.
+//
+// runpars[3]>=0: use given number to set const_HI_A2s_1s. For ==0 default value is used.
+//                Do not vary too much [A2s1s ~ (6 - 10) 1/sec]!
 //
 //===========================================================================================================
 int CosmoRec(const int runmode, const double runpars[5],

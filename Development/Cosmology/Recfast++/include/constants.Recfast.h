@@ -4,6 +4,7 @@
 // CITA, University of Toronto
 // All rights reserved.
 //========================================================================================================
+// 23.07.2014: added possiblity to explicitly set HI A2s1s rate
 
 #ifndef RECFAST_CONSTANTS_H
 #define RECFAST_CONSTANTS_H
@@ -71,7 +72,8 @@ namespace RECFAST_atomic_constants
     //====================================================================================================  
     // hydrogen
     //const double RF_Lam2s1sH=8.2206;  // H 2s-1s two photon rate in [s^-1] from Labzowsky 2005 
-    const double RF_Lam2s1sH=8.22458;   // H 2s-1s two photon rate in [s^-1] 
+    //const double RF_Lam2s1sH=8.22458; // H 2s-1s two photon rate in [s^-1]
+    extern double RF_Lam2s1sH;
     
     // helium
     //const double RF_Lam2s1sHe=52.607; // HeI 2s-1s two photon rate in [s^-1] from Labzowsky 2005 

@@ -6,6 +6,7 @@
 // purpose: to access main CosmoRec code
 //
 //===========================================================================================================
+// 23.07.2014: added possibility to change A2s1s two-photon decay rate
 // 22.07.2014: new He-diffusion runmodes (runpars[1]== 4, 5, 6)
 // 16.07.2014: default runmode for batch version with Diff_iteration_max=1 and nShellsHeI=2
 // 17.06.2013: small cosmetic changes
@@ -79,6 +80,20 @@
 using namespace std;
 using namespace ODE_HI_effective;
 using namespace ODE_solver_Rec;
+
+//===========================================================================================================
+//
+// define default HI A2s1s two-photon decay rate. This was added to allow changing it globally.
+// The corresponding variables are defined as extern in './Development/Definitions/physical_consts.h'
+// and './Development/Cosmology/Recfast++/include/constants.Recfast.h'. A new value is read from
+// the parameter input file (see './Modules/aux_functions.cpp').
+//
+// (added 23.07.2014 JC)
+//===========================================================================================================
+double const_HI_A2s_1s = 8.2206;                            // Hydrogen 2s decay rate (Labzowsky et al. 2005)
+
+#include "constants.Recfast.h"
+double RECFAST_atomic_constants::RF_Lam2s1sH     = 8.22458; // Recfast++ default value (old value)
 
 //===========================================================================================================
 // level of verbosity
@@ -597,6 +612,26 @@ void run_RECFAST_pp(double param[12], const int nz, double *z_arr,
         Te_arr[l]=cosmos.Te(z_arr[l]);
     }
     
+    if(write_Xe_Te_sol>0)
+    {
+        if(show_CosmoRec_mess>=0) cout << " writing data to " << path << endl;
+    
+        ofstream ofile;
+        string name=COSMORECDIR+"./outputs/";
+        if(CT_corr==1) name+="Xe_Recfast.corr_fac.dat";
+        else name+="Xe_Recfast.dat";
+        ofile.open(name.c_str());
+        ofile.precision(10);
+        
+        ofile << "# Recfast++ output. The columns are z, Xe=Ne/NH, Te\n#" << endl;
+        
+        for(int l=0; l<nz; l++) ofile << scientific << z_arr[l] << " "
+                                      << Xe_arr[l] << " "
+                                      << Te_arr[l] << endl;
+        
+        if(show_CosmoRec_mess>=0) cout << " finished RECFAST++ run. Now exiting program ... " << endl << endl;
+    }
+    
     return;
 }
 
@@ -635,6 +670,9 @@ void run_RECFAST_pp(double param[12], const int nz, double *z_arr,
 // runpars[2]==2: write out the recombination history, and the cosmology.
 // runpars[2]==3: write out the recombination history, populations, and the cosmology.
 //
+// runpars[3]>=0: use given number to set const_HI_A2s_1s. For ==0 default value is used.
+//                Do not vary too much [A2s1s ~ (6 - 10) 1/sec]!
+//
 //===========================================================================================================
 int CosmoRec(const int runmode, const double runpars[5], 
              const double omegac, const double omegab, 
@@ -658,8 +696,13 @@ int CosmoRec(const int runmode, const double runpars[5],
     if((int)runpars[2] > 0) write_Xe_Te_sol=1;
     if((int)runpars[2] > 1) write_cosmology=1;
     if((int)runpars[2] > 2) write_populations=1;
+    
     //======================================================================
+    // explicitly set value of A2s1s rate (added July 23.07.2014)
+    //======================================================================
+    if(runpars[3] > 0.0) const_HI_A2s_1s=RECFAST_atomic_constants::RF_Lam2s1sH=runpars[3];
 
+    //======================================================================
     double params[12];
     
     //======================================================================

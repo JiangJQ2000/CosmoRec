@@ -15,10 +15,17 @@
 
 #include "recombination.Recfast.h"
 #include "cosmology.Recfast.h"
+#include "constants.Recfast.h"
 
 using namespace std;
 
 bool verbose=1;
+
+//========================================================================================
+// define default HI A2s1s two-photon decay rate. Added to allow changing it globally.
+// (added 23.07.2014 JC)
+//========================================================================================
+double RECFAST_atomic_constants::RF_Lam2s1sH = 8.22458;  // Recfast++ default value
 
 //========================================================================================
 void show_cosmological_parameters(vector<double> &param)

@@ -2,6 +2,8 @@
 // Author Jens Chluba May 2008
 // comment: I checked NIST and updated all the constants that I found
 //-------------------------------------------------------------------------------------------------------
+// 23.07.2014: added possiblity to explicitly set HI A2s1s rate
+
 #ifndef PHYSICAL_CONSTS_H
 #define PHYSICAL_CONSTS_H
 
@@ -12,7 +14,8 @@
 // atomic data for HI
 //-------------------------------------------------------------------------------------------------------
 //const double const_HI_A2s_1s = 8.22458;         // Hydrogen 2s decay rate (old Recfast value)
-const double const_HI_A2s_1s = 8.2206;            // Hydrogen 2s decay rate (Labzowsky et al. 2005)
+//const double const_HI_A2s_1s = 8.2206;          // Hydrogen 2s decay rate (Labzowsky et al. 2005)
+extern double const_HI_A2s_1s;
 
 //-------------------------------------------------------------------------------------------------------
 // atomic data for DI

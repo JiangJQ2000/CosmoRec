@@ -132,6 +132,13 @@ void read_entries_from_parameter_file(ifstream &paramfile, double *param)
     paramfile >> nShells;
     paramfile >> nS_effective;
     paramfile >> fDM_CosmoRec;
+    
+    //======================================================================
+    // explicitly set value of A2s1s rate (added 23.07.2014)
+    //======================================================================
+    double dumA2s1s;
+    paramfile >> dumA2s1s;
+    if(dumA2s1s>0.0) const_HI_A2s_1s=RECFAST_atomic_constants::RF_Lam2s1sH=dumA2s1s;
 
     paramfile >> nShellsHeI;
     paramfile >> flag_HI_absorption;
@@ -209,6 +216,7 @@ void set_startup_data(string filename, double param[12], Parameters_form_initfil
              << " Nnu= " << param[10] << endl;
         cout << " Hubble constant in units of 100 km s-1 Mpc-1: " << param[9] << endl;
         cout << " Fudge factor for H recombination: " << param[11] << endl;
+        cout << " HI A2s1s rate: " << const_HI_A2s_1s << endl;
     }
     
     if(DM_annihilation && show_CosmoRec_mess>=0)

@@ -1,8 +1,9 @@
 //==================================================================================================
 // Author Jens Chluba Sept/Oct 2010
 // purpose: compute the first few two-photon-profiles
-// last modification: Aug 2012
+// last modification: July 2014
 //==================================================================================================
+// 23rd Jul, 2014: 2s-1s profile changed to have normalization set by external const_HI_A2s_1s
 // 18th Aug, 2012: Mnr is now saved to disc after first setup. After that it is only loaded.
 // 17th Aug, 2012: fixed bug for Rnd->np matrix element + 3d1s profile.
 //                 changed spline-setup for non-resonant part to xmin - 0.5; 
@@ -199,9 +200,9 @@ namespace nsnd_2gamma_profiles_local
     double compute_Mnr_ns_1s(int n, double y)
     { 
         if(y>0.5) return compute_Mnr_ns_1s(n, 1.0-y);
-        
-        return calc_spline_JC(max(nsnd_2gamma_profiles_xmin, y), 
-                              nsnd_2gamma_profiles_Data_ns_1s[n].memindex)/y/(1.0-y); 
+
+        return calc_spline_JC(max(nsnd_2gamma_profiles_xmin, y),
+                              nsnd_2gamma_profiles_Data_ns_1s[n].memindex)/y/(1.0-y);
     }
     
     double compute_Mnr_nd_1s(int n, double y)
@@ -259,8 +260,8 @@ namespace nsnd_2gamma_profiles
                       double (*M_nr_i)(int ni, double y))
     {
         double fac=1.0;
-        // to ensure normalization of 2s-1s profile
-        if(ni==2) fac=sqrt(const_HI_A2s_1s/8.224873118283677); 
+        // to ensure normalization of 2s-1s profile == 2
+        if(ni==2) fac=sqrt(1.0/8.224873118283677);
         
         if(yarr.size()==0)
             for(int k=0; k<nsnd_2gamma_profiles_xpts; k++) 
@@ -662,7 +663,7 @@ namespace nsnd_2gamma_profiles
     double sigma_2s_1s_non_res(double y)
     { 
         double Mnr=compute_Mnr_ns_1s(2, y);
-        return G_ns(2)*Mnr*Mnr*pow(y*(1.0-y), 3);
+        return G_ns(2)*const_HI_A2s_1s*Mnr*Mnr*pow(y*(1.0-y), 3);
     }
 
     //======================================================================================

@@ -1,11 +1,12 @@
 //==================================================================================================
 // Author Jens Chluba Sept/Oct 2010
 // purpose: compute the first few two-photon-profiles
-// last modification: Aug 2012
+// last modification: July 2014
 //==================================================================================================
+// 23rd Jul, 2014: 2s-1s profile changed to have normalization set by external const_HI_A2s_1s
 // 18th Aug, 2012: Mnr is now saved to disc after first setup. After that it is only loaded.
 // 17th Aug, 2012: fixed bug for Rnd->np matrix element + 3d1s profile.
-//                 changed spline-setup for non-resonant part to xmin - 0.5; 
+//                 changed spline-setup for non-resonant part to xmin - 0.5;
 //                 symmetry is used for x>0.5
 
 #ifndef NSND_2GAMMA_PROFILES_H

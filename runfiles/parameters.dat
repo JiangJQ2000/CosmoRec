@@ -15,6 +15,7 @@
 3
 500
 0.0e-24
+8.2206
 
 3
 2
@@ -54,6 +55,8 @@
 1.0e-24	  == dark matter annihilation efficiency in eV/sec (see Chluba 2009). 
              Values <= 10^-23 eV/sec are recommended. For larger values the CosmoRec 
              calculation breaks down. In Recfast-mode also larger values are possible.
+8.2206    == A2s1s decay rate for hydrogen. Do not vary too much [A2s1s ~ (6 - 10) 1/sec]
+			 If ==0 internal default is used.	
 
 3         == number of helium shells (currently: 2, 3, 5 or 10; lite only 2 & 3)
 0         == HI absorption during HeI-recombination

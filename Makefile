@@ -4,7 +4,7 @@
 DEV_DIR = ./Development
 REC_BASE= ./Rec_database
 
-MAKE_COMMAND = make -f Makefile.in
+MAKE_COMMAND = make -f Makefile.in DEV_DIR=$(DEV_DIR) REC_BASE=$(REC_BASE)
 
 #============================================================================================
 # rules
@@ -69,3 +69,6 @@ tidy:
 
 wipeDS:
 	find . -type f -name \.DS_Store -print | xargs rm
+
+#============================================================================================
+#============================================================================================

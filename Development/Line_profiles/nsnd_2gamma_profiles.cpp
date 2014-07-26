@@ -146,7 +146,7 @@ namespace nsnd_2gamma_profiles_local
         
         double r=0.0;
         double a=log(1.0e-8), b=log(0.5), epsrel=1.0e-8, epsabs=1.0e-16;
-        double pars[]={y, ni};
+        double pars[]={y, (double)ni};
         void *p=&pars;
         Cj_x_ptr__=Cj_x;
         

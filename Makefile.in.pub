@@ -2,6 +2,7 @@
 # choose c++ compiler
 #===============================================================================
 #CC= mpicxx
+#CC= icc
 CC= g++
 
 #===============================================================================
@@ -14,7 +15,6 @@ CXXFLAGS = -Wall -pedantic -O2
 # linker flags
 #===============================================================================
 LXXFLAGS =
-#LXXFLAGS = -pg
 
 #===============================================================================
 # GSL lib
@@ -39,7 +39,7 @@ LIBSGSL = -L$(GSL_LIB_PATH) -l$(GSL) -lgslcblas
 #===============================================================================
 # grace lib (for outputs with xmgrace from the diffusion modules)
 #===============================================================================
-# If grace support should be used uncomment the next 5 definitions 
+# If grace support should be used, uncomment the next 5 definitions
 # and set them accordingly. This is not recommended when running with CosmoMC.
 #===============================================================================
 #USE_GRACE   = -D GRACE_DEFINED

@@ -5,6 +5,7 @@
 //          Also note that here calc_Xi and all other splines are using the resolved level index 
 //          instead of the HeI-level index!
 //===========================================================================================================
+// 30.07.2014: Xi_Data is passed on read only
 // 22.07.2014: restart of spline setup if number of redshift points changes
 // 22.07.2014: changed setup routine for splines (smaller buffer region)
 
@@ -21,7 +22,7 @@
 void set_up_splines_for_HeI_pd_Rp_effective(double zend, double zstart, Cosmos &cosmos, Gas_of_HeI_Atoms &HeA);
 
 void set_up_splines_for_HeI_pd_Rp_effective(double zend, double zstart, Cosmos &cosmos, Gas_of_HeI_Atoms &HeA,
-                                            vector<vector<double> > &X_Data);
+                                            const vector<vector<double> > &X_Data);
 
 void clear_HeI_pd_Rp_effective_memory();
 void Set_HeI_pd_Rp_splines_effective_verbosity(int v);

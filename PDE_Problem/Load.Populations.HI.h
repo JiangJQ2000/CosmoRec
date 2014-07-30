@@ -1,6 +1,7 @@
 //=======================================================================================
 // Author Jens Chluba May 2009
 //=======================================================================================
+// 30.07.2014: Xi_Data is passed on read only
 
 #ifndef LOAD_POP_HI_H
 #define LOAD_POP_HI_H
@@ -20,7 +21,7 @@ void Set_Load_Populations_HI_verbosity(int v);
 //=======================================================================================
 void compute_Xi_HI_splines(double zs, double ze, 
                            Gas_of_Atoms &H_Atoms, 
-                           vector<vector<double> > &X_Data);
+                           const vector<vector<double> > &X_Data);
 
 //=======================================================================================
 // functions for access

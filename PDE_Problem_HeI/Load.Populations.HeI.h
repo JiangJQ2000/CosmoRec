@@ -1,6 +1,7 @@
 //====================================================================================================================
 // Authors Jeffrey Fung & Jens Chluba Feb/March 2010
 //====================================================================================================================
+// 30.07.2014: Xi_Data is passed on read only
 
 #ifndef LOAD_POP_HEI_H
 #define LOAD_POP_HEI_H
@@ -19,7 +20,7 @@ void Set_Load_Populations_HeI_verbosity(int v);
 //=======================================================================================
 void compute_Xi_HeI_splines(double zs, double ze, 
                             Gas_of_HeI_Atoms &HeI_Atoms,
-                            vector<vector<double> > &X_Data);
+                            const vector<vector<double> > &X_Data);
 
 //=======================================================================================
 // functions (the index ires is the corresponding resolved level index)

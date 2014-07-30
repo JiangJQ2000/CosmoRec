@@ -1,6 +1,8 @@
 //====================================================================================================================
 // Authors Jens Chluba & Jeffrey Fung Feb-May 2011
 //====================================================================================================================
+// 30.07.2014: Xi_Data is passed on read only
+
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -396,7 +398,7 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
                                                         double zs, double ze, 
                                                         Cosmos &cos, 
                                                         Gas_of_HeI_Atoms &HeIAtoms,
-                                                        vector<vector<double> > HeI_Solution, 
+                                                        const vector<vector<double> > &HeI_Solution,
                                                         int it_num, bool last_it)
 {
     if(nHeI_Trans<2){ cerr << " Not enough helium shells. Exiting. " << endl; exit(0); }

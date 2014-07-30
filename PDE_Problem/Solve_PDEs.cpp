@@ -4,6 +4,7 @@
 // first implementation: July 2010
 // last modification   : July 2014
 //==================================================================================================
+// 30.07.2014: Xi_Data is passed on read only
 // 04.06.2011: added nD-1s transitions to transfer problem
 // 26.03.2011: added Ly-n integrals & electron scattering Kernel support
 
@@ -541,7 +542,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
                                                     double zs, double ze, 
                                                     int nmax_2g_corrs, int nmax_R_corrs,
                                                     Cosmos &cos, Gas_of_Atoms &HIA, 
-                                                    vector<vector<double> > HI_Solution, 
+                                                    const vector<vector<double> > &HI_Solution,
                                                     int it_num)
 {
     Set_Load_Populations_HI_verbosity(show_messages);

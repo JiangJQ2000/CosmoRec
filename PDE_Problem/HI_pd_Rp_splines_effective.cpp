@@ -2,6 +2,7 @@
 // Author Jens Chluba May 2009
 // comment: HI populations have to be pre-loaded; Also the effective rates have to be initialized
 //===========================================================================================================
+// 30.07.2014: Xi_Data is passed on read only
 // 22.07.2014: restart of spline setup if number of redshift points changes
 // 22.07.2014: changed setup routine for splines (smaller buffer region)
 
@@ -323,7 +324,7 @@ void set_up_splines_for_HI_pd_Rp_effective(double zend, double zstart, Cosmos &c
 //===========================================================================================================
 void set_up_splines_for_HI_pd_Rp_effective(double zend, double zstart, 
                                            Cosmos &cosmos, Gas_of_Atoms &HA,
-                                           vector<vector<double> > &X_Data)
+                                           const vector<vector<double> > &X_Data)
 {   
     int nmax=X_Data.size();
     vector<double> Rp_zarr(nmax, 0.0);

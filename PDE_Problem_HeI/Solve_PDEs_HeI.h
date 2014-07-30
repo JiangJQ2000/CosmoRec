@@ -1,6 +1,7 @@
 //====================================================================================================================
 // Authors Jens Chluba & Jeffrey Fung Feb-May 2011
 //====================================================================================================================
+// 30.07.2014: Xi_Data is passed on read only
 
 #ifndef SOLVE_PDES_HEI_H
 #define SOLVE_PDES_HEI_H
@@ -39,7 +40,7 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans,
                                                         double zs, double ze, 
                                                         Cosmos &cos, 
                                                         Gas_of_HeI_Atoms &HeIAtoms,
-                                                        vector<vector<double> > HI_HeI_Solution, 
+                                                        const vector<vector<double> > &HI_HeI_Solution,
                                                         int it_num, bool last_it);
 
 #endif

@@ -1,6 +1,7 @@
 //====================================================================================================================
 // Authors Jeffrey Fung & Jens Chluba Feb/March 2010
 //====================================================================================================================
+// 30.07.2014: Xi_Data is passed on read only
 
 #include <iostream>
 #include <string>
@@ -38,10 +39,10 @@ void Set_Load_Populations_HeI_verbosity(int v)
 // access data (local)
 //
 //==================================================================================
-double HeI_Get_z(int iz, vector<vector<double> > &Xi_Data)
+double HeI_Get_z(int iz, const vector<vector<double> > &Xi_Data)
 { return Xi_Data[iz][0]; }
 
-double HeI_Get_Xi(int iz, vector<vector<double> > &Xi_Data, int i)
+double HeI_Get_Xi(int iz, const vector<vector<double> > &Xi_Data, int i)
 { return Xi_Data[iz][i]; }
 
 //==================================================================================
@@ -62,7 +63,7 @@ double calc_HeI_Xi(double z, int ires)
 //==================================================================================
 void compute_Xi_HeI_splines(double zs, double ze, 
                             Gas_of_HeI_Atoms &HeI_Atoms,
-                            vector<vector<double> > &X_Data)
+                            const vector<vector<double> > &X_Data)
 {
     //==============================================================================
     // allocate memory for splines

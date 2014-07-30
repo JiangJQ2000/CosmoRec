@@ -1,6 +1,7 @@
 //==================================================================================
 // Author Jens Chluba May 2009
 //==================================================================================
+// 30.07.2014: Xi_Data is passed on read only
 
 #include <iostream>
 #include <string>
@@ -70,10 +71,10 @@ void read_HI_Population_from_file(ifstream &ifile, int nS,
 // access data (local)
 //
 //==================================================================================
-double HI_Get_z(int iz, vector<vector<double> > &Xi_Data)
+double HI_Get_z(int iz, const vector<vector<double> > &Xi_Data)
 { return Xi_Data[iz][0]; }
 
-double HI_Get_Xi(int iz, vector<vector<double> > &Xi_Data, int i)
+double HI_Get_Xi(int iz, const vector<vector<double> > &Xi_Data, int i)
 { return Xi_Data[iz][i]; }
 
 //==================================================================================
@@ -102,7 +103,7 @@ double calc_HI_Xi(double z, int i)
 //
 //==================================================================================
 void compute_Xi_HI_splines(double zs, double ze, Gas_of_Atoms &H_Atoms, 
-                           vector<vector<double> > &X_Data)
+                           const vector<vector<double> > &X_Data)
 {
     //==============================================================================
     // allocate memory for splines

@@ -415,6 +415,9 @@ int CosmoRec()
             print_message("starting iteration # " + int_to_string(iteration_count)); 
         }
         
+        //==========================================================================
+        // computation of recombination history with EMLA
+        //==========================================================================
         err=compute_history_with_effective_rates();  // defined in main.CosmoRec.cpp
         
         if(err!=0) iteration=0;

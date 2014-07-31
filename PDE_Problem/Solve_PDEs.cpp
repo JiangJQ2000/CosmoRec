@@ -66,7 +66,8 @@ int dec_HI=50;             // points per decade; from 10^-4 --> 1 for ndec==50 g
 double theta_HI=0.55;
 
 int npts_2s1s=400;         // number of points for 2s-1s two-photon part (300-400 seems enough)
-double xmin_glob=0.005;
+double xmin_glob=0.0001;   // this boundary seems important. A smaller value is better...
+//double xmin_glob=0.005;    // previous setting
 
 //==================================================================================================
 //

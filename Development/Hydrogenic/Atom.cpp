@@ -2,8 +2,9 @@
 // Author: Jens Chluba
 //
 // first implementation: June 2005
-// last change         : July 2014
+// last change         : Aug  2014
 //====================================================================================================================
+// 01.08.2014: fixed bug for transition data when quadrupole lines are activated
 // July 2014: tidied up the code; checked verbosity and recombination rates communication;
 // May  2011: Support for electric quadrupole lines were added.
 //====================================================================================================================
@@ -512,7 +513,7 @@ double Electron_Level::B21(double f_ul, int nu, int nl)
 //====================================================================================================================
 const Transition_Data_A& Electron_Level::Get_Data_A(const int &np, const int &lp) const
 {
-    if(np>=nn) return ZERO_Data;            // no transition to level itself
+    //if(np>=nn) return ZERO_Data;          // no transition to level itself ### Bug fixed 01.08.2014 JC
     if(lp<0 || lp>np-1) return ZERO_Data;   // level (np, lp) does not exist
     
     if(lp==ll-1) return A_values_down_lm1[np-ll];

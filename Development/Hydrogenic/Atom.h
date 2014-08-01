@@ -1,9 +1,10 @@
 //====================================================================================================================
-// Author: Jens Chluba 
+// Author: Jens Chluba
 //
 // first implementation: June 2005
-// last change         : July 2014
+// last change         : Aug  2014
 //====================================================================================================================
+// 01.08.2014: fixed bug for transition data when quadrupole lines are activated
 // July 2014: tidied up the code; checked verbosity and recombination rates communication;
 // May  2011: Support for electric quadrupole lines were added.
 //====================================================================================================================

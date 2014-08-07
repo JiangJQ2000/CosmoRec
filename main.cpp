@@ -22,7 +22,7 @@ int main_random()
 { 
     int nrep = 100000;    
     int runmode=0;
-    double runpars[5]={0.0, 4, 1, 0.0, 0.0};
+    double runpars[5]={0.0, 0, 1, 0.0, 0.0};
     
     //==============================================================================================
     double ombh2_l = 0.01;
@@ -42,10 +42,13 @@ int main_random()
 
     double Nnu_l = 1.0;
     double Nnu_u = 6.0;    
+
+    double A2s1s_l = 5.0;
+    double A2s1s_u = 15.0;
     //==============================================================================================
     
     double h0, omegab, omegac, omegak=0.0;
-    double tcmb, yhe, Nnu;
+    double tcmb, yhe, Nnu, A2s1s;
     
     int nz=10000;
     double *z_arr=new double[nz];
@@ -70,6 +73,7 @@ int main_random()
         tcmb = T0_l + (T0_u - T0_l) * drand48();
         yhe = yhe_l + (yhe_u - yhe_l) * drand48();
         Nnu = Nnu_l + (Nnu_u - Nnu_l) * drand48();
+        A2s1s = A2s1s_l + (A2s1s_u - A2s1s_l) * drand48();
         
         cout << " omegab= " << omegab << endl;
         cout << " omegam= " << omegac+omegab << endl;
@@ -77,7 +81,9 @@ int main_random()
         cout << " tcmb=  " << tcmb << endl;
         cout << " yhe=  " << yhe << endl;
         cout << " Nnu=  " << Nnu << endl;
+        cout << " A2s1s=  " << A2s1s << endl;
         
+        runpars[3]=A2s1s;
         CosmoRec(runmode, runpars, omegac, omegab, omegak, Nnu,
                  h0, tcmb, yhe, nz, z_arr, Xe_arr, Te_arr, 0);
         

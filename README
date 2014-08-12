@@ -49,6 +49,7 @@
 // Update (22.07.2014 | CosmoRec v2.0b) [main implementations: Feb & March 2011 and July 2014]
 // 
 // - added simple OPENMP support for ODE and PDE solver.
+// - added precomputed Pesc-data to distribution (avoids initial setup)
 // - memory checked with valgrind.
 // 
 // Hydrogen specific:

@@ -22,7 +22,8 @@ int main_random()
 { 
     int nrep = 100000;    
     int runmode=0;
-    double runpars[5]={0.0, 0, 1, 0.0, 0.0};
+    // 0: DM annihilation; 1: run settings; 2: outputs; 3: A2s1s; 4: dummy
+    double runpars[5]={0.0, 0, 2, 0.0, 0.0};
     
     //==============================================================================================
     double ombh2_l = 0.01;
@@ -32,7 +33,7 @@ int main_random()
     double omch2_u = 0.22;
     
     double h0_l = 0.6;
-    double h0_u = 0.8;    
+    double h0_u = 0.8;
 
     double T0_l = 2.6;
     double T0_u = 2.8;    
@@ -43,7 +44,7 @@ int main_random()
     double Nnu_l = 1.0;
     double Nnu_u = 6.0;    
 
-    double A2s1s_l = 5.0;
+    double A2s1s_l = 4.0;
     double A2s1s_u = 15.0;
     //==============================================================================================
     
@@ -74,7 +75,7 @@ int main_random()
         yhe = yhe_l + (yhe_u - yhe_l) * drand48();
         Nnu = Nnu_l + (Nnu_u - Nnu_l) * drand48();
         A2s1s = A2s1s_l + (A2s1s_u - A2s1s_l) * drand48();
-        
+      
         cout << " omegab= " << omegab << endl;
         cout << " omegam= " << omegac+omegab << endl;
         cout << " h0=  " << h0 << endl;
@@ -92,7 +93,9 @@ int main_random()
         cout << " The run took " << seconds_Drun << " sec. " << endl;    
         seconds_start=seconds_end;
 
-        cout << " **** Done. ****" << endl << endl;    
+        cout << " **** Done. ****" << endl << endl;
+        
+        for(int k=0; k<nz; k++) if(Xe_arr[k]<0.0) wait_f_r();
     }
 
     //===============================================================

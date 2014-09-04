@@ -674,7 +674,6 @@ void run_RECFAST_pp(double param[12], const int nz, double *z_arr,
 // runpars[2]==3: write out the recombination history, populations, and the cosmology.
 //
 // runpars[3]>=0: use given number to set const_HI_A2s_1s. For ==0 default value is used.
-//                Do not vary too much [A2s1s ~ (6 - 10) 1/sec]!
 //
 //===========================================================================================================
 int CosmoRec(const int runmode, const double runpars[5], 

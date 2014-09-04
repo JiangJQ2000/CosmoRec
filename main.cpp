@@ -93,9 +93,7 @@ int main_random()
         cout << " The run took " << seconds_Drun << " sec. " << endl;    
         seconds_start=seconds_end;
 
-        cout << " **** Done. ****" << endl << endl;
-        
-        for(int k=0; k<nz; k++) if(Xe_arr[k]<0.0) wait_f_r();
+        cout << " **** Done. ****" << endl << endl;    
     }
 
     //===============================================================

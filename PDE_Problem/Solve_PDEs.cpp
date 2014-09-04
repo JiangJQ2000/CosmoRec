@@ -322,6 +322,14 @@ void arm_PDE_solver(Cosmos &cos, Gas_of_Atoms &HIA, vector<double> &xarr,
         PDE_funcs_are_set=1;
     }
     
+    //===========================================================================
+    // make sure normalization of A2s1s is reset (added Sept 4th 2014)
+    //===========================================================================
+    if(Get_nmax_two_g_correction()>=2 && PDE_funcs_are_set)
+        for(int k=0; k<(int)xarr.size(); k++)
+            PDE_funcs.two_g_ns_1s[0].ratio[k]=sigma_2s_1s_2gamma(xarr[k]);
+
+    
     reset_PDE_solver_variables();
     
     return;

@@ -233,11 +233,27 @@ void run_RECFAST(string filename, int corr_fac)
 
     for(int l=0; l<parameters.nz; l++) ofile << scientific << za[l] << " "
                                              << cosmos.Xe_Seager(za[l]) << " " 
-                                             << cosmos.Te(za[l]) << endl;
+                                             << cosmos.Te(za[l]) << " "
+                                             << cosmos.Te_Tg(za[l])-1.0 << endl;
     
     if(show_CosmoRec_mess>=0) cout << " finished RECFAST++ run. Now exiting program ... " 
                                    << endl << endl;
 
+    //=======================================================================================================
+    // compute Compton y-parameter
+    //=======================================================================================================
+    double r=0.0, dt, zeval;
+    for(int l=0; l<parameters.nz; l++)
+    {
+        zeval=(za[l]+za[l-1])*0.5;
+        dt=-(za[l]-za[l-1])/cosmos.H(zeval)/(1.0+zeval);
+        
+        //if(zeval<800.0 && zeval>10.0)
+            r+=const_sigT*const_cl*cosmos.Ne(zeval)*const_kb_mec2*cosmos.Te(zeval)*(cosmos.Te_Tg(zeval)-1.0)*dt;
+    }
+    
+    cout << " y= " << r << endl;
+    
     delete [] za;
     
     exit(0);        

@@ -6,6 +6,7 @@
 // purpose: to access main CosmoRec code
 //
 //===========================================================================================================
+// 11.10.2014: added parameters for magnetic field heating
 // 23.07.2014: added possibility to change A2s1s two-photon decay rate
 // 22.07.2014: new He-diffusion runmodes (runpars[1]== 4, 5, 6)
 // 17.07.2014: included HeI-diffusion correction (most of the coding done 02-05.2011)
@@ -61,8 +62,14 @@ int CosmoRec(int narg, char *args[]);
 //
 // runpars[3]>=0: use given number to set const_HI_A2s_1s. For ==0 default value is used.
 //
+//-----------------------------------------------------------------------------------------------------------
+// heating by magnetic fields mainly following Kunze & Komatsu 2013
+//
+// runpars[4]> 0: B0 in nG. For ==0 no heating is added.
+// runpars[5]   : nB spectral index for magnetic fields
+//
 //===========================================================================================================
-int CosmoRec(const int runmode, const double runpars[5],
+int CosmoRec(const int runmode, const double runpars[6],
              const double omegac, const double omegab, 
              const double omegak, const double Nnu,  
              const double h0, const double tcmb, const double yhe, 

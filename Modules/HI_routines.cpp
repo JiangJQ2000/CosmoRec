@@ -123,7 +123,17 @@ void setup_Hydrogen_atom()
     //==============================================================================================
     if(nShells==3) 
     {   
-        if(!Atom_activate_HI_Quadrupole_lines) effective_rate_path=effective_rate_path_arr[0];
+        if(!Atom_activate_HI_Quadrupole_lines)
+        {
+            effective_rate_path=effective_rate_path_arr[0];
+            
+            // use wide tables when heating is switched on!
+            if(DM_annihilation || magnetic_fields)
+            {
+                effective_rate_path.erase(effective_rate_path.end()-1, effective_rate_path.end());
+                effective_rate_path+=".wide/";
+            }
+        }
         else effective_rate_path=effective_rate_path_arr[4];
     }
     else if(nShells==4) effective_rate_path=effective_rate_path_arr[1];

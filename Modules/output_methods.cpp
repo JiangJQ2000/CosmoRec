@@ -22,8 +22,10 @@ void set_detailed_name()
     }
     //
     if(DM_annihilation) detailedname+="DM_annihil.";
-        
-    if(show_CosmoRec_mess>=0) 
+
+    if(magnetic_fields) detailedname+="magn_heat.";
+
+    if(show_CosmoRec_mess>=0)
         cout << " set_detailed_name: detailedname: " << detailedname << endl;
     
     return; 

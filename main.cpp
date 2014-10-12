@@ -22,8 +22,8 @@ int main_random()
 { 
     int nrep = 100000;    
     int runmode=0;
-    // 0: DM annihilation; 1: run settings; 2: outputs; 3: A2s1s; 4: dummy
-    double runpars[5]={0.0, 0, 2, 0.0, 0.0};
+    // 0: DM annihilation; 1: run settings; 2: outputs; 3: A2s1s; 4: B0; 5: nB
+    double runpars[6]={0.0, 0, 2, 0.0, 0.0, 0.0};
     
     //==============================================================================================
     double ombh2_l = 0.01;
@@ -116,7 +116,7 @@ int main_random()
 int main_batch_mode()
 { 
     int runmode=0, label=1;
-    double runpars[5]={0.0, 0, 0, 0.0, 0.0};
+    double runpars[6]={0.0, 0, 0, 0.0, 0.0, 0.0};
     
     double omegac=0.216;
     double omegab=0.044;

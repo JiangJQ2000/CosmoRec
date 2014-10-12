@@ -2,10 +2,12 @@
 //
 // Author: Jens Chluba
 // first implementation: April 2010
-// last modification   : July  2014
+// last modification   : Oct   2014
 // purpose: to access main CosmoRec code
 //
 //===========================================================================================================
+// 11.10.2014: added parameters for magnetic field heating
+// 09.10.2014: added magnetic field heating module
 // 23.07.2014: added possibility to change A2s1s two-photon decay rate
 // 22.07.2014: new He-diffusion runmodes (runpars[1]== 4, 5, 6)
 // 17.07.2014: included HeI-diffusion correction (most of the coding done 02-05.2011)
@@ -94,6 +96,8 @@ double const_HI_A2s_1s = 8.2206;                            // Hydrogen 2s decay
 
 #include "constants.Recfast.h"
 double RECFAST_atomic_constants::RF_Lam2s1sH     = 8.22458; // Recfast++ default value (old value)
+double RECFAST_atomic_constants::RF_B0_heating   = 0.0;
+double RECFAST_atomic_constants::RF_nB_heating   = 0.0;
 
 //===========================================================================================================
 // level of verbosity
@@ -130,6 +134,11 @@ void print_message(string mess);
 // DM annihilation module
 //===========================================================================================================
 #include "./Modules/DM_annihilation.cpp"
+
+//===========================================================================================================
+// Magnetic field heating module (added Oct. 2014)
+//===========================================================================================================
+#include "./Modules/Magnetic_fields.cpp"
 
 //===========================================================================================================
 // additional definitions for CosmoRec-ODE system
@@ -675,8 +684,14 @@ void run_RECFAST_pp(double param[12], const int nz, double *z_arr,
 //
 // runpars[3]>=0: use given number to set const_HI_A2s_1s. For ==0 default value is used.
 //
+//-----------------------------------------------------------------------------------------------------------
+// heating by magnetic fields mainly following Kunze & Komatsu 2013
+//
+// runpars[4]> 0: B0 in nG. For ==0 no heating is added.
+// runpars[5]   : nB spectral index for magnetic fields
+//
 //===========================================================================================================
-int CosmoRec(const int runmode, const double runpars[5], 
+int CosmoRec(const int runmode, const double runpars[6],
              const double omegac, const double omegab, 
              const double omegak, const double Nnu,  
              const double h0, const double tcmb, const double yhe,
@@ -704,6 +719,16 @@ int CosmoRec(const int runmode, const double runpars[5],
     //======================================================================
     if(runpars[3] > 0.0) const_HI_A2s_1s=RECFAST_atomic_constants::RF_Lam2s1sH=runpars[3];
 
+    //======================================================================
+    // magnetic field heating (added 11.10.2014)
+    //======================================================================
+    if(runpars[4] > 0.0)
+    {
+        B0_CosmoRec=RECFAST_atomic_constants::RF_B0_heating=runpars[4];
+        nB_CosmoRec=RECFAST_atomic_constants::RF_nB_heating=runpars[5];
+    }
+    else B0_CosmoRec=0.0;
+    
     //======================================================================
     double params[12];
     

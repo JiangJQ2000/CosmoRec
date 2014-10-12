@@ -17,6 +17,9 @@
 0.0e-24
 8.2206
 
+3.0
+-2.9
+
 3
 2
 1
@@ -57,6 +60,9 @@
              calculation breaks down. In Recfast-mode also larger values are possible.
 8.2206    == A2s1s decay rate for hydrogen.
 			 If ==0 internal default is used.	
+
+3.0		  == magnetic field amplitude B0 in nG
+-1.5	  == magnetic field spectral index -3.0 < nB < 4.0 
 
 3         == number of helium shells (currently: 2, 3, 5 or 10; lite only 2 & 3)
 0         == HI absorption during HeI-recombination

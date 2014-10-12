@@ -4,6 +4,8 @@
 // CITA, University of Toronto
 // All rights reserved.
 //========================================================================================
+// Oct 11 2014: added switch that allows to change T=TR instead of T=TM for beta_ion
+// Oct 10 2014: added heating by magnetic fields
 
 //========================================================================================
 // This module contains the evaluation of the RECFAST ODE-system. The code is based on the
@@ -18,6 +20,7 @@
 #include "constants.Recfast.h"
 #include "evalode.Recfast.h"
 #include "DM_annihilation.Recfast.h"
+#include "Magnetic_fields.Recfast.h"
 
 using namespace std;
 using namespace RECFAST_physical_constants; // defined in constants.Recfast.h
@@ -28,6 +31,12 @@ using namespace RECFAST_atomic_constants;   // defined in constants.Recfast.h
 //========================================================================================
 extern struct Input input;
 
+//====================================================================================
+// photo-ionization rates should be evaluated at T=TR! This makes a large difference
+// when TR differs strongly from TM. In the orginal version of RECFAST this aspect is
+// not included correctly.
+//====================================================================================
+bool eval_ion_Tr=1;
 
 //========================================================================================
 // Boltzmann factor
@@ -45,7 +54,6 @@ double SahaBoltz(double gi, double gc, double ne, double E_ion, double T)
     return (ne * gi/(2.0*gc) * pow(c1, 1.5) * pow(T, -1.5) 
                * exp(min(680.0, E_ion/(RF_kBoltz*T))) );
 }
-
 
 //========================================================================================
 // case B recombination rate for Hydrogen (in m^3 / s)
@@ -65,7 +73,6 @@ double alphaHe_func(double TM)
   double sqrt_TMT0=sqrt(TM/T0), sqrt_TMT1=sqrt(TM/T1); 
   return a1/(sqrt_TMT0*pow(1.0+sqrt_TMT0, 1.0-a2)*pow(1.0+sqrt_TMT1, 1.0+a2));
 }
-
 
 //========================================================================================
 // evaluation of Recfast-system
@@ -133,12 +140,26 @@ void evaluate_Recfast_System(double z, double y[], double fvec[], int n)
     alphaH = alphaH_func(TM);
     alphaH*= input.F;
     betaH  = alphaH/SH;
-    
+
     //====================================================================================
     // He recombination coefficient 
     //====================================================================================
     alphaHe = alphaHe_func(TM);
     betaHe  = alphaHe/SHe;
+
+    //====================================================================================
+    // photo-ionization rates should be evaluated at T=TR!
+    //====================================================================================
+    if(eval_ion_Tr)
+    {
+        SH  = SahaBoltz(2.0, 1.0, 1.0, RF_EionH2s, TR);
+        BH  = Boltzmann(1.0, 1.0, RF_E2s1sH,  TR);
+        betaH  = alphaH_func(TR)*input.F/SH;
+        
+        SHe = SahaBoltz(1.0, 2.0, 1.0, RF_EionHe2s, TR);
+        BHe = Boltzmann(1.0, 1.0, RF_E2s1sHe, TR);
+        betaHe  = alphaHe_func(TR)/SHe;
+    }
     
     //====================================================================================
     // tau-Sobolev for helium and hydrogen
@@ -158,13 +179,21 @@ void evaluate_Recfast_System(double z, double y[], double fvec[], int n)
     fvec[0] = (alphaHe*xe*xHep*nHTot - betaHe*(fHe-xHep)*BHe)*CHe/((1.0+z)*Hz);
     fvec[1] = (alphaH* xe*xp  *nHTot - betaH *(1.0-xp  )*BH )*CH /((1.0+z)*Hz);
     fvec[2] = Comp*xe/(1.0+xe+fHe)*(TM-TR) + 2.0*TM/(1.0+z);
-    
+
     //====================================================================================
     // add terms due to DM annihilation
     //====================================================================================
     if(input.fDM!=0.0) 
         evaluate_DM_annihilation_terms(z, Hz, fHe, xp, xHep, CHe, CH, input.fDM, fvec);
-        
+    
+    //====================================================================================
+    // add terms due to magnetic field heating
+    //====================================================================================
+    if(RF_B0_heating!=0.0)
+        evaluate_magnetic_field_heating_RF(z, Hz, fHe, nHTot, xp, xHep,
+                                           TM, nHTot/(1.0-input.YP),
+                                           RF_B0_heating, RF_nB_heating, fvec);
+
     return;
 }
 
@@ -191,3 +220,6 @@ void fcn_rescaled(int *neq, double *z, double *y, double *f)
     f[1]*=fcn_rescaled_fac;
     return;
 }
+
+//========================================================================================
+//========================================================================================

@@ -326,6 +326,15 @@ void fcn_effective(double z, Data_Level_III &LIII)
                                        Level_I_temp.g[Level_I_temp.neq-1]);
         
     //==================================================================
+    // heating by magnetic fields
+    //==================================================================
+    if(magnetic_fields)
+        evaluate_magnetic_field_heating(z, parameters.fHe, Tg, Tg*rho,
+                                        Xp, XHeII, B0_CosmoRec, nB_CosmoRec,
+                                        Level_I_temp.g[iHI],
+                                        Level_I_temp.g[Level_I_temp.neq-1]);
+    
+    //==================================================================
     // neutral helium part
     //==================================================================
     if(flag_He==1) fcn_He_effective(z, Xe, Tg, NH, H_z, XHeII, iHeI, Level_I_temp);
@@ -498,6 +507,19 @@ void fcn_for_jacobian_eval(int jX, int neq, double DXj, double z, double Tg,
         evaluate_DM_annihilation_terms(z, parameters.fHe, Tg, Xp, XHeII, fDM_CosmoRec, 
                                        f[LI0.index_HI], f[LI0.index_HeI], f[LI0.neq-1]);  
     }           
+
+    //==============================================================================================
+    // heating by magnetic fields
+    //==============================================================================================
+    if(magnetic_fields && (jX==LI0.index_HI || jX==LI0.index_HeI || jX==LI0.neq-1))
+    {
+        double Xp=1.0-Hydrogen_Atoms.X(0);
+        double XHeII = (flag_He==1 ? parameters.fHe-LI0.X[LI0.index_HeI] : 0.0);
+
+        evaluate_magnetic_field_heating(z, parameters.fHe, Tg, Tg*LI0.X[LI0.neq-1],
+                                        Xp, XHeII, B0_CosmoRec, nB_CosmoRec,
+                                        f[LI0.index_HI], f[LI0.neq-1]);
+    }
 
     //==============================================================================================
     // restore old values

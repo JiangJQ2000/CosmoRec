@@ -80,6 +80,7 @@ OBJSRecfast++ = $(DEV_DIR)/Cosmology/Recfast++/src/recombination.Recfast.o \
 		$(DEV_DIR)/Cosmology/Recfast++/src/cosmology.Recfast.o \
 		$(DEV_DIR)/Cosmology/Recfast++/src/evalode.Recfast.o \
 		$(DEV_DIR)/Cosmology/Recfast++/src/DM_annihilation.Recfast.o \
+		$(DEV_DIR)/Cosmology/Recfast++/src/Magnetic_fields.Recfast.o \
 		$(DEV_DIR)/Cosmology/Recfast++/src/Rec_corrs_CT.Recfast.o
 
 #===============================================================================

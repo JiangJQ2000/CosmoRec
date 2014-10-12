@@ -18,6 +18,7 @@ OBJS = ./src/cosmology.Recfast.o \
 	   ./src/recombination.Recfast.o \
 	   ./src/ODE_solver.Recfast.o \
 	   ./src/DM_annihilation.Recfast.o \
+	   ./src/Magnetic_fields.Recfast.o \
 	   ./src/Rec_corrs_CT.Recfast.o
 
 #===============================================================================

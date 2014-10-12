@@ -1,0 +1,105 @@
+//========================================================================================
+// Author: Jens Chluba (Oct. 2014)
+// Johns Hopkins University
+//========================================================================================
+
+//========================================================================================
+// This simple module allows to add the effect of heating by magnetic fields.
+// Expressions from Sethi & Subramanian, 2005 and Kunze & Komatsu, 2013 are used.
+//========================================================================================
+
+#include <cmath>
+#include <iostream>
+#include <cstdlib>
+
+#include "constants.Recfast.h"
+#include "Magnetic_fields.Recfast.h"
+
+using namespace std;
+using namespace RECFAST_physical_constants; // defined in constants.Recfast.h
+
+//========================================================================================
+// decide in which mode to run
+//========================================================================================
+bool decaying_turb_on_RF =1;
+bool ambipolar_heat_on_RF=0;
+
+//========================================================================================
+// magnetic field decay rate following Kunze & Komatsu, 2013.
+//========================================================================================
+double Gamma_decay_RF(double z, double Hz, double B0, double nB)
+{
+    double zi=1088.0;
+    
+    // B0 is in nG
+    double m=2.0*(nB+3.0)/(nB+5.0);
+    double kd=286.91/B0;                                      // in Mpc^-1; cos(theta)=1
+    double td_ti=14.8/B0/kd;
+    double rhoB=0.1*B0*B0*1.0e-18/(8.0*RF_PI)*pow(1.0+z, 4);  // ergs cm^-3 == 0.1 J m^-3
+
+    // make smooth transition from no heating to heating case
+    if(z>=zi){ rhoB*=exp(-pow(z-zi, 2)/3.0e+3); z=zi; }
+    
+    double Gamma=rhoB*Hz*1.5*m*pow(log(1.0+td_ti), m)
+                  /pow( log(1.0+td_ti)+1.5*log((1.0+zi)/(1.0+z)) , m+1.0);
+    
+    return Gamma;
+}
+
+//========================================================================================
+// magnetic field heating rate for ambipolar diffusion Kunze & Komatsu, 2013.
+//========================================================================================
+double Gamma_ambi_RF(double z, double Tm, double nbar, double Xe, double B0, double nB)
+{
+    // B0 is in nG
+    double L2=2.7056 + 0.9669*nB + 0.011369*nB*nB - 0.0019742*nB*nB*nB; // fit to the integral
+
+    //double kd=286.91/B0;                                      // in Mpc^-1; cos(theta)=1
+    //double rhoB=0.1*B0*B0*1.0e-18/(8.0*RF_PI)*pow(1.0+z, 4);  // ergs cm^-3 == 0.1 J m^-3
+    //double sig=0.649*pow(Tm, 0.375)*1.0e-9*1.0e-6;            // m^3 / sec
+    //double g=sig/(2.0*RF_mHatom);
+    //double rhobar=RF_mHatom*nbar*RF_cLight*RF_cLight;
+    //double Gamma=(1.0-Xe)/Xe/g*pow((1.0+z)*kd/(RF_Mpc*1.0e-2)*rhoB/rhobar, 2)*L2;
+    //cout << Gamma/(RF_cLight*RF_cLight*(1.0-Xe)/Xe/g*pow((1.0+z)*kd/(RF_Mpc*1.0e-2)*rhoB/rhobar/(4.0*RF_PI), 2)*L2) << endl;
+    
+    double Gamma=(1.0-Xe)/Xe*pow(1.0+z, 4)/pow(Tm, 0.375)*5.7e-40*L2*pow(B0/3.0, 2);
+
+    return Gamma;
+}
+
+//========================================================================================
+// evalutation of ODE terms
+//========================================================================================
+void evaluate_magnetic_field_heating_RF(double z, double Hz, double fHe, double NH,
+                                        double xp, double xHep, double Tm, double nbar,
+                                        double B0, double nB, double fvec[])
+{
+    double Xe=xp+xHep;
+//    double fheat=2.0/3.0/RF_kBoltz/NH;    // old expression for heat capacity
+    double fheat=2.0/3.0/RF_kBoltz/(1.0+fHe+Xe)/NH;
+
+    double dE_dz=0.0;
+    if(decaying_turb_on_RF)  dE_dz+=Gamma_decay_RF(z, Hz, B0, nB)/Hz/(1.0+z);
+    if(ambipolar_heat_on_RF) dE_dz+=Gamma_ambi_RF(z, Tm, nbar, Xe, B0, nB)/Hz/(1.0+z);
+
+    //====================================================================================
+    // add collisional ionization for H & He (kci in m^3 / sec from Bell et al. 1983)
+    // Usually this does not make a difference due to the exponential suppression.
+    //====================================================================================
+    double kciH =5.466e-9*1.0e-6*1.07*sqrt(Tm/1.0e+4)*exp(-157821.462/Tm);
+    double kciHe=5.466e-9*1.0e-6*0.37*sqrt(Tm/1.0e+4)*exp(-285471.174/Tm);
+    
+    fvec[0]-=kciHe*Xe*(fHe-xHep)*NH/Hz/(1.0+z);
+    fvec[1]-=kciH *Xe*(1.0 - xp)*NH/Hz/(1.0+z);
+    
+    // cooling terms
+    dE_dz-=13.6*1.602176487e-19*kciH *Xe*(1.0 - xp)*NH*NH/Hz/(1.0+z);
+    dE_dz-=24.6*1.602176487e-19*kciHe*Xe*(fHe-xHep)*NH*NH/Hz/(1.0+z);
+    
+    fvec[2]-=fheat*dE_dz;
+   
+    return;
+}
+
+//========================================================================================
+//========================================================================================

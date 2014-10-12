@@ -139,6 +139,14 @@ void read_entries_from_parameter_file(ifstream &paramfile, double *param)
     double dumA2s1s;
     paramfile >> dumA2s1s;
     if(dumA2s1s>0.0) const_HI_A2s_1s=RECFAST_atomic_constants::RF_Lam2s1sH=dumA2s1s;
+    
+    //======================================================================
+    // magnetic field parameters (added 10.10.2014)
+    //======================================================================
+    paramfile >> B0_CosmoRec;
+    paramfile >> nB_CosmoRec;
+    RECFAST_atomic_constants::RF_B0_heating=B0_CosmoRec;
+    RECFAST_atomic_constants::RF_nB_heating=nB_CosmoRec;
 
     paramfile >> nShellsHeI;
     paramfile >> flag_HI_absorption;
@@ -203,6 +211,7 @@ void set_startup_data(string filename, double param[12], Parameters_form_initfil
     }
 
     if(fDM_CosmoRec>0) DM_annihilation=1;
+    if(B0_CosmoRec >0) magnetic_fields=1;
     
     if(show_CosmoRec_mess>=1)
     {
@@ -222,7 +231,11 @@ void set_startup_data(string filename, double param[12], Parameters_form_initfil
     if(DM_annihilation && show_CosmoRec_mess>=0)
         cout << " Including dark matter annihilation. f_DM= " << fDM_CosmoRec << " eV/sec " << endl;
     
-    if(flag_HI_absorption==1 && show_CosmoRec_mess>=0) 
+    if(magnetic_fields && show_CosmoRec_mess>=0)
+        cout << " Including heating by magnetic fields. B0= " << B0_CosmoRec
+             << " nG and nB= " << nB_CosmoRec << endl;
+
+    if(flag_HI_absorption==1 && show_CosmoRec_mess>=0)
             cout << " HI absorption will be included during HeI-recombination " << endl;
     //
     if(Diffusion_correction_HeI==1 && show_CosmoRec_mess>=0) 

@@ -28,6 +28,12 @@ bool verbose=1;
 double RECFAST_atomic_constants::RF_Lam2s1sH = 8.22458;  // Recfast++ default value
 
 //========================================================================================
+// define default with no magnetic field heating (added 10.10.2014 JC)
+//========================================================================================
+double RECFAST_atomic_constants::RF_B0_heating = 0.0;
+double RECFAST_atomic_constants::RF_nB_heating = 0.0;
+
+//========================================================================================
 void show_cosmological_parameters(vector<double> &param)
 {
     cout << "\n Recfast++ :: show_cosmological_parameters: " << endl;

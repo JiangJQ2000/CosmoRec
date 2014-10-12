@@ -1,6 +1,6 @@
 //==================================================================================================
 //
-// 'CosmoRec' beta version 2.0 (June 22, 2014)
+// 'CosmoRec' beta version 2.1 (Oct 12, 2014)
 //
 //==================================================================================================
 //
@@ -45,6 +45,15 @@
 
 
 //==================================================================================================
+//
+// Update (12.10.2014 | CosmoRec v2.1b)
+// 
+// - added simple routines to include heating by magnetic fields
+// - collisional ionizations added which may be important for Te>>Tg at late times
+// - added wider rate tables for nmax=500 and nres=3
+// - Recfast++ updated to also include these effects
+//
+//--------------------------------------------------------------------------------------------------
 //
 // Update (22.07.2014 | CosmoRec v2.0b) [main implementations: Feb & March 2011 and July 2014]
 // 

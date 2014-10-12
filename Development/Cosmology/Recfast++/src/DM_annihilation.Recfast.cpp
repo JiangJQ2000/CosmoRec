@@ -61,7 +61,7 @@ void evaluate_DM_annihilation_terms(double z, double Hz, double fHe, double xp,
     double bHI_ion=branching_ions_Chen(xp);
     double b_heat=branching_heat_Chen(xp, xHep/fHe, fHe);
     //
-    double fheat=2.0/3.0*1.602176487e-12/(RF_kBoltz*1.0e+7)/(1.0+fHe+xp+xHep);
+    double fheat=2.0/3.0*1.602176487e-19/RF_kBoltz/(1.0+fHe+xp+xHep);
     
     fvec[0]-=bHe_ion/24.6*fHe/(1.0+fHe)*dE_dz;
     fvec[1]-=bHI_ion/13.6    /(1.0+fHe)*dE_dz;
@@ -69,3 +69,6 @@ void evaluate_DM_annihilation_terms(double z, double Hz, double fHe, double xp,
     
     return;
 }
+
+//========================================================================================
+//========================================================================================

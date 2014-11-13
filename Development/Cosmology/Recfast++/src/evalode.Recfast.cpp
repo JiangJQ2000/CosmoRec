@@ -155,7 +155,7 @@ void evaluate_Recfast_System(double z, double y[], double fvec[], int n)
         SH  = SahaBoltz(2.0, 1.0, 1.0, RF_EionH2s, TR);
         BH  = Boltzmann(1.0, 1.0, RF_E2s1sH,  TR);
         betaH  = alphaH_func(TR)*input.F/SH;
-        
+
         SHe = SahaBoltz(1.0, 2.0, 1.0, RF_EionHe2s, TR);
         BHe = Boltzmann(1.0, 1.0, RF_E2s1sHe, TR);
         betaHe  = alphaHe_func(TR)/SHe;

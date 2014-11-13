@@ -6,6 +6,7 @@
 // purpose: to access main CosmoRec code
 //
 //===========================================================================================================
+// 17.10.2014: conversion from B_lambda to B0 when calling in batch mode
 // 11.10.2014: added parameters for magnetic field heating
 // 09.10.2014: added magnetic field heating module
 // 23.07.2014: added possibility to change A2s1s two-photon decay rate
@@ -98,6 +99,8 @@ double const_HI_A2s_1s = 8.2206;                            // Hydrogen 2s decay
 double RECFAST_atomic_constants::RF_Lam2s1sH     = 8.22458; // Recfast++ default value (old value)
 double RECFAST_atomic_constants::RF_B0_heating   = 0.0;
 double RECFAST_atomic_constants::RF_nB_heating   = 0.0;
+
+bool B_lambda_convention=1;
 
 //===========================================================================================================
 // level of verbosity
@@ -234,25 +237,37 @@ void run_RECFAST(string filename, int corr_fac)
     for(int l=0; l<parameters.nz; l++) ofile << scientific << za[l] << " "
                                              << cosmos.Xe_Seager(za[l]) << " " 
                                              << cosmos.Te(za[l]) << " "
-                                             << cosmos.Te_Tg(za[l])-1.0 << endl;
+                                             << cosmos.Te_Tg(za[l])-1.0 << " "
+                                      /*       << cosmos.y_gamma(0.0, za[l]) << " "
+                                             << cosmos.y_elect(0.0, za[l]) << " "
+                                             //
+                                             << cosmos.tau_ff(1.0e-4, za[l]) << " "
+                                             << cosmos.tau_ff(1.0e-3, za[l]) << " "
+                                             << cosmos.tau_ff(1.0e-2, za[l]) << " "
+                                             << cosmos.tau_ff(1.0e-1, za[l]) << " "
+                                             << cosmos.tau_ff(1.0e-0, za[l]) << " "
+                                             << cosmos.tau_ff(0.025/(1.0+za[l]), za[l]) 
+                                       */    << endl;
     
-    if(show_CosmoRec_mess>=0) cout << " finished RECFAST++ run. Now exiting program ... " 
+    if(show_CosmoRec_mess>=0) cout << " finished RECFAST++ run. Now exiting program ... "
                                    << endl << endl;
 
     //=======================================================================================================
     // compute Compton y-parameter
     //=======================================================================================================
-    double r=0.0, dt, zeval;
+    double r=0.0, r2=0.0, dt, zeval;
     for(int l=0; l<parameters.nz; l++)
     {
         zeval=(za[l]+za[l-1])*0.5;
         dt=-(za[l]-za[l-1])/cosmos.H(zeval)/(1.0+zeval);
         
         //if(zeval<800.0 && zeval>10.0)
-            r+=const_sigT*const_cl*cosmos.Ne(zeval)*const_kb_mec2*cosmos.Te(zeval)*(cosmos.Te_Tg(zeval)-1.0)*dt;
+        r+=const_sigT*const_cl*cosmos.Ne(zeval)*const_kb_mec2*cosmos.TCMB(zeval)*(cosmos.Te_Tg(zeval)-1.0)*dt;
+        
+        r2+=Gamma_decay(zeval, cosmos.H(zeval), B0_CosmoRec, nB_CosmoRec)/(0.26*const_e*pow(1.0+zeval, 4))*dt;
     }
     
-    cout << " y= " << r << endl;
+    cout << " y= " << r << " y_max= " << r2/4.0 << endl;
     
     delete [] za;
     
@@ -740,8 +755,21 @@ int CosmoRec(const int runmode, const double runpars[6],
     //======================================================================
     if(runpars[4] > 0.0)
     {
-        B0_CosmoRec=RECFAST_atomic_constants::RF_B0_heating=runpars[4];
-        nB_CosmoRec=RECFAST_atomic_constants::RF_nB_heating=runpars[5];
+        double B0=runpars[4], nB=runpars[5];                     // B0 in nG
+        
+        if(B_lambda_convention)
+        {
+            // convert from B_lambda to B0, if needed (added Oct. 17th)
+            double lambda_Mpc=1.0, k_lambda=TWOPI/lambda_Mpc;
+            double B_lambda=runpars[4], nBp3=nB+3.0, nBp5=nB+5.0;
+            double kD=pow(2.9e+4*h0, 1.0/nBp5)/pow(B_lambda, 2.0/nBp5)*pow(k_lambda, nBp3/nBp5);
+            
+            //B0=sqrt( B_lambda*B_lambda*pow(kD/k_lambda, nBp3)/Gamma_JC(nBp5/2.0) );
+            B0=sqrt( B_lambda*B_lambda*pow(kD*lambda_Mpc, nBp3)/Gamma_JC(nBp5/2.0) );
+        }
+        
+        B0_CosmoRec=RECFAST_atomic_constants::RF_B0_heating=B0;
+        nB_CosmoRec=RECFAST_atomic_constants::RF_nB_heating=nB;
     }
     else B0_CosmoRec=0.0;
     

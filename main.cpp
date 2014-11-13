@@ -23,7 +23,7 @@ int main_random()
     int nrep = 100000;    
     int runmode=0;
     // 0: DM annihilation; 1: run settings; 2: outputs; 3: A2s1s; 4: B0; 5: nB
-    double runpars[6]={0.0, 0, 2, 0.0, 0.0, 0.0};
+    double runpars[6]={0.0, 0, 2, 0.0, 3.0, -1.0};
     
     //==============================================================================================
     double ombh2_l = 0.01;

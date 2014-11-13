@@ -42,14 +42,31 @@ double Gamma_decay(double z, double Hz, double B0, double nB)
 //========================================================================================
 double Gamma_ambi(double z, double Tm, double Xe, double B0, double nB)
 {
-    // B0 is in nG
-    double L2=2.7056 + 0.9669*nB + 0.011369*nB*nB - 0.0019742*nB*nB*nB; // fit to the integral
-
-    // in J/m^3
-    double Gamma=(1.0-Xe)/Xe*pow(1.0+z, 4)/pow(Tm, 0.375)*5.7e-40*L2*pow(B0/3.0, 2);
+    // fit to the integral KK
+    double L2=0.8313*pow(nB+3.0, 1.105)*(1.0-1.020e-2*(nB+3.0));
     
+    //fit to the integral for Finelli
+    //double L2=0.6615*pow(nB+3.0, 0.8874)*(1.0-0.1367*(nB+3.0)+7.574e-3*pow(nB+3.0, 2));
+    
+    // Sethi & Subramanian, 2005
+    //double L2=1.0;
+
+    // B0 is in nG
+    double kd=286.91/B0;                                  // in Mpc^-1; cos(theta)=1
+    double rhoB=B0*B0*1.0e-18/(8.0*RF_PI)*pow(1.0+z, 4);
+    double sig=0.649*pow(Tm, 0.375)*1.0e-9;
+    double g=sig/(2.0*const_mH_gr);
+    double rhobar=const_mH_gr*cosmos.Nb(z);
+    double Gamma=(1.0-Xe)/Xe/g*pow((1.0+z)*kd/const_Mpc*rhoB/rhobar, 2)*L2;
+    
+    // fit that reproduces KK. It seems this is ~1/(8pi)^2 times smaller than the correct rate
     // J/m^3 --> 10 ergs / cm^3
-    return 10.0*Gamma;
+    //double Gamma=10.0*(1.0-Xe)/Xe*pow(1.0+z, 4)/pow(Tm, 0.375)*5.7e-40*L2*pow(B0/3.0, 2);
+    
+    //cout << Gamma/L2/((1.0-Xe)/Xe) << " "
+    //     << 10.0*pow(1.0+z, 4)/pow(Tm, 0.375)*5.7e-40*pow(B0/3.0, 2)*pow(2.0*FOURPI, 2) << endl;
+    
+    return Gamma;
 }
 
 //========================================================================================

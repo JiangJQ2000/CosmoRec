@@ -716,3 +716,98 @@ int Cosmos :: recombine_using_Recfast_system(int nzpts, double zi, double ze, do
     delete [] param;
     return 0;
 }
+
+//========================================================================================
+// y-parameters
+//========================================================================================
+double dy_gamma_GSL(double logz, void *p)
+{
+    double z1=exp(logz), z=z1-1.0;
+    double dtau_dt=1.0/GSL_cosmosptr->t_eg(z);
+    double Thg=GSL_cosmosptr->ThetaCMB(z);
+    return -z1*Thg*dtau_dt*GSL_cosmosptr->dt_dz(z1-1.0);
+}
+
+double Cosmos :: y_gamma(double zlow, double zup)
+{
+    GSL_cosmosptr=this;
+    double epsInt=1.0e-5, epsabs=0.0;
+    double a=log(zlow+1.0), b=log(zup+1.0), r=0.0;
+    
+    r=Integrate_gk_GSL(6, a, b, epsInt, epsabs, dy_gamma_GSL);
+    
+    GSL_cosmosptr=NULL;
+    return r;
+}
+
+double dy_elect_GSL(double logz, void *p)
+{
+    double z1=exp(logz), z=z1-1.0;
+    double dtau_dt=1.0/GSL_cosmosptr->t_eg(z);
+    double The=GSL_cosmosptr->ThetaCMB(z)*GSL_cosmosptr->Te_Tg(z);
+    return -z1*The*dtau_dt*GSL_cosmosptr->dt_dz(z1-1.0);
+}
+
+double Cosmos :: y_elect(double zlow, double zup)
+{
+    GSL_cosmosptr=this;
+    double epsInt=1.0e-5, epsabs=0.0;
+    double a=log(zlow+1.0), b=log(zup+1.0), r=0.0;
+    
+    r=Integrate_gk_GSL(6, a, b, epsInt, epsabs, dy_elect_GSL);
+    
+    GSL_cosmosptr=NULL;
+    return r;
+}
+
+//========================================================================================
+// free-free optical depth
+//========================================================================================
+double dtau_ff_GSL(double logz, void *p)
+{
+    double z1=exp(logz), z=z1-1.0;
+    double x=GSL_cosmosptr->Get_power();
+    
+    double Thg=GSL_cosmosptr->ThetaCMB(z);
+    double Np=GSL_cosmosptr->Np(z), NHeII=GSL_cosmosptr->NHeII(z), NHeIII=GSL_cosmosptr->NHeIII(z);
+    double gff=( x<0.37 ? sqrt(3.0)/PI*log(2.25/x) : 1.0);
+    double KBR=const_alpha/TWOPI*pow(const_lambdac, 3)/sqrt(3.0*TWOPI)/pow(Thg, 3.5)*gff*(Np+NHeII+4.0*NHeIII);
+    double dtau_dt=1.0/GSL_cosmosptr->t_eg(z);
+    
+    return -z1*dtau_dt*GSL_cosmosptr->dt_dz(z1-1.0)*KBR*(1.0-exp(-x))/pow(x, 3);
+}
+
+double dtau_ff_GSL_e(double logz, void *p)
+{
+    double z1=exp(logz), z=z1-1.0;
+    double x=GSL_cosmosptr->Get_power();
+    
+    double Thg=GSL_cosmosptr->ThetaCMB(z);
+    double The=Thg*GSL_cosmosptr->Te_Tg(z);
+    double Np=GSL_cosmosptr->Np(z), NHeII=GSL_cosmosptr->NHeII(z), NHeIII=GSL_cosmosptr->NHeIII(z);
+    double Ne=GSL_cosmosptr->Ne(z);
+    
+    //if(z<=10.0){ Np=Ne=GSL_cosmosptr->NH(z); The=GSL_cosmosptr->ThetaCMB(3600.0); }
+    
+    double gff=( x<0.37 ? sqrt(3.0)/PI*log( 2.25/(x*Thg/The) ) : 1.0);
+    double KBR=const_alpha/TWOPI*pow(const_lambdac, 3)/sqrt(3.0*TWOPI)/pow(The, 1.5)/pow(Thg, 2)*gff*(Np+NHeII+4.0*NHeIII);
+    double dtau_dt=1.0/GSL_cosmosptr->t_eg(z)*Ne/GSL_cosmosptr->Ne(z);
+    
+    return -z1*dtau_dt*GSL_cosmosptr->dt_dz(z1-1.0)*KBR/pow(x, 2);
+}
+
+double Cosmos :: tau_ff(double x, double z)
+{
+    GSL_cosmosptr=this;
+    power=x;
+    double epsInt=1.0e-5, epsabs=0.0;
+    double a=log(1.0), b=log(z+1.0), r=0.0;
+    
+    r=Integrate_gk_GSL(6, a, b, epsInt, epsabs, dtau_ff_GSL_e);
+    
+    GSL_cosmosptr=NULL;
+    return r;
+}
+
+//========================================================================================
+//========================================================================================

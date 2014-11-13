@@ -14,7 +14,7 @@ void set_startup_data(double params[12], Parameters_form_initfile &inparams)
     //=======================================================================================================
     
     inparams.nz=(int)params[0];
-    inparams.zstart=min(3400.0, params[1]);
+    inparams.zstart=min(3000400.0, params[1]);
     inparams.zend=params[2];
     inparams.YP=params[3];
     inparams.To=params[4];

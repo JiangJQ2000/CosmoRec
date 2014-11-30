@@ -6,6 +6,7 @@
 // purpose: to access main CosmoRec code
 //
 //===========================================================================================================
+// 14.11.2014: control of magnetic field parameters is now all in CosmoRec.cpp (also Recfast++ part...)
 // 17.10.2014: conversion from B_lambda to B0 when calling in batch mode
 // 11.10.2014: added parameters for magnetic field heating
 // 09.10.2014: added magnetic field heating module
@@ -97,10 +98,6 @@ double const_HI_A2s_1s = 8.2206;                            // Hydrogen 2s decay
 
 #include "constants.Recfast.h"
 double RECFAST_atomic_constants::RF_Lam2s1sH     = 8.22458; // Recfast++ default value (old value)
-double RECFAST_atomic_constants::RF_B0_heating   = 0.0;
-double RECFAST_atomic_constants::RF_nB_heating   = 0.0;
-
-bool B_lambda_convention=1;
 
 //===========================================================================================================
 // level of verbosity
@@ -141,6 +138,17 @@ void print_message(string mess);
 //===========================================================================================================
 // Magnetic field heating module (added Oct. 2014)
 //===========================================================================================================
+bool decaying_turb_on =1;
+bool ambipolar_heat_on=0;
+bool B_lambda_convention=1; // (affects  only runs with CAMB)
+
+// RECFAST specific settings (automatic at this point...)
+bool RECFAST_atomic_constants::RF_decaying_turb_on = decaying_turb_on;
+bool RECFAST_atomic_constants::RF_ambipolar_heat_on = ambipolar_heat_on;
+bool RECFAST_atomic_constants::RF_eval_ion_Tr = (decaying_turb_on || ambipolar_heat_on ? 1 : 0);
+double RECFAST_atomic_constants::RF_B0_heating   = 0.0;
+double RECFAST_atomic_constants::RF_nB_heating   = 0.0;
+
 #include "./Modules/Magnetic_fields.cpp"
 
 //===========================================================================================================
@@ -532,7 +540,7 @@ int CosmoRec(int narg, char *args[])
     set_array_dimensions_and_parameters();
     allocate();
     set_variables();
-    
+
     //========================================================================
     // initialise zarr (linear)
     //========================================================================

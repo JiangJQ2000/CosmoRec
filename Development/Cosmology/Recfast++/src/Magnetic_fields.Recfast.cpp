@@ -17,12 +17,7 @@
 
 using namespace std;
 using namespace RECFAST_physical_constants; // defined in constants.Recfast.h
-
-//========================================================================================
-// decide in which mode to run
-//========================================================================================
-bool decaying_turb_on_RF =1;
-bool ambipolar_heat_on_RF=0;
+using namespace RECFAST_atomic_constants;
 
 //========================================================================================
 // magnetic field decay rate following Kunze & Komatsu, 2013.
@@ -38,7 +33,7 @@ double Gamma_decay_RF(double z, double Hz, double B0, double nB)
     double rhoB=0.1*B0*B0*1.0e-18/(8.0*RF_PI)*pow(1.0+z, 4);  // ergs cm^-3 == 0.1 J m^-3
 
     // make smooth transition from no heating to heating case
-    if(z>=zi){ rhoB*=exp(-pow(z-zi, 2)/3.0e+3); z=zi; }
+    if(z>=zi){ rhoB*=exp(-pow(z-zi, 2)/5.0e+3); z=zi; }
     
     double Gamma=rhoB*Hz*1.5*m*pow(log(1.0+td_ti), m)
                   /pow( log(1.0+td_ti)+1.5*log((1.0+zi)/(1.0+z)) , m+1.0);
@@ -49,15 +44,15 @@ double Gamma_decay_RF(double z, double Hz, double B0, double nB)
 //========================================================================================
 // magnetic field heating rate for ambipolar diffusion Kunze & Komatsu, 2013.
 //========================================================================================
-double Gamma_ambi_RF(double z, double Tm, double nbar, double Xe, double B0, double nB)
+double Gamma_ambi_RF(double z, double Tm, double nbar, double Xp, double B0, double nB)
 {
     // fit to the integral KK
     double L2=0.8313*pow(nB+3.0, 1.105)*(1.0-1.020e-2*(nB+3.0));
     
-    //fit to the integral for Finelli
+    // fit to the integral for Finelli
     //double L2=0.6615*pow(nB+3.0, 0.8874)*(1.0-0.1367*(nB+3.0)+7.574e-3*pow(nB+3.0, 2));
     
-    // Sethi & Subramanian, 2005
+    // similar to Sethi & Subramanian, 2005
     //double L2=1.0;
     
     // B0 is in nG
@@ -66,13 +61,13 @@ double Gamma_ambi_RF(double z, double Tm, double nbar, double Xe, double B0, dou
     double sig=0.649*pow(Tm, 0.375)*1.0e-9*1.0e-6;            // m^3 / sec
     double g=sig/(2.0*RF_mHatom);
     double rhobar=RF_mHatom*nbar;
-    double Gamma=(1.0-Xe)/Xe/g*pow((1.0+z)*kd/(RF_Mpc*1.0e-2)*rhoB/rhobar, 2)*L2;
+    double Gamma=(1.0-Xp)/Xp/g*pow((1.0+z)*kd/(RF_Mpc*1.0e-2)*rhoB/rhobar, 2)*L2;
     
     // fit that reproduces KK. It seems this is ~1/(8pi)^2 times smaller than the correct rate
-    //double Gamma=(1.0-Xe)/Xe*pow(1.0+z, 4)/pow(Tm, 0.375)*5.7e-40*L2*pow(B0/3.0, 2);
+    //double Gamma=(1.0-Xp)/Xp*pow(1.0+z, 4)/pow(Tm, 0.375)*5.7e-40*L2*pow(B0/3.0, 2);
     
     //cout << pow(1.0+z, 4)/pow(Tm, 0.375)*5.7e-40*pow(B0/3.0, 2)*pow(8.0*RF_PI, 2) << " "
-    //     << Gamma/L2/((1.0-Xe)/Xe) << endl;
+    //     << Gamma/L2/((1.0-Xp)/Xp) << endl;
 
     return Gamma;
 }
@@ -87,11 +82,11 @@ void evaluate_magnetic_field_heating_RF(double z, double Hz, double fHe, double 
     double Xe=xp+xHep;
 //    double fheat=2.0/3.0/RF_kBoltz/NH;    // old expression for heat capacity
     double fheat=2.0/3.0/RF_kBoltz/(1.0+fHe+Xe)/NH;
-
+    
     double dE_dz=0.0;
-    if(decaying_turb_on_RF)  dE_dz+=Gamma_decay_RF(z, Hz, B0, nB)/Hz/(1.0+z);
-    if(ambipolar_heat_on_RF) dE_dz+=Gamma_ambi_RF(z, Tm, nbar, Xe, B0, nB)/Hz/(1.0+z);
-
+    if(RF_decaying_turb_on)  dE_dz+=Gamma_decay_RF(z, Hz, B0, nB)/Hz/(1.0+z);
+    if(RF_ambipolar_heat_on) dE_dz+=Gamma_ambi_RF(z, Tm, nbar, xp, B0, nB)/Hz/(1.0+z);
+    
     //====================================================================================
     // add collisional ionization for H & He (kci in m^3 / sec from Bell et al. 1983)
     // Usually this does not make a difference due to the exponential suppression.

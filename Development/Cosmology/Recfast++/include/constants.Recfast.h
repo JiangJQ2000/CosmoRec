@@ -76,8 +76,14 @@ namespace RECFAST_atomic_constants
     //const double RF_Lam2s1sH=8.22458; // H 2s-1s two photon rate in [s^-1]
     extern double RF_Lam2s1sH;
 
+    //====================================================================================================
+    // parameters for magnetic field heating
+    //====================================================================================================
     extern double RF_B0_heating;
     extern double RF_nB_heating;
+    extern bool RF_eval_ion_Tr;
+    extern bool RF_decaying_turb_on;
+    extern bool RF_ambipolar_heat_on;
     
     // helium
     //const double RF_Lam2s1sHe=52.607; // HeI 2s-1s two photon rate in [s^-1] from Labzowsky 2005 

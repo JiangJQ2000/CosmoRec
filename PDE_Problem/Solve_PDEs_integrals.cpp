@@ -67,7 +67,7 @@ double compute_integral_over_resonances(double xmin, double xmax,
     // lower boundary may contain large phase space density 
     // (better to separate it)
     //----------------------------------------------------------------------
-    b=a*(1.0+0.01);
+    b=a*(1.0+0.005); // JC: for nmax=10 this needs to be 0.005 rather than 0.01
     r1=calc_DF(a, b, epsabs);
     r+=r1; epsabs=fabs(r)*epsrel_HI;
     a=b;

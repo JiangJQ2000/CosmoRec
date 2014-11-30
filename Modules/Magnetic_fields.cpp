@@ -4,12 +4,6 @@
 //========================================================================================
 
 //========================================================================================
-// decide in which mode to run
-//========================================================================================
-bool decaying_turb_on =1;
-bool ambipolar_heat_on=0;
-
-//========================================================================================
 // This simple module allows to add the effect of heating by magnetic fields.
 // Expressions from Sethi & Subramanian, 2005 and Kunze & Komatsu, 2013 are used.
 //========================================================================================
@@ -40,30 +34,30 @@ double Gamma_decay(double z, double Hz, double B0, double nB)
 //========================================================================================
 // magnetic field heating rate for ambipolar diffusion Kunze & Komatsu, 2013.
 //========================================================================================
-double Gamma_ambi(double z, double Tm, double Xe, double B0, double nB)
+double Gamma_ambi(double z, double Tm, double Xp, double B0, double nB)
 {
     // fit to the integral KK
     double L2=0.8313*pow(nB+3.0, 1.105)*(1.0-1.020e-2*(nB+3.0));
     
-    //fit to the integral for Finelli
+    // fit to the integral for Finelli
     //double L2=0.6615*pow(nB+3.0, 0.8874)*(1.0-0.1367*(nB+3.0)+7.574e-3*pow(nB+3.0, 2));
     
-    // Sethi & Subramanian, 2005
+    // similar to Sethi & Subramanian, 2005
     //double L2=1.0;
 
     // B0 is in nG
     double kd=286.91/B0;                                  // in Mpc^-1; cos(theta)=1
-    double rhoB=B0*B0*1.0e-18/(8.0*RF_PI)*pow(1.0+z, 4);
+    double rhoB=B0*B0*1.0e-18/(2.0*FOURPI)*pow(1.0+z, 4);
     double sig=0.649*pow(Tm, 0.375)*1.0e-9;
     double g=sig/(2.0*const_mH_gr);
     double rhobar=const_mH_gr*cosmos.Nb(z);
-    double Gamma=(1.0-Xe)/Xe/g*pow((1.0+z)*kd/const_Mpc*rhoB/rhobar, 2)*L2;
+    double Gamma=(1.0-Xp)/Xp/g*pow((1.0+z)*kd/const_Mpc*rhoB/rhobar, 2)*L2;
     
     // fit that reproduces KK. It seems this is ~1/(8pi)^2 times smaller than the correct rate
-    // J/m^3 --> 10 ergs / cm^3
-    //double Gamma=10.0*(1.0-Xe)/Xe*pow(1.0+z, 4)/pow(Tm, 0.375)*5.7e-40*L2*pow(B0/3.0, 2);
+    // conversion J/m^3 --> 10 ergs / cm^3
+    //double Gamma=10.0*(1.0-Xp)/Xp*pow(1.0+z, 4)/pow(Tm, 0.375)*5.7e-40*L2*pow(B0/3.0, 2);
     
-    //cout << Gamma/L2/((1.0-Xe)/Xe) << " "
+    //cout << Gamma/L2/((1.0-Xp)/Xp) << " "
     //     << 10.0*pow(1.0+z, 4)/pow(Tm, 0.375)*5.7e-40*pow(B0/3.0, 2)*pow(2.0*FOURPI, 2) << endl;
     
     return Gamma;
@@ -79,12 +73,12 @@ void evaluate_magnetic_field_heating(double z, double fHe, double Tg, double Tm,
                                      double &drho_dt)
 {
     double Xe=XHII+XHeII, NH=cosmos.NH(z);
-    double fheat=2.0/3.0/const_kB/(1.0+fHe+Xe)/NH;
 //    double fheat=2.0/3.0/const_kB/NH;  // Xe term canceled
+    double fheat=2.0/3.0/const_kB/(1.0+fHe+Xe)/NH;
     
     double dE_dt=0.0;
     if(decaying_turb_on)  dE_dt+=Gamma_decay(z, cosmos.H(z), B0, nB);
-    if(ambipolar_heat_on) dE_dt+=Gamma_ambi (z, Tm, Xe, B0, nB);
+    if(ambipolar_heat_on) dE_dt+=Gamma_ambi (z, Tm, XHII, B0, nB);
     
     //====================================================================================
     // add collisional ionization for H & He (kci in m^3 / sec from Bell et al. 1983)

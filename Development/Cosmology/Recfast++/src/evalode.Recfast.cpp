@@ -31,13 +31,6 @@ using namespace RECFAST_atomic_constants;   // defined in constants.Recfast.h
 //========================================================================================
 extern struct Input input;
 
-//====================================================================================
-// photo-ionization rates should be evaluated at T=TR! This makes a large difference
-// when TR differs strongly from TM. In the orginal version of RECFAST this aspect is
-// not included correctly.
-//====================================================================================
-bool eval_ion_Tr=1;
-
 //========================================================================================
 // Boltzmann factor
 //========================================================================================
@@ -150,7 +143,7 @@ void evaluate_Recfast_System(double z, double y[], double fvec[], int n)
     //====================================================================================
     // photo-ionization rates should be evaluated at T=TR!
     //====================================================================================
-    if(eval_ion_Tr)
+    if(RF_eval_ion_Tr)
     {
         SH  = SahaBoltz(2.0, 1.0, 1.0, RF_EionH2s, TR);
         BH  = Boltzmann(1.0, 1.0, RF_E2s1sH,  TR);

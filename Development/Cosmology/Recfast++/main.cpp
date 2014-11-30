@@ -4,6 +4,7 @@
 // CITA, University of Toronto
 // All rights reserved.
 //========================================================================================
+// 14.11.2014: added setup for magnetic field heating modes
 
 #include <stdio.h>
 #include <cstdlib>
@@ -32,6 +33,9 @@ double RECFAST_atomic_constants::RF_Lam2s1sH = 8.22458;  // Recfast++ default va
 //========================================================================================
 double RECFAST_atomic_constants::RF_B0_heating = 0.0;
 double RECFAST_atomic_constants::RF_nB_heating = 0.0;
+bool RECFAST_atomic_constants::RF_eval_ion_Tr = 0;
+bool RECFAST_atomic_constants::RF_decaying_turb_on = 0;
+bool RECFAST_atomic_constants::RF_ambipolar_heat_on = 0;
 
 //========================================================================================
 void show_cosmological_parameters(vector<double> &param)
@@ -53,7 +57,13 @@ void show_cosmological_parameters(vector<double> &param)
         cout << " DM-annihilations with efficiency " << param[12] << " will be included " << endl;
     if(param[13]==1) 
         cout << " Will include recombination corrections according to Chluba & Thomas 2010 " << endl;
-        
+
+    if(RECFAST_atomic_constants::RF_B0_heating>0.0)
+    {
+        cout << " Will include heating by magnetic fields (using T=Tr for photo-ionization rate)" << endl;
+        RECFAST_atomic_constants::RF_eval_ion_Tr=1;
+    }
+    
     cout << endl;
     
     return;
@@ -89,7 +99,15 @@ void read_parameter_file(string fname, vector<double> &params)
                          // typical value fDM=2.0e-24 eV/s (see Chluba 2010 for definitions)
     ifile >> params[13]; // switch on/off recombination corrections (Chluba & Thomas 2010)
 
-
+    // magnetic field heating
+    ifile >> RECFAST_atomic_constants::RF_B0_heating; // B0 in nG
+    if(RECFAST_atomic_constants::RF_B0_heating>0.0)
+    {
+        ifile >> RECFAST_atomic_constants::RF_nB_heating; // nB
+        ifile >> RECFAST_atomic_constants::RF_decaying_turb_on; // decaying magnetic turb on / off
+        ifile >> RECFAST_atomic_constants::RF_ambipolar_heat_on; // ambipolar diff on / off
+    }
+    
     //====================================================================================
     // compute Omega_L according to Omega_K
     //====================================================================================
@@ -167,6 +185,9 @@ int main(int narg, char *args[])
     string oname="./output/Xe_Recfast";
     if(params[12]!=0.0) oname+=".DM_annihilations";
     if(params[13]==1) oname+=".Rec_corrs_CT2010";
+    if(RECFAST_atomic_constants::RF_B0_heating>0.0) oname+=".PMF_heating";
+    if(RECFAST_atomic_constants::RF_decaying_turb_on) oname+=".turb";
+    if(RECFAST_atomic_constants::RF_ambipolar_heat_on) oname+=".ambi";
     oname+=".dat";
     
     write_Recfast_output(oname, zarr, Xe_H, Xe_He, Xe, TM);

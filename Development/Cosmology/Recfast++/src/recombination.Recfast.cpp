@@ -32,7 +32,6 @@ using namespace RECFAST_atomic_constants;   // defined in constants.Recfast.h
 //========================================================================================
 struct Input input;
 
-
 //========================================================================================
 // Saha formula for HeIII
 //========================================================================================
@@ -44,19 +43,6 @@ double SahaBoltz_HeIII(double nH, double fHe, double T)
     
     return Xe;
 }
-
-//========================================================================================
-// Saha formula for HeII
-//========================================================================================
-double SahaBoltz_HeII(double nH, double fHe, double T)
-{
-    double c1 = 2.0*RF_PI*RF_mElect*RF_kBoltz*T/(RF_hPlanck*RF_hPlanck);
-    double g = 4.0*pow(c1, 1.5)*exp(-RF_EionHeII/(RF_kBoltz*T))/nH, d=1.0-g;
-    double Xe= 0.5*(d + sqrt(d*d + 4.0*g*(1.0+fHe)));
-    
-    return Xe;
-}
-
 
 //========================================================================================
 // functions to communicate with cosmology object

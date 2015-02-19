@@ -13,7 +13,7 @@
 
 void evaluate_magnetic_field_heating_RF(double z, double Hz, double fHe, double NH,
                                         double xp, double xHep, double Tm, double nbar,
-                                        double B0, double nB, double fvec[]);
+                                        double B0, double nB, double kD, double fvec[]);
 
 #endif
 

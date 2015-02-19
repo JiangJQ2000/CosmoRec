@@ -185,7 +185,8 @@ void evaluate_Recfast_System(double z, double y[], double fvec[], int n)
     if(RF_B0_heating!=0.0)
         evaluate_magnetic_field_heating_RF(z, Hz, fHe, nHTot, xp, xHep,
                                            TM, nHTot/(1.0-input.YP),
-                                           RF_B0_heating, RF_nB_heating, fvec);
+                                           RF_B0_heating, RF_nB_heating,
+                                           RF_kD_heating, fvec);
 
     return;
 }

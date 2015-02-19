@@ -330,7 +330,8 @@ void fcn_effective(double z, Data_Level_III &LIII)
     //==================================================================
     if(magnetic_fields)
         evaluate_magnetic_field_heating(z, parameters.fHe, Tg, Tg*rho,
-                                        Xp, XHeII, B0_CosmoRec, nB_CosmoRec,
+                                        Xp, XHeII,
+                                        B0_CosmoRec, nB_CosmoRec, kD_CosmoRec,
                                         Level_I_temp.g[iHI],
                                         Level_I_temp.g[Level_I_temp.neq-1]);
     
@@ -517,7 +518,8 @@ void fcn_for_jacobian_eval(int jX, int neq, double DXj, double z, double Tg,
         double XHeII = (flag_He==1 ? parameters.fHe-LI0.X[LI0.index_HeI] : 0.0);
 
         evaluate_magnetic_field_heating(z, parameters.fHe, Tg, Tg*LI0.X[LI0.neq-1],
-                                        Xp, XHeII, B0_CosmoRec, nB_CosmoRec,
+                                        Xp, XHeII,
+                                        B0_CosmoRec, nB_CosmoRec, kD_CosmoRec,
                                         f[LI0.index_HI], f[LI0.neq-1]);
     }
 

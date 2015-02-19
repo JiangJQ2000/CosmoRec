@@ -140,14 +140,17 @@ void print_message(string mess);
 //===========================================================================================================
 bool decaying_turb_on =1;
 bool ambipolar_heat_on=0;
-bool B_lambda_convention=1; // (affects  only runs with CAMB)
+bool KK_or_PF_Lorentz =0;  // choose parametrization of KK (==0) or PF (==1)
 
 // RECFAST specific settings (automatic at this point...)
 bool RECFAST_atomic_constants::RF_decaying_turb_on = decaying_turb_on;
 bool RECFAST_atomic_constants::RF_ambipolar_heat_on = ambipolar_heat_on;
 bool RECFAST_atomic_constants::RF_eval_ion_Tr = (decaying_turb_on || ambipolar_heat_on ? 1 : 0);
+bool RECFAST_atomic_constants::RF_KK_or_PF_Lorentz  = KK_or_PF_Lorentz;
+
 double RECFAST_atomic_constants::RF_B0_heating   = 0.0;
 double RECFAST_atomic_constants::RF_nB_heating   = 0.0;
+double RECFAST_atomic_constants::RF_kD_heating   = 0.0;
 
 #include "./Modules/Magnetic_fields.cpp"
 
@@ -272,10 +275,12 @@ void run_RECFAST(string filename, int corr_fac)
         //if(zeval<800.0 && zeval>10.0)
         r+=const_sigT*const_cl*cosmos.Ne(zeval)*const_kb_mec2*cosmos.TCMB(zeval)*(cosmos.Te_Tg(zeval)-1.0)*dt;
         
-        r2+=Gamma_decay(zeval, cosmos.H(zeval), B0_CosmoRec, nB_CosmoRec)/(0.26*const_e*pow(1.0+zeval, 4))*dt;
+        if(B0_CosmoRec>0.0)
+            r2+=Gamma_decay(zeval, cosmos.H(zeval), B0_CosmoRec, nB_CosmoRec, kD_CosmoRec)
+                            /(0.26*const_e*pow(1.0+zeval, 4))*dt;
     }
     
-    cout << " y= " << r << " y_max= " << r2/4.0 << endl;
+    if(show_CosmoRec_mess>=0) cout << " y= " << r << " y_max= " << r2/4.0 << endl;
     
     delete [] za;
     
@@ -761,25 +766,7 @@ int CosmoRec(const int runmode, const double runpars[6],
     //======================================================================
     // magnetic field heating (added 11.10.2014)
     //======================================================================
-    if(runpars[4] > 0.0)
-    {
-        double B0=runpars[4], nB=runpars[5];                     // B0 in nG
-        
-        if(B_lambda_convention)
-        {
-            // convert from B_lambda to B0, if needed (added Oct. 17th)
-            double lambda_Mpc=1.0, k_lambda=TWOPI/lambda_Mpc;
-            double B_lambda=runpars[4], nBp3=nB+3.0, nBp5=nB+5.0;
-            double kD=pow(2.9e+4*h0, 1.0/nBp5)/pow(B_lambda, 2.0/nBp5)*pow(k_lambda, nBp3/nBp5);
-            
-            //B0=sqrt( B_lambda*B_lambda*pow(kD/k_lambda, nBp3)/Gamma_JC(nBp5/2.0) );
-            B0=sqrt( B_lambda*B_lambda*pow(kD*lambda_Mpc, nBp3)/Gamma_JC(nBp5/2.0) );
-        }
-        
-        B0_CosmoRec=RECFAST_atomic_constants::RF_B0_heating=B0;
-        nB_CosmoRec=RECFAST_atomic_constants::RF_nB_heating=nB;
-    }
-    else B0_CosmoRec=0.0;
+    set_PMF_parameters_KK_PF(runpars[4], runpars[5], h0);
     
     //======================================================================
     double params[12];

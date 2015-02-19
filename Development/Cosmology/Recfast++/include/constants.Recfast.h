@@ -81,9 +81,12 @@ namespace RECFAST_atomic_constants
     //====================================================================================================
     extern double RF_B0_heating;
     extern double RF_nB_heating;
+    extern double RF_kD_heating;
+    
     extern bool RF_eval_ion_Tr;
     extern bool RF_decaying_turb_on;
     extern bool RF_ambipolar_heat_on;
+    extern bool RF_KK_or_PF_Lorentz;    // KK or PF integral for Lorentz force (when called from CosmoRec)
     
     // helium
     //const double RF_Lam2s1sHe=52.607; // HeI 2s-1s two photon rate in [s^-1] from Labzowsky 2005 

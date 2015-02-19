@@ -143,11 +143,11 @@ void read_entries_from_parameter_file(ifstream &paramfile, double *param)
     //======================================================================
     // magnetic field parameters (added 10.10.2014)
     //======================================================================
-    paramfile >> B0_CosmoRec;
+    paramfile >> B0_CosmoRec; // B0 in nG
     paramfile >> nB_CosmoRec;
-    RECFAST_atomic_constants::RF_B0_heating=B0_CosmoRec;
-    RECFAST_atomic_constants::RF_nB_heating=nB_CosmoRec;
-
+    set_PMF_parameters_KK_PF(B0_CosmoRec, nB_CosmoRec, param[9]);
+    
+    //======================================================================
     paramfile >> nShellsHeI;
     paramfile >> flag_HI_absorption;
     paramfile >> flag_spin_forbidden;

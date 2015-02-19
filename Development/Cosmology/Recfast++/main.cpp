@@ -33,9 +33,12 @@ double RECFAST_atomic_constants::RF_Lam2s1sH = 8.22458;  // Recfast++ default va
 //========================================================================================
 double RECFAST_atomic_constants::RF_B0_heating = 0.0;
 double RECFAST_atomic_constants::RF_nB_heating = 0.0;
+double RECFAST_atomic_constants::RF_kD_heating = 0.0;
+
 bool RECFAST_atomic_constants::RF_eval_ion_Tr = 0;
 bool RECFAST_atomic_constants::RF_decaying_turb_on = 0;
 bool RECFAST_atomic_constants::RF_ambipolar_heat_on = 0;
+bool RECFAST_atomic_constants::RF_KK_or_PF_Lorentz  = 0;      // flag overwritten below...
 
 //========================================================================================
 void show_cosmological_parameters(vector<double> &param)
@@ -104,8 +107,12 @@ void read_parameter_file(string fname, vector<double> &params)
     if(RECFAST_atomic_constants::RF_B0_heating>0.0)
     {
         ifile >> RECFAST_atomic_constants::RF_nB_heating; // nB
-        ifile >> RECFAST_atomic_constants::RF_decaying_turb_on; // decaying magnetic turb on / off
+        ifile >> RECFAST_atomic_constants::RF_decaying_turb_on;  // decaying magnetic turb on / off
         ifile >> RECFAST_atomic_constants::RF_ambipolar_heat_on; // ambipolar diff on / off
+        
+        double B0=RECFAST_atomic_constants::RF_B0_heating;
+        RECFAST_atomic_constants::RF_KK_or_PF_Lorentz=0;         // always use KK parametrization here
+        RECFAST_atomic_constants::RF_kD_heating=286.91/B0;       // in Mpc^-1; cos(theta)=1
     }
     
     //====================================================================================

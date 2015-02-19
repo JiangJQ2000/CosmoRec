@@ -9,15 +9,53 @@
 //========================================================================================
 
 //========================================================================================
+// convert parameters between KK and PF parametrizations
+//========================================================================================
+void set_PMF_parameters_KK_PF(double B0, double nB, double h0)
+{
+    if(B0>0.0)
+    {
+        //======================================================================
+        // KK parametrization and interpretation; B0 and nB unchanged; (default)
+        //======================================================================
+        double kD=286.91/B0;                          // in Mpc^-1; cos(theta)=1
+        
+        //======================================================================
+        // set dissipation scale and convert B_lam --> B0 when using PF vars
+        //======================================================================
+        if(KK_or_PF_Lorentz)
+        {
+            double lambda_Mpc=1.0, k_lambda=TWOPI/lambda_Mpc;
+            double B_lambda=B0, nBp3=nB+3.0, nBp5=nB+5.0;
+            
+            kD=pow(2.9e+4*h0, 1.0/nBp5)/pow(B_lambda, 2.0/nBp5)*pow(k_lambda, nBp3/nBp5);
+            //kD=pow(5.5e+4*h0, 1.0/nBp5)/pow(B_lambda, 2.0/nBp5)*pow(k_lambda, nBp3/nBp5);
+            B0=sqrt( B_lambda*B_lambda*pow(kD*lambda_Mpc, nBp3)/Gamma_JC(nBp5/2.0) );
+        }
+        
+        B0_CosmoRec=RECFAST_atomic_constants::RF_B0_heating=B0;
+        nB_CosmoRec=RECFAST_atomic_constants::RF_nB_heating=nB;
+        kD_CosmoRec=RECFAST_atomic_constants::RF_kD_heating=kD;
+    }
+    else
+    {
+        B0_CosmoRec=RECFAST_atomic_constants::RF_B0_heating=0.0;
+        nB_CosmoRec=RECFAST_atomic_constants::RF_nB_heating=0.0;
+        kD_CosmoRec=RECFAST_atomic_constants::RF_kD_heating=0.0;
+    }
+    
+    return;
+}
+
+//========================================================================================
 // magnetic field decay rate following Kunze & Komatsu, 2013.
 //========================================================================================
-double Gamma_decay(double z, double Hz, double B0, double nB)
+double Gamma_decay(double z, double Hz, double B0, double nB, double kd)
 {
     double zi=1088.0;
     
     // B0 is in nG
     double m=2.0*(nB+3.0)/(nB+5.0);
-    double kd=286.91/B0;                                        // in Mpc^-1; cos(theta)=1
     double td_ti=14.8/B0/kd;
     //double rhoB=9.545e-8*B0*B0*cosmos.rho_g_g_cm3(z)*const_cl*const_cl;
     double rhoB=B0*B0*1.0e-18/(2.0*FOURPI)*pow(1.0+z, 4);
@@ -34,19 +72,19 @@ double Gamma_decay(double z, double Hz, double B0, double nB)
 //========================================================================================
 // magnetic field heating rate for ambipolar diffusion Kunze & Komatsu, 2013.
 //========================================================================================
-double Gamma_ambi(double z, double Tm, double Xp, double B0, double nB)
+double Gamma_ambi(double z, double Tm, double Xp, double B0, double nB, double kd)
 {
     // fit to the integral KK
     double L2=0.8313*pow(nB+3.0, 1.105)*(1.0-1.020e-2*(nB+3.0));
     
-    // fit to the integral for Finelli
-    //double L2=0.6615*pow(nB+3.0, 0.8874)*(1.0-0.1367*(nB+3.0)+7.574e-3*pow(nB+3.0, 2));
+    // fit to the integral of Finelli
+    if(KK_or_PF_Lorentz)
+        L2=0.6615*pow(nB+3.0, 0.8874)*(1.0-0.1367*(nB+3.0)+7.574e-3*pow(nB+3.0, 2));
     
     // similar to Sethi & Subramanian, 2005
     //double L2=1.0;
 
     // B0 is in nG
-    double kd=286.91/B0;                                  // in Mpc^-1; cos(theta)=1
     double rhoB=B0*B0*1.0e-18/(2.0*FOURPI)*pow(1.0+z, 4);
     double sig=0.649*pow(Tm, 0.375)*1.0e-9;
     double g=sig/(2.0*const_mH_gr);
@@ -68,7 +106,7 @@ double Gamma_ambi(double z, double Tm, double Xp, double B0, double nB)
 //========================================================================================
 void evaluate_magnetic_field_heating(double z, double fHe, double Tg, double Tm,
                                      double XHII, double XHeII,
-                                     double B0, double nB,
+                                     double B0, double nB, double kD,
                                      double &dX1s_dt,
                                      double &drho_dt)
 {
@@ -77,8 +115,8 @@ void evaluate_magnetic_field_heating(double z, double fHe, double Tg, double Tm,
     double fheat=2.0/3.0/const_kB/(1.0+fHe+Xe)/NH;
     
     double dE_dt=0.0;
-    if(decaying_turb_on)  dE_dt+=Gamma_decay(z, cosmos.H(z), B0, nB);
-    if(ambipolar_heat_on) dE_dt+=Gamma_ambi (z, Tm, XHII, B0, nB);
+    if(decaying_turb_on)  dE_dt+=Gamma_decay(z, cosmos.H(z), B0, nB, kD);
+    if(ambipolar_heat_on) dE_dt+=Gamma_ambi (z, Tm, XHII, B0, nB, kD);
     
     //====================================================================================
     // add collisional ionization for H & He (kci in m^3 / sec from Bell et al. 1983)

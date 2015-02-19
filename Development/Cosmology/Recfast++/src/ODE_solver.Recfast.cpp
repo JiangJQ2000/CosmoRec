@@ -283,7 +283,7 @@ void ODE_solver_jac(int neq, int col, double z, double Dz, double *y, double *r)
     // r[i] is reset here
     // y[i] should contain the solution at z
     //===========================================================================   
-    double y0=y[col], Dyj=y[col]*1.0e-10;
+    double y0=y[col], Dyj=y[col]*1.0e-12;
     
     vector<double> fp2(neq), fp1(neq), fm1(neq), fm2(neq);
     

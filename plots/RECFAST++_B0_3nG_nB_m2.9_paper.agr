@@ -54,7 +54,7 @@
 @timestamp rot 0
 @timestamp font 0
 @timestamp char size 1.000000
-@timestamp def "Sat Nov  1 11:57:02 2014"
+@timestamp def "Tue Feb 24 22:38:58 2015"
 @with line
 @    line on
 @    line loctype view
@@ -92,13 +92,13 @@
 @with string
 @    string on
 @    string loctype view
-@    string 1.00490196078, 0.875
+@    string 1.00857843137, 0.854166666667
 @    string color 1
 @    string rot 0
 @    string font 0
 @    string just 0
 @    string char size 1.000000
-@    string def "Non-smooth\ntransition"
+@    string def "Sharp transition"
 @r0 off
 @link r0 to g0
 @r0 type above
@@ -434,7 +434,7 @@
 @    s2 errorbar riser clip off
 @    s2 errorbar riser clip length 0.100000
 @    s2 comment "Cols 1:2"
-@    s2 legend  "standard"
+@    s2 legend  "standard recombination history"
 @    s3 hidden false
 @    s3 type xy
 @    s3 symbol 0

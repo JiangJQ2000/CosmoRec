@@ -2,11 +2,14 @@
 //
 // Author: Jens Chluba
 // first implementation: April 2010
-// last modification   : July  2014
+// last modification   : Oct   2014
 // purpose: to access main CosmoRec code
 //
 //===========================================================================================================
+// 14.11.2014: control of magnetic field parameters is now all in CosmoRec.cpp (also Recfast++ part...)
+// 17.10.2014: conversion from B_lambda to B0 when calling in batch mode
 // 11.10.2014: added parameters for magnetic field heating
+// 09.10.2014: added magnetic field heating module
 // 23.07.2014: added possibility to change A2s1s two-photon decay rate
 // 22.07.2014: new He-diffusion runmodes (runpars[1]== 4, 5, 6)
 // 17.07.2014: included HeI-diffusion correction (most of the coding done 02-05.2011)

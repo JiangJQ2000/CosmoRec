@@ -21,12 +21,13 @@ void set_accuracies_own_solver(double *rtol, double *abs, int neq_HI, int neq)
     rtol[1]=1.0e-7; abs[1]=1.0e-12;
     rtol[2]=1.0e-6; abs[2]=1.0e-80;
     rtol[3]=1.0e-6; abs[3]=1.0e-80;
-    //
+    
     if(flag_He==1)
     {
-        rtol[neq_HI+1]=1.0e-7; abs[neq_HI+1]=1.0e-12;
-        rtol[neq_HI+2]=1.0e-6; abs[neq_HI+2]=1.0e-80;
+        // error setting was shifted by one index!?
+        rtol[neq_HI+2]=1.0e-7; abs[neq_HI+2]=1.0e-12;
         rtol[neq_HI+3]=1.0e-6; abs[neq_HI+3]=1.0e-80;
+        rtol[neq_HI+4]=1.0e-6; abs[neq_HI+4]=1.0e-80;
     }
     
     return;

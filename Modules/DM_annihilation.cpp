@@ -58,3 +58,30 @@ void evaluate_DM_annihilation_terms(double z, double fHe, double Tg,
     
     return;
 }
+
+void evaluate_DM_decay_terms(double z, double fHe, double Tg,
+                             double XHII, double XHeII,
+                             double log10_decayrate, double rho_rhob,
+                             double &dXHI_1s_dt, double &dXHeI_1s_dt,
+                             double &drho_dt)
+{
+    //====================================================================================
+    // decayrate is given in 1/s
+    // assume on the spot approximation at the moment
+    // In this module additional excitations are not included at the moment
+    //====================================================================================
+    
+    double dE_dt= 1.23e9*rho_rhob*pow(10.,-log10_decayrate); // here the factor 1/NH was canceled with definition of dE_dt
+    //
+    double bHe_ion=branching_ratio_ions_Chen(XHeII/fHe);
+    double bHI_ion=branching_ratio_ions_Chen(XHII);
+    double b_heat =branching_ratio_heat_Chen(XHII, XHeII/fHe, fHe);
+    //
+    double fheat=2.0/3.0*const_e/const_kB/(1.0+fHe+XHII+XHeII);
+    
+    dXHI_1s_dt+=-bHI_ion/13.6/(1.0+fHe)*dE_dt;
+    if(XHeII>0.0) dXHeI_1s_dt+=-bHe_ion/24.6*fHe/(1.0+fHe)*dE_dt;
+    drho_dt+=fheat*b_heat*dE_dt/Tg;
+    
+    return;
+}

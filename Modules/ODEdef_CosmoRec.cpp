@@ -321,10 +321,14 @@ void fcn_effective(double z, Data_Level_III &LIII)
     // DM annihilation
     //==================================================================
     if(DM_annihilation) 
-        evaluate_DM_annihilation_terms(z, parameters.fHe, Tg, Xp, XHeII, fDM_CosmoRec, 
-                                       Level_I_temp.g[iHI], Level_I_temp.g[iHeI], 
-                                       Level_I_temp.g[Level_I_temp.neq-1]);
+//        evaluate_DM_annihilation_terms(z, parameters.fHe, Tg, Xp, XHeII, fDM_CosmoRec,
+//                                       Level_I_temp.g[iHI], Level_I_temp.g[iHeI],
+//                                       Level_I_temp.g[Level_I_temp.neq-1]);
         
+        evaluate_DM_decay_terms(z, parameters.fHe, Tg, Xp, XHeII, fDM_CosmoRec, 1.0,
+                                Level_I_temp.g[iHI], Level_I_temp.g[iHeI],
+                                Level_I_temp.g[Level_I_temp.neq-1]);
+    
     //==================================================================
     // heating by magnetic fields
     //==================================================================
@@ -505,9 +509,12 @@ void fcn_for_jacobian_eval(int jX, int neq, double DXj, double z, double Tg,
         double Xp=1.0-Hydrogen_Atoms.X(0);
         double XHeII = (flag_He==1 ? parameters.fHe-LI0.X[LI0.index_HeI] : 0.0); 
         
-        evaluate_DM_annihilation_terms(z, parameters.fHe, Tg, Xp, XHeII, fDM_CosmoRec, 
-                                       f[LI0.index_HI], f[LI0.index_HeI], f[LI0.neq-1]);  
-    }           
+        //evaluate_DM_annihilation_terms(z, parameters.fHe, Tg, Xp, XHeII, fDM_CosmoRec,
+        //                               f[LI0.index_HI], f[LI0.index_HeI], f[LI0.neq-1]);
+
+        evaluate_DM_decay_terms(z, parameters.fHe, Tg, Xp, XHeII, fDM_CosmoRec, 1.0,
+                                f[LI0.index_HI], f[LI0.index_HeI], f[LI0.neq-1]);
+    }
 
     //==============================================================================================
     // heating by magnetic fields

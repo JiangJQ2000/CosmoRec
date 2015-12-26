@@ -177,7 +177,8 @@ void evaluate_Recfast_System(double z, double y[], double fvec[], int n)
     // add terms due to DM annihilation
     //====================================================================================
     if(input.fDM!=0.0) 
-        evaluate_DM_annihilation_terms(z, Hz, fHe, xp, xHep, CHe, CH, input.fDM, fvec);
+    //    evaluate_DM_annihilation_terms(z, Hz, fHe, xp, xHep, CHe, CH, input.fDM, fvec);
+        evaluate_DM_decay_terms(z, Hz, fHe, xp, xHep, CHe, CH, input.fDM, 1.0, fvec);
     
     //====================================================================================
     // add terms due to magnetic field heating

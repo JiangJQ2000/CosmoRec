@@ -18,4 +18,9 @@
 void evaluate_DM_annihilation_terms(double z, double Hz, double fHe, double xp, double xHep, 
                                     double CHe, double CH, double fDM, double fvec[]);
 
+void evaluate_DM_decay_terms(double z, double Hz, double fHe, double xp,
+                             double xHep, double CHe, double CH,
+                             double log10_decayrate, double rho_rhob,
+                             double fvec[]);
+
 #endif

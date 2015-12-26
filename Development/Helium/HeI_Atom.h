@@ -99,6 +99,8 @@ public:
     double Get_E_ion() const { return Eion;}          // ionization energy in eV
     double Get_E_ion_ergs() const {return Eion_ergs;} // ionization energy in ergs
     double Get_nu_ion() const { return nuion;}        // ionization frequency in Hz
+    // approximate reduced mass of helium in units of me
+    double Get_mu_red() const { return 1.0/(1.0+const_me_malp); }
 
     //==============================================
     // storage of additional data for computations 
@@ -192,6 +194,8 @@ public:
     double Get_E_ion() const { return Eion;}         // ionization energy in eV
     double Get_E_ion_ergs() const {return Eion_ergs;}// ionization energy in ergs
     double Get_nu_ion() const { return nuion;}       // ionization frequency in Hz
+    // approximate reduced mass of helium in units of me
+    double Get_mu_red() const { return 1.0/(1.0+const_me_malp); }
 
     //==============================================
     // storage of additional data for computations 
@@ -285,6 +289,8 @@ public:
     double Get_E_ion() const { return Eion;}         // ionization energy in eV
     double Get_E_ion_ergs() const {return Eion_ergs;}// ionization energy in ergs
     double Get_nu_ion() const { return nuion;}       // ionization frequency in Hz
+    // approximate reduced mass of helium in units of me
+    double Get_mu_red() const { return 1.0/(1.0+const_me_malp); }
 
     //==============================================
     // storage of additional data for computations 
@@ -632,6 +638,8 @@ public:
     int Get_indexT_no_j() const { return indexT_no_j; }
     int Get_njres();
     int Get_Level_index(int n, int l, int s, int j) const; 
+    // approximate reduced mass of helium in units of me
+    double Get_mu_red() const { return 1.0/(1.0+const_me_malp); }
     
     double Get_A(int n, int l, int s, int j, int np, int lp, int sp, int jp) const;
     //double Get_f(int n, int l, int s, int j, int np, int lp, int sp, int jp) const;

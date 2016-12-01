@@ -90,7 +90,7 @@ void evaluate_Recfast_System(double z, double y[], double fvec[], int n)
     Hz=H_z(z);
     nHTot = NH(z);
     fHe = input.fHe;
-        
+    
     //====================================================================================
     // set variables
     //====================================================================================
@@ -191,13 +191,12 @@ void evaluate_Recfast_System(double z, double y[], double fvec[], int n)
     fvec[0] = (alphaHe*xe*xHep*nHTot - betaHe*(fHe-xHep)*BHe)*CHe/((1.0+z)*Hz);
     fvec[1] = (alphaH* xe*xp  *nHTot - betaH *(1.0-xp  )*BH )*CH /((1.0+z)*Hz);
     fvec[2] = Comp*xe/(1.0+xe+fHe)*(TM-TR) + 2.0*TM/(1.0+z);
-
+    
     //====================================================================================
     // add terms due to DM annihilation
     //====================================================================================
     if(input.fDM!=0.0) 
-    //    evaluate_DM_annihilation_terms(z, Hz, fHe, xp, xHep, CHe, CH, input.fDM, fvec);
-        evaluate_DM_decay_terms(z, Hz, fHe, xp, xHep, CHe, CH, input.fDM, 1.0, fvec);
+        evaluate_DM_annihilation_terms(z, Hz, fHe, xp, xHep, CHe, CH, input.fDM, fvec);
     
     //====================================================================================
     // add terms due to magnetic field heating

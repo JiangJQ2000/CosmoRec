@@ -42,11 +42,11 @@ LIBSGSL = -L$(GSL_LIB_PATH) -l$(GSL) -lgslcblas
 # If grace support should be used, uncomment the next 5 definitions
 # and set them accordingly. This is not recommended when running with CosmoMC.
 #===============================================================================
-USE_GRACE   = -D GRACE_DEFINED
-GR          = grace_np
-GR_INC_PATH = /opt/local/include/
-GR_LIB_PATH = /opt/local/lib/
-LIBSGR  = -L$(GR_LIB_PATH)  -l$(GR)
+#USE_GRACE   = -D GRACE_DEFINED
+#GR          = grace_np
+#GR_INC_PATH = /opt/local/include/
+#GR_LIB_PATH = /opt/local/lib/
+#LIBSGR  = -L$(GR_LIB_PATH)  -l$(GR)
 
 
 #===============================================================================

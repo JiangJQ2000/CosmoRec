@@ -247,20 +247,9 @@ void run_RECFAST(string filename, int corr_fac)
 
     for(int l=0; l<parameters.nz; l++) ofile << scientific << za[l] << " "
                                              << cosmos.Xe_Seager(za[l]) << " " 
-                                             << cosmos.Te(za[l]) << " "
-                                             << cosmos.Te_Tg(za[l])-1.0 << " "
-                                      /*       << cosmos.y_gamma(0.0, za[l]) << " "
-                                             << cosmos.y_elect(0.0, za[l]) << " "
-                                             //
-                                             << cosmos.tau_ff(1.0e-4, za[l]) << " "
-                                             << cosmos.tau_ff(1.0e-3, za[l]) << " "
-                                             << cosmos.tau_ff(1.0e-2, za[l]) << " "
-                                             << cosmos.tau_ff(1.0e-1, za[l]) << " "
-                                             << cosmos.tau_ff(1.0e-0, za[l]) << " "
-                                             << cosmos.tau_ff(0.025/(1.0+za[l]), za[l]) 
-                                       */    << endl;
+                                             << cosmos.Te(za[l]) << endl;
     
-    if(show_CosmoRec_mess>=0) cout << " finished RECFAST++ run. Now exiting program ... "
+    if(show_CosmoRec_mess>=0) cout << " finished RECFAST++ run. Now exiting program ... " 
                                    << endl << endl;
 
     //=======================================================================================================
@@ -545,7 +534,7 @@ int CosmoRec(int narg, char *args[])
     set_array_dimensions_and_parameters();
     allocate();
     set_variables();
-
+    
     //========================================================================
     // initialise zarr (linear)
     //========================================================================

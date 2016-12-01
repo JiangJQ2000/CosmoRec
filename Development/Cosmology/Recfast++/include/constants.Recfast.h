@@ -1,9 +1,10 @@
 //========================================================================================================
-// Author: Jens Chluba
-// Last modification: Oct 2010
+// Author: Jens Chluba & Luke Hart
+// First implementation: Oct 2010
 // CITA, University of Toronto
 // All rights reserved.
 //========================================================================================================
+// 01.12.2016: added parameters for variation of alpha and me
 // 10.10.2014: added magnetic field heating parameters
 // 23.07.2014: added possiblity to explicitly set HI A2s1s rate
 
@@ -88,8 +89,17 @@ namespace RECFAST_atomic_constants
     extern bool RF_ambipolar_heat_on;
     extern bool RF_KK_or_PF_Lorentz;    // KK or PF integral for Lorentz force (when called from CosmoRec)
     
-    // helium
-    //const double RF_Lam2s1sHe=52.607; // HeI 2s-1s two photon rate in [s^-1] from Labzowsky 2005 
+    //====================================================================================================
+    // fundamental constants scalings (Oct 2016, LH)
+    //====================================================================================================
+    extern double RF_aScale;
+    extern double RF_mScale;
+    extern int RF_rMode;
+
+    //====================================================================================================
+    // helium 2gamma rate
+    //====================================================================================================
+    //const double RF_Lam2s1sHe=52.607; // HeI 2s-1s two photon rate in [s^-1] from Labzowsky 2005
     const double RF_Lam2s1sHe=51.3;     // HeI 2s-1s two photon rate in [s^-1] 
     
     //====================================================================================================  

@@ -1,9 +1,10 @@
 //========================================================================================
 // Author: Jens Chluba
-// Last modification: Oct 2010
+// First implementation: Oct 2010
 // CITA, University of Toronto
 // All rights reserved.
 //========================================================================================
+// 01.12.2016: added approximate dependence of correction function on fundamental constants
 
 //========================================================================================
 // This module allows to add the recombination corrections as described by 
@@ -97,6 +98,10 @@ double Recombination_correction_factor(double z)
 {
     int nz=Rec_corrs_CT_Data.size();
     
+    // 01.12.2016: dependence on alpha & me, JC
+    if(RECFAST_atomic_constants::RF_rMode==1 || RECFAST_atomic_constants::RF_rMode==6)
+        z/=pow(RECFAST_atomic_constants::RF_aScale, 2)*RECFAST_atomic_constants::RF_mScale;
+
     if(Rec_corrs_CT_Data[0][0]<=z) return 1.0;
     if(Rec_corrs_CT_Data[nz-1][0]>=z) return 1.0+Rec_corrs_CT_Data[nz-1][1];
     return interpolate_data(z);

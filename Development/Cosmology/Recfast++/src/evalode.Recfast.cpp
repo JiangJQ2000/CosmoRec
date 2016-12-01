@@ -1,11 +1,12 @@
 //========================================================================================
-// Author: Jens Chluba
-// Last modification: Oct 2010
+// Author: Jens Chluba & Luke Hart
+// First implementation: Oct 2010
 // CITA, University of Toronto
 // All rights reserved.
 //========================================================================================
-// Oct 11 2014: added switch that allows to change T=TR instead of T=TM for beta_ion
-// Oct 10 2014: added heating by magnetic fields
+// Oct/Nov 2016: added effects for variations of alpha and me/mp
+// Oct 11  2014: added switch that allows to change T=TR instead of T=TM for beta_ion
+// Oct 10  2014: added heating by magnetic fields
 
 //========================================================================================
 // This module contains the evaluation of the RECFAST ODE-system. The code is based on the
@@ -72,6 +73,9 @@ double alphaHe_func(double TM)
 //========================================================================================
 void evaluate_Recfast_System(double z, double y[], double fvec[], int n)
 {
+    //====================================================================================
+    // standard variables
+    //====================================================================================
     double xe, xp, xHep, nH1, nHe1;
     double TR, TM, Comp;
     double Hz;
@@ -113,17 +117,52 @@ void evaluate_Recfast_System(double z, double y[], double fvec[], int n)
     Comp = 8.0*RF_sigmaT*RF_aRad*pow(TR, 4)/(3.0*Hz*(1.0+z)*RF_mElect*RF_cLight);
     
     //====================================================================================
-    // to include different effects from variations of constants
+    // added variables to include variation of fundamental constants (Oct/Nov 2016, LH)
     //====================================================================================
-    double alp_fac=1.05;
-    double A2s1sH=RF_Lam2s1sH;
-    double lambda21H=RF_LyalphaH;
+    double A2s1sH=RF_Lam2s1sH, A2s1sHe=RF_Lam2s1sHe;
+    double lambda21H=RF_LyalphaH, lambda21He=RF_LyalphaHe;
     double TMeval=TM, TReval=TR;
     
-    Comp*=pow(alp_fac, 2);
-    A2s1sH*=pow(alp_fac, 8);
-    lambda21H*=pow(alp_fac, -2);
-    TMeval*=pow(alp_fac, -2); TReval*=pow(alp_fac, -2);
+    //====================================================================================
+    // omission run mode settings
+    //====================================================================================
+    // The following is a description of all the different runmode settings and which
+    // value corresponds to which mode
+    // 0 - no rescaling
+    // 1 - Rescaling of Boltzmann factor exponentials (i.e., temperatures)
+    // 2 - Rescaling of Thomson scattering cross section
+    // 3 - Rescaling of 2s1s 2 photon rate
+    // 4 - Rescaling of alpha and beta co-efficients
+    // 5 - Rescaling of Lyman alpha rates
+    // 6 - Rescale everything
+    //====================================================================================
+    int rmode = RECFAST_atomic_constants::RF_rMode;
+    double alpha_scale = RECFAST_atomic_constants::RF_aScale;
+    double mass_scale  = RECFAST_atomic_constants::RF_mScale;
+    
+    if (rmode > 6){ cerr << "Invalid mode selection!" << endl; exit(1); }
+
+    // Rescale the temperatures here
+    else if (rmode == 1 || rmode == 6) {
+        TMeval/=pow(alpha_scale, 2)*mass_scale; // scaled matter temperature
+        TReval/=pow(alpha_scale, 2)*mass_scale; // scaled radiation temperature
+    }
+    
+    // Re-scaled Thomson cross section
+    else if (rmode == 2 || rmode == 6)
+        Comp*=pow(alpha_scale/mass_scale, 2)/mass_scale; // extra 1/me from rho_g/me in coefficient
+    
+    // Rescaling of the two photon rates for the Lambda values
+    else if (rmode == 3 || rmode == 6) {
+        A2s1sH *=pow(alpha_scale,8)*mass_scale;
+        A2s1sHe*=pow(alpha_scale,8)*mass_scale;
+    }
+
+    // rescaling of wavelength to change Pesc
+    else if (rmode == 5 || rmode == 6) {
+        lambda21H /=pow(alpha_scale, 2)*mass_scale;
+        lambda21He/=pow(alpha_scale, 2)*mass_scale;
+    }
     
     //====================================================================================
     // Boltzmann and detailed balance factors
@@ -168,21 +207,25 @@ void evaluate_Recfast_System(double z, double y[], double fvec[], int n)
     }
     
     //====================================================================================
-    // rescale alpha and beta normalization
+    // Explicit rescalings for photo-ionization and recombination coefficients
     //====================================================================================
-    alphaH*=pow(alp_fac, 2);
-    betaH*=pow(alp_fac, 5);
-    
+    if (rmode == 4 || rmode == 6) {
+        double RF_a = pow(alpha_scale/mass_scale, 2);
+        double RF_b = pow(alpha_scale, 5)*mass_scale;
+        alphaH *=RF_a; alphaHe*=RF_a;
+        betaH  *=RF_b; betaHe *=RF_b;
+    }
+
     //====================================================================================
     // tau-Sobolev for helium and hydrogen
     //====================================================================================
-    KHe = pow(RF_LyalphaHe, 3)/(Hz*8.0*RF_PI);
+    KHe = pow(lambda21He, 3)/(Hz*8.0*RF_PI);
     KH  = pow(lambda21H , 3)/(Hz*8.0*RF_PI);
     
     //====================================================================================
     // Inhibition factors for HeI & HI
     //====================================================================================
-    CHe = (1.0+KHe*RF_Lam2s1sHe*nHe1*BHe2p2s)/(1.0+KHe*(RF_Lam2s1sHe+betaHe)*nHe1*BHe2p2s);
+    CHe = (1.0+KHe*A2s1sHe*nHe1*BHe2p2s)/(1.0+KHe*(A2s1sHe+betaHe)*nHe1*BHe2p2s);
     CH  = (1.0+KH *A2s1sH *nH1         )/(1.0+KH *(A2s1sH +betaH )*nH1         );
     
     //====================================================================================

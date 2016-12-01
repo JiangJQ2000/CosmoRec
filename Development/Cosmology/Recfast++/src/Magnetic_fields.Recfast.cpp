@@ -2,6 +2,7 @@
 // Author: Jens Chluba (Oct. 2014)
 // Johns Hopkins University
 //========================================================================================
+// 01.12.2016: added settings for transition from no heating before z>1088
 
 //========================================================================================
 // This simple module allows to add the effect of heating by magnetic fields.

@@ -1,9 +1,10 @@
 //========================================================================================
 // Author: Jens Chluba
-// Last modification: Oct 2010
+// First implementation: Oct 2010
 // CITA, University of Toronto
 // All rights reserved.
 //========================================================================================
+// 01.12.2016: added dependence of Saha_HeIII on fundamental constants
 
 //========================================================================================
 // In this module the solution to the RECFAST ODE-system is computed. 
@@ -37,7 +38,15 @@ struct Input input;
 //========================================================================================
 double SahaBoltz_HeIII(double nH, double fHe, double T)
 {
-    double c1 = 2.0*RF_PI*RF_mElect*RF_kBoltz*T/(RF_hPlanck*RF_hPlanck);
+    // 01.12.2016: dependence on alpha & me, JC
+    double me_loc=RF_mElect;
+    if(RECFAST_atomic_constants::RF_rMode==1 || RECFAST_atomic_constants::RF_rMode==6)
+        T/=pow(RECFAST_atomic_constants::RF_aScale, 2)*RECFAST_atomic_constants::RF_mScale;
+    
+    if(RECFAST_atomic_constants::RF_rMode==4 || RECFAST_atomic_constants::RF_rMode==6)
+        me_loc*=RECFAST_atomic_constants::RF_mScale;
+    
+    double c1 = 2.0*RF_PI*me_loc*RF_kBoltz*T/(RF_hPlanck*RF_hPlanck);
     double g = pow(c1, 1.5)*exp(-RF_EionHeII/(RF_kBoltz*T))/nH, d=1.0+fHe-g;
     double Xe= 0.5*(d + sqrt(d*d + 4.0*g*(1.0+2.0*fHe)));
     

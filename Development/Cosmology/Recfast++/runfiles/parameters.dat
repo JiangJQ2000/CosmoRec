@@ -18,6 +18,10 @@
 1
 0
 
+1.0
+1.0
+0
+
 //===========================================================================
 // parameters above are 
 //===========================================================================
@@ -41,6 +45,16 @@
 -2.9        == nB
 1           == decaying magnetic turbulence on / off
 0           == ambipolar diffusion on / off
+
+1.0         == alp/alp_ref [value ignored when mode==0]
+1.0         == me/me_ref   [value ignored when mode==0]
+0           == mode: 0 - no rescaling
+    				 1 - Rescaling of Boltzmann factor exponentials (i.e., temperatures)
+					 2 - Rescaling of Thomson scattering cross section
+					 3 - Rescaling of 2s1s 2 photon rate
+					 4 - Rescaling of alpha and beta co-efficients
+					 5 - Rescaling of Lyman alpha rates
+					 6 - Rescale everything
 
 //===========================================================================
 //===========================================================================

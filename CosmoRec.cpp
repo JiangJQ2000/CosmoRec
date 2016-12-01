@@ -155,6 +155,13 @@ double RECFAST_atomic_constants::RF_kD_heating   = 0.0;
 #include "./Modules/Magnetic_fields.cpp"
 
 //===========================================================================================================
+// variation of fundamental constants
+//===========================================================================================================
+int RECFAST_atomic_constants::RF_rMode     = 0;
+double RECFAST_atomic_constants::RF_aScale  = 1.0;
+double RECFAST_atomic_constants::RF_mScale  = 1.0;
+
+//===========================================================================================================
 // additional definitions for CosmoRec-ODE system
 //===========================================================================================================
 #include "./Modules/ODEdef_CosmoRec.cpp"

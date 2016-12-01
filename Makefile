@@ -3,8 +3,10 @@
 #============================================================================================
 DEV_DIR = ./Development
 REC_BASE= ./Rec_database
+HELIUM_DIR= Helium
+#HELIUM_DIR= Helium.v1.0
 
-MAKE_COMMAND = make -f Makefile.in DEV_DIR=$(DEV_DIR) REC_BASE=$(REC_BASE)
+MAKE_COMMAND = make -f Makefile.in DEV_DIR=$(DEV_DIR) REC_BASE=$(REC_BASE) HELIUM_DIR=$(HELIUM_DIR)
 
 #============================================================================================
 # rules
@@ -58,7 +60,7 @@ cleanallDEV:
 	rm -f $(DEV_DIR)/Recombination/*.o $(DEV_DIR)/Recombination/*~
 	rm -f $(DEV_DIR)/Hydrogenic/*.o $(DEV_DIR)/Hydrogenic/*~
 	rm -f $(DEV_DIR)/Line_profiles/*.o $(DEV_DIR)/Line_profiles/*~
-	rm -f $(DEV_DIR)/Helium/*.o $(DEV_DIR)/Helium/*~
+	rm -f $(DEV_DIR)/$(HELIUM_DIR)/*.o $(DEV_DIR)/$(HELIUM_DIR)/*~
 	rm -f $(DEV_DIR)/Integration/*.o $(DEV_DIR)/Integration/*~
 	rm -f $(DEV_DIR)/ODE_PDE_Solver/*.o $(DEV_DIR)/ODE_PDE_Solver/*~
 	rm -f $(DEV_DIR)/Compton_Kernel/*.o $(DEV_DIR)/Compton_Kernel/*~

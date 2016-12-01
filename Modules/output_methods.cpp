@@ -93,13 +93,49 @@ void write_HI_HeI_1s_array_to_file(ofstream &ofile, double zval)
 void write_HI_X_array_to_file(ofstream &ofile, double zval, double *X, int nHIeq, int neq)
 {
     ofile << scientific << zval;
-    // Xe & HI Xi
+/*    // Xe & HI Xi
     for(int l=0; l<Level_I.nHIeq+1; l++) ofile << scientific << " " << X[l];
     // rho
     ofile << scientific << " " << X[neq-1];
     // Xp, XeHeII
     ofile << scientific << " " << 1.0-Hydrogen_Atoms.X_tot();
-    ofile << scientific << " " << parameters.fHe-HeI_Atoms.X_tot() << endl;
+    ofile << scientific << " " << parameters.fHe-HeI_Atoms.X_tot();
+*/
+    // tau_Sobolev tauS=A_ji * lambda_ij^3 * (n_i * g_i/g_j - n_j) / ( 8*pi*H )
+    double LL=cosmos.NH(zval)/( 8.0*PI*cosmos.H(zval) );
+    int nmaxl=3, nmaxu=5;
+    #include "Oscillator_strength.h"
+   
+    for(int n=2; n<=nmaxl; n++)
+    {
+        for(int np=n+1; np<=nmaxu; np++)
+        {
+            double tau_S=0.0;
+            
+            for(int l=0; l<n; l++)
+            {
+                double Xi=Hydrogen_Atoms.X(n, l);
+                double gi=2.0*l+1.0;
+                
+                for(int lp=0; lp<np; lp++)
+                {
+                    double gj=2.0*lp+1.0;
+                    double A_ij=A_SH(np, lp, n, l);
+                    double lambda_ij=Hydrogen_Atoms.Level(1, 0).lambda_ul(np, n);
+                    double Xj=(np<=3 ? Hydrogen_Atoms.X(np, lp) : 0.0);
+                    
+                    //cout << n << " " << l << " <-- " << np << " " << lp << " A= " << A_ij << endl;
+                    
+                    tau_S+=A_ij*pow(lambda_ij, 3)*LL*(gj/gi*Xi-Xj);
+                }
+            }
+            
+            ofile << scientific << " " << tau_S;
+            //cout << tau_S << endl << endl;
+        }
+    }
+    
+    ofile << endl;
     
     return;
 }

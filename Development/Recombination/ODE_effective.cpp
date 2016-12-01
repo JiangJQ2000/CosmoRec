@@ -357,7 +357,7 @@ namespace ODE_HI_effective {
     }
 
     //==================================================================
-    void df_dXHeI1s_evaluate_effective_Rci_Ric_terms(double z, double Nc, vector<double> &Ai, vector<double> &Bi, 
+    void df_dXHeI1s_evaluate_effective_Rci_Ric_terms(double z, double Nc, vector<double> &Ai, vector<double> &Bi,
                                                      int (*get_HI_index)(int), double *dXi_H_dt)
     {
         // Xe= 1-X1s + (fHe-XHeI1s) & Nc=NH*(1-X1s) --> d (Xe*Nc) / dXHeI1s = -Nc

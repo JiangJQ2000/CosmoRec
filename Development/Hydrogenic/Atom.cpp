@@ -5,8 +5,8 @@
 // last change         : Aug  2014
 //====================================================================================================================
 // 01.08.2014: fixed bug for transition data when quadrupole lines are activated
-// July 2014: tidied up the code; checked verbosity and recombination rates communication;
-// May  2011: Support for electric quadrupole lines were added.
+// July  2014: tidied up the code; checked verbosity and recombination rates communication;
+// May   2011: Support for electric quadrupole lines were added.
 //====================================================================================================================
 
 #include <iostream>

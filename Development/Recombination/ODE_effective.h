@@ -116,8 +116,11 @@ namespace ODE_HI_effective
     //==================================================================
     // effective Rij-rates
     //==================================================================
-    void evaluate_effective_Rij_terms(double z, double Tg, Gas_of_Atoms &HIA, vector<vector<double> > &Rij, int (*get_HI_index)(int), double *dXi_H_dt);
-    void df_dXi_evaluate_effective_Rij_terms(int i, double z, double Tg, Gas_of_Atoms &HIA, vector<vector<double> > &Rij, int (*get_HI_index)(int), double *dXi_H_dt);
+    void evaluate_effective_Rij_terms(double z, double Tg, Gas_of_Atoms &HIA,
+                                      vector<vector<double> > &Rij, int (*get_HI_index)(int), double *dXi_H_dt);
+    
+    void df_dXi_evaluate_effective_Rij_terms(int i, double z, double Tg, Gas_of_Atoms &HIA,
+                                             vector<vector<double> > &Rij, int (*get_HI_index)(int), double *dXi_H_dt);
 }
 
 //======================================================================
@@ -136,18 +139,32 @@ namespace ODE_HeI_effective
     //==================================================================
     // effective recombination and photonionization rates
     //==================================================================
-    void evaluate_effective_Rci_Ric_terms(double z, double Xe, double Nc, Gas_of_HeI_Atoms &HeIA, vector<double> &Ai, vector<double> &Bi, int (*get_HeI_index)(int), double *dXi_He_dt);
+    void evaluate_effective_Rci_Ric_terms(double z, double Xe, double Nc, Gas_of_HeI_Atoms &HeIA,
+                                          vector<double> &Ai, vector<double> &Bi,
+                                          int (*get_HeI_index)(int), double *dXi_He_dt);
     //
-    void df_dXHI1s_evaluate_effective_Rci_Ric_terms(double z, double Nc, vector<double> &Ai, vector<double> &Bi, int (*get_HeI_index)(int), double *dXi_He_dt);
-    void df_dXHeI1s_evaluate_effective_Rci_Ric_terms(double z, double Ne, double Nc, vector<double> &Ai, vector<double> &Bi, int (*get_HeI_index)(int), double *dXi_He_dt);
+    void df_dXHI1s_evaluate_effective_Rci_Ric_terms(double z, double Nc,
+                                                    vector<double> &Ai, vector<double> &Bi,
+                                                    int (*get_HeI_index)(int), double *dXi_He_dt);
+    
+    void df_dXHeI1s_evaluate_effective_Rci_Ric_terms(double z, double Ne, double Nc,
+                                                     vector<double> &Ai, vector<double> &Bi,
+                                                     int (*get_HeI_index)(int), double *dXi_He_dt);
     //
-    void df_dXi_evaluate_effective_Rci_Ric_terms(int i, double z, vector<double> &Ai, vector<double> &Bi, int (*get_HeI_index)(int), double *dXi_He_dt);
+    void df_dXi_evaluate_effective_Rci_Ric_terms(int i, double z,
+                                                 vector<double> &Ai, vector<double> &Bi,
+                                                 int (*get_HeI_index)(int), double *dXi_He_dt);
     
     //==================================================================
     // effective Rij-rates
     //==================================================================
-    void evaluate_effective_Rij_terms(double z, double Tg, Gas_of_HeI_Atoms &HeIA, vector<vector<double> > &Rij, int (*get_HeI_index)(int), double *dXi_He_dt);
-    void df_dXi_evaluate_effective_Rij_terms(int i, double z, double Tg, Gas_of_HeI_Atoms &HeIA, vector<vector<double> > &Rij, int (*get_HeI_index)(int), double *dXi_He_dt);
+    void evaluate_effective_Rij_terms(double z, double Tg, Gas_of_HeI_Atoms &HeIA,
+                                      vector<vector<double> > &Rij,
+                                      int (*get_HeI_index)(int), double *dXi_He_dt);
+    
+    void df_dXi_evaluate_effective_Rij_terms(int i, double z, double Tg, Gas_of_HeI_Atoms &HeIA,
+                                             vector<vector<double> > &Rij,
+                                             int (*get_HeI_index)(int), double *dXi_He_dt);
 }
 
 //======================================================================

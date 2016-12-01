@@ -31,8 +31,6 @@ using namespace std;
 // reference model: double NAG_Rec_Phot_BB_epsInt=1.0e-10;
 //======================================================================================
 double NAG_Rec_Phot_BB_epsInt=2.0e-9;
-double NAG_Rec_Phot_BB_absInt=1.0e-100;
-double NAG_Rec_Phot_BB_absInt_fac=0.0e-10;
 //
 double NAG_xi_max_fac_SH=1.0e+8;      
 double NAG_xi_max_fac_SH_QSP=1.0e+8;
@@ -169,7 +167,7 @@ double Rec_Phot_BB_SH::R_c_nl_JC(double T_g, double rho)
     //=============================================
     bb=min(bb, xi*xi_small);
 
-    r=Integrate_Ric_Rci_JC_Patterson(2, log(ab), log(bb), epsInt, epsabs, Rec_Phot_BB_SH_dR_c_nl_log);
+    r=Integrate_Ric_Rci_JC_Patterson(log(ab), log(bb), epsInt, epsabs, Rec_Phot_BB_SH_dR_c_nl_log);
     
     return 2.0*FOURPI*const_cl*(g_l/2.0)*r*pow(const_kb_mec2/Get_mu_red()*T_g/rho/TWOPI, 1.5);
 }
@@ -426,7 +424,7 @@ double Rec_Phot_BB_SH_QSP::R_nl_c_JC(double T_g)
     //=============================================
     bb=min(bb, xi*xi_small);
     
-    r=Integrate_Ric_Rci_JC_Patterson(1, log(ab), log(bb), epsInt, epsabs, Rec_Phot_BB_SH_QSP_dR_nl_c_log_P, params);
+    r=Integrate_Ric_Rci_JC_Patterson(log(ab), log(bb), epsInt, epsabs, Rec_Phot_BB_SH_QSP_dR_nl_c_log_P, params);
     
     return 2.0*FOURPI*const_cl*pow(T_g/const_hcl_kb, 3)*r*exp(-xi);    
 }
@@ -460,7 +458,7 @@ double Rec_Phot_BB_SH_QSP::R_c_nl_JC(double T_g, double rho)
     //=============================================
     bb=min(bb, xi*xi_small);
     
-    r=Integrate_Ric_Rci_JC_Patterson(2, log(ab), log(bb), epsInt, epsabs, Rec_Phot_BB_SH_QSP_dR_c_nl_log_P, params);
+    r=Integrate_Ric_Rci_JC_Patterson(log(ab), log(bb), epsInt, epsabs, Rec_Phot_BB_SH_QSP_dR_c_nl_log_P, params);
     
     return 2.0*FOURPI*const_cl*(g_l/2.0)*r*pow(const_kb_mec2/Get_mu_red()*T_g/rho/TWOPI, 1.5);
 }
@@ -521,7 +519,7 @@ double Rec_Phot_BB_SH_QSP::dR_c_nl_dTe_JC(double T_g, double rho)
     //=============================================
     bb=min(bb, xi*xi_small);
     
-    r=Integrate_Ric_Rci_JC_Patterson(3, log(ab), log(bb), epsInt, epsabs, Rec_Phot_BB_SH_QSP_ddR_c_nl_dTe_log_P, params);
+    r=Integrate_Ric_Rci_JC_Patterson(log(ab), log(bb), epsInt, epsabs, Rec_Phot_BB_SH_QSP_ddR_c_nl_dTe_log_P, params);
     
     return 2.0*FOURPI*const_cl*(g_l/2.0)*r*pow(const_kb_mec2/Get_mu_red()*T_g/rho/TWOPI, 1.5)/(rho*rho*T_g);
 }

@@ -1,9 +1,10 @@
-//================================================================================================
-// Author: Jens Chluba 
-// last modification: Oct 2010
-// 
+//====================================================================================================================
+// Author: Jens Chluba
+// first implemtation: Oct 2010
+// last modification : Aug 2015
+//
 // Purpose: carry out the integrals over photoionization cross sections
-//================================================================================================
+//====================================================================================================================
 
 #include <iostream>
 #include <cstdlib>
@@ -19,14 +20,16 @@
 
 using namespace std;
 
-//================================================================================================
-// photonionization rate. 
-//================================================================================================
+//====================================================================================================================
+// photonionization rate.
+//====================================================================================================================
 
-//================================================================================================
+//====================================================================================================================
 // Integral using Patterson formulae
-//================================================================================================
-int Integrate_Ric_Rci_JC_Patterson_refine(int &reclev, double lga, double lgb, double epsrel, double epsabs, double (*fptr)(double), double *r)
+//====================================================================================================================
+int Integrate_Ric_Rci_JC_Patterson_refine(int &reclev, double lga, double lgb,
+                                          double epsrel, double epsabs,
+                                          double (*fptr)(double), double *r)
 {
     int debug=0;
     *r=0.0;
@@ -35,7 +38,12 @@ int Integrate_Ric_Rci_JC_Patterson_refine(int &reclev, double lga, double lgb, d
     // to avoid SEGfault for strange solution
     //-------------------------------------------------------------------
     reclev++;
-    if(reclev>=100){ cout << " Integrate_Ric_Rci_JC_Patterson_refine::recursion_level has exceeded limit of 100. Exiting \n" << endl; exit(0); }
+    if(reclev>=100)
+    {
+        cout << " Integrate_Ric_Rci_JC_Patterson_refine::recursion_level has exceeded limit of 100."
+             << " Exiting \n" << endl;
+        exit(0);
+    }
         
     if(debug>=1) cout << " entering subdivision " << exp(lga) << " " << exp(lgb)<< endl;
     int neval, ntot=0, ifail=0;
@@ -76,8 +84,9 @@ int Integrate_Ric_Rci_JC_Patterson_refine(int &reclev, double lga, double lgb, d
     return ntot;
 }   
 
-//================================================================================================
-double Integrate_Ric_Rci_JC_Patterson_part(int *stopped_before_end_of_interval, double lga, double lgb, double epsrel, double epsabs, double (*fptr)(double))
+//====================================================================================================================
+double Integrate_Ric_Rci_JC_Patterson_part(int *stopped_before_end_of_interval, double lga, double lgb,
+                                           double epsrel, double epsabs, double (*fptr)(double))
 {
     if(lga>=lgb) return 0.0;
     
@@ -129,8 +138,8 @@ double Integrate_Ric_Rci_JC_Patterson_part(int *stopped_before_end_of_interval, 
     return r;
 }
 
-//================================================================================================
-double Integrate_Ric_Rci_JC_Patterson(int choice, double lga, double lgb, double epsrel, double epsabs, double (*fptr)(double))
+//====================================================================================================================
+double Integrate_Ric_Rci_JC_Patterson(double lga, double lgb, double epsrel, double epsabs, double (*fptr)(double))
 {   
     int debug=0;
     //===========================================================================================================
@@ -181,10 +190,12 @@ double Integrate_Ric_Rci_JC_Patterson(int choice, double lga, double lgb, double
     return r;
 }
 
-//================================================================================================
+//====================================================================================================================
 // Integral using Patterson formulae with parameter
-//================================================================================================
-int Integrate_Ric_Rci_JC_Patterson_refine(int &reclev, double lga, double lgb, double epsrel, double epsabs, double (*fptr)(double, void *p), double *r, void *p)
+//====================================================================================================================
+int Integrate_Ric_Rci_JC_Patterson_refine(int &reclev, double lga, double lgb,
+                                          double epsrel, double epsabs,
+                                          double (*fptr)(double, void *p), double *r, void *p)
 {
     int debug=0;
     *r=0.0;
@@ -193,7 +204,12 @@ int Integrate_Ric_Rci_JC_Patterson_refine(int &reclev, double lga, double lgb, d
     // to avoid SEGfault for strange solution
     //-------------------------------------------------------------------
     reclev++;
-    if(reclev>=100){ cout << " Integrate_Ric_Rci_JC_Patterson_refine::recursion_level has exceeded limit of 100. Exiting \n" << endl; exit(0); }
+    if(reclev>=100)
+    {
+        cout << " Integrate_Ric_Rci_JC_Patterson_refine::recursion_level has exceeded limit of 100."
+             << " Exiting \n" << endl;
+        exit(0);
+    }
     
     if(debug>=1) cout << " entering subdivision " << exp(lga) << " " << exp(lgb)<< endl;
     int neval, ntot=0, ifail=0;
@@ -234,8 +250,9 @@ int Integrate_Ric_Rci_JC_Patterson_refine(int &reclev, double lga, double lgb, d
     return ntot;
 }   
 
-//================================================================================================
-double Integrate_Ric_Rci_JC_Patterson_part(int *stopped_before_end_of_interval, double lga, double lgb, double epsrel, double epsabs, double (*fptr)(double, void *p), void *p)
+//====================================================================================================================
+double Integrate_Ric_Rci_JC_Patterson_part(int *stopped_before_end_of_interval, double lga, double lgb,
+                                           double epsrel, double epsabs, double (*fptr)(double, void *p), void *p)
 {
     if(lga>=lgb) return 0.0;
     
@@ -287,8 +304,9 @@ double Integrate_Ric_Rci_JC_Patterson_part(int *stopped_before_end_of_interval, 
     return r;
 }
 
-//================================================================================================
-double Integrate_Ric_Rci_JC_Patterson(int choice, double lga, double lgb, double epsrel, double epsabs, double (*fptr)(double, void *p), void *p)
+//====================================================================================================================
+double Integrate_Ric_Rci_JC_Patterson(double lga, double lgb, double epsrel, double epsabs,
+                                      double (*fptr)(double, void *p), void *p)
 {   
     int debug=0;
     //===========================================================================================================
@@ -299,9 +317,9 @@ double Integrate_Ric_Rci_JC_Patterson(int choice, double lga, double lgb, double
     double xWien=4.0;
     double xmax=xWien-log(1.0e-30);
     double xl=exp(lga), xu=exp(lgb);
-    //
+    
     double a, b;
-    double r=0.0, r1=0.0, errabs;
+    double r=0.0, r1=0.0;
     int stopped_before_end_of_interval=0;
     
     //-------------------------------------------------------------------
@@ -323,12 +341,11 @@ double Integrate_Ric_Rci_JC_Patterson(int choice, double lga, double lgb, double
     
     a=lga; b=log(xWien);
     r=Integrate_Ric_Rci_JC_Patterson_part(&stopped_before_end_of_interval, a, b, epsrel, epsabs, fptr, p);
-    //  cout << r << endl; 
-    // 
+
     if(stopped_before_end_of_interval==0) // only continue if the other part was not already successful
     {
         a=b; b=min(lgb, log(xmax));
-        errabs=min(fabs(r)*epsrel, epsabs);
+        double errabs=min(fabs(r)*epsrel, epsabs);
         
         if(debug>=1) cout << " Integrate_Ric_Rci_JC_Patterson: " << exp(a) << " " << exp(b) << " " << xu << endl;
         if(debug>=2) wait_f_r();
@@ -341,11 +358,12 @@ double Integrate_Ric_Rci_JC_Patterson(int choice, double lga, double lgb, double
 }
 
 
-
-//================================================================================================
+//====================================================================================================================
 // Integral using Chebyshev formulae
-//================================================================================================
-double Integrate_Ric_Rci_JC_Chebyshev(int choice, double xl, double xu, double epsrel, double epsabs, double (*fptr)(double), double xc)
+//====================================================================================================================
+double Integrate_Ric_Rci_JC_Chebyshev(int choice, double xl, double xu,
+                                      double epsrel, double epsabs,
+                                      double (*fptr)(double), double xc)
 {   
     int debug=0;
     //===========================================================================================================
@@ -422,9 +440,9 @@ double Integrate_Ric_Rci_JC_Chebyshev(int choice, double xl, double xu, double e
     return r;
 }
 
-//================================================================================================
+//====================================================================================================================
 // Integral using Chebyshev formulae in log space
-//================================================================================================
+//====================================================================================================================
 inline void message_Chebyshev(string mess, double r, int neval, double a, double x0, double b, int choice, int debug)
 {
     if(debug>=1)
@@ -436,8 +454,10 @@ inline void message_Chebyshev(string mess, double r, int neval, double a, double
     return;
 }
 
-//================================================================================================
-double Integrate_Ric_Rci_JC_Chebyshev_log(int choice, string mess, double lgxl, double lgxu, double epsrel, double epsabs, double (*fptr)(double), double lgxc)
+//====================================================================================================================
+double Integrate_Ric_Rci_JC_Chebyshev_log(int choice, string mess, double lgxl, double lgxu,
+                                          double epsrel, double epsabs,
+                                          double (*fptr)(double), double lgxc)
 {   
     int debug=0;
     //===========================================================================================================
@@ -534,7 +554,11 @@ double Integrate_Ric_Rci_JC_Chebyshev_log(int choice, string mess, double lgxl, 
     return r;
 }
 
-//================================================================================================
-double Integrate_Ric_Rci_JC_Chebyshev_log(int choice, double lgxl, double lgxu, double epsrel, double epsabs, double (*fptr)(double), double lgxc)
+//====================================================================================================================
+double Integrate_Ric_Rci_JC_Chebyshev_log(int choice, double lgxl, double lgxu,
+                                          double epsrel, double epsabs,
+                                          double (*fptr)(double), double lgxc)
 { return Integrate_Ric_Rci_JC_Chebyshev_log(choice, "", lgxl, lgxu, epsrel, epsabs, fptr, lgxc); }
 
+//====================================================================================================================
+//====================================================================================================================

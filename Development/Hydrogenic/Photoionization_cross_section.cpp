@@ -7,6 +7,7 @@
 // recursion relations can be found there. However, we modified these 
 // slightly to achieve better stability.
 //======================================================================================
+// 04.08.2014: added gaunt factor version that returns values for l=0..n-1
 
 #include <iostream>
 #include <string>
@@ -282,6 +283,42 @@ double Photoionization_cross_section_SH::sig_phot_ion(double nu)
 
 double Photoionization_cross_section_SH::g_phot_ion(double nu)
 { return sig_phot_ion(nu)/sig_phot_ion_Kramers(nu); }
+
+//===================================================================================
+// return all photoionization cross section gaunt factor values at nu for l=0..n-1
+//===================================================================================
+void Photoionization_cross_section_SH::g_phot_ion(double nu, vector<double> &g_phot_l)
+{
+    g_phot_l.resize(nn);
+    
+    if(nu<nu_ionization || nu>Photoionization_cross_section_xi_max_limit_SH*nu_ionization)
+        for(int l=0; l<nn; l++) g_phot_l[l]=1.0;
+    
+    //===============================================================================
+    // to avoid the singularity at threshold energy
+    //===============================================================================
+    if(nu<=nu_threshold()) nu=nu_threshold();
+    
+    Rp1.resize(nn+1);
+    Rm1.resize(nn+1);
+    
+    PCS_R_np(nn, ll, nu2E_e(nu), Rp1, Rm1);
+    
+    //===============================================================================
+    // n and E are fixed when one has obtained *Rp1 and *Rm1
+    // FOURPI*const_alpha*pow(const_a0, 2)/3.0=8.5596557e-19 according to S&H 1991
+    //===============================================================================
+    double f_sig=FOURPI*const_alpha*pow(const_a0, 2)/3.0;
+    
+    for(int l=0; l<nn; l++)
+        g_phot_l[l]=f_sig*pow(1.0*Z*mu_red, -2)/sig_phot_ion_Kramers(nu)
+                         *(PCS_sig_1(l, Rp1[l])+PCS_sig_2(l, Rm1[l]));
+    
+    Rp1.clear();
+    Rm1.clear();
+    
+    return;
+}
 
 //===================================================================================
 // functions to find where the cross section becomes smaller than eps*sig_nuc

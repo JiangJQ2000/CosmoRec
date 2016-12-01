@@ -142,7 +142,7 @@ void write_Recfast_output(string oname, vector<double> &zarr, vector<double> &Xe
     for(int i=0; i<(int)zarr.size(); i++)
         ofile << zarr[i] << " " << Xe[i] << " " << Xe_H[i] << " " 
               << Xe_He[i] << " " << TM[i] << endl;
-        
+    
     return;
 }
 

@@ -33,7 +33,8 @@ const double const_HeI_A23s_1s_M1 = 1.272426e-4;  // HeI 2^3 s-1^1 s (M1-transit
 //-------------------------------------------------------------------------------------------------------
 // atomic data for Helium II
 //-------------------------------------------------------------------------------------------------------
-const double const_HeII_A2s_1s = 526.5;           // Helium II 2s-1s two-photon decay rate
+//const double const_HeII_A2s_1s = 526.5;         // Helium II 2s-1s two-photon decay rate (Recfast value)
+const double const_HeII_A2s_1s = 526.57;          // Helium II 2s-1s two-photon decay rate
 
 //-------------------------------------------------------------------------------------------------------
 // most fundamental constants

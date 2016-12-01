@@ -24,17 +24,13 @@ double Recombination_calc_p_d(double Tg, double A21L, double Ric, Gas_of_HeI_Ato
     double r=Ric;
     
     int nl=HeIA.Get_total_number_of_Levels();   // Sing + Trip
-    int n, l, s;
-    int np, lp, sp, jp;
+    int np, lp, sp;
     double gw, gwp;
     double A21, efac;
     
     // start with singlet 3s > 2p   
     for(int i=3; i<nl; i++)
     {
-        n =HeIA.Get_n(i);
-        l =HeIA.Get_l(i);
-        s =HeIA.Get_S(i);
         gw=HeIA.Get_gw(i);
         
         //=========================================================
@@ -46,7 +42,6 @@ double Recombination_calc_p_d(double Tg, double A21L, double Ric, Gas_of_HeI_Ato
             np =HeIA.Get_Trans_Data(i ,m).np;
             lp =HeIA.Get_Trans_Data(i ,m).lp;
             sp =HeIA.Get_Trans_Data(i ,m).sp;
-            jp =HeIA.Get_Trans_Data(i ,m).jp;
             
             if(np==2 && lp==1 && sp==0)
             {
@@ -107,16 +102,12 @@ double Recombination_calc_p_d_Singlet(int ni, int li, double Tg,
     }
 
     int nl=HeIA.Get_total_number_of_Levels();   // Sing + Trip
-    int n, l, s;
     int np, lp, sp, jp;
     double gw, gwp;
     
     // start with singlet 2s level
     for(int i=1; i<nl; i++)
     {
-        n =HeIA.Get_n(i);
-        l =HeIA.Get_l(i);
-        s =HeIA.Get_S(i);
         gw=HeIA.Get_gw(i);
         
         //=========================================================
@@ -174,16 +165,12 @@ double Recombination_calc_p_d_level(int ni, int li, int si, int ji, double Tg,
     }
     
     int nl=HeIA.Get_total_number_of_Levels();   // Sing + Trip
-    int n, l, s;
     int np, lp, sp, jp;
     double gw, gwp;
     
     // start with singlet 2s level
     for(int i=1; i<nl; i++)
     {
-        n =HeIA.Get_n(i);
-        l =HeIA.Get_l(i);
-        s =HeIA.Get_S(i);
         gw=HeIA.Get_gw(i);
         
         //=========================================================

@@ -31,6 +31,8 @@ int CosmoRec(int narg, char *args[]);
 //===========================================================================================================
 // to call CosmoRec with a list of parameters in batch mode (e.g. when calling it from CosmoMC).
 //
+//----------- Runmodes --------------------------------------------------------------------------------------
+//
 // runmode == 0: CosmoRec run with diffusion
 //            1: CosmoRec run without diffusion
 //            2: Recfast++ run (equivalent of the original Recfast version)
@@ -41,6 +43,8 @@ int CosmoRec(int narg, char *args[]);
 //
 // Furthermore, runpars[0] defines the dark matter annihilation efficiency in eV/s.
 // runpars[1] switches the accuracy of the recombination model:
+//
+//----------- Output parameters -----------------------------------------------------------------------------
 //
 // runpars[1]==-1: closest equivalent of 'HyRec' case (Haimoud & Hirata, 2010)
 // runpars[1]== 0: default setting
@@ -58,12 +62,17 @@ int CosmoRec(int narg, char *args[]);
 // directed into the directory "./outputs/"). This can cause problems when using CosmoRec
 // with a parallel CosmoMC, however, it possible to control the outputs through runpars[2]:
 //
+//----------- Output parameters -----------------------------------------------------------------------------
+//
 // runpars[2]==0: don't write out anything (default).
 // runpars[2]==1: write out only the recombination history.
 // runpars[2]==2: write out the recombination history, and the cosmology.
 // runpars[2]==3: write out the recombination history, populations, and the cosmology.
 //
+//----------- A2s1s two-photon rate -------------------------------------------------------------------------
+//
 // runpars[3]>=0: use given number to set const_HI_A2s_1s. For ==0 default value is used.
+//                Do not vary too much [A2s1s ~ (6 - 10) 1/sec]!
 //
 //-----------------------------------------------------------------------------------------------------------
 // heating by magnetic fields mainly following Kunze & Komatsu 2013

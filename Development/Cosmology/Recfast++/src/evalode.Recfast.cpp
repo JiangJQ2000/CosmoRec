@@ -90,7 +90,7 @@ void evaluate_Recfast_System(double z, double y[], double fvec[], int n)
     Hz=H_z(z);
     nHTot = NH(z);
     fHe = input.fHe;
-    
+        
     //====================================================================================
     // set variables
     //====================================================================================
@@ -113,31 +113,44 @@ void evaluate_Recfast_System(double z, double y[], double fvec[], int n)
     Comp = 8.0*RF_sigmaT*RF_aRad*pow(TR, 4)/(3.0*Hz*(1.0+z)*RF_mElect*RF_cLight);
     
     //====================================================================================
+    // to include different effects from variations of constants
+    //====================================================================================
+    double alp_fac=1.05;
+    double A2s1sH=RF_Lam2s1sH;
+    double lambda21H=RF_LyalphaH;
+    double TMeval=TM, TReval=TR;
+    
+    Comp*=pow(alp_fac, 2);
+    A2s1sH*=pow(alp_fac, 8);
+    lambda21H*=pow(alp_fac, -2);
+    TMeval*=pow(alp_fac, -2); TReval*=pow(alp_fac, -2);
+    
+    //====================================================================================
     // Boltzmann and detailed balance factors
     //====================================================================================
-    SHe = SahaBoltz(1.0, 2.0, 1.0, RF_EionHe2s, TM);
-    BHe = Boltzmann(1.0, 1.0, RF_E2s1sHe, TM);
+    SHe = SahaBoltz(1.0, 2.0, 1.0, RF_EionHe2s, TMeval);
+    BHe = Boltzmann(1.0, 1.0, RF_E2s1sHe, TMeval);
     //
-    SH  = SahaBoltz(2.0, 1.0, 1.0, RF_EionH2s, TM);
-    BH  = Boltzmann(1.0, 1.0, RF_E2s1sH,  TM);
+    SH  = SahaBoltz(2.0, 1.0, 1.0, RF_EionH2s, TMeval);
+    BH  = Boltzmann(1.0, 1.0, RF_E2s1sH,  TMeval);
     
     //====================================================================================
     // For HeI, the energy levels of 2s and 2p are different,
     // so that a boltzmann factor remains.
     //====================================================================================
-    BHe2p2s = 1.0/Boltzmann(1.0, 1.0, RF_E2p2sHe, TM);
+    BHe2p2s = 1.0/Boltzmann(1.0, 1.0, RF_E2p2sHe, TMeval);
     
     //====================================================================================
     // H recombination coefficient + fugde-factor
     //====================================================================================
-    alphaH = alphaH_func(TM);
+    alphaH = alphaH_func(TMeval);
     alphaH*= input.F;
     betaH  = alphaH/SH;
 
     //====================================================================================
     // He recombination coefficient 
     //====================================================================================
-    alphaHe = alphaHe_func(TM);
+    alphaHe = alphaHe_func(TMeval);
     betaHe  = alphaHe/SHe;
 
     //====================================================================================
@@ -145,26 +158,32 @@ void evaluate_Recfast_System(double z, double y[], double fvec[], int n)
     //====================================================================================
     if(RF_eval_ion_Tr)
     {
-        SH  = SahaBoltz(2.0, 1.0, 1.0, RF_EionH2s, TR);
-        BH  = Boltzmann(1.0, 1.0, RF_E2s1sH,  TR);
-        betaH  = alphaH_func(TR)*input.F/SH;
+        SH  = SahaBoltz(2.0, 1.0, 1.0, RF_EionH2s, TReval);
+        BH  = Boltzmann(1.0, 1.0, RF_E2s1sH,  TReval);
+        betaH  = alphaH_func(TReval)*input.F/SH;
 
-        SHe = SahaBoltz(1.0, 2.0, 1.0, RF_EionHe2s, TR);
-        BHe = Boltzmann(1.0, 1.0, RF_E2s1sHe, TR);
-        betaHe  = alphaHe_func(TR)/SHe;
+        SHe = SahaBoltz(1.0, 2.0, 1.0, RF_EionHe2s, TReval);
+        BHe = Boltzmann(1.0, 1.0, RF_E2s1sHe, TReval);
+        betaHe  = alphaHe_func(TReval)/SHe;
     }
+    
+    //====================================================================================
+    // rescale alpha and beta normalization
+    //====================================================================================
+    alphaH*=pow(alp_fac, 2);
+    betaH*=pow(alp_fac, 5);
     
     //====================================================================================
     // tau-Sobolev for helium and hydrogen
     //====================================================================================
     KHe = pow(RF_LyalphaHe, 3)/(Hz*8.0*RF_PI);
-    KH  = pow(RF_LyalphaH , 3)/(Hz*8.0*RF_PI);
+    KH  = pow(lambda21H , 3)/(Hz*8.0*RF_PI);
     
     //====================================================================================
     // Inhibition factors for HeI & HI
     //====================================================================================
     CHe = (1.0+KHe*RF_Lam2s1sHe*nHe1*BHe2p2s)/(1.0+KHe*(RF_Lam2s1sHe+betaHe)*nHe1*BHe2p2s);
-    CH  = (1.0+KH *RF_Lam2s1sH *nH1         )/(1.0+KH *(RF_Lam2s1sH +betaH )*nH1         );
+    CH  = (1.0+KH *A2s1sH *nH1         )/(1.0+KH *(A2s1sH +betaH )*nH1         );
     
     //====================================================================================
     // derivatives; 1 == He, 2 == H,  3 == TM 

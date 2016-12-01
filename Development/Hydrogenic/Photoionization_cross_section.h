@@ -7,6 +7,7 @@
 // recursion relations can be found there. However, we modified these 
 // slightly to achieve better stability.
 //======================================================================================
+// 04.08.2014: added gaunt factor version that returns values for l=0..n-1
 
 #ifndef PHOTO_IONIZATION_CROSS_SECTION_H
 #define PHOTO_IONIZATION_CROSS_SECTION_H
@@ -129,6 +130,11 @@ public:
     double nu_sig_phot_ion_small(double eps);
     
     double g_phot_ion(double nu);
+
+    //===================================================================================
+    // return all photoionization cross section gaunt factor values at nu for l=0..n-1
+    //===================================================================================
+    void g_phot_ion(double nu, vector<double> &g_phot_l);
 
     //==================================================================================
     // same as above but as a function of the free electron energy

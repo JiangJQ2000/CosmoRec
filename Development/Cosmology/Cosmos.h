@@ -1,8 +1,14 @@
 //========================================================================================
 // Author: Jens Chluba (May 2003)
-// Last modification: June 2012
+// Last modification: Dec 2015
 // CITA, University of Toronto
 // All rights reserved.
+//========================================================================================
+
+//========================================================================================
+// 22.07.2015
+//========================================================================================
+// fixed Saha populations for helium (not used before...)
 //========================================================================================
 
 //========================================================================================
@@ -300,23 +306,35 @@ public:
     //====================================================================================
     // 30.06.2009
     //====================================================================================
-    double SahaBoltz_HeII(double T)
+    double SahaBoltz_HeIII(double T)
     {
         // HeII ionization energy in [J] --> nu = 1.315817072 10^16 Hz
-        //double RF_EionHeII =8.7186944e-18;        
-        double RF_EionHeII =4.0*const_EH_inf_ergs*1.0e-7/(1.0+const_me_malp);  
-
+        //double RF_EionHeII =8.7186944e-18;
+        double RF_EionHeII =4.0*const_EH_inf_ergs*1.0e-7/(1.0+const_me_malp);
+        
         double c1 = 2.0*PI*RF_mElect*RF_kBoltz*T/(RF_hPlanck*RF_hPlanck);
         double NHm3=NH(Ttoz(T))*1.0e+6;
-        double g = 4.0*pow(c1, 1.5)*exp(-RF_EionHeII/(RF_kBoltz*T))/NHm3, d=1.0-g;
+        double g = pow(c1, 1.5)*exp(-RF_EionHeII/(RF_kBoltz*T))/NHm3, d=1.0+fHe()-g;
+        double Xe= 0.5*(d + sqrt(d*d + 4.0*g*(1.0+2.0*fHe())));
+        
+        return Xe;
+    }
+    
+    double SahaBoltz_HeII(double T)
+    {
+        double RF_EionHeI  =3.93933e-18;         // HeI ionization energy in [J]
+        
+        double c1 = 2.0*PI*RF_mElect*RF_kBoltz*T/(RF_hPlanck*RF_hPlanck);
+        double NHm3=NH(Ttoz(T))*1.0e+6;
+        double g = 4.0*pow(c1, 1.5)*exp(-RF_EionHeI/(RF_kBoltz*T))/NHm3, d=1.0-g;
         double Xe= 0.5*(d + sqrt(d*d + 4.0*g*(1.0+fHe())));
         
         return Xe;
     }
     
-    double SahaBoltz_HeI1s(double T)
+    double SahaBoltz_HeI1s(double T)             // Xp ~ 0
     {
-        double RF_EionHeI  =3.93933e-18;         // HeI ionization energy in [J]       
+        double RF_EionHeI  =3.93933e-18;         // HeI ionization energy in [J]
         
         double c1 = 2.0*PI*RF_mElect*RF_kBoltz*T/(RF_hPlanck*RF_hPlanck);
         double NHm3=NH(Ttoz(T))*1.0e+6;
@@ -421,8 +439,8 @@ public:
     //====================================================================================
     // Integral^zh_z (1+z)^pow |dt_dz| dz 
     //====================================================================================
-    double E_Int(double zh, double z, double pow);                                 
-
+    double E_Int(double zh, double z, double pow);
+    
     //====================================================================================
     // y-parameters
     //====================================================================================

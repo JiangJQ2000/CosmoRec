@@ -1394,7 +1394,7 @@ namespace ODE_solver_Rec
         //===========================================================================
         // setup
         //===========================================================================
-        double zout=zs, zin=zs, Dz_z_old;
+        double zout=zs, zin=zs;
         double Dz_z=max(Dz_in/zs, ODE_Solver_info.Dz_z_last), Dz_z_max;
         int redo_run=0, LAerror=0;
         int maxorder=5;
@@ -1453,7 +1453,6 @@ namespace ODE_solver_Rec
                 // estimate error and next possible stepsize
                 //--------------------------------------------------------
                 redo_run=0;
-                Dz_z_old=Dz_z;
                 redo_run=ODE_Solver_estimate_error_and_next_step_size(ODE_Solver_info.order, 
                                                                       zin, zout, zend, Dz_z, 
                                                                       Dz_z_max, ODE_Solver_info, 

@@ -42,11 +42,11 @@ LIBSGSL = -L$(GSL_LIB_PATH) -l$(GSL) -lgslcblas
 # If grace support should be used, uncomment the next 5 definitions
 # and set them accordingly. This is not recommended when running with CosmoMC.
 #===============================================================================
-#USE_GRACE   = -D GRACE_DEFINED
-#GR          = grace_np
-#GR_INC_PATH = /opt/local/include/
-#GR_LIB_PATH = /opt/local/lib/
-#LIBSGR  = -L$(GR_LIB_PATH)  -l$(GR)
+USE_GRACE   = -D GRACE_DEFINED
+GR          = grace_np
+GR_INC_PATH = /opt/local/include/
+GR_LIB_PATH = /opt/local/lib/
+LIBSGR  = -L$(GR_LIB_PATH)  -l$(GR)
 
 
 #===============================================================================
@@ -65,7 +65,8 @@ LIBSGSL = -L$(GSL_LIB_PATH) -l$(GSL) -lgslcblas
 #===============================================================================
 CXXFLAGSLOC = $(CXXFLAGS) $(USE_GRACE) $(USE_OPENMP) \
               -D COSMORECPATH=\"$(PWD)/\" \
-              -D COSMOREC_BASE_PATH=\"$(REC_BASE)/\"
+              -D COSMOREC_BASE_PATH=\"$(REC_BASE)/\" \
+              -D HEIDATADIR=\"$(DEV_DIR)/$(HELIUM_DIR)/\"
 
 #===============================================================================
 # Required external libs
@@ -105,7 +106,7 @@ OBJSDEV = $(DEV_DIR)/Simple_routines/File.o \
 	   $(DEV_DIR)/Hydrogenic/Atom.o \
 	   $(DEV_DIR)/Hydrogenic/Recombination_Integrals.o \
 	   $(DEV_DIR)/Hydrogenic/Quadrupole_lines_HI.o \
-	   $(DEV_DIR)/Helium/HeI_Atom.o \
+	   $(DEV_DIR)/$(HELIUM_DIR)/HeI_Atom.o \
 	   $(DEV_DIR)/Recombination/Sobolev.o \
 	   $(DEV_DIR)/Recombination/Pesc.HI.o \
 	   $(DEV_DIR)/Recombination/ODE_effective.o \
@@ -128,7 +129,20 @@ OBJSHEDIF = ./PDE_Problem_HeI/define_PDE_HeI.o \
 	    ./PDE_Problem_HeI/HeI_pd_Rp_splines_effective.o \
 	    ./PDE_Problem_HeI/Load.Populations.HeI.o
 
-OBJS= $(OBJSRecfast++) $(OBJSDEV) $(OBJSRAMAN) $(OBJSDATA) $(OBJSHEDIF)
+#===============================================================================
+# helium setup
+#===============================================================================
+ifeq ($(HELIUM_DIR),Helium)
+        OBJSHEI =
+else
+OBJSHEI = $(DEV_DIR)/$(HELIUM_DIR)/He4_Quantum_Defects.o \
+          $(DEV_DIR)/$(HELIUM_DIR)/HeI_Ric_Topbase.o
+endif
+
+#===============================================================================
+# all objects
+#===============================================================================
+OBJS= $(OBJSRecfast++) $(OBJSDEV) $(OBJSRAMAN) $(OBJSDATA) $(OBJSHEDIF) $(OBJSHEI)
 
 #===============================================================================
 # program 
@@ -159,7 +173,7 @@ INC_PATH = -I$(DEV_DIR)/Definitions -I$(DEV_DIR)/Recombination \
 	   -I$(DEV_DIR)/Integration -I$(DEV_DIR)/Cosmology \
 	   -I$(DEV_DIR)/Cosmology/Recfast++/include \
 	   -I$(DEV_DIR)/Hydrogenic -I$(DEV_DIR)/Line_profiles \
-	   -I$(DEV_DIR)/Helium -I$(DEV_DIR)/Simple_routines \
+	   -I$(DEV_DIR)/$(HELIUM_DIR) -I$(DEV_DIR)/Simple_routines \
 	   -I$(DEV_DIR)/ODE_PDE_Solver -I./PDE_Problem -I./PDE_Problem_HeI \
        -I$(DEV_DIR)/Compton_Kernel \
 	   -I$(REC_BASE)/Effective_Rates.HI \

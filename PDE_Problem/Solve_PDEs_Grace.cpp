@@ -115,7 +115,7 @@ void output_Grace(double zout, bool write_to_disk, vector<double> &xarr,
 	if(write_to_disk) GracePrintf("PRINT");
 	GracePrintf("redraw");
 		
-//	wait_f_r();
+	wait_f_r();
 
 	return;
 }			

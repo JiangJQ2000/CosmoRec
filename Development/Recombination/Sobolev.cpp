@@ -72,14 +72,14 @@ double dtau_S_gw_dNj(const double &Aij, const double &lij, const double &gwi, co
 //======================================================================================
 double p_ij(const double &tau_S)
 {
-    if(tau_S<=1.0e-14) return 1.0-0.5*tau_S;
+    if(tau_S<=1.0e-10) return 1.0-0.5*tau_S+tau_S*tau_S/6.0;
     if(tau_S>=5.0e+2) return 1.0/tau_S;
     return (1.0-exp(-tau_S))/tau_S;           
 }
 
 double dp_ij_dtau_S(const double &tau_S)
 {
-    if(tau_S<=1.0e-14) return -0.5+tau_S/3.0;
+    if(tau_S<=1.0e-10) return -0.5+tau_S/3.0;
     if(tau_S>=5.0e+2) return -1.0/tau_S/tau_S;
     return -(1.0-exp(-tau_S)*(1.0+tau_S))/tau_S/tau_S;                
 }

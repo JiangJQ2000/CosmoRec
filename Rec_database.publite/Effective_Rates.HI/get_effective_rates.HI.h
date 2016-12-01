@@ -15,6 +15,8 @@
 
 #include "Atom.h"
 
+void read_parameter_file(string fname, Gas_of_Atoms &HIA, vector<int> &res_Level_indices);
+
 void load_rates(string path, int nShell_max, Gas_of_Atoms &HIA);
 
 void get_rates(double Tg, double Te, vector<double> &Ai, vector<double> &Bi, 

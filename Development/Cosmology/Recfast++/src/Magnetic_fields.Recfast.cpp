@@ -31,11 +31,34 @@ double Gamma_decay_RF(double z, double Hz, double B0, double nB, double kd)
     double td_ti=14.8/B0/kd;
     double rhoB=0.1*B0*B0*1.0e-18/(8.0*RF_PI)*pow(1.0+z, 4);  // ergs cm^-3 == 0.1 J m^-3
 
-    // make smooth transition from no heating to heating case
-    if(z>=zi){ rhoB*=exp(-pow(z-zi, 2)/5.0e+3); z=zi; }
+    double Gamma=0.0;
+    double a=log(1.0+td_ti);
+    double sig=5.0e+3;        // width if the Gaussian transition
+    int trans=1;              // choose type of transition.
     
-    double Gamma=rhoB*Hz*1.5*m*pow(log(1.0+td_ti), m)
-                  /pow( log(1.0+td_ti)+1.5*log((1.0+zi)/(1.0+z)) , m+1.0);
+    if(z<zi) Gamma=rhoB*Hz*1.5*m*pow(a, m)/pow(a+1.5*log((1.0+zi)/(1.0+z)), m+1.0);
+    // make smooth transition from no heating to heating case
+    else if(z>=zi && trans==0)
+    {
+        double G_zi=rhoB*Hz*1.5*m/a;
+        //Gamma=0.0;
+        //Gamma=G_zi*pow((1.0+zi)/(1.0+z), 4);
+        //Gamma=G_zi*exp(-pow(z-zi, 2)/sig);
+        Gamma=G_zi*exp(-pow(z-zi, 2)/sig)*pow((1.0+zi)/(1.0+z), 4);
+    }
+    else if(z>=zi && trans==1)
+    {
+        // smooth 1. derivative transition. Gaussian at z>=z0, polynomial at zi<=z<=z0
+        double G_zi=rhoB*Hz*1.5*m/a*pow((1.0+zi)/(1.0+z), 4);
+        double dG_dzi=G_zi*(4.0+1.5*(1.0+m)/a)/(1.0+zi);
+        double k=7.0;
+        double z0=zi*1.001;
+        double g=dG_dzi/( k*pow(zi-z0, k-1) );
+        double g0=G_zi-g*pow(zi-z0, k);
+        
+        if(z<=z0) Gamma=g0+g*pow(z-z0, k);
+        else Gamma=g0*exp(-pow(z-z0, 2)/sig);
+    }
     
     return Gamma;
 }

@@ -1,12 +1,13 @@
 //====================================================================================================================
-// Author: Jens Chluba
+// Author: Jens Chluba and Luke Hart
 //
 // first implementation: June 2005
 // last change         : Aug  2014
 //====================================================================================================================
+// Oct-Dec 2016: added scaling of hydrogenic atom with alpha and me, LH
 // 01.08.2014: fixed bug for transition data when quadrupole lines are activated
-// July 2014: tidied up the code; checked verbosity and recombination rates communication;
-// May  2011: Support for electric quadrupole lines were added.
+// July  2014: tidied up the code; checked verbosity and recombination rates communication;
+// May   2011: Support for electric quadrupole lines were added.
 //====================================================================================================================
 
 #ifndef ATOM_H
@@ -66,7 +67,18 @@ class Electron_Level
         double AE2;                                    // total Einstein A coefficient for quadrupole lines;
         double Gamma;
         double Gamma_Q_E2;
-        
+    
+        //============================================================================================================
+        // added by LH, Oct-Dec, 2016 [comment: change to mu=1/(1+me/mA) are neglected]
+        //============================================================================================================
+        double FSC_scale;                              // Scaling of the fine structure constant alpha/alpha_ref
+        double ME_scale;                               // Scaling of the electron mass me/me_ref
+        double energy_scale;                           // Scaling of the energy based on FSC and ME scaling
+        double sig_scale;                              // Scaling of the photoionisation cross section with FSC and ME
+        double rate_scale_A;                           // Scaling of the rates R_c_nl
+        double rate_scale_B;                           // Scaling of the rates R_nl_c
+        //============================================================================================================
+    
         Transition_Data_A ZERO_Data;                   // contains all the transition data up to nn-1 (i.e. downwards)
         vector<Transition_Data_A> A_values_down_lm1;   // The data is ordered with respect to n
         vector<Transition_Data_A> A_values_down_lp1; 
@@ -120,12 +132,12 @@ class Electron_Level
                   int Rec_flag=0, int mflag=1);        
             
         //============================================================================================================
-        double DE_ul(int nu, int nl){return Z*Z*const_EH_inf*mu_red*(1.0/nl/nl-1.0/nu/nu); }           // in eV
-        double nu_ul(int nu, int nl){ return Z*Z*const_EH_inf_Hz*mu_red*(1.0/nl/nl-1.0/nu/nu); }       // in Hz
-        double E_ion(int n){return Z*Z*const_EH_inf*mu_red/n/n; }                                      // in eV
-        double E_ion_ergs(int n){return Z*Z*const_EH_inf_ergs*mu_red/n/n; }                            // in ergs
-        double nu_ion(int n){ return Z*Z*const_EH_inf_Hz*mu_red/n/n; }                                 // in Hz
-        double lambda_ul(int nu, int nl){ return const_cl/nu_ul(nu, nl); }                             // in cm
+        double DE_ul(int nu, int nl){return Z*Z*const_EH_inf*energy_scale*mu_red*(1.0/nl/nl-1.0/nu/nu); }   // in eV
+        double nu_ul(int nu, int nl){return Z*Z*const_EH_inf_Hz*energy_scale*mu_red*(1.0/nl/nl-1.0/nu/nu);} // in Hz
+        double E_ion(int n){return Z*Z*const_EH_inf*energy_scale*mu_red/n/n; }                              // in eV
+        double E_ion_ergs(int n){return Z*Z*const_EH_inf_ergs*energy_scale*mu_red/n/n; }                    // in ergs
+        double nu_ion(int n){ return Z*Z*const_EH_inf_Hz*energy_scale*mu_red/n/n; }                         // in Hz
+        double lambda_ul(int nu, int nl){ return const_cl/nu_ul(nu, nl); }                                  // in cm
         
         int Get_n() const { return nn;} 
         int Get_l() const { return ll;} 
@@ -176,9 +188,10 @@ class Electron_Level
         double Get_nu21(const int &np, const int &lp) const;
         double Get_lambda21(const int &np, const int &lp) const;
         double Get_f21(const int &np, const int &lp) const
-        { return Get_A21(np, lp)*pow(Get_lambda21(np, lp), 2)/(2.0*FOURPI*const_PIe2_mec); }
+        { return Get_A21(np, lp)*pow(Get_lambda21(np, lp), 2)/(2.0*FOURPI*const_PIe2_mec*FSC_scale/ME_scale); }
         double Get_f12(const int &np, const int &lp) const
-        { return Get_A21(np, lp)*pow(Get_lambda21(np, lp), 2)/(2.0*FOURPI*const_PIe2_mec)*(2.0*ll+1.0)/(2.0*lp+1.0); }
+        { return Get_A21(np, lp)*pow(Get_lambda21(np, lp), 2)/(2.0*FOURPI*const_PIe2_mec*FSC_scale/ME_scale)
+                                *(2.0*ll+1.0)/(2.0*lp+1.0); }
         
         int Get_n_up() const { return B_values.size(); }
         int Get_B_data_np(const unsigned int &i){ return B_values[i].np; }
@@ -206,6 +219,18 @@ class Electron_Level
         double g_phot_ion(double nu);
         double phi_phot_ion(double nu);                                     // ionization profile
         double phi_phot_rec(double nu, double Tg, int ind_flg=1);           // recombination profile
+    
+        //============================================================================================================
+        // Rescaling and resetting of scaling functions for the electron level in question [LH, Oct-Dec 2016]
+        //============================================================================================================
+        // Scale the electron variables by reduced mass and fine structure constant scaling
+        void rescale_level(double alpha_scale, double me_scale);
+        // Reset the scaling we have used
+        void reset_level();
+        
+        // Access functions for the fine structure constant scaling and the reduced mass scaling
+        double get_FSC_scale() { return this->FSC_scale; }
+        double get_ME_scale() { return this->ME_scale; }
 };
 
 //====================================================================================================================
@@ -249,6 +274,12 @@ class Atomic_Shell
         void display_all_level();
         void display_level(unsigned int i);
         void display_general_data_of_level(unsigned int i);
+        
+        //============================================================================================================
+        // Rescaling and resetting of scaling functions for the electron level in question [LH, Oct-Dec 2016]
+        //============================================================================================================
+        void rescale_shell(double alpha_scale, double me_scale);
+        void reset_shell();
     };
 
 //====================================================================================================================
@@ -308,6 +339,12 @@ class Atom
         int Get_number_of_Levels_until(int nmax) const { return nmax*(nmax+1)/2; }
         
         void display_general_data_of_Shell(unsigned int i);
+        
+        //============================================================================================================
+        // Rescaling and resetting of scaling functions for the electron level in question [LH, Oct-Dec 2016]
+        //============================================================================================================
+        void rescale_atom(double alpha_scale, double me_scale);
+        void reset_atom();
     };
 
 //====================================================================================================================
@@ -331,6 +368,12 @@ class Gas_of_Atoms : public Atom
         Voigtprofile_Dawson phi_HI_nD1s[101];
         bool Atom_activate_Quadrupole_lines;
 
+        //============================================================================================================
+        // Voigt Initialisation [LH, Oct-Dec, 2016]
+        //============================================================================================================
+        // would like to call this both inside the initialisation and also during the rescaling of the energy levels
+        void voigt_init(int mflag=1);
+    
     public:
         
         Voigtprofile_Dawson& HI_Lyn_profile(int n);
@@ -416,6 +459,12 @@ class Gas_of_Atoms : public Atom
         
         double Ni_Saha(unsigned int n, unsigned int l, double Ne, double Nc, double TM);
         double Ni_Saha(unsigned int i, double Ne, double Nc, double TM);
+        
+        //============================================================================================================
+        // Rescaling and resetting of scaling functions for the electron level in question [LH, Oct-Dec 2016]
+        //============================================================================================================
+        void rescale_gas(double alpha_scale, double me_scale);
+        void reset_gas();
     };
 
 #endif

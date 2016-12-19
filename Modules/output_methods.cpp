@@ -23,10 +23,13 @@ void set_detailed_name()
     //
     if(DM_annihilation) detailedname+="DM_annihil.";
 
-    if(magnetic_fields) detailedname+="magn_heat.";
-    if(decaying_turb_on) detailedname+="dec.";
-    if(ambipolar_heat_on) detailedname+="ambi.";
-    if(KK_or_PF_Lorentz) detailedname+="PF.";
+    if(magnetic_fields)
+    {
+        detailedname+="magn_heat.";
+        if(decaying_turb_on) detailedname+="dec.";
+        if(ambipolar_heat_on) detailedname+="ambi.";
+        if(KK_or_PF_Lorentz) detailedname+="PF.";
+    }
     
     if(show_CosmoRec_mess>=0)
         cout << " set_detailed_name: detailedname: " << detailedname << endl;

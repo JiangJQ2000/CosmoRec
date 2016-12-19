@@ -166,6 +166,23 @@ Recfast++:
 	cd $(DEV_DIR)/Cosmology/Recfast++; make CC=$(CC) CXXFLAGS='$(CXXFLAGS)';
 
 #===============================================================================
+# dependencies
+#===============================================================================
+CosmoRec.o: ./Modules/aux_functions.cpp ./Modules/output_methods.cpp \
+            ./Modules/Diffusion_correction.cpp \
+            ./Modules/Diffusion_correction.HeI.cpp \
+            ./Modules/DM_annihilation.cpp \
+            ./Modules/global_variables.cpp \
+            ./Modules/He_routines.cpp \
+            ./Modules/HeI.feedback.cpp \
+            ./Modules/HI_routines.cpp \
+            ./Modules/Magnetic_fields.cpp \
+            ./Modules/main.CosmoRec.cpp \
+            ./Modules/Magnetic_fields.cpp \
+            ./Modules/ODEdef_CosmoRec.cpp \
+            ./Modules/var_trans.cpp
+
+#===============================================================================
 # rules
 #===============================================================================
 

@@ -148,7 +148,7 @@ bool RECFAST_atomic_constants::RF_ambipolar_heat_on = ambipolar_heat_on;
 bool RECFAST_atomic_constants::RF_eval_ion_Tr = (decaying_turb_on || ambipolar_heat_on ? 1 : 0);
 bool RECFAST_atomic_constants::RF_KK_or_PF_Lorentz  = KK_or_PF_Lorentz;
 
-double RECFAST_atomic_constants::RF_B0_heating   = 0.0;
+double RECFAST_atomic_constants::RF_B0_heating   = 0.0; // if B0=0 --> RF_eval_ion_Tr=0 in aux_functions.cpp
 double RECFAST_atomic_constants::RF_nB_heating   = 0.0;
 double RECFAST_atomic_constants::RF_kD_heating   = 0.0;
 

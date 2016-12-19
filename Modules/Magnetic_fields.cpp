@@ -42,6 +42,7 @@ void set_PMF_parameters_KK_PF(double B0, double nB, double h0)
         B0_CosmoRec=RECFAST_atomic_constants::RF_B0_heating=0.0;
         nB_CosmoRec=RECFAST_atomic_constants::RF_nB_heating=0.0;
         kD_CosmoRec=RECFAST_atomic_constants::RF_kD_heating=0.0;
+        RECFAST_atomic_constants::RF_eval_ion_Tr = 0; // do old recfast evaluation
     }
     
     return;

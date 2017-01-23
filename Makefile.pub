@@ -12,6 +12,8 @@ all:
     mkdir ./CosmoRec.vX/temp/DPesc; \
     mkdir ./CosmoRec.vX/temp/JPEG; \
     cp -r ./Development ./CosmoRec.vX/.; \
+    rm -rf ./CosmoRec.vX/Development/Helium.v1.0_nu3; \
+    rm -rf ./CosmoRec.vX/Development/Helium.v1.0_old; \
     cp -r ./Modules ./CosmoRec.vX/.; \
     cp -r ./PDE_Problem ./CosmoRec.vX/.; \
     cp -r ./PDE_Problem_HeI ./CosmoRec.vX/.; \

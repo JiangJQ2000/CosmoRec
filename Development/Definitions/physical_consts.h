@@ -13,9 +13,9 @@
 //-------------------------------------------------------------------------------------------------------
 // atomic data for HI
 //-------------------------------------------------------------------------------------------------------
-//const double const_HI_A2s_1s = 8.22458;         // Hydrogen 2s decay rate (old Recfast value)
-//const double const_HI_A2s_1s = 8.2206;          // Hydrogen 2s decay rate (Labzowsky et al. 2005)
-extern double const_HI_A2s_1s;
+//const double const_HI_A2s_1s_0 = 8.22458;       // Hydrogen 2s decay rate (old Recfast value)
+const double const_HI_A2s_1s_0 =8.2206;           // Hydrogen 2s decay rate (Labzowsky et al. 2005)
+extern double const_HI_A2s_1s;                    // used as globally accessable variable
 
 //-------------------------------------------------------------------------------------------------------
 // atomic data for DI
@@ -107,7 +107,8 @@ const double const_R_me    = 2.8179402894e-13;        // cm | NIST 2008, error 2
 const double const_lambdac = 2.4263102175e-10;        // cm | NIST 2008, error 1.4e-9, old: 2.426310215e-10;
 
 const double const_aRad    = 4.0*const_sigB/const_cl;                             // erg cm^-3 K^-4
-const double const_sigT    = 8.0*PI/3.0*const_R_me*const_R_me;                    // cm^2
+const double const_sigT_0  = 8.0*PI/3.0*const_R_me*const_R_me;                    // cm^2
+extern double const_sigT;                             // Variable const_sigT set in the CosmoRec.cpp
 const double const_PIe2_mec= 3.0/8.0*const_sigT*const_cl/const_R_me;              // cm^2/sec 
 
 //-------------------------------------------------------------------------------------------------------

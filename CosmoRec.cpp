@@ -1,11 +1,13 @@
 //===========================================================================================================
 //
-// Author: Jens Chluba
+// Author: Jens Chluba & Luke Hart
 // first implementation: April 2010
-// last modification   : Oct   2014
+// last modification   : Jan   2017
 // purpose: to access main CosmoRec code
 //
 //===========================================================================================================
+// 22.01.2017: added correction function computation as standard output [LH & JC]
+// 22.01.2017: added Recfast++ variation of fundamental constants setup [LH & JC]
 // 14.11.2014: control of magnetic field parameters is now all in CosmoRec.cpp (also Recfast++ part...)
 // 17.10.2014: conversion from B_lambda to B0 when calling in batch mode
 // 11.10.2014: added parameters for magnetic field heating
@@ -94,15 +96,39 @@ using namespace ODE_solver_Rec;
 //
 // (added 23.07.2014 JC)
 //===========================================================================================================
-double const_HI_A2s_1s = 8.2206;                            // Hydrogen 2s decay rate (Labzowsky et al. 2005)
+double const_HI_A2s_1s = const_HI_A2s_1s_0;                                  // initial setting of the values
+double const_sigT      = const_sigT_0;
 
 #include "constants.Recfast.h"
 double RECFAST_atomic_constants::RF_Lam2s1sH     = 8.22458; // Recfast++ default value (old value)
 
 //===========================================================================================================
+// variation of fundamental constants [Oct 2016 - Jan 2017: LH & JC]
+//===========================================================================================================
+int RECFAST_atomic_constants::RF_rMode     = 0;
+double RECFAST_atomic_constants::RF_aScale  = 1.0;                    // default value for alpha rescaling LH
+double RECFAST_atomic_constants::RF_mScale  = 1.0;                    // default value for alpha rescaling LH
+double RECFAST_atomic_constants::RF_pScale  = 0.0;                    // default value for redshift power law
+
+//-----------------------------------------------------------------------------------------------------------
+// CosmoRec specific variables for variation of fundamental constant
+//-----------------------------------------------------------------------------------------------------------
+// Scaling variables for alpha, reduced mass and omission modes (Luke Hart)
+struct Fund_Const_scaling
+{
+    size_t runmode;
+    double a_scale;
+    double m_scale;
+    // Scaling coefficients that we multiply rates/cross sections
+    double f_a, f_b, f_t;
+};
+
+Fund_Const_scaling FC_CosmoRec={0, 1.0, 1.0, 1.0, 1.0, 1.0};
+
+//===========================================================================================================
 // level of verbosity
 //===========================================================================================================
-int show_CosmoRec_mess=0;
+int show_CosmoRec_mess=0;                                   // note LH: set to 1 for debug check of variables
 
 //===========================================================================================================
 void print_message(string mess);
@@ -153,13 +179,6 @@ double RECFAST_atomic_constants::RF_nB_heating   = 0.0;
 double RECFAST_atomic_constants::RF_kD_heating   = 0.0;
 
 #include "./Modules/Magnetic_fields.cpp"
-
-//===========================================================================================================
-// variation of fundamental constants
-//===========================================================================================================
-int RECFAST_atomic_constants::RF_rMode     = 0;
-double RECFAST_atomic_constants::RF_aScale  = 1.0;
-double RECFAST_atomic_constants::RF_mScale  = 1.0;
 
 //===========================================================================================================
 // additional definitions for CosmoRec-ODE system
@@ -373,6 +392,13 @@ int CosmoRec()
     bool iteration=(Diffusion_correction ? 1 : 0);
     int err=0;
     
+    //==============================================================================
+    // set rescale factor for rates etc
+    //==============================================================================
+    if(FC_CosmoRec.runmode>0)
+        rescale_variables_HI(FC_CosmoRec.a_scale, FC_CosmoRec.m_scale, FC_CosmoRec.runmode,
+                             FC_CosmoRec.f_a, FC_CosmoRec.f_b, FC_CosmoRec.f_t);
+
     //==============================================================================
     // enter the main run of ODE --> PDE-solver --> ODE
     //==============================================================================

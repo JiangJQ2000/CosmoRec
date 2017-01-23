@@ -82,7 +82,8 @@ OBJSRecfast++ = $(DEV_DIR)/Cosmology/Recfast++/src/recombination.Recfast.o \
 		$(DEV_DIR)/Cosmology/Recfast++/src/evalode.Recfast.o \
 		$(DEV_DIR)/Cosmology/Recfast++/src/DM_annihilation.Recfast.o \
 		$(DEV_DIR)/Cosmology/Recfast++/src/Magnetic_fields.Recfast.o \
-		$(DEV_DIR)/Cosmology/Recfast++/src/Rec_corrs_CT.Recfast.o
+		$(DEV_DIR)/Cosmology/Recfast++/src/Rec_corrs_CT.Recfast.o \
+        $(DEV_DIR)/Cosmology/Recfast++/src/Variation_constants.Recfast.o
 
 #===============================================================================
 # object files
@@ -181,6 +182,8 @@ CosmoRec.o: ./Modules/aux_functions.cpp ./Modules/output_methods.cpp \
             ./Modules/Magnetic_fields.cpp \
             ./Modules/ODEdef_CosmoRec.cpp \
             ./Modules/var_trans.cpp
+
+Solve_PDEs.o: ./PDE_Problem/Solve_PDEs_Grace.cpp
 
 #===============================================================================
 # rules

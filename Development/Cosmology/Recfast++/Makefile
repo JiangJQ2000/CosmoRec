@@ -19,6 +19,7 @@ OBJS = ./src/cosmology.Recfast.o \
 	   ./src/ODE_solver.Recfast.o \
 	   ./src/DM_annihilation.Recfast.o \
 	   ./src/Magnetic_fields.Recfast.o \
+	   ./src/Variation_constants.Recfast.o \
 	   ./src/Rec_corrs_CT.Recfast.o
 
 #===============================================================================
@@ -30,12 +31,21 @@ Recfast++:  $(OBJS) main.o
 			 @echo "Linking..."
 			 $(CC) $(LXXFLAGS) $(OBJS) main.o -o Recfast++
 
+pub:
+	make -f Makefile.pub all
+
+pubtar:
+	make -f Makefile.pub tarball
+
 clean:
 	rm -f ./src/*.o
 
 tidy:
 	rm -f ./src/*.o ./src/*.o~ 
 	rm -f *.o *~ Recfast++
+
+wipeDS:
+	find . -type f -name \.DS_Store -print | xargs rm
 
 #===============================================================================
 # rules

@@ -1,6 +1,6 @@
 //==================================================================================================
 //
-// 'CosmoRec' beta version 2.1 (Oct 12, 2014)
+// 'CosmoRec' beta version 2.2 (Jan 23, 2017)
 //
 //==================================================================================================
 //
@@ -8,6 +8,7 @@
 // All rights reserved. No guarantee for the correctness of the outputs is given!
 //
 // Some modifications and additions: J. Fung (Astro. Dept. UoT), R. Thomas (CITA), G. Vasil (CITA)
+// 				     L. Hart (JBCA)
 //==================================================================================================
 //
 // REQUIREMENTS: GSL-library 1.13 or later (download at http://www.gnu.org/software/gsl/)
@@ -45,6 +46,15 @@
 
 
 //==================================================================================================
+//
+// Update (23.01.2017 | CosmoRec v2.2b)
+// 
+// - added new version of Recfast++ which includes variation of fundamental constants [LH & JC]
+// - new correction function approach that treats hydrogen and helium separately [LH & JC]
+// - added the effect of variation of fundamental constants to the main CosmoRec code [LH & JC]
+// - updates magnetic field heating scheme for turbulent decay to allow for smoother transition [JC]
+//
+//--------------------------------------------------------------------------------------------------
 //
 // Update (12.10.2014 | CosmoRec v2.1b)
 // 

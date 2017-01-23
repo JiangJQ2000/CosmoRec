@@ -91,16 +91,20 @@ void setup_Helium_atom()
 {
     print_message(" entering the setup for neutral helium ");
     
-    if(nShellsHeI<njresolved) njresolved=nShellsHeI;
+    //if(nShellsHeI<njresolved) njresolved=nShellsHeI; // old helium atom setup
     
-    Set_flag_Intercombination_lines(10);    
+    //Set_flag_Intercombination_lines(10);             // old helium atom setup
+    int nQ =0;
+    int nTS=10;
     if(set_HeI_Quadrupole_lines)
     {
-        Set_flag_Quadrupole_lines(10);
+        //Set_flag_Quadrupole_lines(10);               // old helium atom setup
+        nQ=10;
         print_message(" switching on HeI nD-1S singlet quadrupole transitions ");
     }
     
-    HeIAtoms=new Gas_of_HeI_Atoms(nShellsHeI, njresolved, -2);
+    //HeIAtoms=new Gas_of_HeI_Atoms(nShellsHeI, njresolved, -2); // old helium atom setup
+    HeIAtoms=new Gas_of_HeI_Atoms(nShellsHeI, njresolved, nQ, nTS, -2);
     
     //===========================================================================
     // Load effective rates
@@ -163,14 +167,16 @@ void Set_HeI_Levels_to_Saha(double z)
     double Xp=cosmos.Xp(z);
     double NH=cosmos.NH(z);
     double TM=cosmos.TCMB(z);
-    double XHeII=min(Xe-Xp, parameters.fHe);
-        
-    if(show_CosmoRec_mess>=1) 
-        cout << " Helium \n" << " Xe-Xp: " << Xe-Xp << " " << XHeII << endl;
-    // follow all sub-level 
+    //double XHeII=min(Xe-Xp, parameters.fHe);  // JC: 15.05.2015
+    double XHeII=cosmos.NHeII(z)/cosmos.NH(z);
+
+    if(show_CosmoRec_mess>=1) cout << " Helium \n" << " Xe-Xp: " << Xe-Xp << " " << XHeII << endl;
+    
+    // follow all sub-level
     for(long int i=0; i<Level_I.nHeIeq; i++)
     {
-        Level_I.X[i+Level_I.index_HeI]=HeI_Atoms.Xi_Saha(i, min(Xe, 1.0+XHeII), XHeII, NH, TM); 
+        //Level_I.X[i+Level_I.index_HeI]=HeI_Atoms.Xi_Saha(i, min(Xe, 1.0+XHeII), XHeII, NH, TM); // JC: 15.05.2015
+        Level_I.X[i+Level_I.index_HeI]=HeI_Atoms.Xi_Saha(i, Xe, XHeII, NH, TM);
         HeI_Atoms.Set_Xi(i, Level_I.X[i+Level_I.index_HeI]);
         
         if(show_CosmoRec_mess>=2) 

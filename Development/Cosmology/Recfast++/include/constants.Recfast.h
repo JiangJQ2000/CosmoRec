@@ -4,7 +4,8 @@
 // CITA, University of Toronto
 // All rights reserved.
 //========================================================================================================
-// 01.12.2016: added parameters for variation of alpha and me
+// 05.12.2016: added parameter to include ~(1+z)^p variations
+// 01.12.2016: added parameters for variation of alpha and me [LH]
 // 10.10.2014: added magnetic field heating parameters
 // 23.07.2014: added possiblity to explicitly set HI A2s1s rate
 
@@ -94,7 +95,14 @@ namespace RECFAST_atomic_constants
     //====================================================================================================
     extern double RF_aScale;
     extern double RF_mScale;
+    extern double RF_pScale;
     extern int RF_rMode;
+    
+    //====================================================================================================
+    // boolean parameters for correction function settings
+    // 0 for the f_h+f_he default and 1 for the new individual correction functions
+    //====================================================================================================
+    const bool RF_separate_corr = 1;
 
     //====================================================================================================
     // helium 2gamma rate

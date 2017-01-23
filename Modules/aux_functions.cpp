@@ -128,7 +128,20 @@ void set_array_dimensions_and_parameters(int wait=0)
 void read_entries_from_parameter_file(ifstream &paramfile, double *param)
 {
     for(int i=0; i<12; i++) paramfile >> param[i];
-
+    
+    // Dummy variables set up for the alpha and reduced mass scalings as well as the omission mode
+    double dumAlpha, dumRatio, dumMode;
+    
+    // The code will now read in the parameters into the dummy parameters associated with these files
+    // double ---> size_t information will be lost when the parameters are converted in evalODE.Recfast or ODEeval
+    // These read in values will now go into Recfast++ and CosmoRec interdependently
+    paramfile >> dumAlpha;
+    paramfile >> dumRatio;
+    paramfile >> dumMode;
+    FC_CosmoRec.a_scale = RECFAST_atomic_constants::RF_aScale = dumAlpha;
+    FC_CosmoRec.m_scale = RECFAST_atomic_constants::RF_mScale = dumRatio;
+    FC_CosmoRec.runmode = RECFAST_atomic_constants::RF_rMode  = dumMode;
+    
     paramfile >> nShells;
     paramfile >> nS_effective;
     paramfile >> fDM_CosmoRec;
@@ -235,6 +248,12 @@ void set_startup_data(string filename, double param[12], Parameters_form_initfil
         cout << " Including heating by magnetic fields. B0= " << B0_CosmoRec
              << " nG and nB= " << nB_CosmoRec << endl;
 
+    if(FC_CosmoRec.runmode>0 && show_CosmoRec_mess>=0)
+        cout << " Including variations of fundamental constants."
+             << " Mode = " << FC_CosmoRec.runmode
+             << " a_scale = " << FC_CosmoRec.a_scale
+             << " m_scale = " << FC_CosmoRec.m_scale << endl;
+    
     if(flag_HI_absorption==1 && show_CosmoRec_mess>=0)
             cout << " HI absorption will be included during HeI-recombination " << endl;
     //

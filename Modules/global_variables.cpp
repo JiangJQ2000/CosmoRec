@@ -1,7 +1,7 @@
 //==================================================================================================
 // CosmoRec version
 //==================================================================================================
-string CosmoRec_version="v2.1 beta";
+string CosmoRec_version="v2.2 beta";
 
 //==================================================================================================
 // setting for two-gamma and Raman corrections
@@ -23,7 +23,8 @@ vector<vector<double> > pass_on_the_Solution_CosmoRec_HeI; //JF
 //==================================================================================================
 // output files
 //==================================================================================================
-bool write_populations=0;   // output solution for the populations of the resolved states
+bool write_populations=1;   // output solution for the populations of the resolved states
+bool write_corrections=1;   // output correction functions from Recfast++ and CosmoRec
 bool write_Xe_Te_sol=1;     // output Xe & Te
 bool write_HI_distortion=0; // output approximate HI distortion (added July 2nd 2012)
 

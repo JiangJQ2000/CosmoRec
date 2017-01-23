@@ -43,6 +43,7 @@ void set_PMF_parameters_KK_PF(double B0, double nB, double h0)
         nB_CosmoRec=RECFAST_atomic_constants::RF_nB_heating=0.0;
         kD_CosmoRec=RECFAST_atomic_constants::RF_kD_heating=0.0;
         RECFAST_atomic_constants::RF_eval_ion_Tr = 0; // do old recfast evaluation
+        //RECFAST_atomic_constants::RF_eval_ion_Tr = 1; // do new recfast evaluation
     }
     
     return;
@@ -145,7 +146,7 @@ void evaluate_magnetic_field_heating(double z, double fHe, double Tg, double Tm,
     //====================================================================================
     // output rate
     //====================================================================================
-    double za[1000];
+/*    double za[1000];
     init_xarr(1200.0, 1000.0, za, 1000, 0, 0);
     
     ofstream ofile("./outputs.Mag_test/test.dat");
@@ -154,7 +155,7 @@ void evaluate_magnetic_field_heating(double z, double fHe, double Tg, double Tm,
         ofile << za[k] << " " << Gamma_decay(za[k], cosmos.H(za[k]), B0, nB, kD) << endl;
     ofile.close();
     exit(0);
-    
+*/    
     //====================================================================================
     // add collisional ionization for H & He (kci in m^3 / sec from Bell et al. 1983)
     // Usually this does not make a difference due to the exponential suppression.

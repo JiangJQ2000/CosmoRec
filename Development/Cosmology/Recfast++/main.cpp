@@ -4,6 +4,7 @@
 // CITA, University of Toronto
 // All rights reserved.
 //========================================================================================
+// 05.12.2016: added simple redshift scaling of constants ~(1+z)^p
 // 01.12.2016: changed setup of Tr flag and added setup for variation of fundamental
 //             constants (developed by Luke Hart)
 // 14.11.2014: added setup for magnetic field heating modes
@@ -47,6 +48,7 @@ bool RECFAST_atomic_constants::RF_KK_or_PF_Lorentz  = 0;      // flag overwritte
 //========================================================================================
 double RECFAST_atomic_constants::RF_aScale = 1.0;  // alp/alp_ref
 double RECFAST_atomic_constants::RF_mScale = 1.0;  // me/me_ref
+double RECFAST_atomic_constants::RF_pScale = 0.0;  // redshift scaling ~[(1+z)/1100]^p
 int RECFAST_atomic_constants::RF_rMode = 1;
 
 //========================================================================================
@@ -80,6 +82,7 @@ void show_cosmological_parameters(vector<double> &param)
     if(RECFAST_atomic_constants::RF_aScale!=1.0 || RECFAST_atomic_constants::RF_mScale!=1.0)
         cout << " Variation of fundamental constants: alp/alp_r== " << RECFAST_atomic_constants::RF_aScale
              << " me/me_r== " << RECFAST_atomic_constants::RF_mScale
+             << " pow== " << RECFAST_atomic_constants::RF_pScale
              << " mode== " << RECFAST_atomic_constants::RF_rMode << endl;
 
     cout << endl;
@@ -143,11 +146,15 @@ void read_parameter_file(string fname, vector<double> &params)
     //====================================================================================
     ifile >> RECFAST_atomic_constants::RF_aScale; // alp/alp_r
     ifile >> RECFAST_atomic_constants::RF_mScale; // me/me_r
+    ifile >> RECFAST_atomic_constants::RF_pScale; // power for (1+z)^p
     ifile >> RECFAST_atomic_constants::RF_rMode;  // mode
     
     if(RECFAST_atomic_constants::RF_rMode==0)
+    {
         RECFAST_atomic_constants::RF_aScale=RECFAST_atomic_constants::RF_mScale=1.0;
-
+        RECFAST_atomic_constants::RF_pScale=0.0;
+    }
+    
     //====================================================================================
     // compute Omega_L according to Omega_K
     //====================================================================================
@@ -222,7 +229,7 @@ int main(int narg, char *args[])
     //====================================================================================
     Xe_frac(&params[0], &zarr[0], &Xe_H[0], &Xe_He[0], &Xe[0], &TM[0]);
     
-    string oname="./output/Xe_Recfast";
+    string oname="./outputs/Xe_Recfast";
     if(params[12]!=0.0) oname+=".DM_annihilations";
     if(params[13]==1) oname+=".Rec_corrs_CT2010";
     if(RECFAST_atomic_constants::RF_B0_heating>0.0)
@@ -233,6 +240,7 @@ int main(int narg, char *args[])
     }
     if(RECFAST_atomic_constants::RF_aScale!=1.0) oname+=".alp";
     if(RECFAST_atomic_constants::RF_mScale!=1.0) oname+=".me";
+    if(RECFAST_atomic_constants::RF_pScale!=0.0) oname+=".power";
     if(RECFAST_atomic_constants::RF_rMode==1) oname+=".Boltz";
     else if(RECFAST_atomic_constants::RF_rMode==2) oname+=".sigT";
     else if(RECFAST_atomic_constants::RF_rMode==3) oname+=".A2s1s";

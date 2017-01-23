@@ -12,12 +12,16 @@
 3.046
 1.14
 
+1.05
+1.
+6
+
 3
 500
 0.0e-24
 8.2206
 
-3.0
+0.0
 -2.9
 
 3
@@ -51,6 +55,13 @@
 0.71      == h100
 3.046     == N_nu
 1.14      == Recfast++ fudge factor (usually leave unchanged)
+
+1. 	      == Scaling of the fine structure constant
+1. 	  	  == Scaling of the m_e/m_p ratio
+1  	  	  == Running mode for the omissions of the scaling of alpha 
+			 (0: previous values omitted; 
+			  1: Boltz; 2: sigT; 3: A2s1s
+			  4: phot ; 5: Ly-a; 6: all corrections)
 
 3         == number of hydrogen shells for ODE problem (currently: 3, 4, 5 or 10; lite only 3)
 500       == nS for effective HI rates (nS=10, 20, 50, 100, 128, 200, 300, 400 and 500; lite only 500)

@@ -1,4 +1,26 @@
 //==================================================================================================
+// Rescaling the rates
+// We need to rescale the Ai Bi and Rij rates by our coefficients and this function does that
+// independently since we need to do this for a series of vectors
+// This function is overloaded for 2 vectors and a vector of vectors as well as a single vector
+//==================================================================================================
+void rescale_rates(vector<double>&A,vector<double>&B,vector<vector<double> >&R)
+{
+    if(FC_CosmoRec.f_a==1.0 || FC_CosmoRec.f_b==1.0) return;  // safe time if not needed
+    
+    // For each of the rates we're going to go through the iterations and times every element by the
+    // f_i prefactors
+    // Leave this alone as this works
+    for (vector<double>::iterator a1 = A.begin(); a1 != A.end(); ++a1) *a1 *= FC_CosmoRec.f_a;
+    for (vector<double>::iterator b1 = B.begin(); b1 != B.end(); ++b1) *b1 *= FC_CosmoRec.f_b;
+    for (vector<vector<double> >::iterator r1 = R.begin(); r1 != R.end(); ++r1) {
+        for (vector<double>::iterator r2 = r1->begin(); r2 != r1->end(); ++r2) {
+            *r2 *= FC_CosmoRec.f_b;
+        }
+    }
+    return;
+}
+//==================================================================================================
 // Hydrogen atom
 //==================================================================================================
 void update_H_populations(const double *XiH, Gas_of_Atoms &H_Atoms)
@@ -46,8 +68,11 @@ void update_Solver_vars_eff(const double *XiH, Gas_of_Atoms &H_Atoms,
         ODE_Solver_rho_pre=rho;
         
         // effective rates
-        get_rates(cosmos.TCMB(z), cosmos.TCMB(z)*rho, Ai_df_dx, Bi_df_dx, RijVec_df_dx);
-        if(flag_He==1) get_rates_HeI(cosmos.TCMB(z), Ai_df_dx_HeI, Bi_df_dx_HeI, RijVec_df_dx_HeI);
+        double Tg=cosmos.TCMB(z);
+        get_rates(Tg*FC_CosmoRec.f_t, Tg*rho*FC_CosmoRec.f_t, Ai_df_dx, Bi_df_dx, RijVec_df_dx);
+        if(FC_CosmoRec.runmode>0) rescale_rates(Ai_df_dx, Bi_df_dx, RijVec_df_dx);
+        //
+        if(flag_He==1) get_rates_HeI(Tg, Ai_df_dx_HeI, Bi_df_dx_HeI, RijVec_df_dx_HeI);
     }
     
     return;
@@ -177,7 +202,7 @@ void fcn_He_effective(double z, double Xe, double Tg, double NH, double H_z,
         //==============================================================
         // Ly-a line
         //==============================================================
-        evaluate_HI_abs_HeI(z, Hydrogen_Atoms.X(1, 0), NH, H_z, Tg, Te, 
+        evaluate_HI_abs_HeI(z, Hydrogen_Atoms.X(1, 0), NH, H_z, Tg, Te,
                             HeI_Atoms, cosmos, 
                             HeI_Atoms.HILyc, DP_interpol_S, dXe_HeI_HI_abs_dt);
 

@@ -4,7 +4,7 @@
 // CITA, University of Toronto
 // All rights reserved.
 //========================================================================================
-// Oct/Nov 2016: added effects for variations of alpha and me/mp
+// Oct-Dec 2016: added effects for variations of alpha and me/mp
 // Oct 11  2014: added switch that allows to change T=TR instead of T=TM for beta_ion
 // Oct 10  2014: added heating by magnetic fields
 
@@ -22,6 +22,7 @@
 #include "evalode.Recfast.h"
 #include "DM_annihilation.Recfast.h"
 #include "Magnetic_fields.Recfast.h"
+#include "Variation_constants.Recfast.h"
 
 using namespace std;
 using namespace RECFAST_physical_constants; // defined in constants.Recfast.h
@@ -117,59 +118,23 @@ void evaluate_Recfast_System(double z, double y[], double fvec[], int n)
     Comp = 8.0*RF_sigmaT*RF_aRad*pow(TR, 4)/(3.0*Hz*(1.0+z)*RF_mElect*RF_cLight);
     
     //====================================================================================
-    // added variables to include variation of fundamental constants (Oct/Nov 2016, LH)
+    // added variables to include variation of fundamental constants (Oct-Dec 2016, LH)
     //====================================================================================
-    double A2s1sH=RF_Lam2s1sH, A2s1sHe=RF_Lam2s1sHe;
-    double lambda21H=RF_LyalphaH, lambda21He=RF_LyalphaHe;
-    double TMeval=TM, TReval=TR;
-    
-    //====================================================================================
-    // omission run mode settings
-    //====================================================================================
-    // The following is a description of all the different runmode settings and which
-    // value corresponds to which mode
-    // 0 - no rescaling
-    // 1 - Rescaling of Boltzmann factor exponentials (i.e., temperatures)
-    // 2 - Rescaling of Thomson scattering cross section
-    // 3 - Rescaling of 2s1s 2 photon rate
-    // 4 - Rescaling of alpha and beta co-efficients
-    // 5 - Rescaling of Lyman alpha rates
-    // 6 - Rescale everything
-    //====================================================================================
-    int rmode = RECFAST_atomic_constants::RF_rMode;
-    double alpha_scale = RECFAST_atomic_constants::RF_aScale;
-    double mass_scale  = RECFAST_atomic_constants::RF_mScale;
-    
-    if (rmode > 6){ cerr << "Invalid mode selection!" << endl; exit(1); }
+    Variables_Fund_Consts VCD=Variables_Fund_Consts();
+    Set_var_const_scale_factors(z, VCD);
 
-    // Rescale the temperatures here
-    else if (rmode == 1 || rmode == 6) {
-        TMeval/=pow(alpha_scale, 2)*mass_scale; // scaled matter temperature
-        TReval/=pow(alpha_scale, 2)*mass_scale; // scaled radiation temperature
-    }
-    
-    // Re-scaled Thomson cross section
-    else if (rmode == 2 || rmode == 6)
-        Comp*=pow(alpha_scale/mass_scale, 2)/mass_scale; // extra 1/me from rho_g/me in coefficient
-    
-    // Rescaling of the two photon rates for the Lambda values
-    else if (rmode == 3 || rmode == 6) {
-        A2s1sH *=pow(alpha_scale,8)*mass_scale;
-        A2s1sHe*=pow(alpha_scale,8)*mass_scale;
-    }
+    // rescale local variables
+    double A2s1sH=RF_Lam2s1sH*VCD.fA2g, A2s1sHe=RF_Lam2s1sHe*VCD.fA2g;
+    double lambda21H=RF_LyalphaH/VCD.fl, lambda21He=RF_LyalphaHe/VCD.fl;
+    double TMeval=TM/VCD.fT, TReval=TR/VCD.fT;
+    Comp*=VCD.fC;
 
-    // rescaling of wavelength to change Pesc
-    else if (rmode == 5 || rmode == 6) {
-        lambda21H /=pow(alpha_scale, 2)*mass_scale;
-        lambda21He/=pow(alpha_scale, 2)*mass_scale;
-    }
-    
     //====================================================================================
     // Boltzmann and detailed balance factors
     //====================================================================================
     SHe = SahaBoltz(1.0, 2.0, 1.0, RF_EionHe2s, TMeval);
     BHe = Boltzmann(1.0, 1.0, RF_E2s1sHe, TMeval);
-    //
+    
     SH  = SahaBoltz(2.0, 1.0, 1.0, RF_EionH2s, TMeval);
     BH  = Boltzmann(1.0, 1.0, RF_E2s1sH,  TMeval);
     
@@ -207,14 +172,10 @@ void evaluate_Recfast_System(double z, double y[], double fvec[], int n)
     }
     
     //====================================================================================
-    // Explicit rescalings for photo-ionization and recombination coefficients
+    // Explicit rescalings for photo-ionization and recombination coefficients (added LH)
     //====================================================================================
-    if (rmode == 4 || rmode == 6) {
-        double RF_a = pow(alpha_scale/mass_scale, 2);
-        double RF_b = pow(alpha_scale, 5)*mass_scale;
-        alphaH *=RF_a; alphaHe*=RF_a;
-        betaH  *=RF_b; betaHe *=RF_b;
-    }
+    alphaH*=VCD.fAp; alphaHe*=VCD.fAp;
+    betaH *=VCD.fBp; betaHe *=VCD.fBp;
 
     //====================================================================================
     // tau-Sobolev for helium and hydrogen

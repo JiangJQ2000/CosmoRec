@@ -5,6 +5,8 @@
 // Copyright 2010 CITA (U of T). All rights reserved.
 //
 //======================================================================
+// 12.10.2015: Explicitly enforcing detailed balance since for the
+//             computations of the rates Tg==Te is assumed.
 
 //======================================================================
 // Standards
@@ -35,6 +37,7 @@
 struct res_state_Data_HeI
 {
     int HeI_index;
+    double gw, nuion, mu_red;
     
     vector<double> BiVec;
     vector<double> BitotVec;
@@ -88,7 +91,9 @@ void read_parameter_file(string fname, Gas_of_HeI_Atoms &HeIA, vector<int> &res_
         if(ifile)
         {   
             res_Level_indices.push_back(HeIA.Get_Level_index(n, l, s, j));
-            cout << " resolved level # " << res_Level_indices.size()-1 << " :: " << n << " " << l << " s= " << s << " j= " << j << " HeI_index= " << res_Level_indices.back() << endl;
+            cout << " resolved level # " << res_Level_indices.size()-1
+                 << " :: " << n << " " << l << " s= " << s << " j= " << j
+                 << " HeI_index= " << res_Level_indices.back() << endl;
         }
     }
     
@@ -113,6 +118,10 @@ void load_rates(string effective_rate_path, int nShell_max, int index_of_res_sta
     int jres = HeIA.Get_J(index_of_res_state);
     double dum;
     
+    Data_res.gw=HeIA.Get_gw(index_of_res_state);
+    Data_res.nuion=HeIA.Get_nu_ion(index_of_res_state);
+    Data_res.mu_red=HeIA.Get_mu_red();
+
     string filenamei = effective_rate_path + "HeI_Rates_n"+int_to_string(nres)+"_l"+int_to_string(lres)+"_S"
                         +int_to_string(sres)+"_J"+int_to_string(jres)+".nS_"+int_to_string(nShell_max)+".dat";
     
@@ -211,13 +220,25 @@ int get_HeI_index(int index_of_res_state)
 //--------------------------------------------------------------------
 int get_res_index_HeI(int index_of_HeI_state){ return resolved_level_map_HeI[index_of_HeI_state]; }
 
+void compute_coefficients_pol_HeI(double *a, double x, double *xv)
+{
+    a[0]= (x - xv[1])*(x - xv[2])*(x - xv[3])/((xv[0] - xv[1])*(xv[0] - xv[2])*(xv[0] - xv[3]));
+    a[1]= (x - xv[0])*(x - xv[2])*(x - xv[3])/((xv[1] - xv[0])*(xv[1] - xv[2])*(xv[1] - xv[3]));
+    a[2]= (x - xv[0])*(x - xv[1])*(x - xv[3])/((xv[2] - xv[0])*(xv[2] - xv[1])*(xv[2] - xv[3]));
+    a[3]= (x - xv[0])*(x - xv[1])*(x - xv[2])/((xv[3] - xv[0])*(xv[3] - xv[1])*(xv[3] - xv[2]));
+    
+    return;
+}
+
 //========================================================================================
 // compute effective rates
 //========================================================================================
 void get_rates_HeI(double Tg, vector<double> &Ai, vector<double> &Bi, vector<vector<double> > &RijVec)
 {
-    if(res_state_D_HeI[0].BiVec.size()==0){ cerr << " get_rates_HeI:: It seems like the transition data has not been loaded. Exiting... " << endl; exit(0); }
-    if(Ai.size()!=res_state_D_HeI.size()){ cerr << " get_rates_HeI:: It seems like the Ai, Bi and RijVec vectors were not set. Exiting... " << endl; exit(0); } 
+    if(res_state_D_HeI[0].BiVec.size()==0)
+    { cerr << " get_rates_HeI:: It seems like the transition data has not been loaded. Exiting... " << endl; exit(0); }
+    if(Ai.size()!=res_state_D_HeI.size())
+    { cerr << " get_rates_HeI:: It seems like the Ai, Bi and RijVec vectors were not set. Exiting... " << endl; exit(0); }
     
     double logTg  = log(Tg);
         
@@ -238,45 +259,38 @@ void get_rates_HeI(double Tg, vector<double> &Ai, vector<double> &Bi, vector<vec
     if(lx+3 > res_state_D_HeI[0].Npoints_Tg || lx<0)
     { cerr << " get_rates_HeI:: out of bounds for Tg = " << Tg << ". Exiting! " << endl; exit(0); } 
     
-    double x = logTg;
-    double x1 = res_state_D_HeI[0].lgTgarr[lx];
-    double x2 = res_state_D_HeI[0].lgTgarr[lx+1];
-    double x3 = res_state_D_HeI[0].lgTgarr[lx+2];
-    double x4 = res_state_D_HeI[0].lgTgarr[lx+3];
-    
-    // ------------------------------------------- 
+    // -------------------------------------------
     // Coefficients for 1-D interpolations         
     // ------------------------------------------- 
     double a[4];
-    //
-    a[0]= (x - x2)*(x - x3)*(x - x4)/((x1 - x2)*(x1 - x3)*(x1 - x4));
-    a[1]= (x - x1)*(x - x3)*(x - x4)/((x1 - x2)*(x2 - x3)*(x4 - x2));
-    a[2]= (x - x1)*(x - x2)*(x - x4)/((x1 - x3)*(x2 - x3)*(x3 - x4));       
-    a[3]= (x - x1)*(x - x2)*(x - x3)/((x3 - x4)*(x4 - x1)*(x2 - x4));
+    compute_coefficients_pol_HeI(a, logTg, &res_state_D_HeI[0].lgTgarr[lx]);
     
     double fx;  
     for(int m=0; m<(int)res_state_D_HeI.size(); m++)
     {
-        // ------------------------------------- 
-        // Simple 1-D interpolation to find Ai   
-        // -------------------------------------        
-        fx=0.0;
-        for(int k=0; k<4; k++) fx+= a[k]*(res_state_D_HeI[m].AiVec[k+lx]-res_state_D_HeI[m].BiVec[k+lx]);
+        double qe=pow(TWOPI*const_me_gr*res_state_D_HeI[m].mu_red*const_kB*Tg/const_h/const_h, 1.5);
+        double gw_gc=res_state_D_HeI[m].gw/4.0;
+        double qln=gw_gc*exp(const_h_kb*res_state_D_HeI[m].nuion/Tg);
+        double log_qnl_qe=log(qln/qe);
         
-        Ai[m] = exp(fx);
-        
-        // ------------------------------------- 
-        // Simple 1-D interpolation to find Bi   
-        // -------------------------------------        
+        // ---------------------------------------
+        // explicitly enforcing detailed balance
+        // ---------------------------------------
+        Ai[m] = exp(log_qnl_qe);
+
+        // ---------------------------------------
+        // Simple 1-D interpolation to find Bi
+        // ---------------------------------------
         fx=0.0;
         for(int k=0; k<4; k++) fx+= a[k]*res_state_D_HeI[m].BiVec[k+lx];
         
         Bi[m] = exp(fx);
         
-        // ------------------------------------- 
-        // Getting all Ri->j interpolated values 
-        // ------------------------------------- 
-        for(int i=0; i<=m; i++) RijVec[m][i] = 0.0; // for these the detailed balance relations inside the code will be used
+        // ---------------------------------------
+        // Getting all Ri->j interpolated values
+        // ---------------------------------------
+        // for these the detailed balance relations inside the code will be used
+        for(int i=0; i<=m; i++) RijVec[m][i] = 0.0;
         
         for(int i=m+1; i<res_state_D_HeI[m].neqres; i++)
         {
@@ -293,8 +307,10 @@ void get_rates_HeI(double Tg, vector<double> &Ai, vector<double> &Bi, vector<vec
 //========================================================================================
 void get_rates_all_HeI(double Tg, vector<double> &Ai, vector<double> &Bi, vector<double> &Bitot, vector<vector<double> > &RijVec)
 {
-    if(res_state_D_HeI[0].BiVec.size()==0){ cerr << " get_rates_HeI:: It seems like the transition data has not been loaded. Exiting... " << endl; exit(0); }
-    if(Ai.size()!=res_state_D_HeI.size()){ cerr << " get_rates_HeI:: It seems like the Ai, Bi and RijVec vectors were not set. Exiting... " << endl; exit(0); } 
+    if(res_state_D_HeI[0].BiVec.size()==0)
+    { cerr << " get_rates_HeI:: It seems like the transition data has not been loaded. Exiting... " << endl; exit(0); }
+    if(Ai.size()!=res_state_D_HeI.size())
+    { cerr << " get_rates_HeI:: It seems like the Ai, Bi and RijVec vectors were not set. Exiting... " << endl; exit(0); }
     
     double logTg  = log(Tg);
     
@@ -315,34 +331,26 @@ void get_rates_all_HeI(double Tg, vector<double> &Ai, vector<double> &Bi, vector
     if(lx+3 > res_state_D_HeI[0].Npoints_Tg || lx<0)
     { cerr << " get_rates_HeI:: out of bounds for Tg = " << Tg << ". Exiting! " << endl; exit(0); } 
     
-    double x = logTg;
-    double x1 = res_state_D_HeI[0].lgTgarr[lx];
-    double x2 = res_state_D_HeI[0].lgTgarr[lx+1];
-    double x3 = res_state_D_HeI[0].lgTgarr[lx+2];
-    double x4 = res_state_D_HeI[0].lgTgarr[lx+3];
-    
-    // ------------------------------------------- 
-    // Coefficients for 1-D interpolations         
-    // ------------------------------------------- 
+    // -------------------------------------------
+    // Coefficients for 1-D interpolations
+    // -------------------------------------------
     double a[4];
-    //
-    a[0]= (x - x2)*(x - x3)*(x - x4)/((x1 - x2)*(x1 - x3)*(x1 - x4));
-    a[1]= (x - x1)*(x - x3)*(x - x4)/((x1 - x2)*(x2 - x3)*(x4 - x2));
-    a[2]= (x - x1)*(x - x2)*(x - x4)/((x1 - x3)*(x2 - x3)*(x3 - x4));       
-    a[3]= (x - x1)*(x - x2)*(x - x3)/((x3 - x4)*(x4 - x1)*(x2 - x4));
+    compute_coefficients_pol_HeI(a, logTg, &res_state_D_HeI[0].lgTgarr[lx]);
     
     double fx;  
     for(int m=0; m<(int)res_state_D_HeI.size(); m++)
     {
-        // --------------------------------------- 
-        // Simple 1-D interpolation to find Ai   
-        // --------------------------------------- 
-        fx=0.0;
-        for(int k=0; k<4; k++) fx+= a[k]*(res_state_D_HeI[m].AiVec[k+lx]-res_state_D_HeI[m].BiVec[k+lx]);
+        double qe=pow(TWOPI*const_me_gr*res_state_D_HeI[m].mu_red*const_kB*Tg/const_h/const_h, 1.5);
+        double gw_gc=res_state_D_HeI[m].gw/4.0;
+        double qln=gw_gc*exp(const_h_kb*res_state_D_HeI[m].nuion/Tg);
+        double log_qnl_qe=log(qln/qe);
         
-        Ai[m] = exp(fx);
-        
-        // --------------------------------------- 
+        // ---------------------------------------
+        // explicitly enforcing detailed balance
+        // ---------------------------------------
+        Ai[m] = exp(log_qnl_qe);
+
+        // ---------------------------------------
         // Simple 1-D interpolation to find Bi   
         // --------------------------------------- 
         fx=0.0;
@@ -360,8 +368,9 @@ void get_rates_all_HeI(double Tg, vector<double> &Ai, vector<double> &Bi, vector
         
         // --------------------------------------- 
         // Getting all Ri->j interpolated values 
-        // --------------------------------------- 
-        for(int i=0; i<=m; i++) RijVec[m][i] = 0.0; // for these the detailed balance relations inside the code will be used
+        // ---------------------------------------
+        // for these the detailed balance relations inside the code will be used
+        for(int i=0; i<=m; i++) RijVec[m][i] = 0.0;
         
         for(int i=m+1; i<res_state_D_HeI[m].neqres; i++)
         {
@@ -380,8 +389,10 @@ void get_rates_all_HeI(double Tg, vector<double> &Ai, vector<double> &Bi, vector
 //========================================================================================
 void get_Bitot_HeI(double Tg, vector<double> &Bitot)
 {
-    if(res_state_D_HeI[0].BiVec.size()==0){ cerr << " get_Bitot_HeI:: It seems like the transition data has not been loaded. Exiting... " << endl; exit(0); }
-    if(Bitot.size()!=res_state_D_HeI.size()){ cerr << " get_Bitot_HeI:: It seems like the Bitot vector was not set. Exiting... " << endl; exit(0); }    
+    if(res_state_D_HeI[0].BiVec.size()==0)
+    { cerr << " get_Bitot_HeI:: It seems like the transition data has not been loaded. Exiting... " << endl; exit(0); }
+    if(Bitot.size()!=res_state_D_HeI.size())
+    { cerr << " get_Bitot_HeI:: It seems like the Bitot vector was not set. Exiting... " << endl; exit(0); }
     
     double logTg  = log(Tg);
     
@@ -402,21 +413,11 @@ void get_Bitot_HeI(double Tg, vector<double> &Bitot)
     if(lx+3 > res_state_D_HeI[0].Npoints_Tg || lx<0)
     { cerr << " get_Bitot_HeI:: out of bounds for Tg = " << Tg << ". Exiting! " << endl; exit(0); } 
     
-    double x = logTg;
-    double x1 = res_state_D_HeI[0].lgTgarr[lx];
-    double x2 = res_state_D_HeI[0].lgTgarr[lx+1];
-    double x3 = res_state_D_HeI[0].lgTgarr[lx+2];
-    double x4 = res_state_D_HeI[0].lgTgarr[lx+3];
-    
-    // ------------------------------------------- 
-    // Coefficients for 1-D interpolations         
-    // ------------------------------------------- 
+    // -------------------------------------------
+    // Coefficients for 1-D interpolations
+    // -------------------------------------------
     double a[4];
-    //
-    a[0]= (x - x2)*(x - x3)*(x - x4)/((x1 - x2)*(x1 - x3)*(x1 - x4));
-    a[1]= (x - x1)*(x - x3)*(x - x4)/((x1 - x2)*(x2 - x3)*(x4 - x2));
-    a[2]= (x - x1)*(x - x2)*(x - x4)/((x1 - x3)*(x2 - x3)*(x3 - x4));       
-    a[3]= (x - x1)*(x - x2)*(x - x3)/((x3 - x4)*(x4 - x1)*(x2 - x4));
+    compute_coefficients_pol_HeI(a, logTg, &res_state_D_HeI[0].lgTgarr[lx]);
     
     double fx;  
     for(int m=0; m<(int)res_state_D_HeI.size(); m++)
@@ -438,8 +439,10 @@ void get_Bitot_HeI(double Tg, vector<double> &Bitot)
 //========================================================================================
 void get_Bitot_HeI(double Tg, double &Bitot, int ires)
 {
-    if(res_state_D_HeI[0].BiVec.size()==0){ cerr << " get_Bitot_HeI:: It seems like the transition data has not been loaded. Exiting... " << endl; exit(0); }
-    if(ires>=(int)res_state_D_HeI.size() || ires < 0){ cerr << " get_Bitot_HeI:: It seems like you are asking for a non-existing level. Exiting... " << endl; exit(0); }    
+    if(res_state_D_HeI[0].BiVec.size()==0)
+    { cerr << " get_Bitot_HeI:: It seems like the transition data has not been loaded. Exiting... " << endl; exit(0); }
+    if(ires>=(int)res_state_D_HeI.size() || ires < 0)
+    { cerr << " get_Bitot_HeI:: It seems like you are asking for a non-existing level. Exiting... " << endl; exit(0); }
     
     double logTg  = log(Tg);
     
@@ -460,21 +463,11 @@ void get_Bitot_HeI(double Tg, double &Bitot, int ires)
     if(lx+3 > res_state_D_HeI[0].Npoints_Tg || lx<0)
     { cerr << " get_Bitot_HeI:: out of bounds for Tg = " << Tg << ". Exiting! " << endl; exit(0); } 
     
-    double x = logTg;
-    double x1 = res_state_D_HeI[0].lgTgarr[lx];
-    double x2 = res_state_D_HeI[0].lgTgarr[lx+1];
-    double x3 = res_state_D_HeI[0].lgTgarr[lx+2];
-    double x4 = res_state_D_HeI[0].lgTgarr[lx+3];
-    
-    // ------------------------------------------- 
-    // Coefficients for 1-D interpolations         
-    // ------------------------------------------- 
+    // -------------------------------------------
+    // Coefficients for 1-D interpolations
+    // -------------------------------------------
     double a[4];
-    //
-    a[0]= (x - x2)*(x - x3)*(x - x4)/((x1 - x2)*(x1 - x3)*(x1 - x4));
-    a[1]= (x - x1)*(x - x3)*(x - x4)/((x1 - x2)*(x2 - x3)*(x4 - x2));
-    a[2]= (x - x1)*(x - x2)*(x - x4)/((x1 - x3)*(x2 - x3)*(x3 - x4));       
-    a[3]= (x - x1)*(x - x2)*(x - x3)/((x3 - x4)*(x4 - x1)*(x2 - x4));
+    compute_coefficients_pol_HeI(a, logTg, &res_state_D_HeI[0].lgTgarr[lx]);
     
     // --------------------------------------- 
     // Simple 1-D interpolation to find Bitot   

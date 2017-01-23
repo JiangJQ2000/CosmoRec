@@ -185,5 +185,53 @@ void Set_Hydrogen_Levels_to_Saha(double z)
     return;
 }
 
+//===========================================================================================================
+void rescale_variables_HI(double alpha_scale, double mu_scale, size_t run_mode,
+                          double &Ascale, double &Bscale, double &Tscale)
+{
+    //=======================================================================================================
+    // This function is designed to rescale all the explicit scalings we need to worry about and drop this
+    // into the reading of the file. For in depth details about the omission mode please look at
+    // evalode.Recfast.cpp description of the variables
+    //=======================================================================================================
+    // Ignore all scalings if the alpha and mu values are already set to 1
+    //=======================================================================================================
+    const_HI_A2s_1s = const_HI_A2s_1s_0;
+    const_sigT = const_sigT_0;
+    Ascale=Bscale=Tscale;
+    
+    if (alpha_scale != 1. || mu_scale != 1.) {
+        
+        // Rescaled Thomson scattering
+        if (run_mode == 2 || run_mode == 6) {
+            const_sigT = const_sigT_0*pow(alpha_scale,2)*pow(mu_scale,-1);
+        }
+        
+        // Rescaled 2 photon rate
+        if (run_mode == 3 || run_mode == 6) {
+            const_HI_A2s_1s = const_HI_A2s_1s_0*pow(alpha_scale,8)*mu_scale;
+        }
+        
+        // Rescaled Boltzmann factors
+        if (run_mode == 1 || run_mode == 6) {
+            Tscale = pow(alpha_scale,-2)*pow(mu_scale,-1);
+        }
+        
+        // Rescaled recomb/photoion rates off mode 4
+        if (run_mode == 4 || run_mode == 6) {
+            Ascale = pow(alpha_scale*mu_scale,-3);
+            Bscale = pow(alpha_scale,5)*mu_scale;
+        }
+    }
+    
+    // rescale hydrogen atom. This is done interally and relative to whatever state the atom is in [LH & JC]
+    if (run_mode == 1) Hydrogen_Atoms.rescale_gas(alpha_scale, mu_scale);
+ 
+    // set rescalings for HI PDE problem [LH & JC]
+    if (run_mode == 6) Set_alpha_and_me_scale(alpha_scale, mu_scale);
+    
+    return;
+}
+
 //==================================================================================================
 //==================================================================================================

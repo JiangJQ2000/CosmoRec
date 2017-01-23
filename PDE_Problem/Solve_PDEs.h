@@ -1,9 +1,10 @@
 //==================================================================================================
-// Author Jens Chluba
+// Author Jens Chluba & Luke Hart
 //
 // first implementation: July 2010
-// last modification   : July 2014
+// last modification   : Jan  2017
 //==================================================================================================
+// 22.01.2017: added variation of fundamental constants correction
 // 30.07.2014: Xi_Data is passed on read only
 // 04.06.2011: added nD-1s transitions to transfer problem
 // 26.03.2011: added Ly-n integrals & electron scattering Kernel support
@@ -19,6 +20,11 @@
 //==================================================================================================
 void switch_off_1s_2s_correction();
 void switch_on_1s_2s_correction();
+
+//==================================================================================================
+// set scalings for fundamental constants, if required [LH & JC]
+//==================================================================================================
+void Set_alpha_and_me_scale(double a_scale, double m_scale);
 
 //==================================================================================================
 // this allows to switch the 1s-2s absorption correction off; in the radiative transfer 

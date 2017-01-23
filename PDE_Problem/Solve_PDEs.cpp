@@ -1,9 +1,10 @@
 //==================================================================================================
-// Author Jens Chluba
+// Author Jens Chluba & Luke Hart
 //
 // first implementation: July 2010
-// last modification   : July 2014
+// last modification   : Jan  2017
 //==================================================================================================
+// 22.01.2017: added variation of fundamental constants correction
 // 30.07.2014: Xi_Data is passed on read only
 // 04.06.2011: added nD-1s transitions to transfer problem
 // 26.03.2011: added Ly-n integrals & electron scattering Kernel support
@@ -116,6 +117,22 @@ void switch_off_1s_2s_absorption_correction()
     return;
 }
 
+//==================================================================================================
+// set scalings for fundamental constants, if required [LH & JC]
+//==================================================================================================
+double Solve_PDE_HI_a_scale=1.0;
+double Solve_PDE_HI_m_scale=1.0;
+double Solve_PDE_HI_Eins_scale=1.0;
+
+void Set_alpha_and_me_scale(double a_scale, double m_scale)
+{
+    Solve_PDE_HI_a_scale = a_scale;
+    Solve_PDE_HI_m_scale = m_scale;
+    // Einstein co-efficient scale for Voigt profile
+    Solve_PDE_HI_Eins_scale = pow(a_scale,5)*m_scale;
+    
+    return;
+}
 
 //==================================================================================================
 //
@@ -297,12 +314,6 @@ void arm_PDE_solver(Cosmos &cos, Gas_of_Atoms &HIA, vector<double> &xarr,
         index=0;
         for(int k=0; k<(int)resonances.size(); k++)
         {
-            for(int m=0; m<(int)resonances.size(); m++)
-            {
-                PDE_funcs.Voigt_profiles_A_npns[m][k]=Get_A_npks(m+2, k+2);
-                PDE_funcs.Voigt_profiles_A_npnd[m][k]=Get_A_npkd(m+2, k+2);
-            }
-            //
             for(; index<npts; index++) if(xarr[index]>=resonances[k])
             { PDE_funcs.index_emission.push_back(index); break; }
         }   
@@ -322,6 +333,14 @@ void arm_PDE_solver(Cosmos &cos, Gas_of_Atoms &HIA, vector<double> &xarr,
         PDE_funcs_are_set=1;
     }
     
+    // Scaling due to fine structure constant and reduced mass (done every time) [added LH & JC]
+    for(int k=0; k<(int)resonances.size(); k++)
+        for(int m=0; m<(int)resonances.size(); m++)
+        {
+            PDE_funcs.Voigt_profiles_A_npns[m][k]=Get_A_npks(m+2, k+2)*Solve_PDE_HI_Eins_scale;
+            PDE_funcs.Voigt_profiles_A_npnd[m][k]=Get_A_npkd(m+2, k+2)*Solve_PDE_HI_Eins_scale;
+        }
+
     //===========================================================================
     // make sure normalization of A2s1s is reset (added Sept 4th 2014)
     //===========================================================================
@@ -692,7 +711,9 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
     //=========================================================================== 
     compute_Xi_HI_splines(zs, ze, HIA, HI_Solution);
 
-    set_up_splines_for_HI_pd_Rp_effective(ze, zs, cos, HIA, HI_Solution);
+    set_up_splines_for_HI_pd_Rp_effective(ze, zs, cos, HIA, HI_Solution,
+                                          Solve_PDE_HI_a_scale,
+                                          Solve_PDE_HI_m_scale);
     
     //=========================================================================== 
     // memory for Solve_PDE

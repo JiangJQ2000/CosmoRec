@@ -1,10 +1,11 @@
 //========================================================================================
-// Author: Jens Chluba
+// Author: Jens Chluba & Luke Hart
 // First implementation: Oct 2010
 // CITA, University of Toronto
 // All rights reserved.
 //========================================================================================
-// 01.12.2016: added dependence of Saha_HeIII on fundamental constants
+// 04.01.2017: added new routines for separate H and HeI correction functions (LH)
+// 05.12.2016: added dependence of Saha_HeIII on fundamental constants
 
 //========================================================================================
 // In this module the solution to the RECFAST ODE-system is computed. 
@@ -23,6 +24,7 @@
 #include "evalode.Recfast.h"
 #include "recombination.Recfast.h"
 #include "Rec_corrs_CT.Recfast.h"
+#include "Variation_constants.Recfast.h"    // 04.12.16: added JC
 
 using namespace std;
 using namespace RECFAST_physical_constants; // defined in constants.Recfast.h
@@ -38,15 +40,7 @@ struct Input input;
 //========================================================================================
 double SahaBoltz_HeIII(double nH, double fHe, double T)
 {
-    // 01.12.2016: dependence on alpha & me, JC
-    double me_loc=RF_mElect;
-    if(RECFAST_atomic_constants::RF_rMode==1 || RECFAST_atomic_constants::RF_rMode==6)
-        T/=pow(RECFAST_atomic_constants::RF_aScale, 2)*RECFAST_atomic_constants::RF_mScale;
-    
-    if(RECFAST_atomic_constants::RF_rMode==4 || RECFAST_atomic_constants::RF_rMode==6)
-        me_loc*=RECFAST_atomic_constants::RF_mScale;
-    
-    double c1 = 2.0*RF_PI*me_loc*RF_kBoltz*T/(RF_hPlanck*RF_hPlanck);
+    double c1 = 2.0*RF_PI*RF_mElect*RF_kBoltz*T/(RF_hPlanck*RF_hPlanck);
     double g = pow(c1, 1.5)*exp(-RF_EionHeII/(RF_kBoltz*T))/nH, d=1.0+fHe-g;
     double Xe= 0.5*(d + sqrt(d*d + 4.0*g*(1.0+2.0*fHe)));
     
@@ -141,6 +135,11 @@ int Xe_frac(double params[14], double *zarr, double *Xe_H, double *Xe_He, double
     //====================================================================================
     Set_input_variables(params);
     double fHe=input.fHe;
+
+    //====================================================================================
+    // inclusion of fundamental constants [04.12.16: added JC]
+    //====================================================================================
+    Variables_Fund_Consts VC_Data=Variables_Fund_Consts();
     
     //====================================================================================
     // above zc_HeIII everything is completely ionized
@@ -171,7 +170,9 @@ int Xe_frac(double params[14], double *zarr, double *Xe_H, double *Xe_He, double
             Xe_H[j] = 1.0;
             Xe_He[j]= fHe;
             TM[j]   = input.To*(1.0+zarr[j]);
-            Xe[j]   = SahaBoltz_HeIII(NH(zarr[j]), fHe, TM[j]);
+            // 05.12.16: T--> T/fT and nH --> nH/(aS mS)^3 [added JC]
+            Set_var_const_scale_factors(zarr[j], VC_Data);
+            Xe[j]   = SahaBoltz_HeIII(NH(zarr[j])*VC_Data.fAp/VC_Data.fBp, fHe, TM[j]/VC_Data.fT);
             dXe[j]   = 0.0;
             dX_H[j]   = 0.0;
         }
@@ -264,7 +265,19 @@ int Xe_frac(double params[14], double *zarr, double *Xe_H, double *Xe_He, double
             Xe_H[i] = Sz.y[1];
             TM[i]   = Sz.y[2];
             Xe[i]   = Xe_H[i]+Xe_He[i];
-            if(input.switch_on_recombination_corrs==1) Xe[i]*=Recombination_correction_factor(ze);
+            if(input.switch_on_recombination_corrs==1)
+            {
+                Set_var_const_scale_factors(ze, VC_Data); // 04.12.16: added JC
+                if (RF_separate_corr == 0)
+                    Xe[i]*=Recombination_correction_factor(ze/VC_Data.fT, 1);
+                else if (RF_separate_corr == 1) {
+                    // If this mode has been selected, we use the cflags to do hydrogen
+                    // and helium separately and then add the resultant Xe
+                    Xe_H [i]*=Recombination_correction_factor(ze/VC_Data.fT, 2);
+                    Xe_He[i]*=Recombination_correction_factor(ze/VC_Data.fT, 3);
+                    Xe[i] = Xe_H[i]+Xe_He[i];
+                }
+            }
             //
             dXe[i]  = Sz.dy[0]+Sz.dy[1];
             dX_H[i] = Sz.dy[1];
@@ -305,6 +318,11 @@ int Xe_frac_rescaled(double params[14], const double *zarr, double *Xe_H,
     TM[j]   = TMi;
     Xe[j]   = Xei;
     
+    //====================================================================================
+    // inclusion of fundamental constants [04.12.16: added JC]
+    //====================================================================================
+    Variables_Fund_Consts VC_Data=Variables_Fund_Consts();
+
     //====================================================================================
     // reading recombination correction as given by Chluba & Thomas 2010
     //====================================================================================
@@ -360,7 +378,20 @@ int Xe_frac_rescaled(double params[14], const double *zarr, double *Xe_H,
             Xe_H[i] = Sz.y[1];
             TM[i]   = Sz.y[2];
             Xe[i]   = Xe_H[i]+Xe_He[i];
-            if(input.switch_on_recombination_corrs==1) Xe[i]*=Recombination_correction_factor(ze);
+            Xe[i]   = Xe_H[i]+Xe_He[i];
+            if(input.switch_on_recombination_corrs==1)
+            {
+                Set_var_const_scale_factors(ze, VC_Data); // 04.12.16: added JC
+                if (RF_separate_corr == 0)
+                    Xe[i]*=Recombination_correction_factor(ze/VC_Data.fT, 1);
+                else if (RF_separate_corr == 1) {
+                    // If this mode has been selected, we use the cflags to do hydrogen
+                    // and helium separately and then add the resultant Xe
+                    Xe_H [i]*=Recombination_correction_factor(ze/VC_Data.fT, 2);
+                    Xe_He[i]*=Recombination_correction_factor(ze/VC_Data.fT, 3);
+                    Xe[i] = Xe_H[i]+Xe_He[i];
+                }
+            }
         }
     }
     

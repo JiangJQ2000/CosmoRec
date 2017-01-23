@@ -22,7 +22,7 @@ void load_rates(string path, int nShell_max, Gas_of_Atoms &HIA);
 void get_rates(double Tg, double Te, vector<double> &Ai, vector<double> &Bi, 
                vector<vector<double> > &RijVec);
 
-void get_rates_all(double Tg, double Te, vector<double> &Ai, vector<double> &Bi, 
+void get_rates_all(double Tg, double Te, vector<double> &Ai, vector<double> &Bi,
                    vector<double> &Bitot, vector<vector<double> > &RijVec);
 
 void get_Bitot(double Tg, vector<double> &Bitot);

@@ -1,11 +1,13 @@
 //===========================================================================================================
 //
-// Author: Jens Chluba
+// Author: Jens Chluba & Luke Hart
 // first implementation: April 2010
-// last modification   : Oct   2014
+// last modification   : Jan   2017
 // purpose: to access main CosmoRec code
 //
 //===========================================================================================================
+// 22.01.2017: added correction function computation as standard output [LH & JC]
+// 22.01.2017: added Recfast++ variation of fundamental constants setup [LH & JC]
 // 14.11.2014: control of magnetic field parameters is now all in CosmoRec.cpp (also Recfast++ part...)
 // 17.10.2014: conversion from B_lambda to B0 when calling in batch mode
 // 11.10.2014: added parameters for magnetic field heating

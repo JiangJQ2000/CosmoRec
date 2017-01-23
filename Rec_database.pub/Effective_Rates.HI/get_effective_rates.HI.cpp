@@ -6,6 +6,11 @@
 // Copyright 2010 CITA ( U of T). All rights reserved.
 //
 //======================================================================
+// 12.10.2015: - added treshold to interpolation scheme. This ensure
+//               detailed balance is reached at high z and avoids errors
+//               due to interpolation.
+//             - Explicitly enforcing detailed balance at z>2000.0 since
+//               for the computations of the rates Tg==Te was assumed.
 
 //======================================================================
 // Standards
@@ -37,6 +42,7 @@
 struct res_state_Data
 {
     int HI_index;
+    double gw, nuion, mu_red;
     
     vector<double> BiVec;
     vector<double> BitotVec;
@@ -59,9 +65,11 @@ struct res_state_Data
     vector<double> lgrhoarr;
 };
 
-
 vector<res_state_Data> res_state_D;
 vector<int> resolved_level_map;
+
+const double eps_A_effective=1.0e-4;
+const double z_detailed_balance=2000.0;
 
 //========================================================================================
 // loading the rates
@@ -115,7 +123,11 @@ void load_rates(string effective_rate_path, int nShell_max, int index_of_res_sta
     int nres = HIA.Get_n_of_Level(index_of_res_state);
     int lres = HIA.Get_l_of_Level(index_of_res_state);
     double dum;
-    
+
+    Data_res.gw=HIA.Level(index_of_res_state).Get_gw();
+    Data_res.nuion=HIA.Level(index_of_res_state).Get_nu_ion();
+    Data_res.mu_red=HIA.Level(index_of_res_state).Get_mu_red();
+
     string filenamei = effective_rate_path + "Rates_n"+int_to_string(nres)+"_l"+int_to_string(lres)+".nS_"+int_to_string(nShell_max)+".dat";
     
     ifstream  Ratesfile(filenamei.c_str());
@@ -218,6 +230,24 @@ int get_HI_index(int index_of_res_state)
 //--------------------------------------------------------------------
 int get_res_index(int index_of_HI_state){ return resolved_level_map[index_of_HI_state]; }
 
+void compute_coefficients_pol(double *a, double x, double *xv)
+{
+    a[0]= (x - xv[1])*(x - xv[2])*(x - xv[3])/((xv[0] - xv[1])*(xv[0] - xv[2])*(xv[0] - xv[3]));
+    a[1]= (x - xv[0])*(x - xv[2])*(x - xv[3])/((xv[1] - xv[0])*(xv[1] - xv[2])*(xv[1] - xv[3]));
+    a[2]= (x - xv[0])*(x - xv[1])*(x - xv[3])/((xv[2] - xv[0])*(xv[2] - xv[1])*(xv[2] - xv[3]));
+    a[3]= (x - xv[0])*(x - xv[1])*(x - xv[2])/((xv[3] - xv[0])*(xv[3] - xv[1])*(xv[3] - xv[2]));
+
+    return;
+}
+
+double log_qnl_qe_func(int m, double Tg)
+{
+    double qe=pow(TWOPI*const_me_gr*res_state_D[m].mu_red*const_kB*Tg/const_h/const_h, 1.5);
+    double gw_gc=res_state_D[m].gw/2.0;
+    double qln=gw_gc*exp(const_h_kb*res_state_D[m].nuion/Tg);
+    return log(qln/qe);
+}
+
 //========================================================================================
 // computations of rates
 //========================================================================================
@@ -237,10 +267,16 @@ void get_rates(double Tg, double Te, vector<double> &Ai, vector<double> &Bi, vec
     }
     
     locate_JC(&res_state_D[0].lgTgarr[0], res_state_D[0].Npoints_Tg, logTg, &res_state_D[0].row); 
-    locate_JC(&res_state_D[0].lgrhoarr[0], res_state_D[0].Npoints_rho, logrho, &res_state_D[0].col); 
-
+    locate_JC(&res_state_D[0].lgrhoarr[0], res_state_D[0].Npoints_rho, logrho, &res_state_D[0].col);
+    
     int lx = (int) res_state_D[0].row;    // index of x coordinate of adjacent grid point to left of P
     int ly = (int) res_state_D[0].col;    // index of y coordinate of adjacent grid point below P
+
+    //============================================================================================
+    // center interpolation point
+    //============================================================================================
+    if(lx>=1) lx-=1;
+    if(ly>=1) ly-=1;
 
     /* --------------------------------------------- */
     /* Boundary condition                            */
@@ -248,47 +284,42 @@ void get_rates(double Tg, double Te, vector<double> &Ai, vector<double> &Bi, vec
     if(lx+3 > res_state_D[0].Npoints_Tg || ly+3 > res_state_D[0].Npoints_rho || lx<0 || ly<0)
     { cerr << " get_rates:: out of bounds for Tg = " << Tg << " Te= " << Te << ". Exiting! " << endl; exit(0); } 
     
-    double x = logTg;
-    double y = logrho;
-    double x1 = res_state_D[0].lgTgarr[lx];
-    double x2 = res_state_D[0].lgTgarr[lx+1];
-    double x3 = res_state_D[0].lgTgarr[lx+2];
-    double x4 = res_state_D[0].lgTgarr[lx+3];
-    double y1 = res_state_D[0].lgrhoarr[ly];
-    double y2 = res_state_D[0].lgrhoarr[ly+1];
-    double y3 = res_state_D[0].lgrhoarr[ly+2];
-    double y4 = res_state_D[0].lgrhoarr[ly+3];
-    
     /* ------------------------------------------- */
     /* Coefficients for 1-D interpolations         */
     /* ------------------------------------------- */
     double a[4], b[4];
-    //
-    a[0]= (x - x2)*(x - x3)*(x - x4)/((x1 - x2)*(x1 - x3)*(x1 - x4));
-    a[1]= (x - x1)*(x - x3)*(x - x4)/((x1 - x2)*(x2 - x3)*(x4 - x2));
-    a[2]= (x - x1)*(x - x2)*(x - x4)/((x1 - x3)*(x2 - x3)*(x3 - x4));       
-    a[3]= (x - x1)*(x - x2)*(x - x3)/((x3 - x4)*(x4 - x1)*(x2 - x4));
-    //
-    b[0]= (y - y2)*(y - y3)*(y - y4)/((y1 - y2)*(y1 - y3)*(y1 - y4));
-    b[1]= (y - y1)*(y - y3)*(y - y4)/((y1 - y2)*(y2 - y3)*(y4 - y2));
-    b[2]= (y - y1)*(y - y2)*(y - y4)/((y1 - y3)*(y2 - y3)*(y3 - y4));       
-    b[3]= (y - y1)*(y - y2)*(y - y3)/((y3 - y4)*(y4 - y1)*(y2 - y4));
-    
-    double fxy, fx; 
+    compute_coefficients_pol(a, logTg, &res_state_D[0].lgTgarr[lx]);
+    compute_coefficients_pol(b, logrho, &res_state_D[0].lgrhoarr[ly]);
+
+    double fxy, fx;
     for(int m=0; m<(int)res_state_D.size(); m++)
     {
         /* ------------------------------------- */
+        /* explicitly enforcing detailed balance */
+        /* ------------------------------------- */
+        if(Tg/2.725-1.0>z_detailed_balance) Ai[m] = exp(log_qnl_qe_func(m, Tg));
+        
+        /* ------------------------------------- */
         /* The 2-D interpolated valued of Ai     */
         /* ------------------------------------- */
-        fxy=0.0;
-        for(int i=0; i<4; i++)
+        else
         {
-            fx=0.0;
-            for(int k=0; k<4; k++) fx+=a[k]*(res_state_D[m].AiMatrix[k+lx][i+ly]-res_state_D[m].BiVec[k+lx]); 
-            fxy+=b[i]*fx;                                                          // interpolation in y 
+            fxy=0.0;
+            for(int i=0; i<4; i++)
+            {
+                fx=0.0;
+                for(int k=0; k<4; k++)
+                    fx+=a[k]*(res_state_D[m].AiMatrix[k+lx][i+ly]
+                              -res_state_D[m].BiVec[k+lx]
+                              -log_qnl_qe_func(m, exp(res_state_D[0].lgTgarr[k+lx])));
+                
+                fxy+=b[i]*fx;                                                      // interpolation in y
+            }
+            
+            // interpolation errors are worse than this
+            if(fabs(exp(fxy)-1.0)<=eps_A_effective) fxy=0.0;
+            Ai[m] = exp(fxy+log_qnl_qe_func(m, Tg));
         }
-        
-        Ai[m] = exp(fxy);
 
         /* ------------------------------------- */
         /* Simple 1-D interpolation to find Bi   */
@@ -337,53 +368,54 @@ void get_rates_all(double Tg, double Te, vector<double> &Ai, vector<double> &Bi,
     int lx = (int) res_state_D[0].row;    // index of x coordinate of adjacent grid point to left of P
     int ly = (int) res_state_D[0].col;    // index of y coordinate of adjacent grid point below P
     
+    //============================================================================================
+    // center interpolation point
+    //============================================================================================
+    if(lx>=1) lx-=1;
+    if(ly>=1) ly-=1;
+    
     /* --------------------------------------------- */
     /* Boundary condition                            */
     /* --------------------------------------------- */
     if(lx+3 > res_state_D[0].Npoints_Tg || ly+3 > res_state_D[0].Npoints_rho || lx<0 || ly<0)
     { cerr << " get_rates_all:: out of bounds for Tg = " << Tg << " Te= " << Te << ". Exiting! " << endl; exit(0); } 
     
-    double x = logTg;
-    double y = logrho;
-    double x1 = res_state_D[0].lgTgarr[lx];
-    double x2 = res_state_D[0].lgTgarr[lx+1];
-    double x3 = res_state_D[0].lgTgarr[lx+2];
-    double x4 = res_state_D[0].lgTgarr[lx+3];
-    double y1 = res_state_D[0].lgrhoarr[ly];
-    double y2 = res_state_D[0].lgrhoarr[ly+1];
-    double y3 = res_state_D[0].lgrhoarr[ly+2];
-    double y4 = res_state_D[0].lgrhoarr[ly+3];
-    
     /* ------------------------------------------- */
     /* Coefficients for 1-D interpolations         */
     /* ------------------------------------------- */
     double a[4], b[4];
-    //
-    a[0]= (x - x2)*(x - x3)*(x - x4)/((x1 - x2)*(x1 - x3)*(x1 - x4));
-    a[1]= (x - x1)*(x - x3)*(x - x4)/((x1 - x2)*(x2 - x3)*(x4 - x2));
-    a[2]= (x - x1)*(x - x2)*(x - x4)/((x1 - x3)*(x2 - x3)*(x3 - x4));       
-    a[3]= (x - x1)*(x - x2)*(x - x3)/((x3 - x4)*(x4 - x1)*(x2 - x4));
-    //
-    b[0]= (y - y2)*(y - y3)*(y - y4)/((y1 - y2)*(y1 - y3)*(y1 - y4));
-    b[1]= (y - y1)*(y - y3)*(y - y4)/((y1 - y2)*(y2 - y3)*(y4 - y2));
-    b[2]= (y - y1)*(y - y2)*(y - y4)/((y1 - y3)*(y2 - y3)*(y3 - y4));       
-    b[3]= (y - y1)*(y - y2)*(y - y3)/((y3 - y4)*(y4 - y1)*(y2 - y4));
+    compute_coefficients_pol(a, logTg, &res_state_D[0].lgTgarr[lx]);
+    compute_coefficients_pol(b, logrho, &res_state_D[0].lgrhoarr[ly]);
     
     double fxy, fx; 
     for(int m=0; m<(int)res_state_D.size(); m++)
     {
         /* ------------------------------------- */
+        /* explicitly enforcing detailed balance */
+        /* ------------------------------------- */
+        if(Tg/2.725-1.0>z_detailed_balance) Ai[m] = exp(log_qnl_qe_func(m, Tg));
+        
+        /* ------------------------------------- */
         /* The 2-D interpolated valued of Ai     */
         /* ------------------------------------- */
-        fxy=0.0;
-        for(int i=0; i<4; i++)
+        else
         {
-            fx=0.0;
-            for(int k=0; k<4; k++) fx+=a[k]*(res_state_D[m].AiMatrix[k+lx][i+ly]-res_state_D[m].BiVec[k+lx]); 
-            fxy+=b[i]*fx;                                                          // interpolation in y 
+            fxy=0.0;
+            for(int i=0; i<4; i++)
+            {
+                fx=0.0;
+                for(int k=0; k<4; k++)
+                    fx+=a[k]*(res_state_D[m].AiMatrix[k+lx][i+ly]
+                                -res_state_D[m].BiVec[k+lx]
+                                -log_qnl_qe_func(m, exp(res_state_D[0].lgTgarr[k+lx])));
+                
+                fxy+=b[i]*fx;                                                      // interpolation in y
+            }
+            
+            // interpolation errors are worse than this
+            if(fabs(exp(fxy)-1.0)<=eps_A_effective) fxy=0.0;
+            Ai[m] = exp(fxy+log_qnl_qe_func(m, Tg));
         }
-        
-        Ai[m] = exp(fxy);
         
         /* ------------------------------------- */
         /* Simple 1-D interpolation to find Bi   */
@@ -445,27 +477,22 @@ void get_Bitot(double Tg, vector<double> &Bitot)
     
     int lx = (int) res_state_D[0].row;    // index of x coordinate of adjacent grid point to left of P
     
+    //============================================================================================
+    // center interpolation point
+    //============================================================================================
+    if(lx>=1) lx-=1;
+
     // ---------------------------------------------
     // Boundary condition                           
     // ---------------------------------------------
     if(lx+3 > res_state_D[0].Npoints_Tg || lx<0)
     { cerr << " get_Bitot:: out of bounds for Tg = " << Tg << ". Exiting! " << endl; exit(0); } 
     
-    double x = logTg;
-    double x1 = res_state_D[0].lgTgarr[lx];
-    double x2 = res_state_D[0].lgTgarr[lx+1];
-    double x3 = res_state_D[0].lgTgarr[lx+2];
-    double x4 = res_state_D[0].lgTgarr[lx+3];
-    
-    // ------------------------------------------- 
+    // -------------------------------------------
     // Coefficients for 1-D interpolations         
     // ------------------------------------------- 
     double a[4];
-    //
-    a[0]= (x - x2)*(x - x3)*(x - x4)/((x1 - x2)*(x1 - x3)*(x1 - x4));
-    a[1]= (x - x1)*(x - x3)*(x - x4)/((x1 - x2)*(x2 - x3)*(x4 - x2));
-    a[2]= (x - x1)*(x - x2)*(x - x4)/((x1 - x3)*(x2 - x3)*(x3 - x4));       
-    a[3]= (x - x1)*(x - x2)*(x - x3)/((x3 - x4)*(x4 - x1)*(x2 - x4));
+    compute_coefficients_pol(a, logTg, &res_state_D[0].lgTgarr[lx]);
     
     double fx;  
     for(int m=0; m<(int)res_state_D.size(); m++)
@@ -501,27 +528,22 @@ void get_Bitot(double Tg, double &Bitot, int ires)
     
     int lx = (int) res_state_D[0].row;    // index of x coordinate of adjacent grid point to left of P
     
+    //============================================================================================
+    // center interpolation point
+    //============================================================================================
+    if(lx>=1) lx-=1;
+
     // ---------------------------------------------
     // Boundary condition                           
     // ---------------------------------------------
     if(lx+3 > res_state_D[0].Npoints_Tg || lx<0)
     { cerr << " get_Bitot:: out of bounds for Tg = " << Tg << ". Exiting! " << endl; exit(0); } 
     
-    double x = logTg;
-    double x1 = res_state_D[0].lgTgarr[lx];
-    double x2 = res_state_D[0].lgTgarr[lx+1];
-    double x3 = res_state_D[0].lgTgarr[lx+2];
-    double x4 = res_state_D[0].lgTgarr[lx+3];
-    
-    // ------------------------------------------- 
+    // -------------------------------------------
     // Coefficients for 1-D interpolations         
     // ------------------------------------------- 
     double a[4];
-    //
-    a[0]= (x - x2)*(x - x3)*(x - x4)/((x1 - x2)*(x1 - x3)*(x1 - x4));
-    a[1]= (x - x1)*(x - x3)*(x - x4)/((x1 - x2)*(x2 - x3)*(x4 - x2));
-    a[2]= (x - x1)*(x - x2)*(x - x4)/((x1 - x3)*(x2 - x3)*(x3 - x4));       
-    a[3]= (x - x1)*(x - x2)*(x - x3)/((x3 - x4)*(x4 - x1)*(x2 - x4));
+    compute_coefficients_pol(a, logTg, &res_state_D[0].lgTgarr[lx]);
     
     // --------------------------------------- 
     // Simple 1-D interpolation to find Bitot   

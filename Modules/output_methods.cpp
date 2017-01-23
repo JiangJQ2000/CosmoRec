@@ -31,6 +31,18 @@ void set_detailed_name()
         if(KK_or_PF_Lorentz) detailedname+="PF.";
     }
     
+    if(FC_CosmoRec.runmode>0)
+    {
+        if(FC_CosmoRec.a_scale!=1.0) detailedname+="alp.";
+        if(FC_CosmoRec.m_scale!=1.0) detailedname+="me.";
+        if(FC_CosmoRec.runmode==1) detailedname+="Boltz.";
+        else if(FC_CosmoRec.runmode==2) detailedname+="sigT.";
+        else if(FC_CosmoRec.runmode==3) detailedname+="A2s1s.";
+        else if(FC_CosmoRec.runmode==4) detailedname+="phot.";
+        else if(FC_CosmoRec.runmode==5) detailedname+="Ly-a.";
+        else if(FC_CosmoRec.runmode==6) detailedname+="all.";
+    }
+    
     if(show_CosmoRec_mess>=0)
         cout << " set_detailed_name: detailedname: " << detailedname << endl;
     
@@ -65,10 +77,19 @@ void open_files(ofstream *Xfiles, string path, int fresh=1)
 //  Xfiles[5].open((prename+"HI.HeI.1s"+addname).c_str(), wrmode); 
     if(write_HI_distortion) Xfiles[5].open((prename+"HI_distortion"+addname).c_str(), wrmode); 
 
+    // Added for correction functions LH & JC
+    if(write_corrections)
+    {
+        if(RECFAST_atomic_constants::RF_eval_ion_Tr)
+            Xfiles[6].open((prename+"correction_function.Tr"+addname).c_str(),wrmode);
+        else Xfiles[6].open((prename+"correction_function"+addname).c_str(),wrmode);
+    }
+
     if(write_Xe_Te_sol && iteration_count==0) Xfiles[0].precision(8);
     if(write_Xe_Te_sol) Xfiles[1].precision(8);
     if(write_populations) Xfiles[3].precision(12);
     if(write_HI_distortion) Xfiles[5].precision(12);
+    if(write_corrections) Xfiles[6].precision(12); // Added for correction functions LH
     
     return;
 }
@@ -79,6 +100,7 @@ void close_files(ofstream *Xfiles)
     if(write_Xe_Te_sol) Xfiles[1].close();
     if(write_populations) Xfiles[3].close();
     if(write_HI_distortion) Xfiles[5].close();
+    if(write_corrections) Xfiles[6].close(); // Added for correction functions LH
     
     return;
 }
@@ -107,6 +129,26 @@ void write_HI_X_array_to_file(ofstream &ofile, double zval, double *X, int nHIeq
     return;
 }
 
+void write_correction_functions_to_file(ofstream &ofile, double zval, Cosmos &cosmos)
+{
+    // This function calculates and then writes the correction functions from CosmoRec and 
+    // Recfast++ into their own files LH
+    // Following the same schematic as the HI populations, we want to get the redshifts in with 
+    // their associated hydrogen and HeI corrections.  
+    
+    // Refrain from considering the correction functions if the redshift is past the Recfast++ limit
+    if (zval < 50.) return;
+    double f_H, f_He, f_tot;
+    f_tot = (1.0-Hydrogen_Atoms.X_tot()+parameters.fHe-HeI_Atoms.X_tot())/(cosmos.Xp(zval)+parameters.fHe-cosmos.XHe1s(zval))-1;
+    f_H  = (1.0-Hydrogen_Atoms.X_tot())/cosmos.Xp(zval)-1;
+    f_He = (parameters.fHe-HeI_Atoms.X_tot())/(parameters.fHe-cosmos.XHe1s(zval))-1;
+    // Write correction functions to the file along with the redshift
+    ofile << scientific << zval << " " << f_tot << " " << f_H << " " << f_He;
+    ofile << endl;
+    
+    return;
+}
+
 //--------------------------------------------------------------------------------------------
 void write_array_to_file(ofstream &ofile, double zval, double *X, int neq)
 {
@@ -126,6 +168,7 @@ void write_X_Recfast_z_to_file(ofstream &ofile, double zval, Cosmos &cosmos)
           << cosmos.Te(zval) << " "
 //        << cosmos.dXe_dz_Seager(zval) << " " << cosmos.X1s(zval) << " " 
 //        << cosmos.dX1s_dz(zval) << " " << cosmos.Te_Tg(zval) << " " << cosmos.H(zval)
+//        << cosmos.Xp(zval) << " " << parameters.fHe-cosmos.XHe1s(zval)
           << endl;
     
     return;
@@ -197,6 +240,11 @@ void write_files(double z, ofstream *Xfiles)
 //  write_array_to_file(Xfiles[4], z, &Level_I.X[Level_I.nHIeq+1], Level_I.neq-(Level_I.nHIeq+1)-1);
     //
 //  write_HI_HeI_1s_array_to_file(Xfiles[5], z);    
+    
+    //==============================================================
+    // write correction functions between Recfast++ and CosmoRec LH
+    //==============================================================
+    if (write_corrections) write_correction_functions_to_file(Xfiles[6], z, cosmos);
     
     return;
 }

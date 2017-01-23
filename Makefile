@@ -3,8 +3,8 @@
 #============================================================================================
 DEV_DIR = ./Development
 REC_BASE= ./Rec_database
-HELIUM_DIR= Helium
-#HELIUM_DIR= Helium.v1.0
+#HELIUM_DIR= Helium
+HELIUM_DIR= Helium.v1.0
 
 MAKE_COMMAND = make -f Makefile.in DEV_DIR=$(DEV_DIR) REC_BASE=$(REC_BASE) HELIUM_DIR=$(HELIUM_DIR)
 

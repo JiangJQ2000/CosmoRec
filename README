@@ -4,7 +4,7 @@
 //
 //==================================================================================================
 //
-// Author: J. Chluba (MPA & CITA). 
+// Author: J. Chluba (MPA & CITA & JHU & JBCA). 
 // All rights reserved. No guarantee for the correctness of the outputs is given!
 //
 // Some modifications and additions: J. Fung (Astro. Dept. UoT), R. Thomas (CITA), G. Vasil (CITA)
@@ -56,7 +56,7 @@
 //
 //--------------------------------------------------------------------------------------------------
 //
-// Update (12.10.2014 | CosmoRec v2.1b)
+// Update (12.10.2014 | CosmoRec v2.1b [not released separately])
 // 
 // - added simple routines to include heating by magnetic fields
 // - collisional ionizations added which may be important for Te>>Tg at late times

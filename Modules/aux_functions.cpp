@@ -129,18 +129,17 @@ void read_entries_from_parameter_file(ifstream &paramfile, double *param)
 {
     for(int i=0; i<12; i++) paramfile >> param[i];
     
-    // Dummy variables set up for the alpha and reduced mass scalings as well as the omission mode
-    double dumAlpha, dumRatio, dumMode;
-    
     // The code will now read in the parameters into the dummy parameters associated with these files
     // double ---> size_t information will be lost when the parameters are converted in evalODE.Recfast or ODEeval
     // These read in values will now go into Recfast++ and CosmoRec interdependently
-    paramfile >> dumAlpha;
-    paramfile >> dumRatio;
-    paramfile >> dumMode;
-    FC_CosmoRec.a_scale = RECFAST_atomic_constants::RF_aScale = dumAlpha;
-    FC_CosmoRec.m_scale = RECFAST_atomic_constants::RF_mScale = dumRatio;
-    FC_CosmoRec.runmode = RECFAST_atomic_constants::RF_rMode  = dumMode;
+    paramfile >> RECFAST_atomic_constants::RF_aScale;
+    paramfile >> RECFAST_atomic_constants::RF_mScale;
+    paramfile >> RECFAST_atomic_constants::RF_pScale;
+    paramfile >> RECFAST_atomic_constants::RF_rMode;
+    FC_CosmoRec.a_scale = RECFAST_atomic_constants::RF_aScale;
+    FC_CosmoRec.m_scale = RECFAST_atomic_constants::RF_mScale;
+    FC_CosmoRec.p_scale = RECFAST_atomic_constants::RF_pScale;
+    FC_CosmoRec.runmode = RECFAST_atomic_constants::RF_rMode;
     
     paramfile >> nShells;
     paramfile >> nS_effective;
@@ -158,7 +157,9 @@ void read_entries_from_parameter_file(ifstream &paramfile, double *param)
     //======================================================================
     paramfile >> B0_CosmoRec; // B0 in nG
     paramfile >> nB_CosmoRec;
-    set_PMF_parameters_KK_PF(B0_CosmoRec, nB_CosmoRec, param[9]);
+    int PMF_mode;
+    paramfile >> PMF_mode;
+    set_PMF_parameters_KK_PF(B0_CosmoRec, nB_CosmoRec, PMF_mode, param[9]);
     
     //======================================================================
     paramfile >> nShellsHeI;

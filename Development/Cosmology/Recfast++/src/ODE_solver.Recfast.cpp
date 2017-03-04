@@ -15,6 +15,7 @@
 // Author: Jens Chluba with contributions from Geoff Vasil at CITA
 // Date: 12/01/2010
 //==================================================================================================
+// 16.02.2017: added brute force solution for moderate matrix via Gaussian elimination [JC]
 
 #include <cstdlib>
 #include <cmath>
@@ -784,16 +785,52 @@ int ODE_Solver_estimate_error_and_next_possible_step_size(int order, const doubl
 }
 
 //==================================================================================================
+// brute force solution of A*x == b for moderate matrix (e.g., 3x3 matrix) via Gaussian elimination
+// (added 16.02.2017 JC)
+//==================================================================================================
+void ODE_Solver_Solve_LA_system_Gaussian(vector<double > &A, vector<double > &b, vector<double > &x,
+                                         int verbose=0)
+{
+    int neq=b.size();
+    // elimiated elements below diagonal
+    for(int cdel=0; cdel<neq; cdel++)
+    {
+        double p=A[cdel+neq*cdel];
+        for(int c=cdel; c<neq; c++) A[c+neq*cdel]/=p;
+        b[cdel]/=p;
+        
+        for(int r=1+cdel; r<neq; r++)
+        {
+            p=A[cdel+neq*r];
+            for(int c=cdel; c<neq; c++) A[c+neq*r]-=p*A[c+neq*cdel];
+            b[r]-=p*b[cdel];
+        }
+    }
+
+    // solve by backward substitution
+    for(int r=neq-1; r>=0; r--)
+    {
+        x[r]=b[r];
+        for(int c=r+1; c<neq; c++) x[r]-=x[c]*A[c+r*neq];
+    }
+    
+    return;
+}
+
+//==================================================================================================
 // Solving the Matrix Equation
 //==================================================================================================
 void ODE_Solver_Solve_LA_system(vector<double > &A, vector<double > &b, vector<double > &x, 
                                 double tol, int verbose=0)
 {
+    // 16.02.2017 JC
+    if(b.size()<=10){ ODE_Solver_Solve_LA_system_Gaussian(A, b, x, verbose); return; }
+    
     // solve linear equation A*x=b
-    int ifail=0, maxit = 500;                   // Maximum iterations
+    int ifail=0, maxit = 5000;                  // Maximum iterations
     
     for(unsigned int i=0; i<x.size(); i++) x[i]=0.0; // reset x-vector
-            
+    
     ifail = BiCGSTAB_JC(A, x, b, maxit, tol);   // Solve linear system
     
     if(verbose>0 && ifail!=0)

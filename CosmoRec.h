@@ -2,11 +2,11 @@
 //
 // Author: Jens Chluba & Luke Hart
 // first implementation: April 2010
-// last modification   : Jan   2017
+// last modification   : Feb   2017
 // purpose: to access main CosmoRec code
 //
 //===========================================================================================================
-// 22.01.2017: added correction function computation as standard output [LH & JC]
+// 15.02.2017: added controll for magnetic field modes [JC]
 // 22.01.2017: added Recfast++ variation of fundamental constants setup [LH & JC]
 // 14.11.2014: control of magnetic field parameters is now all in CosmoRec.cpp (also Recfast++ part...)
 // 17.10.2014: conversion from B_lambda to B0 when calling in batch mode
@@ -81,6 +81,9 @@ int CosmoRec(int narg, char *args[]);
 //
 // runpars[4]> 0: B0 in nG. For ==0 no heating is added.
 // runpars[5]   : nB spectral index for magnetic fields
+// runpars[6]   : magnetic field heating mode
+//             0: turbulent decay; 1: ambipolar diffusion; 2: both
+//            <0: same but using Paoletti & Finelli norm for B0
 //
 //===========================================================================================================
 int CosmoRec(const int runmode, const double runpars[6],

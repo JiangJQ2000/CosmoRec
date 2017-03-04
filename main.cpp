@@ -3,6 +3,7 @@
 // last modification: Dec 2010
 // purpose: to access the main CosmoRec code from console
 //==================================================================================================
+// 16.02.2017: Recfast++ runmode sigmentation fault fixed [JC]
 
 #include "routines.h"
 #include "CosmoRec.h"
@@ -20,11 +21,13 @@ using namespace std;
 //==================================================================================================
 int main_random()
 { 
-    int nrep = 100000;    
-    int runmode=0;
-    // 0: DM annihilation; 1: run settings; 2: outputs; 3: A2s1s; 4: B0; 5: nB
-    double runpars[6]={0.0, 0, 2, 0.0, 3.0, -1.0};
-    
+    int nrep = 10000;
+    int runmode=3;
+    //int runmode=3;
+    // 0: DM annihilation; 1: run settings; 2: outputs; 3: A2s1s; 4: B0; 5: nB; 6: PMF_mode
+    double runpars[7]={0.0, 0, 0, 0.0, 3.0, -1.0, 2};
+
+
     //==============================================================================================
     double ombh2_l = 0.01;
     double ombh2_u = 0.04;
@@ -46,10 +49,16 @@ int main_random()
 
     double A2s1s_l = 4.0;
     double A2s1s_u = 15.0;
+
+    double B0_l    = 0.1;
+    double B0_u    = 5.0;
+    
+    double nB_l    = -2.9;
+    double nB_u    =  2.0;
     //==============================================================================================
     
     double h0, omegab, omegac, omegak=0.0;
-    double tcmb, yhe, Nnu, A2s1s;
+    double tcmb, yhe, Nnu, A2s1s, B0, nB;
     
     int nz=10000;
     double *z_arr=new double[nz];
@@ -75,16 +84,23 @@ int main_random()
         yhe = yhe_l + (yhe_u - yhe_l) * drand48();
         Nnu = Nnu_l + (Nnu_u - Nnu_l) * drand48();
         A2s1s = A2s1s_l + (A2s1s_u - A2s1s_l) * drand48();
-      
+        B0 = B0_l + (B0_u - B0_l) * drand48();
+        nB = nB_l + (nB_u - nB_l) * drand48();
+        
         cout << " omegab= " << omegab << endl;
+        cout << " omegac= " << omegac << endl;
         cout << " omegam= " << omegac+omegab << endl;
         cout << " h0=  " << h0 << endl;
         cout << " tcmb=  " << tcmb << endl;
         cout << " yhe=  " << yhe << endl;
         cout << " Nnu=  " << Nnu << endl;
         cout << " A2s1s=  " << A2s1s << endl;
+        cout << " B0=  " << B0 << endl;
+        cout << " nB=  " << nB << endl;
         
         runpars[3]=A2s1s;
+        runpars[4]=B0;
+        runpars[5]=nB;
         CosmoRec(runmode, runpars, omegac, omegab, omegak, Nnu,
                  h0, tcmb, yhe, nz, z_arr, Xe_arr, Te_arr, 0);
         
@@ -103,7 +119,7 @@ int main_random()
     delete [] Xe_arr;
     delete [] Te_arr;
     
-    cleanup_CosmoRec();
+    if(runmode<2) cleanup_CosmoRec();
     
     return 0;
 }
@@ -116,7 +132,7 @@ int main_random()
 int main_batch_mode()
 { 
     int runmode=0, label=1;
-    double runpars[6]={0.0, 0, 0, 0.0, 0.0, 0.0};
+    double runpars[7]={0.0, 0, 0, 0.0, 0.0, 0.0};
     
     double omegac=0.216;
     double omegab=0.044;
@@ -183,7 +199,7 @@ int main_batch_mode()
     delete [] Xe_arr;
     delete [] Te_arr;
     
-    cleanup_CosmoRec();
+    if(runmode<2) cleanup_CosmoRec();
     
     return 0;
 }

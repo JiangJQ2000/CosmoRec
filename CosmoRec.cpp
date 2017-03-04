@@ -2,11 +2,11 @@
 //
 // Author: Jens Chluba & Luke Hart
 // first implementation: April 2010
-// last modification   : Jan   2017
+// last modification   : Feb   2017
 // purpose: to access main CosmoRec code
 //
 //===========================================================================================================
-// 22.01.2017: added correction function computation as standard output [LH & JC]
+// 15.02.2017: added controll for magnetic field modes [JC]
 // 22.01.2017: added Recfast++ variation of fundamental constants setup [LH & JC]
 // 14.11.2014: control of magnetic field parameters is now all in CosmoRec.cpp (also Recfast++ part...)
 // 17.10.2014: conversion from B_lambda to B0 when calling in batch mode
@@ -105,7 +105,7 @@ double RECFAST_atomic_constants::RF_Lam2s1sH     = 8.22458; // Recfast++ default
 //===========================================================================================================
 // variation of fundamental constants [Oct 2016 - Jan 2017: LH & JC]
 //===========================================================================================================
-int RECFAST_atomic_constants::RF_rMode     = 0;
+int RECFAST_atomic_constants::RF_rMode      = 0;
 double RECFAST_atomic_constants::RF_aScale  = 1.0;                    // default value for alpha rescaling LH
 double RECFAST_atomic_constants::RF_mScale  = 1.0;                    // default value for alpha rescaling LH
 double RECFAST_atomic_constants::RF_pScale  = 0.0;                    // default value for redshift power law
@@ -164,8 +164,8 @@ void print_message(string mess);
 //===========================================================================================================
 // Magnetic field heating module (added Oct. 2014)
 //===========================================================================================================
-bool decaying_turb_on =1;
-bool ambipolar_heat_on=0;
+bool decaying_turb_on =0;  // default mode set in "./Modules/Magnetic_fields.cpp"
+bool ambipolar_heat_on=0;  // default mode set in "./Modules/Magnetic_fields.cpp"
 bool KK_or_PF_Lorentz =0;  // choose parametrization of KK (==0) or PF (==1)
 
 // RECFAST specific settings (automatic at this point...)
@@ -764,9 +764,11 @@ void run_RECFAST_pp(double param[12], const int nz, double *z_arr,
 //
 // runpars[4]> 0: B0 in nG. For ==0 no heating is added.
 // runpars[5]   : nB spectral index for magnetic fields
+//             0: turbulent decay; 1: ambipolar diffusion; 2: both
+//            <0: same but using Paoletti & Finelli norm for B0
 //
 //===========================================================================================================
-int CosmoRec(const int runmode, const double runpars[6],
+int CosmoRec(const int runmode, const double runpars[7],
              const double omegac, const double omegab, 
              const double omegak, const double Nnu,  
              const double h0, const double tcmb, const double yhe,
@@ -797,7 +799,7 @@ int CosmoRec(const int runmode, const double runpars[6],
     //======================================================================
     // magnetic field heating (added 11.10.2014)
     //======================================================================
-    set_PMF_parameters_KK_PF(runpars[4], runpars[5], h0);
+    set_PMF_parameters_KK_PF(runpars[4], runpars[5], runpars[6], h0);
     
     //======================================================================
     double params[12];

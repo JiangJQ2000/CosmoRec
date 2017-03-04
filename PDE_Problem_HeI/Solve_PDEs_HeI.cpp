@@ -1,6 +1,7 @@
 //====================================================================================================================
 // Authors Jens Chluba & Jeffrey Fung Feb-May 2011
 //====================================================================================================================
+// 26.01.2016: fixed small bug with n^1 D - 1 S transition setup (was already fixed in CosmoSpec version...)
 // 30.07.2014: Xi_Data is passed on read only
 
 #include <iostream>
@@ -48,7 +49,7 @@ int show_messages_HeI=-1;
 // settings for the grid
 //
 //====================================================================================================================
-int core_HeI=25;            // points per Doppler width in the core region; 
+int core_HeI=25;            // points per Doppler width in the core region;
                             // For +/- 10 xD core=25 implies 500 points (which is recommended).
 int dec_HeI=50;             // points per decade; from 10^-4 --> 1 for ndec==50 gives ~ 200 points
 
@@ -464,8 +465,10 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
     
     if(nHeI_Trans>=3)
     {
-        HeI_level_indices.push_back(HeIAtoms.Get_Level_index(3, 1, 1, 1)); // 3^3 P - 1 S
-        HeI_level_indices.push_back(HeIAtoms.Get_Level_index(3, 2, 0, 1)); // 3^1 D - 1 S
+        if(HeIAtoms.are_add_TS_lines_loaded())
+            HeI_level_indices.push_back(HeIAtoms.Get_Level_index(3, 1, 1, 1)); // 3^3 P - 1 S
+        if(HeIAtoms.are_add_Q_lines_loaded())
+            HeI_level_indices.push_back(HeIAtoms.Get_Level_index(3, 2, 0, 2)); // 3^1 D - 1 S
         HeI_level_indices.push_back(HeIAtoms.Get_Level_index(3, 1, 0, 1)); // 3^1 P - 1 S
     }
     
@@ -475,19 +478,13 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
         
         for(int nn=4; nn<=nnm; nn++)
         {
-            HeI_level_indices.push_back(HeIAtoms.Get_Level_index(nn, 1, 1, 1)); // n^3 P - 1 S
-            HeI_level_indices.push_back(HeIAtoms.Get_Level_index(nn, 2, 0, 1)); // n^1 D - 1 S
+            if(HeIAtoms.are_add_TS_lines_loaded())
+                HeI_level_indices.push_back(HeIAtoms.Get_Level_index(nn, 1, 1, 1)); // n^3 P - 1 S
+            if(HeIAtoms.are_add_Q_lines_loaded())
+                HeI_level_indices.push_back(HeIAtoms.Get_Level_index(nn, 2, 0, 2)); // n^1 D - 1 S
             HeI_level_indices.push_back(HeIAtoms.Get_Level_index(nn, 1, 0, 1)); // n^1 P - 1 S
         }
     }    
-    //==============================================================================================
-//    HeI_level_indices.clear();
-//    HeI_level_indices.push_back(HeIAtoms.Get_Level_index(3, 1, 0, 1)); 
-//    HeI_level_indices.push_back(HeIAtoms.Get_Level_index(2, 1, 1, 1)); 
-
-//    HeI_level_indices.push_back(HeIAtoms.Get_Level_index(2, 1, 1, 1)); // 2^3 P - 1 S
-//    HeI_level_indices.push_back(HeIAtoms.Get_Level_index(2, 1, 0, 1)); // 2^1 P - 1 S
-    
     
     //==============================================================================================
     // save resolved level indices for computation
@@ -699,8 +696,7 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
                 //==================================================================================
                 for(int line=0; line<(int)HeI_level_indices.size(); line++)
                 {
-                    
-                    DF_vec[line].push_back(compute_DP_HeI(line, zout, nu21, cos, HeIAtoms, 
+                    DF_vec[line].push_back(compute_DP_HeI(line, zout, nu21, cos, HeIAtoms,
                                                           SPDE_D_HeI.xarr, SPDE_D_HeI.yarr, 
                                                           SPDE_D_HeI.Fwork, 
                                                           PDE_funcs_HeI.exp_x, PDE_funcs_HeI));

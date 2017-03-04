@@ -72,7 +72,7 @@ double fDM_CosmoRec=0.0;
 //==================================================================================================
 bool magnetic_fields=0;
 double B0_CosmoRec=0.0, nB_CosmoRec=0.0, kD_CosmoRec=0.0;
-void set_PMF_parameters_KK_PF(double B0, double nB, double h0);
+void set_PMF_parameters_KK_PF(double B0, double nB, int PMF_mode, double h0);
 
 //==================================================================================================
 // memory for CosmoRec-ODE solver

@@ -11,7 +11,7 @@
 //========================================================================================
 // convert parameters between KK and PF parametrizations
 //========================================================================================
-void set_PMF_parameters_KK_PF(double B0, double nB, double h0)
+void set_PMF_parameters_KK_PF(double B0, double nB, int PMF_mode, double h0)
 {
     if(B0>0.0)
     {
@@ -36,16 +36,32 @@ void set_PMF_parameters_KK_PF(double B0, double nB, double h0)
         B0_CosmoRec=RECFAST_atomic_constants::RF_B0_heating=B0;
         nB_CosmoRec=RECFAST_atomic_constants::RF_nB_heating=nB;
         kD_CosmoRec=RECFAST_atomic_constants::RF_kD_heating=kD;
+        
+        if(PMF_mode< 0){ KK_or_PF_Lorentz=1; PMF_mode*=-1; }
+        else KK_or_PF_Lorentz=0;
+        
+        if(PMF_mode==0){ decaying_turb_on=1; ambipolar_heat_on=0; }
+        else if(PMF_mode==1){ decaying_turb_on=0; ambipolar_heat_on=1; }
+        else if(PMF_mode==2){ decaying_turb_on=1; ambipolar_heat_on=1; }
+        else{ cerr << " PMF-mode not existing. Exiting..." << endl; exit(1); }
+
+        RECFAST_atomic_constants::RF_eval_ion_Tr = 1; // do new recfast evaluation
     }
     else
     {
+        KK_or_PF_Lorentz=decaying_turb_on=ambipolar_heat_on=0;
         B0_CosmoRec=RECFAST_atomic_constants::RF_B0_heating=0.0;
         nB_CosmoRec=RECFAST_atomic_constants::RF_nB_heating=0.0;
         kD_CosmoRec=RECFAST_atomic_constants::RF_kD_heating=0.0;
+
         RECFAST_atomic_constants::RF_eval_ion_Tr = 0; // do old recfast evaluation
         //RECFAST_atomic_constants::RF_eval_ion_Tr = 1; // do new recfast evaluation
     }
     
+    RECFAST_atomic_constants::RF_KK_or_PF_Lorentz = KK_or_PF_Lorentz;
+    RECFAST_atomic_constants::RF_decaying_turb_on = decaying_turb_on;
+    RECFAST_atomic_constants::RF_ambipolar_heat_on= ambipolar_heat_on;
+
     return;
 }
 

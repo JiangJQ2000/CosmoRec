@@ -474,7 +474,7 @@ double Electron_Level::g_phot_ion(double nu)
     else if(Recombination_flag==1) r=Interaction_with_Photons_SH_QSP.g_phot_ion(nu);
     else if(Recombination_flag==2) r=Interaction_with_Photons_SH.g_phot_ion(nu);
     
-    return r; // JC, CHECK again!
+    return r; // JC, CHECK again --> should be correct since Gaunt-factor dimensionless.
 }
 
 //====================================================================================================================
@@ -1346,8 +1346,9 @@ double Gas_of_Atoms::R_phot_tot_BB(int nlow)         // total photoionization ra
 double Gas_of_Atoms::Ni_NeNc_LTE(unsigned int i, double TM)
 { 
     double gi=2.0*(2.0*Get_l_of_Level(i)+1.0), gc=1.0;
-    return gi/2.0/gc*pow(const_lambdac/Level(i).get_ME_scale(), 3)
-                    *pow(2.0*PI*const_kb_mec2/Level(i).get_ME_scale()*TM*Level(i).Get_mu_red(), -1.5)
+    // factors for variation of fundamental constants: energy rescaled internally; just red. mass needed!
+    return gi/2.0/gc*pow(const_lambdac, 3)
+                    *pow(2.0*PI*const_kb_mec2*TM*Level(i).get_ME_scale()*Level(i).Get_mu_red(), -1.5)
                     *exp(Level(i).Get_E_ion_ergs()/const_kB/TM );
 }
 

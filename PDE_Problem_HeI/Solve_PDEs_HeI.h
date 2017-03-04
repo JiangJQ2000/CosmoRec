@@ -1,6 +1,7 @@
 //====================================================================================================================
 // Authors Jens Chluba & Jeffrey Fung Feb-May 2011
 //====================================================================================================================
+// 26.01.2016: fixed small bug with n^1 D - 1 S transition setup (was already fixed in CosmoSpec version...)
 // 30.07.2014: Xi_Data is passed on read only
 
 #ifndef SOLVE_PDES_HEI_H

@@ -25,7 +25,8 @@ const double const_DI_A2s_1s = const_HI_A2s_1s;   // Deuterium 2s decay rate
 //-------------------------------------------------------------------------------------------------------
 // atomic data for Helium I
 //-------------------------------------------------------------------------------------------------------
-const double const_HeI_A2s_1s = 51.3 ;            // HeI 2s-1s two photon rate in [s^-1] ( Drake (1969) )
+const double const_HeI_A2s_1s_0 = 51.3 ;          // HeI 2s-1s two photon rate in [s^-1] ( Drake (1969) )
+extern double const_HeI_A2s_1s;                   // used as globally accessible variable
 //const double const_HeI_A2s_1s = 50.94;          // HeI 2s-1s two photon rate in [s^-1] ( Eric Switzer / Drake 1986 ) --> small difference with normal value
 const double const_HeI_A23s_1s = 4.02e-9;         // HeI 2^3 s-1^1 s two photon rate in [s^-1] Drake (1969)
 const double const_HeI_A23s_1s_M1 = 1.272426e-4;  // HeI 2^3 s-1^1 s (M1-transition) in [s^-1] Lach & Pachucki (2001)

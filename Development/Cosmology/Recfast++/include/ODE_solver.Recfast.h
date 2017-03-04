@@ -15,6 +15,7 @@
 // Author: Jens Chluba with contributions from Geoff Vasil at CITA
 // Date: 12/01/2010
 //=====================================================================================================
+// 16.02.2017: added brute force solution for moderate matrix via Gaussian elimination [JC]
 
 #ifndef _ODE_SOLVER_RECFAST_H_
 #define _ODE_SOLVER_RECFAST_H_

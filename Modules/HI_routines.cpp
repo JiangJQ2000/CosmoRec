@@ -225,7 +225,7 @@ void rescale_variables_HI(double alpha_scale, double mu_scale, size_t run_mode,
     }
     
     // rescale hydrogen atom. This is done interally and relative to whatever state the atom is in [LH & JC]
-    if (run_mode == 1) Hydrogen_Atoms.rescale_gas(alpha_scale, mu_scale);
+    if (run_mode == 1 || run_mode == 6) Hydrogen_Atoms.rescale_gas(alpha_scale, mu_scale);
  
     // set rescalings for HI PDE problem [LH & JC]
     if (run_mode == 6) Set_alpha_and_me_scale(alpha_scale, mu_scale);

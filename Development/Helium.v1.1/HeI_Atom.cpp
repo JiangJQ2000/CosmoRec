@@ -2549,7 +2549,6 @@ void Gas_of_HeI_Atoms::init(int nS, int njres, int nQ, int nTS, int mflag)
     ME_scale = 1.;
     energy_scale = 1.;
     sig_scale = 1.;
-    rate_scale_A = 1.;
     rate_scale_B = 1.;
 
     return;
@@ -3438,7 +3437,8 @@ void Gas_of_HeI_Atoms::rescale_gas(double alpha_scale, double me_scale)
     
     // Need to reinitialise the Voigt profiles
     this->voigt_init(0);
-
+    HILyc.rescale_phot(alpha_scale, me_scale); // rescale Ly-c crossection [JC, March 6th, 2017]
+    
     // to compute rescaled photo_ionization and recombination rates
     this->FSC_scale = alpha_scale;
     this->ME_scale = me_scale;

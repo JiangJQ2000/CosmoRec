@@ -24,7 +24,7 @@ void switch_on_1s_2s_correction();
 //==================================================================================================
 // set scalings for fundamental constants, if required [LH & JC]
 //==================================================================================================
-void Set_alpha_and_me_scale(double a_scale, double m_scale);
+void Set_rescaling_PDE_HI(double a_scale, double m_scale);
 
 //==================================================================================================
 // this allows to switch the 1s-2s absorption correction off; in the radiative transfer 

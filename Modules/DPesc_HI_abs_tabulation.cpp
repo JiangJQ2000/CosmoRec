@@ -34,8 +34,8 @@ static int show_error_message=0;
 double pd_2P_Singlet_HeI(double Tg)
 {
     double Bitot;
-    get_Bitot_HeI(Tg, Bitot, get_res_index_HeI(2));    
-    return 1.0/(1.0+HeI_Atoms.nP_S_profile(2).Get_A21()/Bitot);
+    get_Bitot_HeI(Tg*FC_CosmoRec.f_t, Bitot, get_res_index_HeI(2));
+    return 1.0/(1.0+HeI_Atoms.nP_S_profile(2).Get_A21()/Bitot/FC_CosmoRec.f_b);
 }
 
 double pd_2P_Triplet_HeI(double Tg)
@@ -44,9 +44,9 @@ double pd_2P_Triplet_HeI(double Tg)
     
     //-------------------------------------------------------------    
     double Bitot;
-    get_Bitot_HeI(Tg, Bitot, get_res_index_HeI(HeI_Atoms.Get_Level_index(2, 1, 1, 1)));
+    get_Bitot_HeI(Tg*FC_CosmoRec.f_t, Bitot, get_res_index_HeI(HeI_Atoms.Get_Level_index(2, 1, 1, 1)));
     
-    return 1.0/(1.0+HeI_Atoms.nP_T_profile(2).Get_A21()/Bitot);
+    return 1.0/(1.0+HeI_Atoms.nP_T_profile(2).Get_A21()/Bitot/FC_CosmoRec.f_b);
 }
 
 //===========================================================================================================
@@ -189,10 +189,14 @@ double DP_interpol_S(double T, double tauS, double eta)
 //    return call_DP_Singlet(T, eta, tauS, pd_2P_Singlet_HeI(T));
 //    return 0.0;
     
+    // to include remapping of pretabulated values [March, 2017, JC]
+    double Tg=T;
+    T*=FC_CosmoRec.f_t;
+    
     unsigned long int nT=DP_collection.T.size();
     unsigned long int iT;
     double lgT=log(T);
-    double pd=pd_2P_Singlet_HeI(T);
+    double pd=pd_2P_Singlet_HeI(Tg);
     
     //===========================================================================
     // find index for Tg (Tg is ordered Tg_0 > Tg_1 > ... > Tg_n)
@@ -207,7 +211,7 @@ double DP_interpol_S(double T, double tauS, double eta)
                                        << exp(DP_collection.T[nT-1]) << " " 
                                        << T << "\n";        
         
-        return call_DP_Singlet(T, fabs(eta), fabs(tauS), pd);
+        return call_DP_Singlet(Tg, fabs(eta), fabs(tauS), pd);
     }
     
     locate_JC(&DP_collection.T[0], nT, lgT, &iT); 
@@ -369,10 +373,14 @@ double DP_interpol_T(double T, double tauS, double eta)
 //    return call_DP_Triplet(T, fabs(eta), fabs(tauS), pd_2P_Triplet_HeI(T));
 //    return 0.0;
     
+    // to include remapping of pretabulated values [March, 2017, JC]
+    double Tg=T;
+    T*=FC_CosmoRec.f_t;
+    
     unsigned long int nT=DP_collection.T.size();
     unsigned long int iT;
     double lgT=log(T);
-    double pd=pd_2P_Triplet_HeI(T);
+    double pd=pd_2P_Triplet_HeI(Tg);
    
     //===========================================================================
     // find index for Tg (Tg is ordered Tg_0 > Tg_1 > ... > Tg_n)
@@ -387,7 +395,7 @@ double DP_interpol_T(double T, double tauS, double eta)
                                        << exp(DP_collection.T[nT-1]) << " " 
                                        << T << "\n"; 
         
-        return call_DP_Triplet(T, fabs(eta), fabs(tauS), pd);
+        return call_DP_Triplet(Tg, fabs(eta), fabs(tauS), pd);
     }
         
     locate_JC(&DP_collection.T[0], nT, lgT, &iT); 

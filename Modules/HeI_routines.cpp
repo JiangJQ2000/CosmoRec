@@ -78,11 +78,9 @@ const double zcrit_HI_Int=3400.0;
 const double zref_HeI=2500.0;
 
 //========================================================================
-// both defined in ./Modules/P_HI_abs_tabulation.cpp
+// defined in ./Modules/P_HI_abs_tabulation.cpp
 //========================================================================
-void create_Pesc_tables(double z_s, double z_e, Photoionization_Lyc &Lyc1s, 
-                        Gas_of_HeI_Atoms &HeIA, Cosmos &cos);
-void read_DP_Data(string filename, int show); 
+void read_DP_Data(string filename, int show);
 
 //========================================================================
 // for helium atom
@@ -177,6 +175,10 @@ void Set_HeI_Levels_to_Saha(double z)
     {
         //Level_I.X[i+Level_I.index_HeI]=HeI_Atoms.Xi_Saha(i, min(Xe, 1.0+XHeII), XHeII, NH, TM); // JC: 15.05.2015
         Level_I.X[i+Level_I.index_HeI]=HeI_Atoms.Xi_Saha(i, Xe, XHeII, NH, TM);
+        
+        // for ground-state use non-equilibrium value [5th March, 2017, JC]
+        if(i==0) Level_I.X[i+Level_I.index_HeI]=cosmos.NHeI(z)/cosmos.NH(z);
+        
         HeI_Atoms.Set_Xi(i, Level_I.X[i+Level_I.index_HeI]);
         
         if(show_CosmoRec_mess>=2) 

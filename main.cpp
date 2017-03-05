@@ -22,7 +22,7 @@ using namespace std;
 int main_random()
 { 
     int nrep = 10000;
-    int runmode=3;
+    int runmode=0;
     //int runmode=3;
     // 0: DM annihilation; 1: run settings; 2: outputs; 3: A2s1s; 4: B0; 5: nB; 6: PMF_mode
     double runpars[7]={0.0, 0, 0, 0.0, 3.0, -1.0, 2};
@@ -58,7 +58,7 @@ int main_random()
     //==============================================================================================
     
     double h0, omegab, omegac, omegak=0.0;
-    double tcmb, yhe, Nnu, A2s1s, B0, nB;
+    double tcmb, yhe, Nnu, A2s1s, B0=0.0, nB=-1.0;
     
     int nz=10000;
     double *z_arr=new double[nz];
@@ -84,9 +84,9 @@ int main_random()
         yhe = yhe_l + (yhe_u - yhe_l) * drand48();
         Nnu = Nnu_l + (Nnu_u - Nnu_l) * drand48();
         A2s1s = A2s1s_l + (A2s1s_u - A2s1s_l) * drand48();
-        B0 = B0_l + (B0_u - B0_l) * drand48();
-        nB = nB_l + (nB_u - nB_l) * drand48();
-        
+        //B0 = B0_l + (B0_u - B0_l) * drand48();
+        //nB = nB_l + (nB_u - nB_l) * drand48();
+
         cout << " omegab= " << omegab << endl;
         cout << " omegac= " << omegac << endl;
         cout << " omegam= " << omegac+omegab << endl;

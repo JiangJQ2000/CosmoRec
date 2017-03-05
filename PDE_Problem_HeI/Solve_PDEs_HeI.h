@@ -20,6 +20,11 @@ void switch_off_e_scat_kernel_HeI();
 void switch_on_e_scat_kernel_HeI();
 
 //====================================================================================================================
+// require same rescalings for helium as well as hydrogen PDE solve [JC & LH]
+//====================================================================================================================
+void Set_rescaling_PDE_HeI(double a_scale, double m_scale);
+
+//====================================================================================================================
 // switch on/off HeI singlet 2s-1s channel; this overwrites all other settings for 2s-1s channel
 //====================================================================================================================
 void switch_off_1s_2s_HeI_correction();

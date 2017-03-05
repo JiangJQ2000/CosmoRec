@@ -252,8 +252,9 @@ void set_startup_data(string filename, double param[12], Parameters_form_initfil
     if(FC_CosmoRec.runmode>0 && show_CosmoRec_mess>=0)
         cout << " Including variations of fundamental constants."
              << " Mode = " << FC_CosmoRec.runmode
-             << " a_scale = " << FC_CosmoRec.a_scale
-             << " m_scale = " << FC_CosmoRec.m_scale << endl;
+             << ", a_scale = " << FC_CosmoRec.a_scale
+             << ", m_scale = " << FC_CosmoRec.m_scale
+             << ", p_scale = " << FC_CosmoRec.p_scale << endl;
     
     if(flag_HI_absorption==1 && show_CosmoRec_mess>=0)
             cout << " HI absorption will be included during HeI-recombination " << endl;

@@ -2,11 +2,12 @@
 //
 // Author: Jens Chluba & Luke Hart
 // first implementation: April 2010
-// last modification   : Feb   2017
+// last modification   : March 2017
 // purpose: to access main CosmoRec code
 //
 //===========================================================================================================
 // 15.02.2017: added controll for magnetic field modes [JC]
+// 22.01.2017: added correction function computation as standard output [LH]
 // 22.01.2017: added Recfast++ variation of fundamental constants setup [LH & JC]
 // 14.11.2014: control of magnetic field parameters is now all in CosmoRec.cpp (also Recfast++ part...)
 // 17.10.2014: conversion from B_lambda to B0 when calling in batch mode
@@ -98,6 +99,7 @@ using namespace ODE_solver_Rec;
 //===========================================================================================================
 double const_HI_A2s_1s = const_HI_A2s_1s_0;                                  // initial setting of the values
 double const_sigT      = const_sigT_0;
+double const_HeI_A2s_1s = const_HeI_A2s_1s_0;
 
 #include "constants.Recfast.h"
 double RECFAST_atomic_constants::RF_Lam2s1sH     = 8.22458; // Recfast++ default value (old value)
@@ -119,11 +121,14 @@ struct Fund_Const_scaling
     size_t runmode;
     double a_scale;
     double m_scale;
+    double p_scale;
     // Scaling coefficients that we multiply rates/cross sections
     double f_a, f_b, f_t;
 };
 
-Fund_Const_scaling FC_CosmoRec={0, 1.0, 1.0, 1.0, 1.0, 1.0};
+Fund_Const_scaling FC_CosmoRec={0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0};
+// Switch to determine whether we are rescaling Helium recombination or not
+int FC_He_switch = 1;
 
 //===========================================================================================================
 // level of verbosity
@@ -139,8 +144,8 @@ void print_message(string mess);
 //===========================================================================================================
 #include "./Modules/global_variables.cpp"
 #include "./Modules/HI_routines.cpp"
-#include "./Modules/He_routines.cpp"
-#include "./Modules/HeI.feedback.cpp"
+#include "./Modules/HeI_routines.cpp"
+#include "./Modules/HeI_feedback.cpp"
 #include "./Modules/DPesc_HI_abs_tabulation.cpp"
 #include "./Modules/Diffusion_correction.cpp"   
 #include "./Modules/Diffusion_correction.HeI.cpp" 
@@ -160,6 +165,12 @@ void print_message(string mess);
 // DM annihilation module
 //===========================================================================================================
 #include "./Modules/DM_annihilation.cpp"
+
+//===========================================================================================================
+// Rescaling of fundamental constants module [JC and LH 2016/17]
+//===========================================================================================================
+
+#include "./Modules/Variations_constants.cpp"
 
 //===========================================================================================================
 // Magnetic field heating module (added Oct. 2014)
@@ -395,9 +406,11 @@ int CosmoRec()
     //==============================================================================
     // set rescale factor for rates etc
     //==============================================================================
-    if(FC_CosmoRec.runmode>0)
-        rescale_variables_HI(FC_CosmoRec.a_scale, FC_CosmoRec.m_scale, FC_CosmoRec.runmode,
-                             FC_CosmoRec.f_a, FC_CosmoRec.f_b, FC_CosmoRec.f_t);
+    if(FC_CosmoRec.runmode>0) {
+        rescale_variables_all(FC_CosmoRec.a_scale, FC_CosmoRec.m_scale, 
+                              FC_CosmoRec.runmode, FC_CosmoRec.f_a, FC_CosmoRec.f_b,
+                              FC_CosmoRec.f_t, FC_He_switch);
+    }
 
     //==============================================================================
     // enter the main run of ODE --> PDE-solver --> ODE
@@ -436,8 +449,8 @@ int CosmoRec()
             compute_DPesc_with_diffusion_equation_effective(DF_vec_z, DF_Ly_n, 
                                                             DF_2_gamma_vec, DF_Raman_vec, 
                                                             DF_nD1s_vec, DI1_2s_vec, 
-                                                            min(Diff_corr_zmax*1.25, parameters.zstart/1.002), 
-                                                            max(Diff_corr_zmin, parameters.zend*1.002), 
+                                                            min(Diff_corr_zmax*FC_CosmoRec.f_t*1.25, parameters.zstart/1.002),
+                                                            max(Diff_corr_zmin*FC_CosmoRec.f_t, parameters.zend*1.002),
                                                             ntg_max, nR_max, cosmos, 
                                                             Hydrogen_Atoms, 
                                                             pass_on_the_Solution_CosmoRec,
@@ -468,7 +481,7 @@ int CosmoRec()
                 compute_HeI_DPesc_with_diffusion_equation_effective(HeI_Atoms.Get_nShells(), DF_vec_z,
                                                                     DF_Ly_n, DI1_2s_vec,
                                                                     HeI_level_indices,
-                                                                    min(3200.0, parameters.zstart/1.002),
+                                                                    min(3200.0*FC_CosmoRec.f_t, parameters.zstart/1.002),
                                                                     HeI_was_switched_off_at_z*1.002,
                                                                     cosmos, 
                                                                     HeI_Atoms,

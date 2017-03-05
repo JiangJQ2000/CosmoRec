@@ -64,7 +64,7 @@ void create_feedback_Table(int nmax, Gas_of_HeI_Atoms &HeIA)
             // write down every line that has transition frequency nu>nuLy-aT, i.e. 
             // exclude triplet line
             //======================================================================
-            if(5069096.0e+9<HeIA.Get_Trans_Data(lev, k).Dnu)
+            if(5069096.0e+9/FC_CosmoRec.f_t<HeIA.Get_Trans_Data(lev, k).Dnu)
             {
                 dum.upperLevel.n=HeIA.Get_n(lev);
                 dum.upperLevel.l=HeIA.Get_l(lev);
@@ -198,10 +198,10 @@ void init_HeI_feedback(Gas_of_HeI_Atoms &HeIA, Parameters_form_initfile &params,
         for(int k=0; k<params.nz; k++)
         { 
             // Helium is totally recombined at low redshift. Just stop tabulation below.
-            if(za[k]<=500.0){ HeI_photons_nz=k-1; break; } 
+            if(za[k]<=500.0*FC_CosmoRec.f_t){ HeI_photons_nz=k-1; break; }
             
             double Tg=cosmos.TCMB(za[k]);
-            get_Bitot_HeI(Tg, Bitot);
+            get_Bitot_HeI(Tg*FC_CosmoRec.f_t, Bitot);
             
             //===========================================================
             // compute death probabilities from effective rate tables
@@ -210,7 +210,8 @@ void init_HeI_feedback(Gas_of_HeI_Atoms &HeIA, Parameters_form_initfile &params,
             {
                 HeI_photons[line].z[k]=za[k];
                 HeI_photons[line].zpd[k]=za[k];
-                HeI_photons[line].Dn[k]=0.0;            
+                HeI_photons[line].Dn[k]=0.0;
+                Bitot[get_res_index_HeI(HeI_Lines[line].upperLevel.i)]*=FC_CosmoRec.f_b; // correct scaling
                 HeI_photons[line].pd[k]=log(1.0/(1.0+HeI_Lines[line].A21
                                           /Bitot[get_res_index_HeI(HeI_Lines[line].upperLevel.i)]));          
             }
@@ -394,13 +395,13 @@ double Dn_HeI_effective(int linenum, double znow, double X1sHI,
     double DP=0.0;
     double eta_c=const_cl*NH*X1sHI*HeIA.HILyc.sig_phot_ion_nuc()/H_z;
 
-    if(linenum==1 && flag_HI_absorption==1 && znow<=zcrit_HI_Int && flag_spin_forbidden==1) 
+    if(linenum==1 && flag_HI_absorption==1 && znow<=zcrit_HI_Int*FC_CosmoRec.f_t && flag_spin_forbidden==1)
         DP=DP_interpol_T(Tg, tauS, eta_c);
 
     //=======================================================================
     // here tau_S was used in the tabulation NOT pd*tauS!   
     //=======================================================================
-    if(linenum==2 && flag_HI_absorption==1 && znow<=zcrit_HI) DP=DP_interpol_S(Tg, tauS, eta_c);
+    if(linenum==2 && flag_HI_absorption==1 && znow<=zcrit_HI*FC_CosmoRec.f_t) DP=DP_interpol_S(Tg, tauS, eta_c);
 
     PdS=PS+DP;  
     Dn_noscatt=0.0;

@@ -66,7 +66,7 @@ LIBSGSL = -L$(GSL_LIB_PATH) -l$(GSL) -lgslcblas
 CXXFLAGSLOC = $(CXXFLAGS) $(USE_GRACE) $(USE_OPENMP) \
               -D COSMORECPATH=\"$(PWD)/\" \
               -D COSMOREC_BASE_PATH=\"$(REC_BASE)/\" \
-              -D HEIDATADIR=\"$(DEV_DIR)/$(HELIUM_DIR)/\"
+              -D HEIDATADIR=\"$(PWD)/$(DEV_DIR)/$(HELIUM_DIR)/\"
 
 #===============================================================================
 # Required external libs
@@ -174,14 +174,16 @@ CosmoRec.o: ./Modules/aux_functions.cpp ./Modules/output_methods.cpp \
             ./Modules/Diffusion_correction.HeI.cpp \
             ./Modules/DM_annihilation.cpp \
             ./Modules/global_variables.cpp \
-            ./Modules/He_routines.cpp \
-            ./Modules/HeI.feedback.cpp \
+            ./Modules/HeI_routines.cpp \
+            ./Modules/HeI_feedback.cpp \
             ./Modules/HI_routines.cpp \
             ./Modules/Magnetic_fields.cpp \
             ./Modules/main.CosmoRec.cpp \
             ./Modules/Magnetic_fields.cpp \
             ./Modules/ODEdef_CosmoRec.cpp \
-            ./Modules/var_trans.cpp
+            ./Modules/var_trans.cpp \
+            ./Modules/DPesc_HI_abs_tabulation.cpp \
+            ./Modules/Variations_constants.cpp
 
 Solve_PDEs.o: ./PDE_Problem/Solve_PDEs_Grace.cpp
 

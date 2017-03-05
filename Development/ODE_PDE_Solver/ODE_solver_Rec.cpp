@@ -10,8 +10,9 @@
 // Author: Jens Chluba with contributions from Geoff Vasil at CITA
 //
 // First implementation: 12/01/2010
-// Last modification   : 03/01/2012
+// Last modification   : 05/03/2017
 //==================================================================================================
+// 05/03/2017: added brute force solution for moderate matrix via Gaussian elimination [JC]
 // 24/08/2012: improved some of the functions and tidied the code up
 //
 // 15/06/2011: set max order to 5; This was making the code a bit faster; 
@@ -24,7 +25,6 @@
 #include <vector>
 
 #include "ODE_solver_Rec.h"
-#include <gsl/gsl_linalg.h>
 #include "routines.h"
 
 using namespace std;
@@ -293,41 +293,52 @@ namespace ODE_solver_Rec
         tol = resid;
         return 1;
     }
-    
-    //===================================================================================
-    // Solving the Matrix Equation A*x == b for x using GSL
-    //===================================================================================
-    int ODE_Solver_Solve_LA_system_GSL(ODE_solver_matrix &M, 
-                                       vector<double > &bi, 
-                                       vector<double > &x, 
-                                       double tol)
+
+    //==================================================================================================
+    // brute force solution of A*x == b for moderate matrix (e.g., 3x3 matrix) via Gaussian elimination
+    // (added 05/03/2017 JC)
+    //==================================================================================================
+    void ODE_Solver_Solve_LA_system_Gaussian(ODE_solver_matrix &M,
+                                             vector<double > &b,
+                                             vector<double > &x,
+                                             int verbose=0)
     {
-        int npxi=bi.size();
+        int neq=b.size();
         
-        vector<double> a_data(npxi*npxi, 0.0);
+        // copy matrix
+        vector<double> A(neq*neq, 0.0);
         
         for(int r=0; r<(int)M.col.size(); r++)
         {
-            int ind=M.col[r]+npxi*M.row[r];
-            a_data[ind]=M.A[r];
+            int ind=M.col[r]+neq*M.row[r];
+            A[ind]=M.A[r];
+        }
+
+        // elimiated elements below diagonal
+        for(int cdel=0; cdel<neq; cdel++)
+        {
+            double p=A[cdel+neq*cdel];
+            for(int c=cdel; c<neq; c++) A[c+neq*cdel]/=p;
+            b[cdel]/=p;
+            
+            for(int r=1+cdel; r<neq; r++)
+            {
+                p=A[cdel+neq*r];
+                for(int c=cdel; c<neq; c++) A[c+neq*r]-=p*A[c+neq*cdel];
+                b[r]-=p*b[cdel];
+            }
         }
         
-        gsl_matrix_view m=gsl_matrix_view_array (&a_data[0], npxi, npxi);
-        gsl_vector_view b=gsl_vector_view_array (&bi[0], npxi);
-        gsl_vector *x_GSL = gsl_vector_alloc (npxi);
+        // solve by backward substitution
+        for(int r=neq-1; r>=0; r--)
+        {
+            x[r]=b[r];
+            for(int c=r+1; c<neq; c++) x[r]-=x[c]*A[c+r*neq];
+        }
         
-        int s;
-        gsl_permutation * p = gsl_permutation_alloc (npxi);
-        gsl_linalg_LU_decomp (&m.matrix, p, &s);
-        gsl_linalg_LU_solve (&m.matrix, p, &b.vector, x_GSL);
-        
-        for(int k=0; k<npxi; k++) x[k]=x_GSL->data[k];
-        
-        gsl_permutation_free (p);
-        gsl_vector_free (x_GSL);    
-        a_data.clear();
-        
-        return 0;
+        A.clear();
+
+        return;
     }
 
     //===================================================================================
@@ -339,6 +350,9 @@ namespace ODE_solver_Rec
                                    double tol, 
                                    int verbose=0)
     {
+        // 05/03/2017 JC
+        if(b.size()<=15){ ODE_Solver_Solve_LA_system_Gaussian(Jac, b, x, verbose); return 0; }
+        
         int ifail=0, maxit = 10000;                      // Maximum iterations
         
         for(unsigned int i=0; i<x.size(); i++) x[i]=0.0; // reset x-vector
@@ -1296,9 +1310,9 @@ namespace ODE_solver_Rec
             //--------------------------------------------------------
             // solve equation for dY
             //--------------------------------------------------------
-            LA_error=ODE_Solver_Solve_LA_system_GSL(*ODE_Solver_info.Jacobian_ptr, 
-                                                    ODE_Solver_info.F, 
-                                                    ODE_Solver_info.dY, tolJac);
+            LA_error=ODE_Solver_Solve_LA_system(*ODE_Solver_info.Jacobian_ptr,
+                                                ODE_Solver_info.F,
+                                                ODE_Solver_info.dY, tolJac);
             
             //--------------------------------------------------------
             // if nan was produced return main

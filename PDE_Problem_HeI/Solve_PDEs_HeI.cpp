@@ -117,6 +117,22 @@ void switch_off_1s_2s_HeI_absorption_correction()
     return;
 }
 
+//==================================================================================================
+// set scalings for fundamental constants for HeI as we did for HI, if required [LH & JC]
+//==================================================================================================
+double Solve_PDE_HeI_a_scale=1.0;
+double Solve_PDE_HeI_m_scale=1.0;
+double Solve_PDE_HeI_Eins_scale=1.0;
+
+void Set_rescaling_PDE_HeI(double a_scale, double m_scale)
+{
+    Solve_PDE_HeI_a_scale = a_scale;
+    Solve_PDE_HeI_m_scale = m_scale;
+    // Einstein co-efficient scale for Voigt profile
+    Solve_PDE_HeI_Eins_scale = pow(a_scale,5)*m_scale;
+    
+    return;
+}
 //====================================================================================================================
 //
 // important functions
@@ -516,7 +532,9 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
     //==============================================================================================
     compute_Xi_HeI_splines(zs, ze, HeIAtoms, HeI_Solution);
     
-    set_up_splines_for_HeI_pd_Rp_effective(ze, zs, cos, HeIAtoms, HeI_Solution);
+    set_up_splines_for_HeI_pd_Rp_effective(ze, zs, cos, HeIAtoms, HeI_Solution,
+                                           Solve_PDE_HeI_a_scale,
+                                           Solve_PDE_HeI_m_scale);
     
     //==============================================================================================
     // memory for Solve_PDE

@@ -1,26 +1,4 @@
 //==================================================================================================
-// Rescaling the rates
-// We need to rescale the Ai Bi and Rij rates by our coefficients and this function does that
-// independently since we need to do this for a series of vectors
-// This function is overloaded for 2 vectors and a vector of vectors as well as a single vector
-//==================================================================================================
-void rescale_rates(vector<double>&A,vector<double>&B,vector<vector<double> >&R)
-{
-    if(FC_CosmoRec.f_a==1.0 || FC_CosmoRec.f_b==1.0) return;  // safe time if not needed
-    
-    // For each of the rates we're going to go through the iterations and times every element by the
-    // f_i prefactors
-    // Leave this alone as this works
-    for (vector<double>::iterator a1 = A.begin(); a1 != A.end(); ++a1) *a1 *= FC_CosmoRec.f_a;
-    for (vector<double>::iterator b1 = B.begin(); b1 != B.end(); ++b1) *b1 *= FC_CosmoRec.f_b;
-    for (vector<vector<double> >::iterator r1 = R.begin(); r1 != R.end(); ++r1) {
-        for (vector<double>::iterator r2 = r1->begin(); r2 != r1->end(); ++r2) {
-            *r2 *= FC_CosmoRec.f_b;
-        }
-    }
-    return;
-}
-//==================================================================================================
 // Hydrogen atom
 //==================================================================================================
 void update_H_populations(const double *XiH, Gas_of_Atoms &H_Atoms)
@@ -71,8 +49,13 @@ void update_Solver_vars_eff(const double *XiH, Gas_of_Atoms &H_Atoms,
         double Tg=cosmos.TCMB(z);
         get_rates(Tg*FC_CosmoRec.f_t, Tg*rho*FC_CosmoRec.f_t, Ai_df_dx, Bi_df_dx, RijVec_df_dx);
         if(FC_CosmoRec.runmode>0) rescale_rates(Ai_df_dx, Bi_df_dx, RijVec_df_dx);
-        //
-        if(flag_He==1) get_rates_HeI(Tg, Ai_df_dx_HeI, Bi_df_dx_HeI, RijVec_df_dx_HeI);
+        
+        // equivalent for Helium
+        if(flag_He==1) {
+            get_rates_HeI(Tg*FC_CosmoRec.f_t, Ai_df_dx_HeI, Bi_df_dx_HeI, RijVec_df_dx_HeI);
+            if(FC_CosmoRec.runmode>0) rescale_rates(Ai_df_dx_HeI, Bi_df_dx_HeI, RijVec_df_dx_HeI);
+        }
+           
     }
     
     return;
@@ -196,7 +179,7 @@ void fcn_He_effective(double z, double Xe, double Tg, double NH, double H_z,
     //==================================================================
     // absorption by neutral hydrogen
     //==================================================================
-    if(flag_HI_absorption==1 && z<=zcrit_HI && !Diffusion_correction_HeI_is_on)
+    if(flag_HI_absorption==1 && z<=zcrit_HI*FC_CosmoRec.f_t && !Diffusion_correction_HeI_is_on)
     {  
         double dXe_HeI_HI_abs_dt=0.0;
         //==============================================================
@@ -217,7 +200,7 @@ void fcn_He_effective(double z, double Xe, double Tg, double NH, double H_z,
         //==============================================================
         // from intercombination line
         //==============================================================
-        if(z<=zcrit_HI_Int && flag_spin_forbidden==1)
+        if(z<=zcrit_HI_Int*FC_CosmoRec.f_t && flag_spin_forbidden==1)
         {
             dXe_HeI_HI_abs_dt=0.0;
             evaluate_HI_abs_HeI_Intercombination(z, Hydrogen_Atoms.X(1, 0), NH, H_z, Tg, Te,
@@ -482,7 +465,7 @@ void fcn_for_jacobian_eval(int jX, int neq, double DXj, double z, double Tg,
             //==================================================================
             // absorption by neutral hydrogen
             //==================================================================
-            if(flag_HI_absorption==1 && z<=zcrit_HI && !Diffusion_correction_HeI_is_on)
+            if(flag_HI_absorption==1 && z<=zcrit_HI*FC_CosmoRec.f_t && !Diffusion_correction_HeI_is_on)
             {  
                 if(jX==LI0.index_HeI || jX==LI0.index_HeI+2 || jX==LI0.index_HI)
                 {
@@ -507,7 +490,7 @@ void fcn_for_jacobian_eval(int jX, int neq, double DXj, double z, double Tg,
                 if(jX==LI0.index_HeI || jX==LI0.index_HI || 
                    jX==LI0.index_HeI+(int)HeI_Atoms.Get_Level_index(2, 1, 1, 1))
                 {
-                    if(z<=zcrit_HI_Int && flag_spin_forbidden==1)
+                    if(z<=zcrit_HI_Int*FC_CosmoRec.f_t && flag_spin_forbidden==1)
                     {
                         double dXe_HeI_HI_abs_dt=0.0;
                         evaluate_HI_abs_HeI_Intercombination(z, Hydrogen_Atoms.X(1, 0), NH, 

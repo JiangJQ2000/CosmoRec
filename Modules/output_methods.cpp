@@ -39,7 +39,7 @@ void set_detailed_name()
         else if(FC_CosmoRec.runmode==2) detailedname+="sigT.";
         else if(FC_CosmoRec.runmode==3) detailedname+="A2s1s.";
         else if(FC_CosmoRec.runmode==4) detailedname+="phot.";
-        else if(FC_CosmoRec.runmode==5) detailedname+="Ly-a.";
+        else if(FC_CosmoRec.runmode==5) detailedname+="Pesc.";  // currently not included...
         else if(FC_CosmoRec.runmode==6) detailedname+="all.";
     }
     
@@ -84,12 +84,17 @@ void open_files(ofstream *Xfiles, string path, int fresh=1)
             Xfiles[6].open((prename+"correction_function.Tr"+addname).c_str(),wrmode);
         else Xfiles[6].open((prename+"correction_function"+addname).c_str(),wrmode);
     }
+    
+    // Added extra file option for separated Xe components
+    if (write_split) Xfiles[7].open((prename+"Xe.H.HeI"+addname).c_str(),wrmode);
 
     if(write_Xe_Te_sol && iteration_count==0) Xfiles[0].precision(8);
     if(write_Xe_Te_sol) Xfiles[1].precision(8);
     if(write_populations) Xfiles[3].precision(12);
     if(write_HI_distortion) Xfiles[5].precision(12);
     if(write_corrections) Xfiles[6].precision(12); // Added for correction functions LH
+    if(write_split) Xfiles[7].precision(12); // Added for split Xe LH
+
     
     return;
 }
@@ -101,6 +106,8 @@ void close_files(ofstream *Xfiles)
     if(write_populations) Xfiles[3].close();
     if(write_HI_distortion) Xfiles[5].close();
     if(write_corrections) Xfiles[6].close(); // Added for correction functions LH
+    if(write_split) Xfiles[7].close(); // Added for split Xe LH
+
     
     return;
 }
@@ -126,6 +133,16 @@ void write_HI_X_array_to_file(ofstream &ofile, double zval, double *X, int nHIeq
     ofile << scientific << " " << 1.0-Hydrogen_Atoms.X_tot();
     ofile << scientific << " " << parameters.fHe-HeI_Atoms.X_tot() << endl;
     
+    return;
+}
+
+void write_HI_HeI_Xe_to_file(ofstream &ofile, double zval, double Xe)
+{
+    ofile << scientific << zval;
+    ofile << scientific << " " << 1.0-Hydrogen_Atoms.X_tot();
+    ofile << scientific << " " << parameters.fHe-HeI_Atoms.X_tot();
+    ofile << scientific << " " << 1.0-Hydrogen_Atoms.X_tot()+parameters.fHe-HeI_Atoms.X_tot();
+    ofile << scientific << " " << Xe << endl;
     return;
 }
 
@@ -245,6 +262,11 @@ void write_files(double z, ofstream *Xfiles)
     // write correction functions between Recfast++ and CosmoRec LH
     //==============================================================
     if (write_corrections) write_correction_functions_to_file(Xfiles[6], z, cosmos);
+    
+    //==============================================================
+    // write Xe for HI and HeI separately
+    //==============================================================
+    if (write_split) write_HI_HeI_Xe_to_file(Xfiles[7],z,Level_I.X[0]);
     
     return;
 }

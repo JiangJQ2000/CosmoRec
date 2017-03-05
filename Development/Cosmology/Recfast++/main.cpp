@@ -245,7 +245,7 @@ int main(int narg, char *args[])
     else if(RECFAST_atomic_constants::RF_rMode==2) oname+=".sigT";
     else if(RECFAST_atomic_constants::RF_rMode==3) oname+=".A2s1s";
     else if(RECFAST_atomic_constants::RF_rMode==4) oname+=".phot";
-    else if(RECFAST_atomic_constants::RF_rMode==5) oname+=".Ly-a";
+    else if(RECFAST_atomic_constants::RF_rMode==5) oname+=".Pesc";
     else if(RECFAST_atomic_constants::RF_rMode==6) oname+=".all";
     oname+=".dat";
     

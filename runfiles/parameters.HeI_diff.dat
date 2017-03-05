@@ -60,11 +60,11 @@
 
 1. 	      == Scaling of the fine structure constant
 1. 	  	  == Scaling of the m_e/m_p ratio
-0. 	  	  == scaling [(1+z)/1100]^p
+0. 	  	  == scaling [(1+z)/1100]^p [only Recfast++ mode, but ignored in CosmoRec]
 1  	  	  == Running mode for the omissions of the scaling of alpha 
 			 (0: previous values omitted; 
 			  1: Boltz; 2: sigT; 3: A2s1s
-			  4: phot ; 5: Ly-a; 6: all corrections)
+			  4: phot ; 5: Pesc [only Recfast++ mode]; 6: all corrections)
 
 3         == number of hydrogen shells for ODE problem (currently: 3, 4, 5 or 10; lite only 3)
 500       == nS for effective HI rates (nS=10, 20, 50, 100, 128, 200, 300, 400 and 500; lite only 500)

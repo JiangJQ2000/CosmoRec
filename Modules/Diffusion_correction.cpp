@@ -65,8 +65,8 @@ void setup_DF_spline_data(int n, vector<double> &DPesc_vec_z, vector<double> &DP
     //
     else update_spline_coeffies_JC(DPesc_splines_Data_DF[n].memindex, nz, za, ya);                
 
-    DPesc_splines_Data_DF[n].zmin=max(Diff_corr_zmin, DPesc_vec_z[nz-1]);
-    DPesc_splines_Data_DF[n].zmax=min(Diff_corr_zmax, DPesc_vec_z[0]);
+    DPesc_splines_Data_DF[n].zmin=max(Diff_corr_zmin*FC_CosmoRec.f_t, DPesc_vec_z[nz-1]);
+    DPesc_splines_Data_DF[n].zmax=min(Diff_corr_zmax*FC_CosmoRec.f_t, DPesc_vec_z[0]);
     DPesc_splines_Data_DF[n].DPmin=DPesc_splines_Data_DF[n].DPmax=0.0;
     
     delete [] za;
@@ -120,8 +120,8 @@ void setup_DF_n_point_data(int n, vector<double> &DPesc_vec_z, vector<double> &D
     DPesc_splines_Data_DF[n].za=DPesc_vec_z;
     DPesc_splines_Data_DF[n].ya=DPesc_vec;
     DPesc_splines_Data_DF[n].memindex=n;
-    DPesc_splines_Data_DF[n].zmin=max(Diff_corr_zmin, DPesc_vec_z[nz-1]);
-    DPesc_splines_Data_DF[n].zmax=min(Diff_corr_zmax, DPesc_vec_z[0]);
+    DPesc_splines_Data_DF[n].zmin=max(Diff_corr_zmin*FC_CosmoRec.f_t, DPesc_vec_z[nz-1]);
+    DPesc_splines_Data_DF[n].zmax=min(Diff_corr_zmax*FC_CosmoRec.f_t, DPesc_vec_z[0]);
     DPesc_splines_Data_DF[n].DPmin=DPesc_splines_Data_DF[n].DPmax=0.0;
     DPesc_splines_Data_DF[n].accel=0;
     

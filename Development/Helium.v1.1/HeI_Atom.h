@@ -75,7 +75,7 @@ private:
     double Eion;                                               // ionisation energy in eV
     double Eion_ergs;                                          // ionisation energy in ergs
     double FSC_scale;                                          // Helium alpha scaling variable
-    double ME_scale;                                           // scaling of the reduced mass of HeI
+    double ME_scale;                                           // scaling of the electron mass
 
     //==========================================================
     // storage of additional data for computations 
@@ -159,7 +159,7 @@ public:
     void rescale_level(double alpha_scale, double me_scale);
     void reset_level() { this->rescale_level(1.,1.); }
     
-    // Access functions for the fine structure constant scaling and the reduced mass scaling
+    // Access functions for the fine structure constant scaling and the electron mass scaling
     double get_FSC_scale() const { return this->FSC_scale; }
     double get_ME_scale() const { return this->ME_scale; }
 };
@@ -184,7 +184,7 @@ private:
     double Eion;                                               // ionisation energy in eV
     double Eion_ergs;                                          // ionisation energy in ergs
     double FSC_scale;                                          // Helium alpha scaling variable
-    double ME_scale;                                           // scaling of the reduced mass of HeI
+    double ME_scale;                                           // scaling of the electron mass
 
     //==========================================================
     // storage of additional data for computations 
@@ -269,7 +269,7 @@ public:
     void rescale_level(double alpha_scale, double me_scale);
     void reset_level() { this->rescale_level(1.,1.); }
 
-    // Access functions for the fine structure constant scaling and the reduced mass scaling
+    // Access functions for the fine structure constant scaling and the electron mass scaling
     double get_FSC_scale() const { return this->FSC_scale; }
     double get_ME_scale() const { return this->ME_scale; }
 };
@@ -295,7 +295,7 @@ private:
     double Eion;                                               // ionisation energy in eV
     double Eion_ergs;                                          // ionisation energy in ergs
     double FSC_scale;                                          // Helium alpha scaling variable
-    double ME_scale;                                           // scaling of the reduced mass of HeI
+    double ME_scale;                                           // scaling of the electron mass
 
     //==========================================================
     // storage of additional data for computations 
@@ -379,7 +379,7 @@ public:
     void rescale_level(double alpha_scale, double me_scale);
     void reset_level() { this->rescale_level(1.,1.); }
 
-    // Access functions for the fine structure constant scaling and the reduced mass scaling
+    // Access functions for the fine structure constant scaling and the electron mass scaling
     double get_FSC_scale() const { return this->FSC_scale; }
     double get_ME_scale() const { return this->ME_scale; }
 };
@@ -818,7 +818,7 @@ public:
     void rescale_gas(double alpha_scale, double me_scale);
     void reset_gas() { this->rescale_gas(1.,1.); }
 
-    // Access functions for the fine structure constant scaling and the reduced mass scaling
+    // Access functions for the fine structure constant scaling and the electron mass scaling
     double get_FSC_scale() const { return this->FSC_scale; }
     double get_ME_scale() const { return this->ME_scale; }
 };

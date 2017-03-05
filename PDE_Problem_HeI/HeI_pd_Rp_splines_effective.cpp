@@ -1,10 +1,11 @@
 //===========================================================================================================
-// Authors Jeffrey Fung & Jens Chluba Feb/March 2010
+// Authors Jeffrey Fung & Jens Chluba Feb/March 2010 (with contributions from Luke Hart)
 //
 // comment: HeI populations have to be pre-loaded; Also the effective rates have to be initialized
 //          Also note that here calc_Xi and all other splines are using the resolved level index 
 //          instead of the HeI-level index!
 //===========================================================================================================
+// 01.03.2017: added possiblity to used scaling of alpha and me [LH & JC]
 // 30.07.2014: Xi_Data is passed on read only
 // 22.07.2014: restart of spline setup if number of redshift points changes
 // 22.07.2014: changed setup routine for splines (smaller buffer region)
@@ -26,6 +27,30 @@
 using namespace std;
 
 //===========================================================================================================
+//
+// Rescaling the get_rates_all vectors so that we can rescale the PDE part as well
+//
+//===========================================================================================================
+void rescale_rates_HeI(vector<double> &A, vector<double> &B,
+                       vector<double> &Btot, vector <vector<double> > &R,
+                       double f_a, double f_b)
+{
+    // For each of the rates we're going to go through the iterations and times every element by the
+    // f_i prefactors
+    // Leave this alone as this works
+    vector<double>::iterator x;
+    for (x = A.begin(); x != A.end(); ++x) *x *= f_a;
+    for (x = B.begin(); x != B.end(); ++x) *x *= f_b;
+    for (x = Btot.begin(); x != Btot.end(); ++x) *x *= f_b;
+    for (vector<vector<double> >::iterator r = R.begin(); r != R.end(); ++r) {
+        for (x = r->begin(); x != r->end(); ++x) {
+            *x *= f_b;
+        }
+    }
+    return;
+}
+
+//===========================================================================================================
 static bool HeI_pd_Rp_splines_effective_spline_memory_was_allocated=0;
 int HeI_pd_Rp_splines_effective_verbose=1;
 
@@ -39,7 +64,8 @@ void Set_HeI_pd_Rp_splines_effective_verbosity(int v)
 //
 //===========================================================================================================
 void calc_HeI_Rp_Rm_pd_all(double z, Gas_of_HeI_Atoms &HeIA, double Tg, double Te, double Ne, 
-                          double Xp, double NH, vector<double> &Rp_Rm, vector<double> &pd)
+                           double Xp, double NH, vector<double> &Rp_Rm, vector<double> &pd,
+                           double f_a, double f_b, double f_t)
 {
     int ntot=Rp_Rm.size();
     
@@ -48,8 +74,9 @@ void calc_HeI_Rp_Rm_pd_all(double z, Gas_of_HeI_Atoms &HeIA, double Tg, double T
     vector<vector<double> > RijVec(ntot, vector<double>(ntot));
 
     //=======================================================================================================
-    get_rates_all_HeI(Tg, Ai, Bi, Bitot, RijVec);
-
+    get_rates_all_HeI(Tg*f_t, Ai, Bi, Bitot, RijVec);
+    if (f_a != 1.0 || f_b != 1.0) rescale_rates_HeI(Ai, Bi, Bitot, RijVec, f_a, f_b); 
+    // notice definitions of A and B
     //=======================================================================================================
     // Ai[nr] :: effective recombination rate to level nr
     // Bi[nr] :: effective photonionization rate from level nr
@@ -123,7 +150,8 @@ void clear_HeI_pd_Rp_effective_memory()
 //===========================================================================================================
 void set_up_splines_for_HeI_pd_Rp_effective(double zend, double zstart,
                                             Cosmos &cosmos, Gas_of_HeI_Atoms &HeA, 
-                                            double *Rp_zarr, int nz)
+                                            double *Rp_zarr, int nz, 
+                                            double a_scale, double m_scale)
 {   
     //===========================================================================
     int ntot=get_number_of_resolved_levels_HeI();
@@ -165,6 +193,8 @@ void set_up_splines_for_HeI_pd_Rp_effective(double zend, double zstart,
     vector<double> Rp_Rm(ntot);
     vector<double> pd(ntot);
     vector<double> Dnem_arr(ntot);
+    double f_a=pow(a_scale*m_scale,-3), f_b=pow(a_scale,5)*m_scale; 
+    double f_t=pow(a_scale,-2)*pow(m_scale,-1);
     Transition_Data_HeI_A T;
     //
     for(int i=0; i<nz; i++)
@@ -174,7 +204,9 @@ void set_up_splines_for_HeI_pd_Rp_effective(double zend, double zstart,
         Te=Tg*calc_HI_rho(z);
         NH=cosmos.NH(z);
 
-        calc_HeI_Rp_Rm_pd_all(z, HeA, Tg, Te, NH*calc_HI_Xe(z), cosmos.fHe()-calc_HeI_X1s(z), NH, Rp_Rm, pd);
+        calc_HeI_Rp_Rm_pd_all(z, HeA, Tg, Te, NH*calc_HI_Xe(z), 
+                              cosmos.fHe()-calc_HeI_X1s(z), NH, Rp_Rm, pd,
+                              f_a, f_b, f_t);
 
         //=====================================================================
         // common data
@@ -265,7 +297,7 @@ void set_up_splines_for_HeI_pd_Rp_effective(double zend, double zstart,
 }
 
 //===========================================================================================================
-void set_up_splines_for_HeI_pd_Rp_effective(double zend, double zstart, Cosmos &cosmos, Gas_of_HeI_Atoms &HeA)
+void set_up_splines_for_HeI_pd_Rp_effective(double zend, double zstart, Cosmos &cosmos, Gas_of_HeI_Atoms &HeA, double a_scale, double m_scale)
 {   
     int nz=2000;
     double *Rp_zarr=new double[nz];
@@ -278,7 +310,7 @@ void set_up_splines_for_HeI_pd_Rp_effective(double zend, double zstart, Cosmos &
     //===========================================================================
     // compute splines
     //===========================================================================
-    set_up_splines_for_HeI_pd_Rp_effective(zend, zstart, cosmos, HeA, Rp_zarr, nz);
+    set_up_splines_for_HeI_pd_Rp_effective(zend, zstart, cosmos, HeA, Rp_zarr, nz, a_scale, m_scale);
     
     //========================================================================
     // clean up
@@ -291,7 +323,8 @@ void set_up_splines_for_HeI_pd_Rp_effective(double zend, double zstart, Cosmos &
 //===========================================================================================================
 void set_up_splines_for_HeI_pd_Rp_effective(double zend, double zstart, 
                                            Cosmos &cosmos, Gas_of_HeI_Atoms &HeA,
-                                           const vector<vector<double> > &X_Data)
+                                           const vector<vector<double> > &X_Data, double a_scale, 
+                                           double m_scale)
 {   
     int nmax=X_Data.size();
     vector<double> Rp_zarr(nmax, 0.0);
@@ -316,7 +349,7 @@ void set_up_splines_for_HeI_pd_Rp_effective(double zend, double zstart,
     //===========================================================================
     // compute splines
     //===========================================================================
-    set_up_splines_for_HeI_pd_Rp_effective(zend, zstart, cosmos, HeA, &Rp_zarr[0], nz);
+    set_up_splines_for_HeI_pd_Rp_effective(zend, zstart, cosmos, HeA, &Rp_zarr[0], nz, a_scale, m_scale);
     
     //========================================================================
     // clean up

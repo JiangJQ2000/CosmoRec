@@ -223,12 +223,12 @@ class Electron_Level
         //============================================================================================================
         // Rescaling and resetting of scaling functions for the electron level in question [LH, Oct-Dec 2016]
         //============================================================================================================
-        // Scale the electron variables by reduced mass and fine structure constant scaling
+        // Scale the electron variables by mass and fine structure constant scaling
         void rescale_level(double alpha_scale, double me_scale);
         // Reset the scaling we have used
         void reset_level();
         
-        // Access functions for the fine structure constant scaling and the reduced mass scaling
+        // Access functions for the fine structure constant scaling and the electron mass scaling
         double get_FSC_scale() { return this->FSC_scale; }
         double get_ME_scale() { return this->ME_scale; }
 };

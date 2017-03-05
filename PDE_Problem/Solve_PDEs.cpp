@@ -83,7 +83,7 @@ int solve_with_Kernel_HI=0; // ==0: no kernel correction;
 
 //==================================================================================================
 //
-// setting different paramters for PDE problem regarding the HeI Singlet 2s-1s channel
+// setting different parameters for PDE problem regarding the HI 2s-1s channel
 //
 //==================================================================================================
 bool compute_full_2s_1s_corr=1;
@@ -124,7 +124,7 @@ double Solve_PDE_HI_a_scale=1.0;
 double Solve_PDE_HI_m_scale=1.0;
 double Solve_PDE_HI_Eins_scale=1.0;
 
-void Set_alpha_and_me_scale(double a_scale, double m_scale)
+void Set_rescaling_PDE_HI(double a_scale, double m_scale)
 {
     Solve_PDE_HI_a_scale = a_scale;
     Solve_PDE_HI_m_scale = m_scale;

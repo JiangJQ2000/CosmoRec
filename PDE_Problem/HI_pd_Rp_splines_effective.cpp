@@ -27,7 +27,7 @@ using namespace std;
 // Rescaling the get_rates_all vectors so that we can rescale the PDE part as well
 //
 //===========================================================================================================
-void rescale_rates(vector<double> &A, vector<double> &B,
+void rescale_rates_HI(vector<double> &A, vector<double> &B,
                    vector<double> &Btot, vector <vector<double> > &R,
                    double f_a, double f_b)
 {
@@ -73,7 +73,8 @@ void calc_HI_Rp_Rm_pd_all(double z, Gas_of_Atoms &HIA, double Tg, double Te, dou
     //get_rates_all(Tg, Te, Ai, Bi, Bitot, RijVec);
     //=======================================================================================================
     get_rates_all(Tg*f_t, Te*f_t, Ai, Bi, Bitot, RijVec);
-    if(f_a!=1.0 || f_b!=1.0) rescale_rates(Ai, Bi, Bitot, RijVec, f_a, f_b); // notice definitions of A and B
+    if( f_a != 1.0 || f_b != 1.0) rescale_rates_HI(Ai, Bi, Bitot, RijVec, f_a, f_b); 
+    // notice definitions of A and B
     //=======================================================================================================
     // Ai[nr] :: effective recombination rate to level nr
     // Bi[nr] :: effective photonionization rate from level nr
@@ -198,7 +199,8 @@ void set_up_splines_for_HI_pd_Rp_effective(double zend, double zstart,
     vector<double> Rp_Rm(ntot);
     vector<double> pd(ntot);
     vector<double> Dnem_arr(ntot);
-    double f_a=pow(a_scale*m_scale,-3),f_b=pow(a_scale,5)*m_scale, f_t=pow(a_scale,-2)*pow(m_scale,-1);
+    double f_a=pow(a_scale*m_scale,-3),f_b=pow(a_scale,5)*m_scale;
+    double f_t=pow(a_scale,-2)*pow(m_scale,-1);
     //
     for(int i=0; i<nz; i++)
     {

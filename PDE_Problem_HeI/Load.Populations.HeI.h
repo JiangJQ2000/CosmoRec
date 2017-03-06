@@ -6,8 +6,10 @@
 #ifndef LOAD_POP_HEI_H
 #define LOAD_POP_HEI_H
 
-#include "HeI_Atom.h"
 #include <string>
+#include <vector>
+
+using namespace std;
 
 //=======================================================================================
 // Load the data for Xi
@@ -18,9 +20,7 @@ void Set_Load_Populations_HeI_verbosity(int v);
 //=======================================================================================
 // to directly pass on the solutions for the populations
 //=======================================================================================
-void compute_Xi_HeI_splines(double zs, double ze, 
-                            Gas_of_HeI_Atoms &HeI_Atoms,
-                            const vector<vector<double> > &X_Data);
+void compute_Xi_HeI_splines(double zs, double ze, const vector<vector<double> > &X_Data);
 
 //=======================================================================================
 // functions (the index ires is the corresponding resolved level index)

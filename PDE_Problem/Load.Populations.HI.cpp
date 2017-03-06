@@ -10,7 +10,6 @@
 #include <vector>
 
 #include "Load.Populations.HI.h"
-#include "Atom.h"
 #include "routines.h"
 
 using namespace std;
@@ -102,8 +101,7 @@ double calc_HI_Xi(double z, int i)
 // Load the data for Xi
 //
 //==================================================================================
-void compute_Xi_HI_splines(double zs, double ze, Gas_of_Atoms &H_Atoms, 
-                           const vector<vector<double> > &X_Data)
+void compute_Xi_HI_splines(double zs, double ze, const vector<vector<double> > &X_Data)
 {
     //==============================================================================
     // allocate memory for splines
@@ -176,7 +174,7 @@ void compute_Xi_HI_splines(double zs, double ze, Gas_of_Atoms &H_Atoms,
 }
 
 //==================================================================================
-void Load_Xi_HI(int nS, double zs, double ze, Gas_of_Atoms &H_Atoms, string fname)
+void Load_Xi_HI(int nS, double zs, double ze, string fname)
 {
     if(Load_Populations_HI_verbose>=1)
         cout << "\n Loading solution from : " << fname << " || nShells=" << nS << endl;
@@ -195,7 +193,7 @@ void Load_Xi_HI(int nS, double zs, double ze, Gas_of_Atoms &H_Atoms, string fnam
     read_HI_Population_from_file(ifile, nS, X_Data);
     ifile.close();
 
-    compute_Xi_HI_splines(zs, ze, H_Atoms, X_Data);
+    compute_Xi_HI_splines(zs, ze, X_Data);
     
     X_Data.clear();
     

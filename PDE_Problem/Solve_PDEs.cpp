@@ -709,7 +709,7 @@ int compute_DPesc_with_diffusion_equation_effective(vector<double> &DF_vec_z,
     //=========================================================================== 
     // load precomputed solutions
     //=========================================================================== 
-    compute_Xi_HI_splines(zs, ze, HIA, HI_Solution);
+    compute_Xi_HI_splines(zs, ze, HI_Solution);
 
     set_up_splines_for_HI_pd_Rp_effective(ze, zs, cos, HIA, HI_Solution,
                                           Solve_PDE_HI_a_scale,

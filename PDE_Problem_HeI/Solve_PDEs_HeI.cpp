@@ -555,7 +555,7 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
     //==============================================================================================
     // load precomputed solutions (load could be avoided...)
     //==============================================================================================
-    compute_Xi_HeI_splines(zs, ze, HeIAtoms, HeI_Solution);
+    compute_Xi_HeI_splines(zs, ze, HeI_Solution);
     
     set_up_splines_for_HeI_pd_Rp_effective(ze, zs, cos, HeIAtoms, HeI_Solution,
                                            Solve_PDE_HeI_a_scale,

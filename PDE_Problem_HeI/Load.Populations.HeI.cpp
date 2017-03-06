@@ -10,7 +10,6 @@
 #include <vector>
 
 #include "Load.Populations.HeI.h"
-#include "HeI_Atom.h"
 #include "routines.h"
 
 using namespace std;
@@ -61,9 +60,7 @@ double calc_HeI_Xi(double z, int ires)
 // Load the data for Xi
 //
 //==================================================================================
-void compute_Xi_HeI_splines(double zs, double ze, 
-                            Gas_of_HeI_Atoms &HeI_Atoms,
-                            const vector<vector<double> > &X_Data)
+void compute_Xi_HeI_splines(double zs, double ze, const vector<vector<double> > &X_Data)
 {
     //==============================================================================
     // allocate memory for splines

@@ -297,7 +297,8 @@ void set_up_splines_for_HeI_pd_Rp_effective(double zend, double zstart,
 }
 
 //===========================================================================================================
-void set_up_splines_for_HeI_pd_Rp_effective(double zend, double zstart, Cosmos &cosmos, Gas_of_HeI_Atoms &HeA, double a_scale, double m_scale)
+void set_up_splines_for_HeI_pd_Rp_effective(double zend, double zstart, Cosmos &cosmos, Gas_of_HeI_Atoms &HeA,
+                                            double a_scale, double m_scale)
 {   
     int nz=2000;
     double *Rp_zarr=new double[nz];
@@ -322,9 +323,9 @@ void set_up_splines_for_HeI_pd_Rp_effective(double zend, double zstart, Cosmos &
 
 //===========================================================================================================
 void set_up_splines_for_HeI_pd_Rp_effective(double zend, double zstart, 
-                                           Cosmos &cosmos, Gas_of_HeI_Atoms &HeA,
-                                           const vector<vector<double> > &X_Data, double a_scale, 
-                                           double m_scale)
+                                            Cosmos &cosmos, Gas_of_HeI_Atoms &HeA,
+                                            const vector<vector<double> > &X_Data,
+                                            double a_scale, double m_scale)
 {   
     int nmax=X_Data.size();
     vector<double> Rp_zarr(nmax, 0.0);

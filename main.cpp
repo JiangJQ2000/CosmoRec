@@ -86,7 +86,7 @@ int main_random()
         A2s1s = A2s1s_l + (A2s1s_u - A2s1s_l) * drand48();
         B0 = B0_l + (B0_u - B0_l) * drand48();
         nB = nB_l + (nB_u - nB_l) * drand48();
-        B0=nB=0.0;
+        B0 = nB = 0.0;
         
         cout << " omegab= " << omegab << endl;
         cout << " omegac= " << omegac << endl;

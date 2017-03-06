@@ -205,9 +205,9 @@ void arm_PDE_solver_HeI(double nu21, Cosmos &cos, Gas_of_HeI_Atoms &HeIAtoms,
         //==================================================================
         for(int k=0; k<(int)xarr.size(); k++)
             PDE_funcs_HeI.sig_Lyc_x[k]=HeIAtoms.HILyc.sig_phot_ion(xarr[k]*nu21);
-        
+
         PDE_funcs_HeI.nu2s1s=HeIAtoms.Sing.Level(2, 0).Get_Dnu_1s2();
-        
+
         //==================================================================
         // fixed small bug here that made jem=npts all the time. Might be
         // faster now but should otherwise not have affected matters. No
@@ -216,7 +216,7 @@ void arm_PDE_solver_HeI(double nu21, Cosmos &cos, Gas_of_HeI_Atoms &HeIAtoms,
         unsigned long jem=0;
         locate_JC(&xarr[0], xarr.size(), PDE_funcs_HeI.nu2s1s/nu21, &jem);
         PDE_funcs_HeI.emission_2s1s=jem+1;
-        
+
         PDE_funcs_are_set_HeI=1;
     }
     else

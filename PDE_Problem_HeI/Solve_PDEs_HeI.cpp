@@ -122,14 +122,11 @@ void switch_off_1s_2s_HeI_absorption_correction()
 //==================================================================================================
 double Solve_PDE_HeI_a_scale=1.0;
 double Solve_PDE_HeI_m_scale=1.0;
-double Solve_PDE_HeI_Eins_scale=1.0;
 
 void Set_rescaling_PDE_HeI(double a_scale, double m_scale)
 {
     Solve_PDE_HeI_a_scale = a_scale;
     Solve_PDE_HeI_m_scale = m_scale;
-    // Einstein co-efficient scale for Voigt profile
-    Solve_PDE_HeI_Eins_scale = pow(a_scale,5)*m_scale;
     
     return;
 }
@@ -222,7 +219,31 @@ void arm_PDE_solver_HeI(double nu21, Cosmos &cos, Gas_of_HeI_Atoms &HeIAtoms,
         
         PDE_funcs_are_set_HeI=1;
     }
-    
+    else
+    {
+        //==================================================================
+        // HI Lyc photon-ionization cross section at grid-points
+        //------------------------------------------------------------------
+        // needed for rescaling with alpha and me. Could be made improved by
+        // simply renormalizing cross section.
+        //==================================================================
+        for(int k=0; k<(int)xarr.size(); k++)
+            PDE_funcs_HeI.sig_Lyc_x[k]=HeIAtoms.HILyc.sig_phot_ion(xarr[k]*nu21);
+        
+        PDE_funcs_HeI.nu2s1s=HeIAtoms.Sing.Level(2, 0).Get_Dnu_1s2();
+        
+        //==============================================================
+        // update profiles
+        //==============================================================
+        for(int k=0; k<(int)PDE_funcs_HeI.Voigt_profiles_aV.size(); k++)
+        {
+            Voigtprofile_Dawson p=get_HeI_profile(k);
+            
+            PDE_funcs_HeI.Voigt_profiles_nui1s[k]=p.Get_nu21();
+            PDE_funcs_HeI.Voigt_profiles_Ai1s[k] =p.Get_A21();
+        }
+    }
+
     reset_PDE_solver_variables();
     
     return;

@@ -93,7 +93,6 @@ void copy_LI_to_ysol(double *LIX, double *ysol, int neq, int index_HI, int index
     //============================================================================
     // 1. eq is Te
     //============================================================================
-    for(int k=0; k<neq; k++) ysol[k]=0.0;                   // reset all initially
     ysol[0]=LIX[neq-1];
     ysol[1]=LIX[index_HI];
     

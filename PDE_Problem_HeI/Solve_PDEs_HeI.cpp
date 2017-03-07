@@ -266,6 +266,8 @@ Solve_PDE_Data_HeI SPDE_D_HeI;
 bool SPDE_D_is_set_HeI=0;
 
 //====================================================================================================================
+// comment: no rescaling with alpha or me needed here, since things are saved in terms of nu/nu21.
+//--------------------------------------------------------------------------------------------------------------------
 void init_Solve_PDE_Data_HeI(int iresmax, vector<int> &lines, Gas_of_HeI_Atoms &HeIAtoms)
 {
     //==================================================================

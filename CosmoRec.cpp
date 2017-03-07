@@ -159,6 +159,9 @@ void print_message(string mess);
 //===========================================================================================================
 // functions to read parameter file and set up memory etc
 //===========================================================================================================
+// defined in "./Modules/ODEdef_CosmoRec.cpp"
+void compute_fractions(const Data_Level_I &LI, double &Xe, double &Xp, double &XHeII);
+
 #include "./Modules/aux_functions.cpp"
 
 //===========================================================================================================

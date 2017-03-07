@@ -13,7 +13,7 @@ void print_var_change_message(string mess, double zs)
 }
 
 //===========================================================================================================
-void set_accuracies_own_solver(double *rtol, double *abs, int neq_HI, int neq)
+void set_accuracies_own_solver(double *rtol, double *abs, int neq)
 {
     for(int k=0; k<neq; k++) rtol[k]=abs[k]=0.0;
     
@@ -22,7 +22,9 @@ void set_accuracies_own_solver(double *rtol, double *abs, int neq_HI, int neq)
     rtol[2]=1.0e-6; abs[2]=1.0e-80;
     rtol[3]=1.0e-6; abs[3]=1.0e-80;
     
-    if(flag_He==1)
+    int neq_HI=get_number_of_resolved_levels();
+    
+    if(flag_He>=1)
     {
         // error setting was shifted by one index!?
         rtol[neq_HI+2]=1.0e-7; abs[neq_HI+2]=1.0e-12;
@@ -42,7 +44,7 @@ int Xe_frac_effective_rates()
 {
     bool numerical_jacobian=0;
     int err=0;
-
+    
     //==========================================================================
     // HeI S->T feedback tables
     //==========================================================================
@@ -76,7 +78,7 @@ int Xe_frac_effective_rates()
         //===========================================================================
         ODE_solver_Rec::allocate_memory(Sz, tols, neq);
         Sz.z=zs;        
-        set_accuracies_own_solver(&tols.rel[0], &tols.abs[0], get_number_of_resolved_levels(), neq);
+        set_accuracies_own_solver(&tols.rel[0], &tols.abs[0], neq);
         
         //===========================================================================
         // initialize Sz
@@ -132,7 +134,7 @@ int Xe_frac_effective_rates()
                 //============================================
                 ODE_solver_Rec::allocate_memory(Sz, tols, neq);
                 Sz.z=zs;        
-                set_accuracies_own_solver(&tols.rel[0], &tols.abs[0], get_number_of_resolved_levels(), neq);
+                set_accuracies_own_solver(&tols.rel[0], &tols.abs[0], neq);
                 
                 copy_LIII_to_ysol(Level_III.y, &Sz.y[0], Level_III.neq, Level_III.index_HI, Level_III.index_HeI);
                 

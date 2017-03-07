@@ -25,6 +25,27 @@ void update_HeI_populations(const double *XiHeI, Gas_of_HeI_Atoms &HeIA)
 }
 
 //==================================================================================================
+// compute Xe, Xp, XHeI, XHeII, XHeIII
+//==================================================================================================
+void compute_fractions(const Data_Level_I &LI, double &Xe, double &Xp, double &XHeII, double &XHeIII)
+{
+    int iHI=LI.index_HI, iHeI=LI.index_HeI;
+    
+    Xp=1.0-LI.X[iHI];
+    XHeII=XHeIII=0.0;
+    
+    if(flag_He==1)
+    {
+        XHeII =parameters.fHe-LI.X[iHeI];
+        XHeIII=0.0;
+    }
+
+    Xe=Xp+XHeII+2.0*XHeIII;
+    
+    return;
+}
+
+//==================================================================================================
 //==================================================================================================
 static double ODE_Solver_z_pre=0.0, ODE_Solver_rho_pre=0.0;
 
@@ -110,28 +131,106 @@ void copy_ysol_to_LIII(double *ysol, double *LIIIy, int neq, int index_HI, int i
 }
 
 //==================================================================================================
+// fcn for hydrogen
+//==================================================================================================
+void fcn_HI_effective(double z, double rho, double Xe, double Tg, double NH, double H_z,
+                      double Xp, int iHI, Data_Level_I &LI)
+{
+    //==================================================================
+    // effective rates
+    //==================================================================
+    ODE_effective::evaluate_2s_two_photon_decay(z, Tg, Hydrogen_Atoms.X(0), Hydrogen_Atoms.X(1),
+                                                Hydrogen_Atoms.Level(1).Get_Dnu_1s(),
+                                                const_HI_A2s_1s, Level_I_temp.g[iHI],
+                                                Level_I_temp.g[iHI+1]);
+    
+    //==================================================================
+    // HI Lyman-series
+    //==================================================================
+    int nres=get_number_of_resolved_levels();
+    int nLy_max=(int)min(Lyn_max_parameter, Hydrogen_Atoms.Get_n_of_Level(get_HI_index(nres-1)));
+    
+    for(int n=2; n<=nLy_max; n++)
+    {
+        Transition_Data_A T=Hydrogen_Atoms.Level(n, 1).Get_Data_A(1, 0);
+        
+        ODE_effective::evaluate_Ly_n_channel(z, Tg, Hydrogen_Atoms.X(0), Hydrogen_Atoms.X(n, 1),
+                                             NH, H_z, T.A21, T.lambda21, T.Dnu,
+                                             Level_I_temp.g[iHI],
+                                             Level_I_temp.g[iHI+Hydrogen_Atoms.Get_Level_index(n,1)]);
+    }
+    
+    //==================================================================
+    // HI nD-1s Quadrupole transitions (added May 2011)
+    //==================================================================
+    if(Atom_activate_HI_Quadrupole_lines)
+    {
+        for(int k=0; k<get_number_of_resolved_levels(); k++)
+        {
+            int l=Hydrogen_Atoms.Get_l_of_Level(get_HI_index(k));
+            
+            if(l==2)
+            {
+                int n=Hydrogen_Atoms.Get_n_of_Level(get_HI_index(k));
+                
+                if(n<=nD_Quadrupole_max)
+                    ODE_effective::evaluate_nD_1s_Q_channel(Hydrogen_Atoms.X(n, 1),
+                                                            Hydrogen_Atoms.X(n, 2),
+                                                            Hydrogen_Atoms.Level(n, 2).Get_A21(1, 0),
+                                                            Level_I_temp.g[iHI+Hydrogen_Atoms.Get_Level_index(n, 1)],
+                                                            Level_I_temp.g[iHI+Hydrogen_Atoms.Get_Level_index(n, 2)]);
+            }
+        }
+    }
+    
+    //==================================================================
+    // these are the ones with effective rates that depend on Te
+    //==================================================================
+    ODE_HI_effective::evaluate_effective_Rci_Ric_terms(z, Xe, NH*Xp, Hydrogen_Atoms, Ai_df_dx,
+                                                       Bi_df_dx, get_HI_index, &Level_I_temp.g[iHI]);
+    
+    ODE_HI_effective::evaluate_effective_Rij_terms(z, Tg, Hydrogen_Atoms, RijVec_df_dx,
+                                                   get_HI_index, &Level_I_temp.g[iHI]);
+    
+    //==================================================================
+    // Diffusion correction
+    //==================================================================
+    if(Diffusion_correction_is_on)
+    {
+        evaluate_HI_Diffusion_correction(z, Hydrogen_Atoms, NH, H_z, Tg, &Level_I_temp.g[iHI]);
+        
+        if(DI1_2s_correction_on) evaluate_HI_DI1_DI2_correction(z, Hydrogen_Atoms.X(0),
+                                                                Hydrogen_Atoms.X(1),
+                                                                Hydrogen_Atoms.Level(1).Get_Dnu_1s(),
+                                                                Tg, &Level_I_temp.g[iHI]);
+    }
+    
+    return;
+}
+
+//==================================================================================================
 // fcn for helium
 //==================================================================================================
-void fcn_He_effective(double z, double Xe, double Tg, double NH, double H_z, 
-                      double XHeII, int iHeI, Data_Level_I &LI)
+void fcn_HeI_effective(double z, double Xe, double Tg, double NH, double H_z,
+                       double XHeII, int iHeI, Data_Level_I &LI)
 {   
     double Te=Tg;   
     
     //==================================================================
     // these are the ones with effective rates that depend on Xi
-    //==================================================================    
-    ODE_HeI_effective::evaluate_effective_Rci_Ric_terms(z, Xe, XHeII*NH, HeI_Atoms, Ai_df_dx_HeI, 
+    //==================================================================
+    ODE_HeI_effective::evaluate_effective_Rci_Ric_terms(z, Xe, NH*XHeII, HeI_Atoms, Ai_df_dx_HeI,
                                                         Bi_df_dx_HeI, get_HeI_index, &LI.g[iHeI]);
     
-    ODE_HeI_effective::evaluate_effective_Rij_terms(z, Tg, HeI_Atoms, RijVec_df_dx_HeI, 
+    ODE_HeI_effective::evaluate_effective_Rij_terms(z, Tg, HeI_Atoms, RijVec_df_dx_HeI,
                                                     get_HeI_index, &LI.g[iHeI]);    
-    
+
     //==========================================================================
     // 2s two-photon channels (2S - 1S singlet channel)
     //==========================================================================
-    ODE_effective::evaluate_2s_two_photon_decay(z, Tg, HeI_Atoms.Xi(0), HeI_Atoms.Xi(1), 
-                                                HeI_Atoms.Sing.Level(2, 0).Get_Dnu_1s2(), 
-                                                const_HeI_A2s_1s, LI.g[iHeI], LI.g[iHeI+1]);    
+    ODE_effective::evaluate_2s_two_photon_decay(z, Tg, HeI_Atoms.Xi(0), HeI_Atoms.Xi(1),
+                                                HeI_Atoms.Sing.Level(2, 0).Get_Dnu_1s2(),
+                                                const_HeI_A2s_1s, LI.g[iHeI], LI.g[iHeI+1]);
     
     //==================================================================
     // HeI 'Lyman-series' & quadrupole lines (if switched on)
@@ -142,7 +241,7 @@ void fcn_He_effective(double z, double Xe, double Tg, double NH, double H_z,
         if(flag_spin_forbidden==0 && ik==(int)HeI_Atoms.Get_Level_index(2, 1, 1, 1)) continue;
         
         Transition_Data_HeI_A T=HeI_Atoms.Get_Trans_Data(ik, 1, 0, 0, 0);
-        if(T.A21!=0) ODE_effective::evaluate_Ly_n_channel(z, Tg, HeI_Atoms.Xi(0), HeI_Atoms.Xi(ik), 
+        if(T.A21!=0) ODE_effective::evaluate_Ly_n_channel(z, Tg, HeI_Atoms.Xi(0), HeI_Atoms.Xi(ik),
                                                           NH, H_z, T.A21, T.lambda21, T.Dnu, 
                                                           LI.g[iHeI], LI.g[iHeI+ik], 
                                                           HeI_Atoms.Get_gw(ik)/T.gwp);
@@ -235,18 +334,17 @@ void fcn_effective(double z, Data_Level_III &LIII)
     double Tg=cosmos.TCMB(z);
     int iHI=Level_I_temp.index_HI;
     int iHeI=Level_I_temp.index_HeI;
-    //
-    double Xp=1.0-Level_I_temp.X[iHI];
-    double XHeII = (flag_He==1 ? parameters.fHe-Level_I_temp.X[iHeI] : 0.0); 
-    double Xe=Xp+XHeII;
-    double NH=cosmos.NH(z), H_z=cosmos.H(z), Np=NH*Xp;
+    
+    double Xe, Xp, XHeII, XHeIII;
+    compute_fractions(Level_I_temp, Xe, Xp, XHeII, XHeIII);
+    double NH=cosmos.NH(z), H_z=cosmos.H(z);
     
     //==================================================================
     // copy Xi_H --> Atoms && update recombination coefficients
     //==================================================================
     update_Solver_vars_eff(&Level_I_temp.X[iHI], Hydrogen_Atoms, 
-                           &Level_I_temp.X[Level_I_temp.index_HeI], 
-                           HeI_Atoms, z, rho);
+                           &Level_I_temp.X[Level_I_temp.index_HeI], HeI_Atoms,
+                           z, rho);
     
     //==================================================================
     // reset everything 
@@ -254,81 +352,25 @@ void fcn_effective(double z, Data_Level_III &LIII)
     for(int i=0; i<Level_I_temp.neq; i++) Level_I_temp.g[i]=LIII.g[i]=0.0;        
     
     //==================================================================
-    // effective rates
+    // Te part
     //==================================================================
     ODE_effective::evaluate_TM(z, Xe, parameters.fHe, rho, Tg, H_z, 
                                Level_I_temp.g[Level_I_temp.neq-1]);
     
-    ODE_effective::evaluate_2s_two_photon_decay(z, Tg, Hydrogen_Atoms.X(0), Hydrogen_Atoms.X(1), 
-                                                Hydrogen_Atoms.Level(1).Get_Dnu_1s(), 
-                                                const_HI_A2s_1s, Level_I_temp.g[iHI], 
-                                                Level_I_temp.g[iHI+1]);
-    
     //==================================================================
-    // HI Lyman-series
+    // hydrogen part
     //==================================================================
-    int nres=get_number_of_resolved_levels();
-    int nLy_max=(int)min(Lyn_max_parameter, Hydrogen_Atoms.Get_n_of_Level(get_HI_index(nres-1)));
-    
-    for(int n=2; n<=nLy_max; n++)
-    {
-        Transition_Data_A T=Hydrogen_Atoms.Level(n, 1).Get_Data_A(1, 0);
-        
-        ODE_effective::evaluate_Ly_n_channel(z, Tg, Hydrogen_Atoms.X(0), Hydrogen_Atoms.X(n, 1), 
-                                             NH, H_z, T.A21, T.lambda21, T.Dnu, 
-                                             Level_I_temp.g[iHI], 
-                                             Level_I_temp.g[iHI+Hydrogen_Atoms.Get_Level_index(n,1)]);
-    }   
-    
-    //==================================================================
-    // HI nD-1s Quadrupole transitions (added May 2011)
-    //==================================================================
-    if(Atom_activate_HI_Quadrupole_lines)
-    {
-        for(int k=0; k<get_number_of_resolved_levels(); k++)
-        {
-            int l=Hydrogen_Atoms.Get_l_of_Level(get_HI_index(k));
-            
-            if(l==2)
-            {
-                int n=Hydrogen_Atoms.Get_n_of_Level(get_HI_index(k));
-                
-                if(n<=nD_Quadrupole_max)
-                    ODE_effective::evaluate_nD_1s_Q_channel(Hydrogen_Atoms.X(n, 1), 
-                                                            Hydrogen_Atoms.X(n, 2), 
-                                                            Hydrogen_Atoms.Level(n, 2).Get_A21(1, 0), 
-                                                            Level_I_temp.g[iHI+Hydrogen_Atoms.Get_Level_index(n, 1)], 
-                                                            Level_I_temp.g[iHI+Hydrogen_Atoms.Get_Level_index(n, 2)]);
-            }
-        }
-    }
+    fcn_HI_effective(z, rho, Xe, Tg, NH, H_z, Xp, iHI, Level_I_temp);
 
     //==================================================================
-    // these are the ones with effective rates that depend on Te
-    //==================================================================    
-    ODE_HI_effective::evaluate_effective_Rci_Ric_terms(z, Xe, Np, Hydrogen_Atoms, Ai_df_dx, 
-                                                       Bi_df_dx, get_HI_index, &Level_I_temp.g[iHI]);
-    
-    ODE_HI_effective::evaluate_effective_Rij_terms(z, Tg, Hydrogen_Atoms, RijVec_df_dx, 
-                                                   get_HI_index, &Level_I_temp.g[iHI]);    
-    
+    // neutral helium part
     //==================================================================
-    // Diffusion correction
-    //==================================================================
-    if(Diffusion_correction_is_on)
-    {
-        evaluate_HI_Diffusion_correction(z, Hydrogen_Atoms, NH, H_z, Tg, &Level_I_temp.g[iHI]);
-        
-        if(DI1_2s_correction_on) evaluate_HI_DI1_DI2_correction(z, Hydrogen_Atoms.X(0), 
-                                                                Hydrogen_Atoms.X(1), 
-                                                                Hydrogen_Atoms.Level(1).Get_Dnu_1s(), 
-                                                                Tg, &Level_I_temp.g[iHI]);
-    }
+    if(flag_He==1) fcn_HeI_effective(z, Xe, Tg, NH, H_z, XHeII, iHeI, Level_I_temp);
     
     //==================================================================
     // DM annihilation
     //==================================================================
-    if(DM_annihilation) 
+    if(DM_annihilation)
 //        evaluate_DM_annihilation_terms(z, parameters.fHe, Tg, Xp, XHeII, fDM_CosmoRec,
 //                                       Level_I_temp.g[iHI], Level_I_temp.g[iHeI],
 //                                       Level_I_temp.g[Level_I_temp.neq-1]);
@@ -346,11 +388,6 @@ void fcn_effective(double z, Data_Level_III &LIII)
                                         B0_CosmoRec, nB_CosmoRec, kD_CosmoRec,
                                         Level_I_temp.g[iHI],
                                         Level_I_temp.g[Level_I_temp.neq-1]);
-    
-    //==================================================================
-    // neutral helium part
-    //==================================================================
-    if(flag_He==1) fcn_He_effective(z, Xe, Tg, NH, H_z, XHeII, iHeI, Level_I_temp);
     
     //==================================================================
     // to transform g_i --> dy_i/dt
@@ -397,16 +434,17 @@ void fcn_for_jacobian_eval(int jX, int neq, double DXj, double z, double Tg,
     else if(jX>=LI0.index_HeI && jX<LI0.neq-1) 
         HeI_Atoms.Set_Xi(jX-LI0.index_HeI, LI0.X[jX]);       
     
+    double Xe, Xp, XHeII, XHeIII;
+    compute_fractions(LI0, Xe, Xp, XHeII, XHeIII);
+
     //------------------------------------------------------------------
     // rho-dependent parts
     //------------------------------------------------------------------
     if(jX==LI0.neq-1)
     {
-        double Xp=1.0-Hydrogen_Atoms.X(0), Xe=Xp;
-        if(flag_He==1) Xe+=parameters.fHe-HeI_Atoms.Xi(0);
-        
-        update_Solver_vars_eff(&LI0.X[LI0.index_HI], Hydrogen_Atoms, &LI0.X[LI0.index_HeI], 
-                               HeI_Atoms, z, LI0.X[LI0.neq-1], 0);
+        update_Solver_vars_eff(&LI0.X[LI0.index_HI], Hydrogen_Atoms,
+                               &LI0.X[LI0.index_HeI], HeI_Atoms,
+                               z, LI0.X[LI0.neq-1], 0);
         
         ODE_HI_effective::evaluate_effective_Rci_Ric_terms_for_Te_derivative(z, Xe, NH*Xp, Ai_df_dx, 
                                                                              Bi_df_dx, get_HI_index, 
@@ -514,9 +552,6 @@ void fcn_for_jacobian_eval(int jX, int neq, double DXj, double z, double Tg,
     //==============================================================================================
     if(DM_annihilation && (jX==LI0.index_HI || jX==LI0.index_HeI || jX==LI0.neq-1))
     {
-        double Xp=1.0-Hydrogen_Atoms.X(0);
-        double XHeII = (flag_He==1 ? parameters.fHe-LI0.X[LI0.index_HeI] : 0.0); 
-        
         //evaluate_DM_annihilation_terms(z, parameters.fHe, Tg, Xp, XHeII, fDM_CosmoRec,
         //                               f[LI0.index_HI], f[LI0.index_HeI], f[LI0.neq-1]);
 
@@ -529,9 +564,6 @@ void fcn_for_jacobian_eval(int jX, int neq, double DXj, double z, double Tg,
     //==============================================================================================
     if(magnetic_fields && (jX==LI0.index_HI || jX==LI0.index_HeI || jX==LI0.neq-1))
     {
-        double Xp=1.0-Hydrogen_Atoms.X(0);
-        double XHeII = (flag_He==1 ? parameters.fHe-LI0.X[LI0.index_HeI] : 0.0);
-
         evaluate_magnetic_field_heating(z, parameters.fHe, Tg, Tg*LI0.X[LI0.neq-1],
                                         Xp, XHeII,
                                         B0_CosmoRec, nB_CosmoRec, kD_CosmoRec,
@@ -551,12 +583,38 @@ void fcn_for_jacobian_eval(int jX, int neq, double DXj, double z, double Tg,
     
     else if(flag_He==1 && jX>=LI0.index_HeI && jX<LI0.neq-1) 
         HeI_Atoms.Set_Xi(jX-LI0.index_HeI, LI0.X[jX]);     
-    
+
+    //===========================================================================
+    // derivative with respect to rho --> restore recombination rates after calls
+    //===========================================================================
+    if(jX==LI0.neq-1)
+    {
+        update_Solver_vars_eff(&LI0.X[LI0.index_HI], Hydrogen_Atoms,
+                               &LI0.X[LI0.index_HeI], HeI_Atoms,
+                               z, LI0.X[LI0.neq-1], 0);
+    }
+    //==============================================================================================
+    //==============================================================================================
+
     return;
 }
 
 //==================================================================================================
-void compute_numerical_derivative(int colX, int neq, int neq_HI, int neq_HeI, double z, 
+void evaluate_derives_atomic_part(double *r, double DXj, double eps, int iY, int neqY, int (*get_index_func)(int))
+{
+    r[iY]+=df_dx_2point_sym(Level_III_temp_JAC.g[iY], Level_III_temp_JAC.y[iY], DXj, eps);
+    
+    for(int m=0; m<neqY; m++)
+    {
+        int kl=iY+get_index_func(m);
+        r[kl]+=df_dx_2point_sym(Level_III_temp_JAC.g[kl], Level_III_temp_JAC.y[kl], DXj, eps);
+    }
+
+    return;
+}
+
+
+void compute_numerical_derivative(int colX, int neq, int neq_HI, int neq_HeI, double z,
                                   double Tg, double NH, Data_Level_I &LI0, double *r)
 { 
     //===========================================================================
@@ -575,42 +633,13 @@ void compute_numerical_derivative(int colX, int neq, int neq_HI, int neq_HeI, do
     fcn_for_jacobian_eval(colX, neq, -DXj, z, Tg, NH, LI0, Level_III_temp_JAC.y);
     
     //===========================================================================
-    // derivative with respect to rho --> restore recombination rates after calls
-    //===========================================================================
-    if(colX==neq-1) 
-        update_Solver_vars_eff(&LI0.X[LI0.index_HI], Hydrogen_Atoms, 
-                               &LI0.X[LI0.index_HeI], HeI_Atoms, 
-                               z, LI0.X[LI0.neq-1], 0);
-    
-    //===========================================================================
     // define numerical derivative
     //===========================================================================
     r[0]+=df_dx_2point_sym(Level_III_temp_JAC.g[0], Level_III_temp_JAC.y[0], DXj, eps);
-    
-    r[LI0.index_HI]+=df_dx_2point_sym(Level_III_temp_JAC.g[LI0.index_HI], 
-                                      Level_III_temp_JAC.y[LI0.index_HI], 
-                                      DXj, eps);
-    //
-    for(int m=0; m<neq_HI; m++)
-    { 
-        int kl=LI0.index_HI+get_HI_index(m); 
-        r[kl]+=df_dx_2point_sym(Level_III_temp_JAC.g[kl], Level_III_temp_JAC.y[kl], DXj, eps); 
-    }
-    
-    if(flag_He==1)
-    {
-        r[LI0.index_HeI]+=df_dx_2point_sym(Level_III_temp_JAC.g[LI0.index_HeI], 
-                                           Level_III_temp_JAC.y[LI0.index_HeI], 
-                                           DXj, eps);
-        
-        for(int m=0; m<neq_HeI; m++)
-        { 
-            int kl=LI0.index_HeI+get_HeI_index(m); 
-            r[kl]+=df_dx_2point_sym(Level_III_temp_JAC.g[kl], Level_III_temp_JAC.y[kl], DXj, eps); 
-        }
-    }
-    
-    return; 
+    evaluate_derives_atomic_part(r, DXj, eps, LI0.index_HI, neq_HI, get_HI_index);
+    if(flag_He==1) evaluate_derives_atomic_part(r, DXj, eps, LI0.index_HeI, neq_HeI, get_HeI_index);
+
+    return;
 }
 
 //==================================================================================================
@@ -626,6 +655,14 @@ static double jac_effective_z=-1e+300;
 //==================================================================================================
 void jac_effective(double z, Data_Level_III &LIII, int col)
 {
+    //==================================================================
+    // do numerical derivative if it was set that way
+    //==================================================================
+    if(ODE_Solver_info_CR.num_jac) return fcn_effective(z, LIII);
+
+    //==================================================================
+    // common data
+    //==================================================================
     int iHI=Level_I_temp.index_HI;
     int iHeI=Level_I_temp.index_HeI;
     int neq_HI=get_number_of_resolved_levels();
@@ -646,17 +683,20 @@ void jac_effective(double z, Data_Level_III &LIII, int col)
         //==================================================================
         // copy Xi_H --> Atoms && update recombination coefficients
         //==================================================================
-        update_Solver_vars_eff(&Level_I_temp.X[iHI], Hydrogen_Atoms, &Level_I_temp.X[iHeI], 
-                               HeI_Atoms, z, Level_I_temp.X[Level_I_temp.neq-1]);
+        update_Solver_vars_eff(&Level_I_temp.X[iHI], Hydrogen_Atoms,
+                               &Level_I_temp.X[iHeI], HeI_Atoms,
+                               z, Level_I_temp.X[Level_I_temp.neq-1]);
     }   
     
+    //==================================================================
+    // local variables
+    //==================================================================
     double rho=Level_I_temp.X[Level_I_temp.neq-1];
     double Tg=cosmos.TCMB(z);
-    double Xp=1.0-Level_I_temp.X[iHI];
-    double XHeII = (flag_He==1 ? parameters.fHe-Level_I_temp.X[iHeI] : 0.0); 
-    double Xe=Xp+XHeII;
-    double NH=cosmos.NH(z), H_z=cosmos.H(z), Np=NH*Xp;
-    
+    double Xe, Xp, XHeII, XHeIII;
+    compute_fractions(Level_I_temp, Xe, Xp, XHeII, XHeIII);
+    double NH=cosmos.NH(z), H_z=cosmos.H(z);
+
     //==================================================================
     // reset everything 
     //==================================================================
@@ -689,12 +729,12 @@ void jac_effective(double z, Data_Level_III &LIII, int col)
                                                             const_HI_A2s_1s, Level_I_temp.g[iHI], 
                                                             Level_I_temp.g[iHI+1]); 
         
-        ODE_HI_effective::df_dXHI1s_evaluate_effective_Rci_Ric_terms(z, Xe*NH, Np, Ai_df_dx, 
+        ODE_HI_effective::df_dXHI1s_evaluate_effective_Rci_Ric_terms(z, NH*Xe, NH*Xp, Ai_df_dx,
                                                                      Bi_df_dx, get_HI_index, 
                                                                      &Level_I_temp.g[iHI]);
         
         if(flag_He==1) 
-            ODE_HeI_effective::df_dXHI1s_evaluate_effective_Rci_Ric_terms(z, XHeII*NH, Ai_df_dx_HeI, 
+            ODE_HeI_effective::df_dXHI1s_evaluate_effective_Rci_Ric_terms(z, NH*XHeII, Ai_df_dx_HeI,
                                                                           Bi_df_dx_HeI, 
                                                                           get_HeI_index, 
                                                                           &Level_I_temp.g[iHeI]);
@@ -791,11 +831,11 @@ void jac_effective(double z, Data_Level_III &LIII, int col)
                                                             Level_I_temp.g[iHeI], 
                                                             Level_I_temp.g[iHeI+1]); 
         
-        ODE_HI_effective ::df_dXHeI1s_evaluate_effective_Rci_Ric_terms(z, Np, Ai_df_dx, Bi_df_dx, 
+        ODE_HI_effective ::df_dXHeI1s_evaluate_effective_Rci_Ric_terms(z, NH*Xp, Ai_df_dx, Bi_df_dx,
                                                                        get_HI_index, 
                                                                        &Level_I_temp.g[iHI]);
         
-        ODE_HeI_effective::df_dXHeI1s_evaluate_effective_Rci_Ric_terms(z, Xe*NH, XHeII*NH, 
+        ODE_HeI_effective::df_dXHeI1s_evaluate_effective_Rci_Ric_terms(z, NH*Xe, NH*XHeII,
                                                                        Ai_df_dx_HeI, 
                                                                        Bi_df_dx_HeI, 
                                                                        get_HeI_index, 
@@ -827,8 +867,9 @@ void jac_effective(double z, Data_Level_III &LIII, int col)
     else if(flag_He==1 && col>2+neq_HI)
     {
         int m=col-(3+neq_HI), ik=get_HeI_index(m);
-        //
-        if(3+neq_HI) 
+        
+        //if(3+neq_HI) // JC: 23rd July 2015: this was a stupid bug (seemed to not make a difference...)
+        if(col==3+neq_HI)
             ODE_effective::df_dX2s_evaluate_2s_two_photon_decay(z, Tg, 
                                                                 HeI_Atoms.Sing.Level(2,0).Get_Dnu_1s2(), 
                                                                 const_HeI_A2s_1s, 
@@ -844,22 +885,19 @@ void jac_effective(double z, Data_Level_III &LIII, int col)
                                                                get_HeI_index, 
                                                                &Level_I_temp.g[iHeI]);        
         
-        int l=HeI_Atoms.Get_l(ik);
-        int J=HeI_Atoms.Get_J(ik);
-        if((l==1 && J==1) || (l==2 && J==2))
+        // JC: 23rd July 2015: l=0 and J=1 transition was neglected with previous version.
+        //                     Very small rate though so this did not have a large effect.
+        if(!( flag_spin_forbidden==0 && ik==(int)HeI_Atoms.Get_Level_index(2, 1, 1, 1) ) )
         {
-            if(!( flag_spin_forbidden==0 && ik==(int)HeI_Atoms.Get_Level_index(2, 1, 1, 1) ) )
-            {
-                Transition_Data_HeI_A T=HeI_Atoms.Get_Trans_Data(ik, 1, 0, 0, 0);
-                
-                ODE_effective::df_dXnp_evaluate_Ly_n_channel(z, Tg, HeI_Atoms.Xi(0), 
-                                                             HeI_Atoms.Xi(ik), NH, H_z, 
-                                                             T.A21, T.lambda21, T.Dnu, 
-                                                             Level_I_temp.g[iHeI], 
-                                                             Level_I_temp.g[iHeI+ik], 
+            Transition_Data_HeI_A T=HeI_Atoms.Get_Trans_Data(ik, 1, 0, 0, 0);
+            if(T.A21!=0)
+                ODE_effective::df_dXnp_evaluate_Ly_n_channel(z, Tg, HeI_Atoms.Xi(0),
+                                                             HeI_Atoms.Xi(ik), NH, H_z,
+                                                             T.A21, T.lambda21, T.Dnu,
+                                                             Level_I_temp.g[iHeI],
+                                                             Level_I_temp.g[iHeI+ik],
                                                              HeI_Atoms.Get_gw(ik)/T.gwp);
-            }
-        }       
+        }
         
         compute_numerical_derivative(iHeI+ik, neq, neq_HI, neq_HeI, z, Tg, NH, 
                                      Level_I_temp, Level_I_temp.g);

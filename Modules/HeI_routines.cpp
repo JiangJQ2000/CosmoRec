@@ -89,7 +89,7 @@ void setup_Helium_atom()
 {
     print_message(" entering the setup for neutral helium ");
     
-    //if(nShellsHeI<njresolved) njresolved=nShellsHeI; // old helium atom setup
+    if(nShellsHeI<njresolved) njresolved=nShellsHeI;
     
     //Set_flag_Intercombination_lines(10);             // old helium atom setup
     int nQ =0;

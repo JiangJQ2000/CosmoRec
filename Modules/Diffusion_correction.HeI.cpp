@@ -44,7 +44,7 @@ void setup_DP_spline_data_HeI(int n, vector<double> &DPesc_vec_z, vector<double>
     //
     else update_spline_coeffies_JC(DPesc_splines_Data_HeI[n].memindex, nz, za, ya);                
 
-    DPesc_splines_Data_HeI[n].zmin=max(1300.0, DPesc_vec_z[nz-1]);
+    DPesc_splines_Data_HeI[n].zmin=max(HeI_was_switched_off_at_z*1.01, DPesc_vec_z[nz-1]);
     DPesc_splines_Data_HeI[n].zmax=min(3200.0, DPesc_vec_z[0]);
     DPesc_splines_Data_HeI[n].DPmin=DPesc_splines_Data_HeI[n].DPmax=0.0;
     
@@ -146,7 +146,7 @@ void evaluate_HeI_Diffusion_correction(double z, Gas_of_HeI_Atoms &HeIA,
         double exp_x=exp(-const_h_kb*T.Dnu/Tg);
         double DPval=DP_spline_HeI(line, z);
 
-        DRij=T.A21*1.0/(1.0-exp_x)*DPval*w*X1s*(HeIA.Xi(i_HeI)/X1s/w-exp_x);
+        DRij=T.A21/(1.0-exp_x)*DPval*w*X1s*(HeIA.Xi(i_HeI)/X1s/w-exp_x);
 
         //================================================================================
         // Helium transitions

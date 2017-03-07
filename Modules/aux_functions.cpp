@@ -379,7 +379,6 @@ void restart_CosmoRec()
 {   
     flag_He=1;
     set_array_dimensions_and_parameters();
-    set_variables();
     
     return;
 }   
@@ -469,17 +468,15 @@ void allocate()
     Level_I_temp.g =new double[Level_I.neq];
     
     // Level III
-    Level_III.y   =new double[Level_III.neq];
+    Level_III.X   =new double[Level_III.neq];
     Level_III.g   =new double[Level_III.neq];
     //
-    Level_III_temp.y   =new double[Level_III.neq];
+    Level_III_temp.X   =new double[Level_III.neq];
     Level_III_temp.g   =new double[Level_III.neq];
     //
-    Level_III_temp_JAC.y   =new double[Level_III.neq];
+    Level_III_temp_JAC.X   =new double[Level_III.neq];
     Level_III_temp_JAC.g   =new double[Level_III.neq];
     //----------------------------------------------------
-    
-    f0=new double[Level_I.neq];
     
     ODE_Solver_info_CR.Snewptr=NULL; // to make sure that the memory will be set
 
@@ -498,16 +495,15 @@ void deallocate()
     delete[] Level_I_temp.g;
     
     // Level III
-    delete[] Level_III.y;
+    delete[] Level_III.X;
     delete[] Level_III.g;
     //
-    delete[] Level_III_temp.y;
+    delete[] Level_III_temp.X;
     delete[] Level_III_temp.g;
     //
-    delete[] Level_III_temp_JAC.y;
+    delete[] Level_III_temp_JAC.X;
     delete[] Level_III_temp_JAC.g;
     
-    delete[] f0;
     delete[] Xfiles;
     
     clear_all_memory(Sz, tols, ODE_Solver_info_CR);

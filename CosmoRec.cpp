@@ -582,7 +582,6 @@ int CosmoRec(int narg, char *args[])
     read_startup_data(filename, parameters, cosmos);
     set_array_dimensions_and_parameters();
     allocate();
-    set_variables();
     
     //========================================================================
     // initialise zarr (linear)
@@ -929,8 +928,6 @@ int CosmoRec(const int runmode, const double runpars[7],
         set_array_dimensions_and_parameters();  
         
         if(!CosmoRec_is_initialized && err==0) allocate();
-        
-        set_variables();
         
         //========================================================================
         // write info about cosmology

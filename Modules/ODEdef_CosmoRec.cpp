@@ -45,6 +45,24 @@ void compute_fractions(const Data_Level_I &LI, double &Xe, double &Xp, double &X
     return;
 }
 
+void compute_fractions(const Data_Level_III &LI, double &Xe, double &Xp, double &XHeII, double &XHeIII)
+{
+    int iHI=LI.index_HI, iHeI=LI.index_HeI;
+    
+    Xp=1.0-LI.X[iHI];
+    XHeII=XHeIII=0.0;
+    
+    if(flag_He==1)
+    {
+        XHeII =parameters.fHe-LI.X[iHeI];
+        XHeIII=0.0;
+    }
+    
+    Xe=Xp+XHeII+2.0*XHeIII;
+    
+    return;
+}
+
 //==================================================================================================
 //==================================================================================================
 static double ODE_Solver_z_pre=0.0, ODE_Solver_rho_pre=0.0;
@@ -134,15 +152,14 @@ void copy_ysol_to_LIII(double *ysol, double *LIIIy, int neq, int index_HI, int i
 // fcn for hydrogen
 //==================================================================================================
 void fcn_HI_effective(double z, double rho, double Xe, double Tg, double NH, double H_z,
-                      double Xp, int iHI, Data_Level_I &LI)
+                      double Xp, int iHI, Data_Level_III &LI)
 {
     //==================================================================
     // effective rates
     //==================================================================
     ODE_effective::evaluate_2s_two_photon_decay(z, Tg, Hydrogen_Atoms.X(0), Hydrogen_Atoms.X(1),
                                                 Hydrogen_Atoms.Level(1).Get_Dnu_1s(),
-                                                const_HI_A2s_1s, Level_I_temp.g[iHI],
-                                                Level_I_temp.g[iHI+1]);
+                                                const_HI_A2s_1s, LI.g[iHI], LI.g[iHI+1]);
     
     //==================================================================
     // HI Lyman-series
@@ -156,8 +173,8 @@ void fcn_HI_effective(double z, double rho, double Xe, double Tg, double NH, dou
         
         ODE_effective::evaluate_Ly_n_channel(z, Tg, Hydrogen_Atoms.X(0), Hydrogen_Atoms.X(n, 1),
                                              NH, H_z, T.A21, T.lambda21, T.Dnu,
-                                             Level_I_temp.g[iHI],
-                                             Level_I_temp.g[iHI+Hydrogen_Atoms.Get_Level_index(n,1)]);
+                                             LI.g[iHI],
+                                             LI.g[iHI+Hydrogen_Atoms.Get_Level_index(n,1)]);
     }
     
     //==================================================================
@@ -177,8 +194,8 @@ void fcn_HI_effective(double z, double rho, double Xe, double Tg, double NH, dou
                     ODE_effective::evaluate_nD_1s_Q_channel(Hydrogen_Atoms.X(n, 1),
                                                             Hydrogen_Atoms.X(n, 2),
                                                             Hydrogen_Atoms.Level(n, 2).Get_A21(1, 0),
-                                                            Level_I_temp.g[iHI+Hydrogen_Atoms.Get_Level_index(n, 1)],
-                                                            Level_I_temp.g[iHI+Hydrogen_Atoms.Get_Level_index(n, 2)]);
+                                                            LI.g[iHI+Hydrogen_Atoms.Get_Level_index(n, 1)],
+                                                            LI.g[iHI+Hydrogen_Atoms.Get_Level_index(n, 2)]);
             }
         }
     }
@@ -187,22 +204,22 @@ void fcn_HI_effective(double z, double rho, double Xe, double Tg, double NH, dou
     // these are the ones with effective rates that depend on Te
     //==================================================================
     ODE_HI_effective::evaluate_effective_Rci_Ric_terms(z, Xe, NH*Xp, Hydrogen_Atoms, Ai_df_dx,
-                                                       Bi_df_dx, get_HI_index, &Level_I_temp.g[iHI]);
+                                                       Bi_df_dx, get_HI_index, &LI.g[iHI]);
     
     ODE_HI_effective::evaluate_effective_Rij_terms(z, Tg, Hydrogen_Atoms, RijVec_df_dx,
-                                                   get_HI_index, &Level_I_temp.g[iHI]);
+                                                   get_HI_index, &LI.g[iHI]);
     
     //==================================================================
     // Diffusion correction
     //==================================================================
     if(Diffusion_correction_is_on)
     {
-        evaluate_HI_Diffusion_correction(z, Hydrogen_Atoms, NH, H_z, Tg, &Level_I_temp.g[iHI]);
+        evaluate_HI_Diffusion_correction(z, Hydrogen_Atoms, NH, H_z, Tg, &LI.g[iHI]);
         
         if(DI1_2s_correction_on) evaluate_HI_DI1_DI2_correction(z, Hydrogen_Atoms.X(0),
                                                                 Hydrogen_Atoms.X(1),
                                                                 Hydrogen_Atoms.Level(1).Get_Dnu_1s(),
-                                                                Tg, &Level_I_temp.g[iHI]);
+                                                                Tg, &LI.g[iHI]);
     }
     
     return;
@@ -212,7 +229,7 @@ void fcn_HI_effective(double z, double rho, double Xe, double Tg, double NH, dou
 // fcn for helium
 //==================================================================================================
 void fcn_HeI_effective(double z, double Xe, double Tg, double NH, double H_z,
-                       double XHeII, int iHeI, Data_Level_I &LI)
+                       double XHeII, int iHeI, Data_Level_III &LI)
 {   
     double Te=Tg;   
     
@@ -323,61 +340,54 @@ void fcn_HeI_effective(double z, double Xe, double Tg, double NH, double H_z,
 //==================================================================================================
 // fcn for ODE evaluation
 //==================================================================================================
-void fcn_effective(double z, Data_Level_III &LIII)
+void fcn_effective(double z, Data_Level_III &LI)
 {
-    //==================================================================
-    // transform from yi --> Xi
-    //==================================================================
-    transform_y2X(LIII, z, Level_I_temp);
-    
-    double rho=Level_I_temp.X[Level_I_temp.neq-1];
+    double rho=LI.X[LI.neq-1];
     double Tg=cosmos.TCMB(z);
-    int iHI=Level_I_temp.index_HI;
-    int iHeI=Level_I_temp.index_HeI;
+    int iHI=LI.index_HI;
+    int iHeI=LI.index_HeI;
     
     double Xe, Xp, XHeII, XHeIII;
-    compute_fractions(Level_I_temp, Xe, Xp, XHeII, XHeIII);
+    compute_fractions(LI, Xe, Xp, XHeII, XHeIII);
     double NH=cosmos.NH(z), H_z=cosmos.H(z);
     
     //==================================================================
     // copy Xi_H --> Atoms && update recombination coefficients
     //==================================================================
-    update_Solver_vars_eff(&Level_I_temp.X[iHI], Hydrogen_Atoms, 
-                           &Level_I_temp.X[Level_I_temp.index_HeI], HeI_Atoms,
+    update_Solver_vars_eff(&LI.X[iHI], Hydrogen_Atoms, 
+                           &LI.X[iHeI], HeI_Atoms,
                            z, rho);
     
     //==================================================================
     // reset everything 
     //==================================================================
-    for(int i=0; i<Level_I_temp.neq; i++) Level_I_temp.g[i]=LIII.g[i]=0.0;        
+    for(int i=0; i<LI.neq; i++) LI.g[i]=0.0;
     
     //==================================================================
     // Te part
     //==================================================================
-    ODE_effective::evaluate_TM(z, Xe, parameters.fHe, rho, Tg, H_z, 
-                               Level_I_temp.g[Level_I_temp.neq-1]);
+    ODE_effective::evaluate_TM(z, Xe, parameters.fHe, rho, Tg, H_z, LI.g[LI.neq-1]);
     
     //==================================================================
     // hydrogen part
     //==================================================================
-    fcn_HI_effective(z, rho, Xe, Tg, NH, H_z, Xp, iHI, Level_I_temp);
+    fcn_HI_effective(z, rho, Xe, Tg, NH, H_z, Xp, iHI, LI);
 
     //==================================================================
     // neutral helium part
     //==================================================================
-    if(flag_He==1) fcn_HeI_effective(z, Xe, Tg, NH, H_z, XHeII, iHeI, Level_I_temp);
+    if(flag_He==1) fcn_HeI_effective(z, Xe, Tg, NH, H_z, XHeII, iHeI, LI);
+    
     
     //==================================================================
     // DM annihilation
     //==================================================================
     if(DM_annihilation)
 //        evaluate_DM_annihilation_terms(z, parameters.fHe, Tg, Xp, XHeII, fDM_CosmoRec,
-//                                       Level_I_temp.g[iHI], Level_I_temp.g[iHeI],
-//                                       Level_I_temp.g[Level_I_temp.neq-1]);
+//                                       LI.g[iHI], LI.g[iHeI], LI.g[LI.neq-1]);
         
         evaluate_DM_decay_terms(z, parameters.fHe, Tg, Xp, XHeII, fDM_CosmoRec, 1.0,
-                                Level_I_temp.g[iHI], Level_I_temp.g[iHeI],
-                                Level_I_temp.g[Level_I_temp.neq-1]);
+                                LI.g[iHI], LI.g[iHeI], LI.g[LI.neq-1]);
     
     //==================================================================
     // heating by magnetic fields
@@ -386,14 +396,8 @@ void fcn_effective(double z, Data_Level_III &LIII)
         evaluate_magnetic_field_heating(z, parameters.fHe, Tg, Tg*rho,
                                         Xp, XHeII,
                                         B0_CosmoRec, nB_CosmoRec, kD_CosmoRec,
-                                        Level_I_temp.g[iHI],
-                                        Level_I_temp.g[Level_I_temp.neq-1]);
-    
-    //==================================================================
-    // to transform g_i --> dy_i/dt
-    //==================================================================
-    transform_g_tX2g_ty(Level_I_temp, z, LIII);
-    
+                                        LI.g[iHI], LI.g[LI.neq-1]);
+
     return;
 }
 
@@ -602,12 +606,12 @@ void fcn_for_jacobian_eval(int jX, int neq, double DXj, double z, double Tg,
 //==================================================================================================
 void evaluate_derives_atomic_part(double *r, double DXj, double eps, int iY, int neqY, int (*get_index_func)(int))
 {
-    r[iY]+=df_dx_2point_sym(Level_III_temp_JAC.g[iY], Level_III_temp_JAC.y[iY], DXj, eps);
+    r[iY]+=df_dx_2point_sym(Level_III_temp_JAC.g[iY], Level_III_temp_JAC.X[iY], DXj, eps);
     
     for(int m=0; m<neqY; m++)
     {
         int kl=iY+get_index_func(m);
-        r[kl]+=df_dx_2point_sym(Level_III_temp_JAC.g[kl], Level_III_temp_JAC.y[kl], DXj, eps);
+        r[kl]+=df_dx_2point_sym(Level_III_temp_JAC.g[kl], Level_III_temp_JAC.X[kl], DXj, eps);
     }
 
     return;
@@ -630,12 +634,12 @@ void compute_numerical_derivative(int colX, int neq, int neq_HI, int neq_HeI, do
     // get f(Xj+DXj)
     fcn_for_jacobian_eval(colX, neq,  DXj, z, Tg, NH, LI0, Level_III_temp_JAC.g);
     // get f(Xj-DXj)
-    fcn_for_jacobian_eval(colX, neq, -DXj, z, Tg, NH, LI0, Level_III_temp_JAC.y);
+    fcn_for_jacobian_eval(colX, neq, -DXj, z, Tg, NH, LI0, Level_III_temp_JAC.X);
     
     //===========================================================================
     // define numerical derivative
     //===========================================================================
-    r[0]+=df_dx_2point_sym(Level_III_temp_JAC.g[0], Level_III_temp_JAC.y[0], DXj, eps);
+    r[0]+=df_dx_2point_sym(Level_III_temp_JAC.g[0], Level_III_temp_JAC.X[0], DXj, eps);
     evaluate_derives_atomic_part(r, DXj, eps, LI0.index_HI, neq_HI, get_HI_index);
     if(flag_He==1) evaluate_derives_atomic_part(r, DXj, eps, LI0.index_HeI, neq_HeI, get_HeI_index);
 
@@ -713,8 +717,7 @@ void jac_effective(double z, Data_Level_III &LIII, int col)
         compute_numerical_derivative(Level_I_temp.neq-1, neq, neq_HI, neq_HeI, 
                                      z, Tg, NH, Level_I_temp, Level_I_temp.g);
         
-        for(int k=0; k<LIII.neq; k++) 
-            LIII.g[k]=Level_I_temp.g[k]*f0[Level_I_temp.neq-1]/f0[k];
+        for(int k=0; k<LIII.neq; k++) LIII.g[k]=Level_I_temp.g[k];
     }
     //==================================================================
     // HI X1s derivatives
@@ -757,7 +760,7 @@ void jac_effective(double z, Data_Level_III &LIII, int col)
         compute_numerical_derivative(iHI, neq, neq_HI, neq_HeI, z, Tg, NH, 
                                      Level_I_temp, Level_I_temp.g);
         
-        for(int k=0; k<LIII.neq; k++) LIII.g[k]=Level_I_temp.g[k]*f0[iHI]/f0[k];
+        for(int k=0; k<LIII.neq; k++) LIII.g[k]=Level_I_temp.g[k];
     }
     //==================================================================
     // HI Xi derivatives (i>1s)
@@ -815,7 +818,7 @@ void jac_effective(double z, Data_Level_III &LIII, int col)
         compute_numerical_derivative(iHI+ik, neq, neq_HI, neq_HeI, z, Tg, NH, 
                                      Level_I_temp, Level_I_temp.g);
         
-        for(int k=0; k<LIII.neq; k++) LIII.g[k]=Level_I_temp.g[k]*f0[iHI+ik]/f0[k];
+        for(int k=0; k<LIII.neq; k++) LIII.g[k]=Level_I_temp.g[k];
     }
     //==================================================================
     // HeI X1s derivatives
@@ -859,7 +862,7 @@ void jac_effective(double z, Data_Level_III &LIII, int col)
         compute_numerical_derivative(iHeI, neq, neq_HI, neq_HeI, z, Tg, NH, 
                                      Level_I_temp, Level_I_temp.g);
         
-        for(int k=0; k<LIII.neq; k++) LIII.g[k]=Level_I_temp.g[k]*f0[iHeI]/f0[k];
+        for(int k=0; k<LIII.neq; k++) LIII.g[k]=Level_I_temp.g[k];
     }
     //==================================================================
     // HeI Xi derivatives (i>1s)
@@ -902,7 +905,7 @@ void jac_effective(double z, Data_Level_III &LIII, int col)
         compute_numerical_derivative(iHeI+ik, neq, neq_HI, neq_HeI, z, Tg, NH, 
                                      Level_I_temp, Level_I_temp.g);
         
-        for(int k=0; k<LIII.neq; k++) LIII.g[k]=Level_I_temp.g[k]*f0[iHeI+ik]/f0[k];
+        for(int k=0; k<LIII.neq; k++) LIII.g[k]=Level_I_temp.g[k];
     }
     else if(flag_He==0 && col>=2+neq_HI){}
     else{ cerr << " This should not happen. Exiting. " << endl; exit(0); }
@@ -919,7 +922,7 @@ void fcn_effective(int *neq, double *z, double *y, double *f, int col)
     int nres_HeI=get_number_of_resolved_levels_HeI();
         
     //==================================================================
-    copy_ysol_to_LIII(y, Level_III_temp.y, Level_III_temp.neq, index_HI, index_HeI);
+    copy_ysol_to_LIII(y, Level_III_temp.X, Level_III_temp.neq, index_HI, index_HeI);
     
     //==================================================================
     // col<0 : evaluate the rhs of system  dy/dz == g(t,y); 

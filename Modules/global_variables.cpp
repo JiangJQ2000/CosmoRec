@@ -126,7 +126,7 @@ struct Data_Level_III {
     int nHeIeq;
     int index_HI;
     int index_HeI;
-    double *y;
+    double *X;
     double *g;
 };
 
@@ -139,7 +139,6 @@ Data_Level_III Level_III_temp_JAC;
 
 //==================================================================================================
 double *zarr;               // redshift array
-double *f0;                 // rescaling factors Yi=Xi/fi
 
 //==================================================================================================
 // for Cosmology object

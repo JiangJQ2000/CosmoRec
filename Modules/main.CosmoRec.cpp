@@ -84,7 +84,7 @@ int Xe_frac_effective_rates()
         // initialize Sz
         //===========================================================================
         initialize_y(Level_I, Hydrogen_Atoms, HeI_Atoms, zs, Level_III);
-        copy_LIII_to_ysol(Level_III.y, &Sz.y[0], Level_III.neq, Level_III.index_HI, Level_III.index_HeI);
+        copy_LIII_to_ysol(Level_III.X, &Sz.y[0], Level_III.neq, Level_III.index_HI, Level_III.index_HeI);
         
         //===========================================================================
         // initialize ODE solver
@@ -128,7 +128,6 @@ int Xe_frac_effective_rates()
                 // take away helium equations
                 //============================================
                 neq=2+get_number_of_resolved_levels();
-                set_variables(700.0, zref_HeI);
                 initialize_y(Level_I, Hydrogen_Atoms, HeI_Atoms, zs, Level_III);
                 
                 //============================================
@@ -136,7 +135,7 @@ int Xe_frac_effective_rates()
                 Sz.z=zs;        
                 set_accuracies_own_solver(&tols.rel[0], &tols.abs[0], neq);
                 
-                copy_LIII_to_ysol(Level_III.y, &Sz.y[0], Level_III.neq, Level_III.index_HI, Level_III.index_HeI);
+                copy_LIII_to_ysol(Level_III.X, &Sz.y[0], Level_III.neq, Level_III.index_HI, Level_III.index_HeI);
                 
                 ODE_solver_Rec::ODE_Solver_set_up_solution_and_memory(Sz, tols, ODE_Solver_info_CR, fcn_effective, numerical_jacobian);
             }
@@ -146,20 +145,20 @@ int Xe_frac_effective_rates()
             //===========================================================================
             err=ODE_solver_Rec::ODE_Solver_Solve_history(zs, ze, Sz, ODE_Solver_info_CR);            
             if(err==10) break;            
-            copy_ysol_to_LIII(&Sz.y[0], Level_III.y, Level_III.neq, Level_III.index_HI, Level_III.index_HeI);
+            copy_ysol_to_LIII(&Sz.y[0], Level_III.X, Level_III.neq, Level_III.index_HI, Level_III.index_HeI);
             
             //===========================================================================
             // save step
             //===========================================================================
             copy_y_to_X(Level_III, ze, Level_I);
             //
-            Level_I.X[0]=Level_III.y[0]=1.0-Level_I.X[Level_I.index_HI];
+            Level_I.X[0]=Level_III.X[0]=1.0-Level_I.X[Level_I.index_HI];
             update_H_populations(&Level_I.X[Level_I.index_HI], Hydrogen_Atoms);
             if(flag_He==1)
             {
                 update_HeI_populations(&Level_I.X[Level_I.index_HeI], HeI_Atoms);
                 Level_I.X[0]+= parameters.fHe-Level_I.X[Level_I.index_HeI];
-                Level_III.y[0]=Level_I.X[0];
+                Level_III.X[0]=Level_I.X[0];
             }
             
             //===========================================================================
@@ -205,7 +204,7 @@ int Xe_frac_effective_rates()
             // set derivative of Xe for rescaling 
             //==========================================================================
             fcn_effective(ze, Level_III);
-            double dXe_dz=-Level_III.g[Level_I.index_HI]*f0[Level_I.index_HI]/(-cosmos.H(ze)*(1.0+(ze))); 
+            double dXe_dz=-Level_III.g[Level_I.index_HI]/(-cosmos.H(ze)*(1.0+(ze)));
             
             compute_Recfast_part(ze, ze_Recfast, 1.0-Hydrogen_Atoms.X(0), 0.0, Level_I.X[0], 
                                  Level_I.X[Level_I.neq-1], dXe_dz, Xfiles[1], Xfiles[0]);

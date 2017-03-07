@@ -123,6 +123,7 @@ void switch_off_1s_2s_absorption_correction()
 double Solve_PDE_HI_a_scale=1.0;
 double Solve_PDE_HI_m_scale=1.0;
 double Solve_PDE_HI_Eins_scale=1.0;
+bool   Solve_PDE_HI_alp_me_scale_on=0;
 
 void Set_rescaling_PDE_HI(double a_scale, double m_scale)
 {
@@ -130,6 +131,7 @@ void Set_rescaling_PDE_HI(double a_scale, double m_scale)
     Solve_PDE_HI_m_scale = m_scale;
     // Einstein co-efficient scale for Voigt profile
     Solve_PDE_HI_Eins_scale = pow(a_scale,5)*m_scale;
+    Solve_PDE_HI_alp_me_scale_on=1;
     
     return;
 }
@@ -332,15 +334,18 @@ void arm_PDE_solver(Cosmos &cos, Gas_of_Atoms &HIA, vector<double> &xarr,
     
         PDE_funcs_are_set=1;
     }
+    // only do this if var-consts are used [March 2017, JC]
+    else if(Solve_PDE_HI_alp_me_scale_on)
+    {
+        // Scaling due to fine structure constant and reduced mass (done every time when mode active) [added LH & JC]
+        for(int k=0; k<(int)resonances.size(); k++)
+            for(int m=0; m<(int)resonances.size(); m++)
+            {
+                PDE_funcs.Voigt_profiles_A_npns[m][k]=Get_A_npks(m+2, k+2)*Solve_PDE_HI_Eins_scale;
+                PDE_funcs.Voigt_profiles_A_npnd[m][k]=Get_A_npkd(m+2, k+2)*Solve_PDE_HI_Eins_scale;
+            }
+    }
     
-    // Scaling due to fine structure constant and reduced mass (done every time) [added LH & JC]
-    for(int k=0; k<(int)resonances.size(); k++)
-        for(int m=0; m<(int)resonances.size(); m++)
-        {
-            PDE_funcs.Voigt_profiles_A_npns[m][k]=Get_A_npks(m+2, k+2)*Solve_PDE_HI_Eins_scale;
-            PDE_funcs.Voigt_profiles_A_npnd[m][k]=Get_A_npkd(m+2, k+2)*Solve_PDE_HI_Eins_scale;
-        }
-
     //===========================================================================
     // make sure normalization of A2s1s is reset (added Sept 4th 2014)
     //===========================================================================

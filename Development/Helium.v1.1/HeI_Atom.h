@@ -702,7 +702,7 @@ private:
     //===================================================================================
     // Voigt profile initialisation [JC]
     //===================================================================================
-    void voigt_init(int nS, int mflag=1);
+    void voigt_init(int nS, int mflag=0);
 
     // to compute rescaled photo_ionization and recombination rates [JC]
     double FSC_scale;

@@ -187,6 +187,8 @@ CosmoRec.o: ./Modules/aux_functions.cpp ./Modules/output_methods.cpp \
 
 Solve_PDEs.o: ./PDE_Problem/Solve_PDEs_Grace.cpp
 
+Solve_PDEs_HeI.o: ./PDE_Problem_HeI/Solve_PDEs_HeI_Grace.cpp
+
 #===============================================================================
 # rules
 #===============================================================================

@@ -3436,7 +3436,7 @@ void Gas_of_HeI_Atoms::rescale_gas(double alpha_scale, double me_scale)
     this->Trip_no_j.rescale_atom(alpha_scale, me_scale);
     
     // Need to reinitialise the Voigt profiles
-    this->voigt_init(0);
+    this->voigt_init(this->Get_nShells());
     HILyc.rescale_phot(alpha_scale, me_scale); // rescale Ly-c crossection [JC, March 6th, 2017]
     
     // to compute rescaled photo_ionization and recombination rates

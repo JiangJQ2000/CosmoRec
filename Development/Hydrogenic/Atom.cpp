@@ -1459,7 +1459,7 @@ void Gas_of_Atoms::rescale_gas(double alpha_scale, double me_scale){
     this->rescale_atom(alpha_scale, me_scale);
     
     // Need to reinitialise the Voigt profiles
-    this->voigt_init(1);
+    this->voigt_init();
     return;
 }
 void Gas_of_Atoms::reset_gas() { rescale_gas(1.,1.); return; }

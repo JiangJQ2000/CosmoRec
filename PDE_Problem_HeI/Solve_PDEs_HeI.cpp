@@ -122,11 +122,13 @@ void switch_off_1s_2s_HeI_absorption_correction()
 //==================================================================================================
 double Solve_PDE_HeI_a_scale=1.0;
 double Solve_PDE_HeI_m_scale=1.0;
+bool   Solve_PDE_HeI_alp_me_scale_on=0;
 
 void Set_rescaling_PDE_HeI(double a_scale, double m_scale)
 {
     Solve_PDE_HeI_a_scale = a_scale;
     Solve_PDE_HeI_m_scale = m_scale;
+    Solve_PDE_HeI_alp_me_scale_on=1;
     
     return;
 }
@@ -219,7 +221,8 @@ void arm_PDE_solver_HeI(double nu21, Cosmos &cos, Gas_of_HeI_Atoms &HeIAtoms,
 
         PDE_funcs_are_set_HeI=1;
     }
-    else
+    // only do this if var-consts are used [JC]
+    else if(Solve_PDE_HeI_alp_me_scale_on)
     {
         //==================================================================
         // HI Lyc photon-ionization cross section at grid-points
@@ -459,7 +462,7 @@ int compute_HeI_DPesc_with_diffusion_equation_effective(int nHeI_Trans, vector<d
 	// output for Grace (optional)
     //==============================================================================================
 #ifdef GRACE_DEFINED
-	bool out_put_GRACE=0;
+	bool out_put_GRACE=1;
     bool write_to_disk_GRACE=0;
 	int GR_output_step=1;
 #endif

@@ -372,7 +372,7 @@ class Gas_of_Atoms : public Atom
         // Voigt Initialisation [LH, Oct-Dec, 2016]
         //============================================================================================================
         // would like to call this both inside the initialisation and also during the rescaling of the energy levels
-        void voigt_init(int mflag=1);
+        void voigt_init(int mflag=0);
     
     public:
         

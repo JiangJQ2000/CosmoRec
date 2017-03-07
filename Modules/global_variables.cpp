@@ -117,25 +117,7 @@ struct Data_Level_I {
     double *g;
 };
 
-//==================================================================================================
-// Level III: 
-//==================================================================================================
-struct Data_Level_III {
-    int neq;
-    int nHIeq;
-    int nHeIeq;
-    int index_HI;
-    int index_HeI;
-    double *X;
-    double *g;
-};
-
-Data_Level_I Level_I; 
-Data_Level_III Level_III; 
-
-Data_Level_I Level_I_temp; 
-Data_Level_III Level_III_temp; 
-Data_Level_III Level_III_temp_JAC; 
+Data_Level_I Level_I, Level_I_temp, Level_I_temp_JAC;
 
 //==================================================================================================
 double *zarr;               // redshift array

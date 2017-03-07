@@ -151,12 +151,6 @@ void print_message(string mess);
 #include "./Modules/Diffusion_correction.HeI.cpp" 
 
 //===========================================================================================================
-// variable transformation. For numerical reasons it is better 
-// to rescale the populations. This is done here.
-//===========================================================================================================
-#include "./Modules/var_trans.cpp"
-
-//===========================================================================================================
 // functions to read parameter file and set up memory etc
 //===========================================================================================================
 // defined in "./Modules/ODEdef_CosmoRec.cpp"

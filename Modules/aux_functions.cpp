@@ -74,41 +74,33 @@ void set_array_dimensions_and_parameters(int wait=0)
     //=======================================================================================================
     Level_I.nHIeq=Hydrogen_Atoms.Get_total_number_of_Levels();
     Level_I_temp.nHIeq=Level_I.nHIeq;
+    Level_I_temp_JAC.nHIeq=Level_I.nHIeq;
     //
     Level_I.nHeIeq=HeI_Atoms.Get_total_number_of_Levels();
     Level_I_temp.nHeIeq=Level_I.nHeIeq;
+    Level_I_temp_JAC.nHeIeq=Level_I.nHeIeq;
     //
     Level_I.neq=Level_I.nHIeq+Level_I.nHeIeq+2;
     Level_I_temp.neq=Level_I.neq;
+    Level_I_temp_JAC.neq=Level_I.neq;
     
     //=======================================================================================================
     // start index of HI and HeI
     //=======================================================================================================
     Level_I.index_HI=1;
     Level_I_temp.index_HI=Level_I.index_HI;
+    Level_I_temp_JAC.index_HI=Level_I.index_HI;
     //
     Level_I.index_HeI=Level_I.nHIeq+1;
     Level_I_temp.index_HeI=Level_I.index_HeI;
-    
-    //=======================================================================================================
-    // setup Level III
-    //=======================================================================================================
-    Level_III.nHIeq=Level_III_temp.nHIeq=Level_III_temp_JAC.nHIeq=Hydrogen_Atoms.Get_number_of_Levels_until(nShells);
-    Level_III.nHeIeq=Level_III_temp.nHeIeq=Level_III_temp_JAC.nHeIeq=HeI_Atoms.Get_total_number_of_Levels();
-    Level_III.neq=Level_III_temp.neq=Level_III_temp_JAC.neq=Level_III.nHIeq+Level_I.nHeIeq+2;
-
-    //=======================================================================================================
-    // start index of HI and HeI (these are reset when using reordering)
-    //=======================================================================================================
-    Level_III.index_HI =Level_III_temp.index_HI=Level_III_temp_JAC.index_HI=1;
-    Level_III.index_HeI=Level_III_temp.index_HeI=Level_III_temp_JAC.index_HeI=Level_III.nHIeq+1;
+    Level_I_temp_JAC.index_HeI=Level_I.index_HeI;
 
     //=======================================================================================================
     if(show_CosmoRec_mess>=2)
     {
-        cout << "\n total number of equations: " << Level_III.neq 
-             << "\n Hydrogen equations: " << Level_III.nHIeq       
-             << "\n Helium equations: " << Level_III.nHeIeq << endl;
+        cout << "\n total number of equations: " << Level_I.neq
+             << "\n Hydrogen equations: " << Level_I.nHIeq
+             << "\n Helium equations: " << Level_I.nHeIeq << endl;
     
         cout << " nShells: " << nShells << "\n included number of hydrogen levels: " 
              << Level_I.nHIeq << endl;
@@ -466,17 +458,9 @@ void allocate()
     //
     Level_I_temp.X =new double[Level_I.neq];
     Level_I_temp.g =new double[Level_I.neq];
-    
-    // Level III
-    Level_III.X   =new double[Level_III.neq];
-    Level_III.g   =new double[Level_III.neq];
     //
-    Level_III_temp.X   =new double[Level_III.neq];
-    Level_III_temp.g   =new double[Level_III.neq];
-    //
-    Level_III_temp_JAC.X   =new double[Level_III.neq];
-    Level_III_temp_JAC.g   =new double[Level_III.neq];
-    //----------------------------------------------------
+    Level_I_temp_JAC.X =new double[Level_I.neq];
+    Level_I_temp_JAC.g =new double[Level_I.neq];
     
     ODE_Solver_info_CR.Snewptr=NULL; // to make sure that the memory will be set
 
@@ -493,16 +477,9 @@ void deallocate()
     //
     delete[] Level_I_temp.X;
     delete[] Level_I_temp.g;
-    
-    // Level III
-    delete[] Level_III.X;
-    delete[] Level_III.g;
     //
-    delete[] Level_III_temp.X;
-    delete[] Level_III_temp.g;
-    //
-    delete[] Level_III_temp_JAC.X;
-    delete[] Level_III_temp_JAC.g;
+    delete[] Level_I_temp_JAC.X;
+    delete[] Level_I_temp_JAC.g;
     
     delete[] Xfiles;
     

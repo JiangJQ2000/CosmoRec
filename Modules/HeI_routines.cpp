@@ -75,7 +75,6 @@ int nHeFeedback=2;
 //========================================================================
 const double zcrit_HI=3400.0;
 const double zcrit_HI_Int=3400.0;
-const double zref_HeI=2500.0;
 
 //========================================================================
 // defined in ./Modules/P_HI_abs_tabulation.cpp

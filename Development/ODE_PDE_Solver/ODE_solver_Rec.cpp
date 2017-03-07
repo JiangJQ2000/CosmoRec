@@ -351,7 +351,7 @@ namespace ODE_solver_Rec
                                    int verbose=0)
     {
         // 05/03/2017 JC
-        if(b.size()<=15){ ODE_Solver_Solve_LA_system_Gaussian(Jac, b, x, verbose); return 0; }
+        if(b.size()<=50){ ODE_Solver_Solve_LA_system_Gaussian(Jac, b, x, verbose); return 0; }
         
         int ifail=0, maxit = 10000;                      // Maximum iterations
         

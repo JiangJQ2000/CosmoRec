@@ -45,24 +45,6 @@ void compute_fractions(const Data_Level_I &LI, double &Xe, double &Xp, double &X
     return;
 }
 
-void compute_fractions(const Data_Level_III &LI, double &Xe, double &Xp, double &XHeII, double &XHeIII)
-{
-    int iHI=LI.index_HI, iHeI=LI.index_HeI;
-    
-    Xp=1.0-LI.X[iHI];
-    XHeII=XHeIII=0.0;
-    
-    if(flag_He==1)
-    {
-        XHeII =parameters.fHe-LI.X[iHeI];
-        XHeIII=0.0;
-    }
-    
-    Xe=Xp+XHeII+2.0*XHeIII;
-    
-    return;
-}
-
 //==================================================================================================
 //==================================================================================================
 static double ODE_Solver_z_pre=0.0, ODE_Solver_rho_pre=0.0;
@@ -103,7 +85,7 @@ void update_Solver_vars_eff(const double *XiH, Gas_of_Atoms &H_Atoms,
 //==================================================================================================
 // aux-functions for variable mapping
 //==================================================================================================
-void copy_LIII_to_ysol(double *LIIIy, double *ysol, int neq, int index_HI, int index_HeI)
+void copy_LI_to_ysol(double *LIX, double *ysol, int neq, int index_HI, int index_HeI)
 {
     int nres_HI=get_number_of_resolved_levels();
     int nres_HeI=get_number_of_resolved_levels_HeI();
@@ -111,22 +93,23 @@ void copy_LIII_to_ysol(double *LIIIy, double *ysol, int neq, int index_HI, int i
     //============================================================================
     // 1. eq is Te
     //============================================================================
-    ysol[0]=LIIIy[neq-1];
-    ysol[1]=LIIIy[index_HI];
-    //
-    for(int k=0; k<nres_HI; k++){ ysol[k+2]=LIIIy[index_HI+get_HI_index(k)]; }
-    //
-    if(flag_He==1) 
+    for(int k=0; k<neq; k++) ysol[k]=0.0;                   // reset all initially
+    ysol[0]=LIX[neq-1];
+    ysol[1]=LIX[index_HI];
+    
+    for(int k=0; k<nres_HI; k++) ysol[k+2]=LIX[index_HI+get_HI_index(k)];
+    
+    if(flag_He>=1)
     {
-        ysol[nres_HI+2]=LIIIy[index_HeI]; 
-        for(int k=0; k<nres_HeI; k++){ ysol[nres_HI+k+3]=LIIIy[index_HeI+get_HeI_index(k)]; }
+        ysol[nres_HI+2]=LIX[index_HeI];
+        for(int k=0; k<nres_HeI; k++) ysol[nres_HI+k+3]=LIX[index_HeI+get_HeI_index(k)];
     }
     
     return;
 }
 
 //==================================================================================================
-void copy_ysol_to_LIII(double *ysol, double *LIIIy, int neq, int index_HI, int index_HeI)
+void copy_ysol_to_LI(double *ysol, Data_Level_I &LI, int neq, int index_HI, int index_HeI)
 {
     int nres_HI=get_number_of_resolved_levels();
     int nres_HeI=get_number_of_resolved_levels_HeI();
@@ -134,17 +117,22 @@ void copy_ysol_to_LIII(double *ysol, double *LIIIy, int neq, int index_HI, int i
     //============================================================================
     // 1. eq is Te
     //============================================================================
-    LIIIy[neq-1]=ysol[0];
-    LIIIy[index_HI]=ysol[1];
-    //  
-    for(int k=0; k<nres_HI; k++){ LIIIy[index_HI+get_HI_index(k)]=ysol[k+2]; }
-    //
-    if(flag_He==1) 
+    LI.X[neq-1]=ysol[0];
+    LI.X[index_HI]=ysol[1];
+    
+    for(int k=0; k<nres_HI; k++) LI.X[index_HI+get_HI_index(k)]=ysol[k+2];
+    
+    if(flag_He>=1)
     {
-        LIIIy[index_HeI]=ysol[nres_HI+2];
-        for(int k=0; k<nres_HeI; k++){ LIIIy[index_HeI+get_HeI_index(k)]=ysol[nres_HI+k+3]; }
+        LI.X[index_HeI]=ysol[nres_HI+2];
+        for(int k=0; k<nres_HeI; k++) LI.X[index_HeI+get_HeI_index(k)]=ysol[nres_HI+k+3];
     }
     
+    // also update Xe
+    double Xe, Xp, XHeII, XHeIII;
+    compute_fractions(LI, Xe, Xp, XHeII, XHeIII);
+    LI.X[0]=Xe;
+
     return;
 }
 
@@ -152,7 +140,7 @@ void copy_ysol_to_LIII(double *ysol, double *LIIIy, int neq, int index_HI, int i
 // fcn for hydrogen
 //==================================================================================================
 void fcn_HI_effective(double z, double rho, double Xe, double Tg, double NH, double H_z,
-                      double Xp, int iHI, Data_Level_III &LI)
+                      double Xp, int iHI, Data_Level_I &LI)
 {
     //==================================================================
     // effective rates
@@ -229,7 +217,7 @@ void fcn_HI_effective(double z, double rho, double Xe, double Tg, double NH, dou
 // fcn for helium
 //==================================================================================================
 void fcn_HeI_effective(double z, double Xe, double Tg, double NH, double H_z,
-                       double XHeII, int iHeI, Data_Level_III &LI)
+                       double XHeII, int iHeI, Data_Level_I &LI)
 {   
     double Te=Tg;   
     
@@ -340,7 +328,7 @@ void fcn_HeI_effective(double z, double Xe, double Tg, double NH, double H_z,
 //==================================================================================================
 // fcn for ODE evaluation
 //==================================================================================================
-void fcn_effective(double z, Data_Level_III &LI)
+void fcn_effective(double z, Data_Level_I &LI)
 {
     double rho=LI.X[LI.neq-1];
     double Tg=cosmos.TCMB(z);
@@ -606,12 +594,12 @@ void fcn_for_jacobian_eval(int jX, int neq, double DXj, double z, double Tg,
 //==================================================================================================
 void evaluate_derives_atomic_part(double *r, double DXj, double eps, int iY, int neqY, int (*get_index_func)(int))
 {
-    r[iY]+=df_dx_2point_sym(Level_III_temp_JAC.g[iY], Level_III_temp_JAC.X[iY], DXj, eps);
+    r[iY]+=df_dx_2point_sym(Level_I_temp_JAC.g[iY], Level_I_temp_JAC.X[iY], DXj, eps);
     
     for(int m=0; m<neqY; m++)
     {
         int kl=iY+get_index_func(m);
-        r[kl]+=df_dx_2point_sym(Level_III_temp_JAC.g[kl], Level_III_temp_JAC.X[kl], DXj, eps);
+        r[kl]+=df_dx_2point_sym(Level_I_temp_JAC.g[kl], Level_I_temp_JAC.X[kl], DXj, eps);
     }
 
     return;
@@ -632,17 +620,17 @@ void compute_numerical_derivative(int colX, int neq, int neq_HI, int neq_HeI, do
     // also recombination rates could be changed
     //===========================================================================
     // get f(Xj+DXj)
-    fcn_for_jacobian_eval(colX, neq,  DXj, z, Tg, NH, LI0, Level_III_temp_JAC.g);
+    fcn_for_jacobian_eval(colX, neq,  DXj, z, Tg, NH, LI0, Level_I_temp_JAC.g);
     // get f(Xj-DXj)
-    fcn_for_jacobian_eval(colX, neq, -DXj, z, Tg, NH, LI0, Level_III_temp_JAC.X);
+    fcn_for_jacobian_eval(colX, neq, -DXj, z, Tg, NH, LI0, Level_I_temp_JAC.X);
     
     //===========================================================================
     // define numerical derivative
     //===========================================================================
-    r[0]+=df_dx_2point_sym(Level_III_temp_JAC.g[0], Level_III_temp_JAC.X[0], DXj, eps);
+    r[0]+=df_dx_2point_sym(Level_I_temp_JAC.g[0], Level_I_temp_JAC.X[0], DXj, eps);
     evaluate_derives_atomic_part(r, DXj, eps, LI0.index_HI, neq_HI, get_HI_index);
     if(flag_He==1) evaluate_derives_atomic_part(r, DXj, eps, LI0.index_HeI, neq_HeI, get_HeI_index);
-
+    
     return;
 }
 
@@ -657,18 +645,18 @@ static double jac_effective_z=-1e+300;
 // jac for ODE evaluation
 //
 //==================================================================================================
-void jac_effective(double z, Data_Level_III &LIII, int col)
+void jac_effective(double z, Data_Level_I &LI, int col)
 {
     //==================================================================
     // do numerical derivative if it was set that way
     //==================================================================
-    if(ODE_Solver_info_CR.num_jac) return fcn_effective(z, LIII);
+    if(ODE_Solver_info_CR.num_jac) return fcn_effective(z, LI);
 
     //==================================================================
     // common data
     //==================================================================
-    int iHI=Level_I_temp.index_HI;
-    int iHeI=Level_I_temp.index_HeI;
+    int iHI=LI.index_HI;
+    int iHeI=LI.index_HeI;
     int neq_HI=get_number_of_resolved_levels();
     int neq_HeI=get_number_of_resolved_levels_HeI();
     int neq=1+neq_HI+neq_HeI;
@@ -679,32 +667,28 @@ void jac_effective(double z, Data_Level_III &LIII, int col)
     if(jac_effective_z!=z)
     {
         jac_effective_z=z;
-        //==================================================================
-        // transform from yi --> Xi
-        //==================================================================
-        transform_y2X(LIII, z, Level_I_temp);
         
         //==================================================================
         // copy Xi_H --> Atoms && update recombination coefficients
         //==================================================================
-        update_Solver_vars_eff(&Level_I_temp.X[iHI], Hydrogen_Atoms,
-                               &Level_I_temp.X[iHeI], HeI_Atoms,
-                               z, Level_I_temp.X[Level_I_temp.neq-1]);
+        update_Solver_vars_eff(&LI.X[iHI], Hydrogen_Atoms,
+                               &LI.X[iHeI], HeI_Atoms,
+                               z, LI.X[LI.neq-1]);
     }   
     
     //==================================================================
     // local variables
     //==================================================================
-    double rho=Level_I_temp.X[Level_I_temp.neq-1];
+    double rho=LI.X[LI.neq-1];
     double Tg=cosmos.TCMB(z);
     double Xe, Xp, XHeII, XHeIII;
-    compute_fractions(Level_I_temp, Xe, Xp, XHeII, XHeIII);
+    compute_fractions(LI, Xe, Xp, XHeII, XHeIII);
     double NH=cosmos.NH(z), H_z=cosmos.H(z);
-
+    
     //==================================================================
     // reset everything 
     //==================================================================
-    for(int i=0; i<Level_I_temp.neq; i++) Level_I_temp.g[i]=LIII.g[i]=0.0;        
+    for(int i=0; i<LI.neq; i++) LI.g[i]=0.0;
     
     //==================================================================
     // Te derivatives
@@ -712,12 +696,10 @@ void jac_effective(double z, Data_Level_III &LIII, int col)
     if(col==0)
     {
         ODE_effective::df_drho_evaluate_TM(z, Xe, parameters.fHe, Tg, H_z, 
-                                           Level_I_temp.g[Level_I_temp.neq-1]);
+                                           LI.g[LI.neq-1]);
         
-        compute_numerical_derivative(Level_I_temp.neq-1, neq, neq_HI, neq_HeI, 
-                                     z, Tg, NH, Level_I_temp, Level_I_temp.g);
-        
-        for(int k=0; k<LIII.neq; k++) LIII.g[k]=Level_I_temp.g[k];
+        compute_numerical_derivative(LI.neq-1, neq, neq_HI, neq_HeI, 
+                                     z, Tg, NH, LI, LI.g);
     }
     //==================================================================
     // HI X1s derivatives
@@ -725,22 +707,22 @@ void jac_effective(double z, Data_Level_III &LIII, int col)
     else if(col==1)
     {
         ODE_effective::df_dXHI1s_evaluate_TM(z, Xe, parameters.fHe, rho, Tg, H_z, 
-                                             Level_I_temp.g[Level_I_temp.neq-1]);
+                                             LI.g[LI.neq-1]);
         
         ODE_effective::df_dX1s_evaluate_2s_two_photon_decay(z, Tg, 
                                                             Hydrogen_Atoms.Level(1).Get_Dnu_1s(), 
-                                                            const_HI_A2s_1s, Level_I_temp.g[iHI], 
-                                                            Level_I_temp.g[iHI+1]); 
+                                                            const_HI_A2s_1s, LI.g[iHI], 
+                                                            LI.g[iHI+1]); 
         
         ODE_HI_effective::df_dXHI1s_evaluate_effective_Rci_Ric_terms(z, NH*Xe, NH*Xp, Ai_df_dx,
                                                                      Bi_df_dx, get_HI_index, 
-                                                                     &Level_I_temp.g[iHI]);
+                                                                     &LI.g[iHI]);
         
         if(flag_He==1) 
             ODE_HeI_effective::df_dXHI1s_evaluate_effective_Rci_Ric_terms(z, NH*XHeII, Ai_df_dx_HeI,
                                                                           Bi_df_dx_HeI, 
                                                                           get_HeI_index, 
-                                                                          &Level_I_temp.g[iHeI]);
+                                                                          &LI.g[iHeI]);
         
         int nLy_max=(int)min(Lyn_max_parameter, 
                              Hydrogen_Atoms.Get_n_of_Level(get_HI_index(neq_HI-1)));
@@ -753,14 +735,11 @@ void jac_effective(double z, Data_Level_III &LIII, int col)
             ODE_effective::df_dX1s_evaluate_Ly_n_channel(z, Tg, Hydrogen_Atoms.X(0), 
                                                          Hydrogen_Atoms.X(n, 1), NH, H_z, 
                                                          T.A21, T.lambda21, T.Dnu, 
-                                                         Level_I_temp.g[iHI], 
-                                                         Level_I_temp.g[iHI+nly]);
+                                                         LI.g[iHI], 
+                                                         LI.g[iHI+nly]);
         }
         
-        compute_numerical_derivative(iHI, neq, neq_HI, neq_HeI, z, Tg, NH, 
-                                     Level_I_temp, Level_I_temp.g);
-        
-        for(int k=0; k<LIII.neq; k++) LIII.g[k]=Level_I_temp.g[k];
+        compute_numerical_derivative(iHI, neq, neq_HI, neq_HeI, z, Tg, NH, LI, LI.g);
     }
     //==================================================================
     // HI Xi derivatives (i>1s)
@@ -772,16 +751,16 @@ void jac_effective(double z, Data_Level_III &LIII, int col)
         if(col==2) 
             ODE_effective::df_dX2s_evaluate_2s_two_photon_decay(z, Tg, 
                                                                 Hydrogen_Atoms.Level(1).Get_Dnu_1s(), 
-                                                                const_HI_A2s_1s, Level_I_temp.g[iHI], 
-                                                                Level_I_temp.g[iHI+1]);
+                                                                const_HI_A2s_1s, LI.g[iHI], 
+                                                                LI.g[iHI+1]);
         
         ODE_HI_effective::df_dXi_evaluate_effective_Rci_Ric_terms(m, z, Ai_df_dx, Bi_df_dx, 
                                                                   get_HI_index, 
-                                                                  &Level_I_temp.g[iHI]);
+                                                                  &LI.g[iHI]);
         
         ODE_HI_effective::df_dXi_evaluate_effective_Rij_terms(m, z, Tg, Hydrogen_Atoms, 
                                                               RijVec_df_dx, get_HI_index, 
-                                                              &Level_I_temp.g[iHI]);
+                                                              &LI.g[iHI]);
         
         int n=Hydrogen_Atoms.Get_n_of_Level(ik);
         int l=Hydrogen_Atoms.Get_l_of_Level(ik);
@@ -792,8 +771,8 @@ void jac_effective(double z, Data_Level_III &LIII, int col)
             
             ODE_effective::df_dXnp_evaluate_Ly_n_channel(z, Tg, Hydrogen_Atoms.X(0), 
                                                          Hydrogen_Atoms.X(ik), NH, H_z, T.A21, 
-                                                         T.lambda21, T.Dnu, Level_I_temp.g[iHI], 
-                                                         Level_I_temp.g[iHI+ik]);
+                                                         T.lambda21, T.Dnu, LI.g[iHI], 
+                                                         LI.g[iHI+ik]);
             
             //==================================================================
             // nD-1s quadrupole lines (added May 2011)
@@ -801,8 +780,8 @@ void jac_effective(double z, Data_Level_III &LIII, int col)
             if(Atom_activate_HI_Quadrupole_lines && n>2 && n<=nD_Quadrupole_max)
                 ODE_effective::df_dXnp_evaluate_nD_1s_Q_channel(Hydrogen_Atoms.X(n, 2), 
                                                                 Hydrogen_Atoms.Level(n, 2).Get_A21(1, 0), 
-                                                                Level_I_temp.g[iHI+Hydrogen_Atoms.Get_Level_index(n, 1)], 
-                                                                Level_I_temp.g[iHI+Hydrogen_Atoms.Get_Level_index(n, 2)]);
+                                                                LI.g[iHI+Hydrogen_Atoms.Get_Level_index(n, 1)], 
+                                                                LI.g[iHI+Hydrogen_Atoms.Get_Level_index(n, 2)]);
         }
         
         //==================================================================
@@ -811,14 +790,11 @@ void jac_effective(double z, Data_Level_III &LIII, int col)
         if(Atom_activate_HI_Quadrupole_lines && n>2 && n<=nD_Quadrupole_max && l==2)
             ODE_effective::df_dXnd_evaluate_nD_1s_Q_channel(Hydrogen_Atoms.X(n, 1), 
                                                             Hydrogen_Atoms.Level(n, 2).Get_A21(1, 0), 
-                                                            Level_I_temp.g[iHI+Hydrogen_Atoms.Get_Level_index(n, 1)], 
-                                                            Level_I_temp.g[iHI+Hydrogen_Atoms.Get_Level_index(n, 2)]);
+                                                            LI.g[iHI+Hydrogen_Atoms.Get_Level_index(n, 1)], 
+                                                            LI.g[iHI+Hydrogen_Atoms.Get_Level_index(n, 2)]);
         
         
-        compute_numerical_derivative(iHI+ik, neq, neq_HI, neq_HeI, z, Tg, NH, 
-                                     Level_I_temp, Level_I_temp.g);
-        
-        for(int k=0; k<LIII.neq; k++) LIII.g[k]=Level_I_temp.g[k];
+        compute_numerical_derivative(iHI+ik, neq, neq_HI, neq_HeI, z, Tg, NH, LI, LI.g);
     }
     //==================================================================
     // HeI X1s derivatives
@@ -826,23 +802,23 @@ void jac_effective(double z, Data_Level_III &LIII, int col)
     else if(flag_He==1 && col==2+neq_HI)
     {
         ODE_effective::df_dXHeI1s_evaluate_TM(z, Xe, parameters.fHe, rho, Tg, H_z, 
-                                              Level_I_temp.g[Level_I_temp.neq-1]);
+                                              LI.g[LI.neq-1]);
         
         ODE_effective::df_dX1s_evaluate_2s_two_photon_decay(z, Tg, 
                                                             HeI_Atoms.Sing.Level(2, 0).Get_Dnu_1s2(), 
                                                             const_HeI_A2s_1s, 
-                                                            Level_I_temp.g[iHeI], 
-                                                            Level_I_temp.g[iHeI+1]); 
+                                                            LI.g[iHeI], 
+                                                            LI.g[iHeI+1]); 
         
         ODE_HI_effective ::df_dXHeI1s_evaluate_effective_Rci_Ric_terms(z, NH*Xp, Ai_df_dx, Bi_df_dx,
                                                                        get_HI_index, 
-                                                                       &Level_I_temp.g[iHI]);
+                                                                       &LI.g[iHI]);
         
         ODE_HeI_effective::df_dXHeI1s_evaluate_effective_Rci_Ric_terms(z, NH*Xe, NH*XHeII,
                                                                        Ai_df_dx_HeI, 
                                                                        Bi_df_dx_HeI, 
                                                                        get_HeI_index, 
-                                                                       &Level_I_temp.g[iHeI]);
+                                                                       &LI.g[iHeI]);
         
         for(int k=1; k<neq_HeI; k++)
         {
@@ -854,15 +830,12 @@ void jac_effective(double z, Data_Level_III &LIII, int col)
                 ODE_effective::df_dX1s_evaluate_Ly_n_channel(z, Tg, HeI_Atoms.Xi(0), 
                                                              HeI_Atoms.Xi(ik), NH, H_z, T.A21, 
                                                              T.lambda21, T.Dnu, 
-                                                             Level_I_temp.g[iHeI], 
-                                                             Level_I_temp.g[iHeI+ik], 
+                                                             LI.g[iHeI], 
+                                                             LI.g[iHeI+ik], 
                                                              HeI_Atoms.Get_gw(ik)/T.gwp);
         }
         
-        compute_numerical_derivative(iHeI, neq, neq_HI, neq_HeI, z, Tg, NH, 
-                                     Level_I_temp, Level_I_temp.g);
-        
-        for(int k=0; k<LIII.neq; k++) LIII.g[k]=Level_I_temp.g[k];
+        compute_numerical_derivative(iHeI, neq, neq_HI, neq_HeI, z, Tg, NH, LI, LI.g);
     }
     //==================================================================
     // HeI Xi derivatives (i>1s)
@@ -876,17 +849,17 @@ void jac_effective(double z, Data_Level_III &LIII, int col)
             ODE_effective::df_dX2s_evaluate_2s_two_photon_decay(z, Tg, 
                                                                 HeI_Atoms.Sing.Level(2,0).Get_Dnu_1s2(), 
                                                                 const_HeI_A2s_1s, 
-                                                                Level_I_temp.g[iHeI], 
-                                                                Level_I_temp.g[iHeI+1]); 
+                                                                LI.g[iHeI], 
+                                                                LI.g[iHeI+1]); 
         
         ODE_HeI_effective::df_dXi_evaluate_effective_Rci_Ric_terms(m, z, Ai_df_dx_HeI, 
                                                                    Bi_df_dx_HeI, get_HeI_index, 
-                                                                   &Level_I_temp.g[iHeI]);
+                                                                   &LI.g[iHeI]);
         
         ODE_HeI_effective::df_dXi_evaluate_effective_Rij_terms(m, z, Tg, HeI_Atoms, 
                                                                RijVec_df_dx_HeI, 
                                                                get_HeI_index, 
-                                                               &Level_I_temp.g[iHeI]);        
+                                                               &LI.g[iHeI]);        
         
         // JC: 23rd July 2015: l=0 and J=1 transition was neglected with previous version.
         //                     Very small rate though so this did not have a large effect.
@@ -897,15 +870,12 @@ void jac_effective(double z, Data_Level_III &LIII, int col)
                 ODE_effective::df_dXnp_evaluate_Ly_n_channel(z, Tg, HeI_Atoms.Xi(0),
                                                              HeI_Atoms.Xi(ik), NH, H_z,
                                                              T.A21, T.lambda21, T.Dnu,
-                                                             Level_I_temp.g[iHeI],
-                                                             Level_I_temp.g[iHeI+ik],
+                                                             LI.g[iHeI],
+                                                             LI.g[iHeI+ik],
                                                              HeI_Atoms.Get_gw(ik)/T.gwp);
         }
         
-        compute_numerical_derivative(iHeI+ik, neq, neq_HI, neq_HeI, z, Tg, NH, 
-                                     Level_I_temp, Level_I_temp.g);
-        
-        for(int k=0; k<LIII.neq; k++) LIII.g[k]=Level_I_temp.g[k];
+        compute_numerical_derivative(iHeI+ik, neq, neq_HI, neq_HeI, z, Tg, NH, LI, LI.g);
     }
     else if(flag_He==0 && col>=2+neq_HI){}
     else{ cerr << " This should not happen. Exiting. " << endl; exit(0); }
@@ -916,38 +886,42 @@ void jac_effective(double z, Data_Level_III &LIII, int col)
 //==================================================================================================
 void fcn_effective(int *neq, double *z, double *y, double *f, int col)
 {    
-    int index_HI=Level_III_temp.index_HI;
-    int index_HeI=Level_III_temp.index_HeI;
+    int index_HI=Level_I_temp.index_HI;
+    int index_HeI=Level_I_temp.index_HeI;
     int nres_HI=get_number_of_resolved_levels();
     int nres_HeI=get_number_of_resolved_levels_HeI();
         
     //==================================================================
-    copy_ysol_to_LIII(y, Level_III_temp.X, Level_III_temp.neq, index_HI, index_HeI);
+    copy_ysol_to_LI(y, Level_I_temp, Level_I_temp.neq, index_HI, index_HeI);
     
     //==================================================================
     // col<0 : evaluate the rhs of system  dy/dz == g(t,y); 
     // col>=0: evaluate derivative with respect to j==col
     //==================================================================
-    if(col<0) fcn_effective(*z, Level_III_temp); 
-    else jac_effective(*z, Level_III_temp, col); 
+    if(col<0) fcn_effective(*z, Level_I_temp); 
+    else jac_effective(*z, Level_I_temp, col); 
     
     //==================================================================
-    // remember that Level_III_temp.g is g(t, y) --> need dz/dt factor!!!
+    // remember that Level_I_temp.g is g(t, y) --> need dz/dt factor!!!
     //==================================================================
     double dz_dt=-cosmos.H( (*z) )*( 1.0+ (*z) );
     
     //==================================================================
-    f[0]=Level_III_temp.g[Level_III_temp.neq-1]/dz_dt;
-    f[1]=Level_III_temp.g[index_HI]/dz_dt;
+    // reset everything
+    //==================================================================
+    for(int i=0; i<*neq; i++) f[i]=0.0;
+
+    //==================================================================
+    f[0]=Level_I_temp.g[Level_I_temp.neq-1]/dz_dt;
+    f[1]=Level_I_temp.g[index_HI]/dz_dt;
+    for(int k=0; k<nres_HI; k++) f[k+2]=Level_I_temp.g[index_HI+get_HI_index(k)]/dz_dt;
     
-    for(int k=0; k<nres_HI; k++) f[k+2]=Level_III_temp.g[index_HI+get_HI_index(k)]/dz_dt;
-    //
     if(flag_He==1)
     {
-        f[nres_HI+2]=Level_III_temp.g[index_HeI]/dz_dt;
+        f[nres_HI+2]=Level_I_temp.g[index_HeI]/dz_dt;
         
         for(int k=0; k<nres_HeI; k++) 
-            f[nres_HI+k+3]=Level_III_temp.g[index_HeI+get_HeI_index(k)]/dz_dt;
+            f[nres_HI+k+3]=Level_I_temp.g[index_HeI+get_HeI_index(k)]/dz_dt;
     }
     
     return;

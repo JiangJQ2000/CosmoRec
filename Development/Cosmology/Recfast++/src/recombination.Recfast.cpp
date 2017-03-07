@@ -140,6 +140,14 @@ int Xe_frac(double params[14], double *zarr, double *Xe_H, double *Xe_He, double
     // inclusion of fundamental constants [04.12.16: added JC]
     //====================================================================================
     Variables_Fund_Consts VC_Data=Variables_Fund_Consts();
+
+    //====================================================================================
+    // Rescale the pivot redshifts for the different regions of recombination
+    // as defined in Variations_constants.Recfast.cpp [added LH]
+    //====================================================================================
+    Rescale_redshift_switch(zc_HeIII);  // HeIII recombined from ionized states
+    Rescale_redshift_switch(zc_HeIIIS); // HeIII <--> HeII
+    Rescale_redshift_switch(zc_HeII);   // HeII <--> HeI
     
     //====================================================================================
     // above zc_HeIII everything is completely ionized

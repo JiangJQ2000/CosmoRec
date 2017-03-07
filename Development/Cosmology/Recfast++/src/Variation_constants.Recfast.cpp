@@ -94,5 +94,15 @@ void Reset_var_const_scale_factors(Variables_Fund_Consts &D)
     return;
 }
 
+//===========================================================================================
+// rescale the pivot redshifts in Recfast++ for the different regions
+//===========================================================================================
+void Rescale_redshift_switch(double &z)
+{
+    Variables_Fund_Consts D=Variables_Fund_Consts();
+    Set_var_const_scale_factors(z,D);
+    z*=D.fT;
+    return;
+}
 //========================================================================================
 //========================================================================================

@@ -54,6 +54,11 @@ void Set_var_const_scale_factors(double z, Variables_Fund_Consts &D);
 //===========================================================================================
 void Reset_var_const_scale_factors(Variables_Fund_Consts &D);
 
+//===========================================================================================
+// rescale pivot redshifts in recombination history
+//===========================================================================================
+void Rescale_redshift_switch(double &z);
+
 #endif
 
 //===========================================================================================

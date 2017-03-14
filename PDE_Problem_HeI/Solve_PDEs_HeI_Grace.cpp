@@ -8,13 +8,14 @@
 //==================================================================================================
 void prepare_Grace_HeI(double xmin, vector<double> &resonances, bool write_to_disk=0)
 {
-	if (GraceOpen(2048) == -1) 
+    //if (GraceOpen(2048) == -1)
+    if (GraceOpenVA("xmgrace", 2048, "-geometry", "2880x15000", "-nosafe", "-noask", NULL) == -1)
 	{
 		cerr << " can't run grace " << endl; 
 		exit(-1);
 	}
 	
-    GracePrintf("PAGE SIZE 700, 500");
+    GracePrintf("PAGE SIZE 900, 700");
 
     //===============================================================
 	// Set output device 

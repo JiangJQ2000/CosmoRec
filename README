@@ -57,6 +57,7 @@
 // - added simple solver (using Gaussian elimination) to Recfast++ to improve numerical stability [JC]
 // - fixed issue with absolute path for Helium database [JC]
 // - new helium atomic model setup [JC]
+// - added geometry flag to Grace setup, which opens a full screen version of xmgrace [LH]
 //
 //--------------------------------------------------------------------------------------------------
 //

@@ -22,8 +22,10 @@ void rescale_variables_all(double alpha_scale, double me_scale, size_t run_mode,
     //=======================================================================================================
     const_HI_A2s_1s = const_HI_A2s_1s_0;
     const_sigT = const_sigT_0;
-    Ascale=Bscale=Tscale;
-
+    Ascale=Bscale=Tscale=1.0;
+    
+    if(run_mode == 0) return;
+        
     if (alpha_scale != 1. || me_scale != 1.) {
         
         // Rescaled Thomson scattering

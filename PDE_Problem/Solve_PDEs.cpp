@@ -316,9 +316,15 @@ void arm_PDE_solver(Cosmos &cos, Gas_of_Atoms &HIA, vector<double> &xarr,
         index=0;
         for(int k=0; k<(int)resonances.size(); k++)
         {
+            for(int m=0; m<(int)resonances.size(); m++)
+            {
+                PDE_funcs.Voigt_profiles_A_npns[m][k]=Get_A_npks(m+2, k+2);
+                PDE_funcs.Voigt_profiles_A_npnd[m][k]=Get_A_npkd(m+2, k+2);
+            }
+            //
             for(; index<npts; index++) if(xarr[index]>=resonances[k])
             { PDE_funcs.index_emission.push_back(index); break; }
-        }   
+        }
         
         if(PDE_funcs.index_emission.size()==0) PDE_funcs.index_emission.push_back(npts);
         

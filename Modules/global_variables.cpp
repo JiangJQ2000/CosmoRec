@@ -24,7 +24,7 @@ vector<vector<double> > pass_on_the_Solution_CosmoRec_HeI; //JF
 // output files
 //==================================================================================================
 bool write_populations=0;   // output solution for the populations of the resolved states
-bool write_corrections=1;   // output correction functions from Recfast++ and CosmoRec (LH)
+bool write_corrections=0;   // output correction functions from Recfast++ and CosmoRec (LH)
 bool write_Xe_Te_sol=1;     // output Xe & Te
 bool write_HI_distortion=0; // output approximate HI distortion (added July 2nd 2012)
 bool write_split=0;         // output that splits the Xe for H and He so they can be individually analysed

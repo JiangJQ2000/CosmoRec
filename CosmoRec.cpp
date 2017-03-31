@@ -123,12 +123,6 @@ double const_HeI_A2s_1s = const_HeI_A2s_1s_0;
 double RECFAST_atomic_constants::RF_Lam2s1sH     = 8.22458; // Recfast++ default value (old value)
 
 //===========================================================================================================
-// functions to read parameter file and set up memory etc
-//===========================================================================================================
-// defined in "./Modules/ODEdef_CosmoRec.cpp"
-void compute_fractions(const Data_Level_I &LI, double &Xe, double &Xp, double &XHeII);
-
-//===========================================================================================================
 // Photo-ionization with T=Te (Recfast default, although incorrect) or T=Tg (phys.correct)
 //===========================================================================================================
 // defined in Recfast++/src/evalode.Recfast.cpp
@@ -160,6 +154,13 @@ void Set_VFC_params(double aS, double mS, double pS, int RM); // called once at 
 #include "./Modules/DPesc_HI_abs_tabulation.cpp"
 #include "./Modules/Diffusion_correction.cpp"   
 #include "./Modules/Diffusion_correction.HeI.cpp" 
+
+//===========================================================================================================
+// functions to read parameter file and set up memory etc
+//===========================================================================================================
+// defined in "./Modules/ODEdef_CosmoRec.cpp"
+void compute_fractions(const Data_Level_I &LI, double &Xe, double &Xp, double &XHeII);
+
 #include "./Modules/aux_functions.cpp"
 
 //===========================================================================================================

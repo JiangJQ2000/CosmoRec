@@ -93,7 +93,18 @@ using namespace ODE_solver_Rec;
 //===========================================================================================================
 int show_CosmoRec_mess=0;                                   // note LH: set to 1 for debug check of variables
 
-void print_message(string mess);
+//===========================================================================================================
+void print_message(string mess) // for messages to user
+{
+    if(show_CosmoRec_mess>=0)
+    {
+        cout << "\n " << setfill('=') << setw(100) << "=" << endl;
+        cout << " || " << mess << endl;
+        cout << " " << setfill('=') << setw(100) << "=" << endl << endl;
+    }
+    
+    return;
+}
 
 //===========================================================================================================
 //
@@ -176,19 +187,6 @@ void compute_fractions(const Data_Level_I &LI, double &Xe, double &Xp, double &X
 // writing the output
 //===========================================================================================================
 #include "./Modules/output_methods.cpp"
-
-//===========================================================================================================
-void print_message(string mess)
-{
-    if(show_CosmoRec_mess>=0)
-    {
-        cout << "\n " << setfill('=') << setw(100) << "=" << endl;  
-        cout << " || " << mess << endl;
-        cout << " " << setfill('=') << setw(100) << "=" << endl << endl;   
-    }
-    
-    return;
-}
 
 //===========================================================================================================
 //

@@ -14,6 +14,14 @@
 #define EVALODE_H
 
 //========================================================================================
+// Photo-ionization with T=Te (Recfast default, although incorrect) or T=Tg (phys.correct)
+//========================================================================================
+void Set_Te_eval();
+void Set_Tr_eval();
+void Set_default(); // --> T=Te
+bool Get_T_eval();
+
+//========================================================================================
 // evaluation of Recfast-system
 //========================================================================================
 void evaluate_Recfast_System(double z, double y[], double fvec[], int n);

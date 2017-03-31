@@ -20,6 +20,9 @@
 #include "recombination.Recfast.h"
 #include "cosmology.Recfast.h"
 #include "constants.Recfast.h"
+#include "evalode.Recfast.h"
+#include "Magnetic_fields.Recfast.h"
+#include "Variation_constants.Recfast.h"
 
 using namespace std;
 
@@ -29,27 +32,7 @@ bool verbose=1;
 // define default HI A2s1s two-photon decay rate. Added to allow changing it globally.
 // (added 23.07.2014 JC)
 //========================================================================================
-double RECFAST_atomic_constants::RF_Lam2s1sH = 8.22458;  // Recfast++ default value
-
-//========================================================================================
-// define default with no magnetic field heating (added 10.10.2014 JC)
-//========================================================================================
-double RECFAST_atomic_constants::RF_B0_heating = 0.0;
-double RECFAST_atomic_constants::RF_nB_heating = 0.0;
-double RECFAST_atomic_constants::RF_kD_heating = 0.0;
-
-bool RECFAST_atomic_constants::RF_eval_ion_Tr = 0;
-bool RECFAST_atomic_constants::RF_decaying_turb_on = 0;
-bool RECFAST_atomic_constants::RF_ambipolar_heat_on = 0;
-bool RECFAST_atomic_constants::RF_KK_or_PF_Lorentz  = 0;      // flag overwritten below...
-
-//========================================================================================
-// parameters for variation of fundamental constants (Oct 2016; Luke Hart)
-//========================================================================================
-double RECFAST_atomic_constants::RF_aScale = 1.0;  // alp/alp_ref
-double RECFAST_atomic_constants::RF_mScale = 1.0;  // me/me_ref
-double RECFAST_atomic_constants::RF_pScale = 0.0;  // redshift scaling ~[(1+z)/1100]^p
-int RECFAST_atomic_constants::RF_rMode = 1;
+double RECFAST_atomic_constants::RF_Lam2s1sH = 8.22458;         // Recfast++ default value
 
 //========================================================================================
 void show_cosmological_parameters(vector<double> &param)
@@ -66,24 +49,29 @@ void show_cosmological_parameters(vector<double> &param)
     
     cout << " Hubble constant in units of 100 km s-1 Mpc-1: " << param[9] << endl;
     cout << " Fudge factor for H recombination: " << param[11] << endl;
+    
+    cout << " Using HI A2s1s = " << RECFAST_atomic_constants::RF_Lam2s1sH << " s^-1";
+    if(param[14]==0.0) cout << " (default value)";
+    cout << endl;
 
-    if(param[12]!=0.0) 
+    if(param[12]!=0.0)
         cout << " DM-annihilations with efficiency " << param[12] << " will be included " << endl;
     if(param[13]==1) 
-        cout << " Will include recombination corrections according to Chluba & Thomas 2010 " << endl;
+        cout << " Will include recombination corrections following Chluba & Thomas 2010 / Hart & Chluba 2017" << endl;
+    
+    if(Get_T_eval()) cout << " Using T=Tr for photo-ionization rate" << endl;
+    else cout << " Using T=Te for photo-ionization rate (Recfast default)" << endl;
 
-    if(RECFAST_atomic_constants::RF_B0_heating>0.0)
-    {
-        if(RECFAST_atomic_constants::RF_eval_ion_Tr)
-            cout << " Will include heating by magnetic fields (using T=Tr for photo-ionization rate)" << endl;
-        else cout << " Will include heating by magnetic fields (using T=Te for photo-ionization rate)" << endl;
-    }
+    if(Get_B0_PMF()>0.0) cout << " Will include heating by magnetic fields "
+                              << "(decay==" << Get_decay_setting()
+                              << ", ambi==" << Get_ambi_setting()
+                              << ", Lorentz==" << Get_Lorentz_setting() << ")" << endl;
 
-    if(RECFAST_atomic_constants::RF_aScale!=1.0 || RECFAST_atomic_constants::RF_mScale!=1.0)
-        cout << " Variation of fundamental constants: alp/alp_r== " << RECFAST_atomic_constants::RF_aScale
-             << " me/me_r== " << RECFAST_atomic_constants::RF_mScale
-             << " pow== " << RECFAST_atomic_constants::RF_pScale
-             << " mode== " << RECFAST_atomic_constants::RF_rMode << endl;
+    if(Get_aScale()!=1.0 || Get_mScale()!=1.0  || Get_pScale()!=0.0)
+        cout << " Variation of fundamental constants: alp/alp_r== " << Get_aScale()
+             << " me/me_r== " << Get_mScale()
+             << " pow== " << Get_pScale()
+             << " mode== " << Get_rMode() << endl;
 
     cout << endl;
     
@@ -116,44 +104,41 @@ void read_parameter_file(string fname, vector<double> &params)
     ifile >> params[10]; // effective number of neutrinos 
     ifile >> params[11]; // fudge-factor; normally F=1.14
     
-    ifile >> params[12]; // fDM [eV/s] which gives annihilation efficiency; 
+    ifile >> params[12]; // fDM [eV/s] which gives annihilation efficiency;
                          // typical value fDM=2.0e-24 eV/s (see Chluba 2010 for definitions)
     ifile >> params[13]; // switch on/off recombination corrections (Chluba & Thomas 2010)
+
+    ifile >> params[14]; // HI A2s1s
+    if(params[14]>0.0) RECFAST_atomic_constants::RF_Lam2s1sH=params[14];
 
     //====================================================================================
     // magnetic field heating
     //====================================================================================
-    ifile >> RECFAST_atomic_constants::RF_B0_heating; // B0 in nG
-    ifile >> RECFAST_atomic_constants::RF_nB_heating; // nB
-    ifile >> RECFAST_atomic_constants::RF_decaying_turb_on;  // decaying magnetic turb on / off
-    ifile >> RECFAST_atomic_constants::RF_ambipolar_heat_on; // ambipolar diff on / off
+    double B0, nB; bool turb, ambi;
+    ifile >> B0;   // B0 in nG
+    ifile >> nB;   // nB
+    ifile >> turb; // decaying magnetic turb on / off
+    ifile >> ambi; // ambipolar diff on / off
     
-    if(RECFAST_atomic_constants::RF_B0_heating>0.0)
+    if(B0>0.0 && (turb || ambi) )
     {
-        double B0=RECFAST_atomic_constants::RF_B0_heating;
-        RECFAST_atomic_constants::RF_KK_or_PF_Lorentz=0;         // always use KK parametrization here
-        RECFAST_atomic_constants::RF_kD_heating=286.91/B0;       // in Mpc^-1; cos(theta)=1
-        RECFAST_atomic_constants::RF_eval_ion_Tr=1;              // use T==Tr for photo-ionization
+        double kD=286.91/B0;         // in Mpc^-1; cos(theta)=1
+        Set_PMF(turb, ambi, 0, B0, nB, kD);
+        Set_Tr_eval();
     }
-    else
-    {
-        RECFAST_atomic_constants::RF_nB_heating=0.0;
-        RECFAST_atomic_constants::RF_decaying_turb_on=RECFAST_atomic_constants::RF_ambipolar_heat_on=0;
-    }
+    else Switch_PMF_off();           // switch PMF heating off
     
     //====================================================================================
     // variation of alpha and me/mp
     //====================================================================================
-    ifile >> RECFAST_atomic_constants::RF_aScale; // alp/alp_r
-    ifile >> RECFAST_atomic_constants::RF_mScale; // me/me_r
-    ifile >> RECFAST_atomic_constants::RF_pScale; // power for (1+z)^p
-    ifile >> RECFAST_atomic_constants::RF_rMode;  // mode
+    double aS, mS, pS; int RM;
+    ifile >> aS; // alp/alp_r
+    ifile >> mS; // me/me_r
+    ifile >> pS; // power for (1+z)^p
+    ifile >> RM; // mode
     
-    if(RECFAST_atomic_constants::RF_rMode==0)
-    {
-        RECFAST_atomic_constants::RF_aScale=RECFAST_atomic_constants::RF_mScale=1.0;
-        RECFAST_atomic_constants::RF_pScale=0.0;
-    }
+    if(RM>0) Set_VFC_params(aS, mS, pS, RM);
+    else Switch_VFC_off(); // switch VFC off
     
     //====================================================================================
     // compute Omega_L according to Omega_K
@@ -207,7 +192,7 @@ int main(int narg, char *args[])
     //====================================================================================
     // reading parameters
     //====================================================================================
-    vector<double> params(14);
+    vector<double> params(15);
     int npz=10000;
     double zstart=1.0e+4, zend=0.001;
     
@@ -232,21 +217,23 @@ int main(int narg, char *args[])
     string oname="./outputs/Xe_Recfast";
     if(params[12]!=0.0) oname+=".DM_annihilations";
     if(params[13]==1) oname+=".Rec_corrs_CT2010";
-    if(RECFAST_atomic_constants::RF_B0_heating>0.0)
+    if(Get_B0_PMF()>0.0)
     {
         oname+=".PMF_heating";
-        if(RECFAST_atomic_constants::RF_decaying_turb_on) oname+=".turb";
-        if(RECFAST_atomic_constants::RF_ambipolar_heat_on) oname+=".ambi";
+        if(Get_decay_setting()) oname+=".turb";
+        if(Get_ambi_setting()) oname+=".ambi";
     }
-    if(RECFAST_atomic_constants::RF_aScale!=1.0) oname+=".alp";
-    if(RECFAST_atomic_constants::RF_mScale!=1.0) oname+=".me";
-    if(RECFAST_atomic_constants::RF_pScale!=0.0) oname+=".power";
-    if(RECFAST_atomic_constants::RF_rMode==1) oname+=".Boltz";
-    else if(RECFAST_atomic_constants::RF_rMode==2) oname+=".sigT";
-    else if(RECFAST_atomic_constants::RF_rMode==3) oname+=".A2s1s";
-    else if(RECFAST_atomic_constants::RF_rMode==4) oname+=".phot";
-    else if(RECFAST_atomic_constants::RF_rMode==5) oname+=".Pesc";
-    else if(RECFAST_atomic_constants::RF_rMode==6) oname+=".all";
+
+    if(Get_aScale()!=1.0) oname+=".alp";
+    if(Get_mScale()!=1.0) oname+=".me";
+    if(Get_pScale()!=0.0) oname+=".power";
+    if(Get_rMode()==1) oname+=".Boltz";
+    else if(Get_rMode()==2) oname+=".sigT";
+    else if(Get_rMode()==3) oname+=".A2s1s";
+    else if(Get_rMode()==4) oname+=".phot";
+    else if(Get_rMode()==5) oname+=".Pesc";
+    else if(Get_rMode()==6) oname+=".all";
+    if(Get_T_eval()) oname+=".Tr";
     oname+=".dat";
     
     write_Recfast_output(oname, zarr, Xe_H, Xe_He, Xe, TM);

@@ -276,15 +276,7 @@ int Xe_frac(double params[14], double *zarr, double *Xe_H, double *Xe_He, double
             if(input.switch_on_recombination_corrs==1)
             {
                 Set_var_const_scale_factors(ze, VC_Data); // 04.12.16: added JC
-                if (RF_separate_corr == 0)
-                    Xe[i]*=Recombination_correction_factor(ze/VC_Data.fT, 1);
-                else if (RF_separate_corr == 1) {
-                    // If this mode has been selected, we use the cflags to do hydrogen
-                    // and helium separately and then add the resultant Xe
-                    Xe_H [i]*=Recombination_correction_factor(ze/VC_Data.fT, 2);
-                    Xe_He[i]*=Recombination_correction_factor(ze/VC_Data.fT, 3);
-                    Xe[i] = Xe_H[i]+Xe_He[i];
-                }
+                Recombination_correction_factor(ze/VC_Data.fT, Xe[i], Xe_H[i], Xe_He[i]);
             }
             //
             dXe[i]  = Sz.dy[0]+Sz.dy[1];
@@ -390,15 +382,7 @@ int Xe_frac_rescaled(double params[14], const double *zarr, double *Xe_H,
             if(input.switch_on_recombination_corrs==1)
             {
                 Set_var_const_scale_factors(ze, VC_Data); // 04.12.16: added JC
-                if (RF_separate_corr == 0)
-                    Xe[i]*=Recombination_correction_factor(ze/VC_Data.fT, 1);
-                else if (RF_separate_corr == 1) {
-                    // If this mode has been selected, we use the cflags to do hydrogen
-                    // and helium separately and then add the resultant Xe
-                    Xe_H [i]*=Recombination_correction_factor(ze/VC_Data.fT, 2);
-                    Xe_He[i]*=Recombination_correction_factor(ze/VC_Data.fT, 3);
-                    Xe[i] = Xe_H[i]+Xe_He[i];
-                }
+                Recombination_correction_factor(ze/VC_Data.fT, Xe[i], Xe_H[i], Xe_He[i]);
             }
         }
     }

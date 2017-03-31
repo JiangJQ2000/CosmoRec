@@ -89,6 +89,13 @@ using namespace ODE_HI_effective;
 using namespace ODE_solver_Rec;
 
 //===========================================================================================================
+// level of verbosity
+//===========================================================================================================
+int show_CosmoRec_mess=0;                                   // note LH: set to 1 for debug check of variables
+
+void print_message(string mess);
+
+//===========================================================================================================
 //
 // define default HI A2s1s two-photon decay rate. This was added to allow changing it globally.
 // The corresponding variables are defined as extern in './Development/Definitions/physical_consts.h'
@@ -105,42 +112,29 @@ double const_HeI_A2s_1s = const_HeI_A2s_1s_0;
 double RECFAST_atomic_constants::RF_Lam2s1sH     = 8.22458; // Recfast++ default value (old value)
 
 //===========================================================================================================
-// variation of fundamental constants [Oct 2016 - Jan 2017: LH & JC]
+// Photo-ionization with T=Te (Recfast default, although incorrect) or T=Tg (phys.correct)
 //===========================================================================================================
-int RECFAST_atomic_constants::RF_rMode      = 0;
-double RECFAST_atomic_constants::RF_aScale  = 1.0;                    // default value for alpha rescaling LH
-double RECFAST_atomic_constants::RF_mScale  = 1.0;                    // default value for alpha rescaling LH
-double RECFAST_atomic_constants::RF_pScale  = 0.0;                    // default value for redshift power law
-
-//-----------------------------------------------------------------------------------------------------------
-// CosmoRec specific variables for variation of fundamental constant
-//-----------------------------------------------------------------------------------------------------------
-// Scaling variables for alpha, reduced mass and omission modes (Luke Hart)
-struct Fund_Const_scaling
-{
-    size_t runmode;
-    double a_scale;
-    double m_scale;
-    double p_scale;
-    // Scaling coefficients that we multiply rates/cross sections
-    double f_a, f_b, f_t;
-};
-
-Fund_Const_scaling FC_CosmoRec={0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0};
-// Switch to determine whether we are rescaling Helium recombination or not
-int FC_He_switch = 1;
+// defined in Recfast++/src/evalode.Recfast.cpp
+void Set_Te_eval();
+void Set_Tr_eval();
+bool Get_T_eval();
 
 //===========================================================================================================
-// level of verbosity
+// for Magnetic field heating module
 //===========================================================================================================
-int show_CosmoRec_mess=0;                                   // note LH: set to 1 for debug check of variables
+// defined in Recfast++/src/Magnetic_fields.Recfast.cpp
+void Switch_PMF_off();
+void Set_PMF(bool decay_on, bool ambi_on, bool Lorentz, double B0, double nB, double kD);
 
 //===========================================================================================================
-void print_message(string mess);
+// for variation of fundamental constants
+//===========================================================================================================
+// defined in Recfast++/src/Variation_constants.Recfast.cpp
+void Switch_VFC_off();
+void Set_VFC_params(double aS, double mS, double pS, int RM); // called once at the beginning
 
 //===========================================================================================================
-// these are several Modules (i.e. plugins) that are directly loaded when compiling. If these are changed one 
-// should type "make clean" before "make"
+// these are several Modules (i.e. plugins) that are directly loaded when compiling.
 //===========================================================================================================
 #include "./Modules/global_variables.cpp"
 #include "./Modules/HI_routines.cpp"
@@ -164,29 +158,14 @@ void compute_fractions(const Data_Level_I &LI, double &Xe, double &Xp, double &X
 #include "./Modules/DM_annihilation.cpp"
 
 //===========================================================================================================
-// Rescaling of fundamental constants module [JC and LH 2016/17]
-//===========================================================================================================
-
-#include "./Modules/Variations_constants.cpp"
-
-//===========================================================================================================
 // Magnetic field heating module (added Oct. 2014)
 //===========================================================================================================
-bool decaying_turb_on =0;  // default mode set in "./Modules/Magnetic_fields.cpp"
-bool ambipolar_heat_on=0;  // default mode set in "./Modules/Magnetic_fields.cpp"
-bool KK_or_PF_Lorentz =0;  // choose parametrization of KK (==0) or PF (==1)
-
-// RECFAST specific settings (automatic at this point...)
-bool RECFAST_atomic_constants::RF_decaying_turb_on = decaying_turb_on;
-bool RECFAST_atomic_constants::RF_ambipolar_heat_on = ambipolar_heat_on;
-bool RECFAST_atomic_constants::RF_eval_ion_Tr = (decaying_turb_on || ambipolar_heat_on ? 1 : 0);
-bool RECFAST_atomic_constants::RF_KK_or_PF_Lorentz  = KK_or_PF_Lorentz;
-
-double RECFAST_atomic_constants::RF_B0_heating   = 0.0; // if B0=0 --> RF_eval_ion_Tr=0 in aux_functions.cpp
-double RECFAST_atomic_constants::RF_nB_heating   = 0.0;
-double RECFAST_atomic_constants::RF_kD_heating   = 0.0;
-
 #include "./Modules/Magnetic_fields.cpp"
+
+//===========================================================================================================
+// variation of fundamental constants [Oct 2016 - Jan 2017: LH & JC]
+//===========================================================================================================
+#include "./Modules/Variations_constants.cpp"
 
 //===========================================================================================================
 // additional definitions for CosmoRec-ODE system

@@ -23,18 +23,26 @@
 #include "Rec_corrs_CT.Recfast.h"
 
 using namespace std;
-using namespace RECFAST_physical_constants; // defined in constants.Recfast.h
+
+bool Get_T_eval();  // defined in 'evalode.Recfast.cpp'
 
 //========================================================================================
-// data-file with correction
+// boolean parameters for correction function settings
+// 0 for the f_h+f_he default and 1 for the new individual correction functions
 //========================================================================================
+const bool RF_separate_corr = 1;
+
+//----------------------------------------------------------------------------------------
+// data-file with correction
+//----------------------------------------------------------------------------------------
 // if separate correction functions requested --> new file & scheme
-bool file_sect=(RECFAST_atomic_constants::RF_separate_corr ? 1 : 0); // new file for fH & fHe but old for ftot
-//bool file_sect=(RECFAST_atomic_constants::RF_separate_corr ? 1 : 1); // using new file for both
+bool file_sect=(RF_separate_corr ? 1 : 0); // new file for fH & fHe but old for ftot
+//bool file_sect=(RF_separate_corr ? 1 : 1); // using new file for both
 
 // if Tr evaluation wanted --> new file with respective evaluation
-bool use_Tr=(RECFAST_atomic_constants::RF_eval_ion_Tr ? 1 : 0);
+bool use_Tr=(Get_T_eval() ? 1 : 0);
 
+//----------------------------------------------------------------------------------------
 string Rec_corrs_CT_file_old=(string)RECFASTPPPATH+"./src/Data/DXe_Xe.CT2010.dat";
 string Rec_corrs_CT_file_Tr=(string)RECFASTPPPATH+"./src/Data/Corr_LH_Tr.dat";
 string Rec_corrs_CT_file_noTr=(string)RECFASTPPPATH+"./src/Data/Corr_LH.dat";
@@ -77,7 +85,7 @@ void read_recombination_correction(int mflag)
             cout << " reading recombination correction according to Chluba & Thomas 2010 for ftot " << endl;
         else
         {
-            if(RECFAST_atomic_constants::RF_separate_corr)
+            if(RF_separate_corr)
                 cout << " reading recombination correction according to Hart & Chluba 2017 for fH & fHe " << endl;
             else cout << " reading recombination correction according to Hart & Chluba 2017 for ftot " << endl;
         }
@@ -144,6 +152,22 @@ double Recombination_correction_factor(double z, int cflag)
     if(Rec_corrs_CT_Data[0][0]<=z) return 1.0;
     if(Rec_corrs_CT_Data[nz-1][0]>=z) return 1.0+Rec_corrs_CT_Data[nz-1][cflag];
     return interpolate_data(z, cflag);
+}
+
+void Recombination_correction_factor(double z, double &Xe, double &Xe_H, double &Xe_He)
+{
+    
+    if (RF_separate_corr == 0) Xe*=Recombination_correction_factor(z, 1);
+    else if (RF_separate_corr == 1)
+    {
+        // If this mode has been selected, we use the cflags to do hydrogen
+        // and helium separately and then add the resultant Xe
+        Xe_H *=Recombination_correction_factor(z, 2);
+        Xe_He*=Recombination_correction_factor(z, 3);
+        Xe = Xe_H+Xe_He;
+    }
+    
+    return;
 }
 
 //========================================================================================

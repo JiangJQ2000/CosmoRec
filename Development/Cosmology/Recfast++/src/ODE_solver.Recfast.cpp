@@ -700,7 +700,7 @@ int ODE_Solver_estimate_error_and_next_possible_step_size(int order, const doubl
     // estimate errors
     //--------------------------------------------------------
     double power, fac=1.0e+10, dum;
-    int mflag=0, max_err_time=-1;
+    int mflag=0;
     //--------------------------------------------------------
     if(order<=1) power=1.0;
     else power=1.0/order;
@@ -708,15 +708,15 @@ int ODE_Solver_estimate_error_and_next_possible_step_size(int order, const doubl
     //--------------------------------------------------------
     dum=ODE_Solver_error_check(z, tol, ODE_Solver_info.abs_vector[0], S.y[0], 
                                ODE_Solver_info.Stemp.y[0], mflag, "1");
-    if(fac>dum){ fac=dum; max_err_time=0; }
+    if(fac>dum){ fac=dum; }
     //
     dum=ODE_Solver_error_check(z, tol, ODE_Solver_info.abs_vector[1], S.y[1], 
                                ODE_Solver_info.Stemp.y[1], mflag, "2");
-    if(fac>dum){ fac=dum; max_err_time=1; }
+    if(fac>dum){ fac=dum; }
     //
     dum=ODE_Solver_error_check(z, tol, ODE_Solver_info.abs_vector[2], S.y[2], 
                                ODE_Solver_info.Stemp.y[2], mflag, "3");
-    if(fac>dum){ fac=dum; max_err_time=2; }
+    if(fac>dum){ fac=dum; }
 
     //--------------------------------------------------------
     // change step-size; 
@@ -948,7 +948,7 @@ int ODE_Solver_compute_new_Solution(int order, const double zout, const double r
 
 int ODE_Solver_Solve_history(double zs, double zend, ODE_solver_Solution &Sz)
 {   
-    double zout=zs, zin=zs, Dz_z_old;
+    double zout=zs, zin=zs;
     double tolSol=1.0e-8;
     double Dz_z=max(1.0e-8, ODE_Solver_info.Dz_z_last), Dz_z_max=10.0/zs;
     int redo_run=0, LAerror=0;
@@ -979,8 +979,7 @@ int ODE_Solver_Solve_history(double zs, double zend, ODE_solver_Solution &Sz)
             // estimate error and next possible stepsize
             //--------------------------------------------------------
             redo_run=0;
-            Dz_z_old=Dz_z;
-            redo_run=ODE_Solver_estimate_error_and_next_possible_step_size(ODE_Solver_info.order, 
+            redo_run=ODE_Solver_estimate_error_and_next_possible_step_size(ODE_Solver_info.order,
                                                                            zin, zout, zend, Dz_z, 
                                                                            Dz_z_max, tolSol, 
                                                                            *ODE_Solver_info.Snewptr, 

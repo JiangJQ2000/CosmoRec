@@ -4,6 +4,7 @@
 // CITA, University of Toronto
 // All rights reserved.
 //========================================================================================
+// March   2017: added control over photoionization evaluation [JC]
 // Oct-Dec 2016: added effects for variations of alpha and me/mp
 // Oct 11  2014: added switch that allows to change T=TR instead of T=TM for beta_ion
 // Oct 10  2014: added heating by magnetic fields
@@ -27,6 +28,15 @@
 using namespace std;
 using namespace RECFAST_physical_constants; // defined in constants.Recfast.h
 using namespace RECFAST_atomic_constants;   // defined in constants.Recfast.h
+
+//========================================================================================
+// Photo-ionization with T=Te (Recfast default, although incorrect) or T=Tg (phys.correct)
+//========================================================================================
+bool RF_eval_ion_Tr=0;
+void Set_Te_eval(){ RF_eval_ion_Tr=0; return; }
+void Set_Tr_eval(){ RF_eval_ion_Tr=1; return; }
+void Set_default(){ Set_Te_eval(); return; }
+bool Get_T_eval(){ return RF_eval_ion_Tr; }
 
 //========================================================================================
 // Global Variables; defined in cosmology.Recfast.h
@@ -205,11 +215,11 @@ void evaluate_Recfast_System(double z, double y[], double fvec[], int n)
     //====================================================================================
     // add terms due to magnetic field heating
     //====================================================================================
-    if(RF_B0_heating!=0.0)
+    if(Get_B0_PMF()!=0.0)
         evaluate_magnetic_field_heating_RF(z, Hz, fHe, nHTot, xp, xHep,
                                            TM, nHTot/(1.0-input.YP),
-                                           RF_B0_heating, RF_nB_heating,
-                                           RF_kD_heating, fvec);
+                                           Get_B0_PMF(), Get_nB_PMF(),
+                                           Get_kD_PMF(), fvec);
 
     return;
 }

@@ -2,6 +2,7 @@
 // Author: Jens Chluba (Oct. 2014)
 // Johns Hopkins University
 //========================================================================================
+// 30.03.2017: added set functions for parameters related to PMF [JC]
 // 01.12.2016: added settings for transition from no heating before z>1088
 
 //========================================================================================
@@ -19,6 +20,51 @@
 using namespace std;
 using namespace RECFAST_physical_constants; // defined in constants.Recfast.h
 using namespace RECFAST_atomic_constants;
+
+//========================================================================================
+// runmodes and parameters
+//========================================================================================
+double RF_B0_heating=0.0;
+double RF_nB_heating=0.0;
+double RF_kD_heating=0.0;
+
+bool RF_decaying_turb_on=0;
+bool RF_ambipolar_heat_on=0;
+bool RF_KK_or_PF_Lorentz=0;  // KK or PF integral for Lorentz force (when called from CosmoRec)
+
+//========================================================================================
+// access values
+//========================================================================================
+double Get_B0_PMF(){ return RF_B0_heating; }
+double Get_nB_PMF(){ return RF_nB_heating; }
+double Get_kD_PMF(){ return RF_kD_heating; }
+
+bool Get_decay_setting(){ return RF_decaying_turb_on; }
+bool Get_ambi_setting(){ return RF_ambipolar_heat_on; }
+bool Get_Lorentz_setting(){ return RF_KK_or_PF_Lorentz; }
+
+void Switch_PMF_off()
+{
+    RF_B0_heating=RF_nB_heating=0.0; RF_kD_heating=0.0;
+    RF_decaying_turb_on=RF_ambipolar_heat_on=RF_KK_or_PF_Lorentz=0;
+    return;
+}
+
+void Set_PMF_params(double B0, double nB, double kD)
+{ RF_B0_heating=B0; RF_nB_heating=nB; RF_kD_heating=kD; return; }
+
+void Set_PMF_mode(bool decay_on, bool ambi_on, bool Lorentz)
+{
+    RF_decaying_turb_on=decay_on; RF_ambipolar_heat_on=ambi_on; RF_KK_or_PF_Lorentz=Lorentz;
+    return;
+}
+
+void Set_PMF(bool decay_on, bool ambi_on, bool Lorentz, double B0, double nB, double kD)
+{
+    Set_PMF_mode(decay_on, ambi_on, Lorentz);
+    Set_PMF_params(B0, nB, kD);
+    return;
+}
 
 //========================================================================================
 // magnetic field decay rate following Kunze & Komatsu, 2013.

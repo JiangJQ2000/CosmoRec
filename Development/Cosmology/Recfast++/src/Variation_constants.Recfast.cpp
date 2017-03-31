@@ -4,6 +4,7 @@
 // The University of Manchester
 // All rights reserved.
 //===========================================================================================
+// 30.03.2017: added set functions for parameters related to VFC [JC]
 
 //===========================================================================================
 // This simple module allows to include the effects of variations of alpha and me into
@@ -15,11 +16,34 @@
 #include <iostream>
 #include <cstdlib>
 
-#include "constants.Recfast.h"
 #include "Variation_constants.Recfast.h"
 
 using namespace std;
-using namespace RECFAST_physical_constants; // defined in constants.Recfast.h
+
+//====================================================================================================
+// fundamental constants scalings
+//====================================================================================================
+double RF_aScale=1.0;
+double RF_mScale=1.0;
+double RF_pScale=0.0;
+int RF_rMode=0;
+
+//========================================================================================
+// access values
+//========================================================================================
+double Get_aScale(){ return RF_aScale; }
+double Get_mScale(){ return RF_mScale; }
+double Get_pScale(){ return RF_pScale; }
+int Get_rMode()    { return RF_rMode; }
+
+void Switch_VFC_off()
+{
+    RF_aScale=RF_mScale=1.0; RF_pScale=0.0; RF_rMode=0;
+    return;
+}
+
+void Set_VFC_params(double aS, double mS, double pS, int RM)
+{ RF_aScale=aS; RF_mScale=mS; RF_pScale=pS; RF_rMode=RM; return; }
 
 //===========================================================================================
 // run mode settings
@@ -77,11 +101,11 @@ void Set_var_const_scale_factors(double aS, double mS, int rmode, Variables_Fund
 //===========================================================================================
 void Set_var_const_scale_factors(double z, Variables_Fund_Consts &D)
 {
-    double p  =RECFAST_atomic_constants::RF_pScale;
-    double alp=RECFAST_atomic_constants::RF_aScale*pow((1.0+z)/1100.0, p);
-    double me =RECFAST_atomic_constants::RF_mScale*pow((1.0+z)/1100.0, p);
+    double p  =RF_pScale;
+    double alp=RF_aScale*pow((1.0+z)/1100.0, p);
+    double me =RF_mScale*pow((1.0+z)/1100.0, p);
     
-    Set_var_const_scale_factors(alp, me, RECFAST_atomic_constants::RF_rMode, D);
+    Set_var_const_scale_factors(alp, me, RF_rMode, D);
     return;
 }
 

@@ -4,6 +4,7 @@
 // The University of Manchester
 // All rights reserved.
 //===========================================================================================
+// 30.03.2017: added set functions for parameters related to VFC [JC]
 
 //===========================================================================================
 // This simple module allows to include the effects of variations of alpha and me into
@@ -46,8 +47,18 @@ struct Variables_Fund_Consts
 // 5 - Rescaling of Lyman alpha rates
 // 6 - Rescale everything
 //===========================================================================================
-void Set_var_const_scale_factors(double aS, double mS, int rmode, Variables_Fund_Consts &D);
+void Switch_VFC_off();
+void Set_VFC_params(double aS, double mS, double pS, int RM); // called once at the beginning
+
 void Set_var_const_scale_factors(double z, Variables_Fund_Consts &D);
+
+//========================================================================================
+// access parameters
+//========================================================================================
+double Get_aScale();
+double Get_mScale();
+double Get_pScale();
+int Get_rMode();
 
 //===========================================================================================
 // restore initial values

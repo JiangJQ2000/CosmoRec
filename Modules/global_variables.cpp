@@ -73,7 +73,30 @@ double fDM_CosmoRec=0.0;
 //==================================================================================================
 bool magnetic_fields=0;
 double B0_CosmoRec=0.0, nB_CosmoRec=0.0, kD_CosmoRec=0.0;
+
+bool decaying_turb_on =0;  // default mode set in "./Modules/Magnetic_fields.cpp"
+bool ambipolar_heat_on=0;  // default mode set in "./Modules/Magnetic_fields.cpp"
+bool KK_or_PF_Lorentz =0;  // choose parametrization of KK (==0) or PF (==1)
+
 void set_PMF_parameters_KK_PF(double B0, double nB, int PMF_mode, double h0);
+
+//==================================================================================================
+// CosmoRec specific variables for variation of fundamental constant
+//==================================================================================================
+// Scaling variables for alpha, reduced mass and omission modes (Luke Hart)
+struct Fund_Const_scaling
+{
+    size_t runmode;
+    double a_scale;
+    double m_scale;
+    double p_scale;
+    // Scaling coefficients that we multiply rates/cross sections
+    double f_a, f_b, f_t;
+};
+
+Fund_Const_scaling FC_CosmoRec={0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0};
+// Switch to determine whether we are rescaling Helium recombination or not
+int FC_He_switch = 1;
 
 //==================================================================================================
 // memory for CosmoRec-ODE solver

@@ -124,14 +124,19 @@ void read_entries_from_parameter_file(ifstream &paramfile, double *param)
     // The code will now read in the parameters into the dummy parameters associated with these files
     // double ---> size_t information will be lost when the parameters are converted in evalODE.Recfast or ODEeval
     // These read in values will now go into Recfast++ and CosmoRec interdependently
-    paramfile >> RECFAST_atomic_constants::RF_aScale;
-    paramfile >> RECFAST_atomic_constants::RF_mScale;
-    paramfile >> RECFAST_atomic_constants::RF_pScale;
-    paramfile >> RECFAST_atomic_constants::RF_rMode;
-    FC_CosmoRec.a_scale = RECFAST_atomic_constants::RF_aScale;
-    FC_CosmoRec.m_scale = RECFAST_atomic_constants::RF_mScale;
-    FC_CosmoRec.p_scale = RECFAST_atomic_constants::RF_pScale;
-    FC_CosmoRec.runmode = RECFAST_atomic_constants::RF_rMode;
+    double aS, mS, pS; int RM;
+    paramfile >> aS;
+    paramfile >> mS;
+    paramfile >> pS;
+    paramfile >> RM;
+    // set Recfast++ parameters
+    if(RM>0) Set_VFC_params(aS, mS, pS, RM);
+    else Switch_VFC_off(); // switch VFC off
+
+    FC_CosmoRec.a_scale = aS;
+    FC_CosmoRec.m_scale = mS;
+    FC_CosmoRec.p_scale = pS;
+    FC_CosmoRec.runmode = RM;
     
     paramfile >> nShells;
     paramfile >> nS_effective;

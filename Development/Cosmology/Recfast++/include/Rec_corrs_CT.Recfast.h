@@ -20,13 +20,8 @@
 void read_recombination_correction(int mflag=1);
 
 //========================================================================================
-// correction factor 1+DNe/Ne as explained by Rubino-Martin et al. 2010.
-//----------------------------------------------------------------------------------------
-// Modification according to Hart & Chluba, 2017
-// cflag == 1: fH+fHeI (default)
-// cflag == 2: fH
-// cflag == 3: fHeI
+// correction factor 1+DNe/Ne as explained by Rubino-Martin et al. 2010 and LH & JC, 2017
 //========================================================================================
-double Recombination_correction_factor(double z, int cflag=1);
+void Recombination_correction_factor(double z, double &Xe, double &Xe_H, double &Xe_He);
 
 #endif

@@ -74,36 +74,10 @@ namespace RECFAST_atomic_constants
     // two-photon transition rates
     //====================================================================================================  
     // hydrogen
-    //const double RF_Lam2s1sH=8.2206;  // H 2s-1s two photon rate in [s^-1] from Labzowsky 2005 
+    //const double RF_Lam2s1sH=8.2206;  // H 2s-1s two photon rate in [s^-1] from Labzowsky 2005
     //const double RF_Lam2s1sH=8.22458; // H 2s-1s two photon rate in [s^-1]
     extern double RF_Lam2s1sH;
-
-    //====================================================================================================
-    // parameters for magnetic field heating
-    //====================================================================================================
-    extern double RF_B0_heating;
-    extern double RF_nB_heating;
-    extern double RF_kD_heating;
     
-    extern bool RF_eval_ion_Tr;
-    extern bool RF_decaying_turb_on;
-    extern bool RF_ambipolar_heat_on;
-    extern bool RF_KK_or_PF_Lorentz;    // KK or PF integral for Lorentz force (when called from CosmoRec)
-    
-    //====================================================================================================
-    // fundamental constants scalings (Oct 2016, LH)
-    //====================================================================================================
-    extern double RF_aScale;
-    extern double RF_mScale;
-    extern double RF_pScale;
-    extern int RF_rMode;
-    
-    //====================================================================================================
-    // boolean parameters for correction function settings
-    // 0 for the f_h+f_he default and 1 for the new individual correction functions
-    //====================================================================================================
-    const bool RF_separate_corr = 1;
-
     //====================================================================================================
     // helium 2gamma rate
     //====================================================================================================

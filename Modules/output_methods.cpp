@@ -80,7 +80,7 @@ void open_files(ofstream *Xfiles, string path, int fresh=1)
     // Added for correction functions LH & JC
     if(write_corrections)
     {
-        if(RECFAST_atomic_constants::RF_eval_ion_Tr)
+        if(Get_T_eval())
             Xfiles[6].open((prename+"correction_function.Tr"+addname).c_str(),wrmode);
         else Xfiles[6].open((prename+"correction_function"+addname).c_str(),wrmode);
     }

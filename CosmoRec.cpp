@@ -6,6 +6,7 @@
 // purpose: to access main CosmoRec code
 //
 //===========================================================================================================
+// 31.03.2017: added VFC control for batch mode / CAMB runs [LH & JC]
 // 15.02.2017: added controll for magnetic field modes [JC]
 // 22.01.2017: added correction function computation as standard output [LH]
 // 22.01.2017: added Recfast++ variation of fundamental constants setup [LH & JC]
@@ -682,8 +683,8 @@ void run_RECFAST_pp(double param[12], const int nz, double *z_arr,
     
         ofstream ofile;
         string name=COSMORECDIR+"./outputs/";
-        if(CT_corr==1) name+="Xe_Recfast.corr_fac.dat";
-        else name+="Xe_Recfast.dat";
+        if(CT_corr==1) name+="Xe_Recfast.corr_fac"+addname+".dat";
+        else name+="Xe_Recfast"+addname+".dat";
         ofile.open(name.c_str());
         ofile.precision(10);
         
@@ -750,11 +751,19 @@ void run_RECFAST_pp(double param[12], const int nz, double *z_arr,
 //
 // runpars[4]> 0: B0 in nG. For ==0 no heating is added.
 // runpars[5]   : nB spectral index for magnetic fields
-//             0: turbulent decay; 1: ambipolar diffusion; 2: both
+// runpars[6]  0: turbulent decay; 1: ambipolar diffusion; 2: both
 //            <0: same but using Paoletti & Finelli norm for B0
 //
+//-----------------------------------------------------------------------------------------------------------
+// runpars[7]!=1: Fine structure constant rescaled
+// runpars[8]!=1: Mass of electron rescaled
+// runpars[9]!=0: Redshift dependent power law of fundamental constants scaling
+// runpars[10] 0: no rescaling;    1: Boltzmann/T rescaling; 2: sigma_T rescaling
+//             3: A2s1s rescaling; 4: Phot rates rescaled; 5: Pesc rescaled (only for Recfast++ runmodes)
+//             6: All components rescaled
+//
 //===========================================================================================================
-int CosmoRec(const int runmode, const double runpars[7],
+int CosmoRec(const int runmode, const double runpars[11],
              const double omegac, const double omegab, 
              const double omegak, const double Nnu,  
              const double h0, const double tcmb, const double yhe,
@@ -765,7 +774,9 @@ int CosmoRec(const int runmode, const double runpars[7],
     // switch off messages 
     //======================================================================
     show_CosmoRec_mess=-1;
-
+    path=COSMORECDIR+"./outputs/";
+    addname=".batch."+int_to_string(label, 6)+".dat";
+    
     //======================================================================
     // switch on/off outputs 
     //======================================================================
@@ -786,6 +797,33 @@ int CosmoRec(const int runmode, const double runpars[7],
     // magnetic field heating (added 11.10.2014)
     //======================================================================
     set_PMF_parameters_KK_PF(runpars[4], runpars[5], runpars[6], h0);
+    
+    //======================================================================
+    // scaling of fundamental constants using input variables from camb
+    //======================================================================
+    if(runpars[10] != 0)
+    {
+        // set Recfast++ parameters
+        Set_VFC_params(runpars[7], runpars[8], runpars[9], runpars[10]);
+        // set CosmoRec parameters
+        FC_CosmoRec.a_scale=runpars[7];
+        FC_CosmoRec.m_scale=runpars[8];
+        if(runpars[9] != 0.0 && runmode < 2)
+        {
+            cerr << "Cannot currently run CosmoRec with the power law!" << endl;
+            exit(1);
+        }
+        FC_CosmoRec.runmode=runpars[10];
+    }
+    else
+    {
+        // set Recfast++ parameters
+        Switch_VFC_off(); // switch VFC off
+        // set CosmoRec parameters
+        FC_CosmoRec.a_scale = FC_CosmoRec.m_scale = 1.0;
+        FC_CosmoRec.p_scale = 0.0;
+        FC_CosmoRec.runmode = 0;
+    }
     
     //======================================================================
     double params[12];
@@ -874,9 +912,6 @@ int CosmoRec(const int runmode, const double runpars[7],
     
     //======================================================================
     if(runmode==1) Diffusion_flag=0;
-
-    path=COSMORECDIR+"./outputs/";
-    addname=".batch."+int_to_string(label, 6)+".dat";
 
     //======================================================================
     // initialize cosmology and the general startup

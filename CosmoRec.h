@@ -6,6 +6,7 @@
 // purpose: to access main CosmoRec code
 //
 //===========================================================================================================
+// 31.03.2017: added VFC control for batch mode / CAMB runs [LH & JC]
 // 15.02.2017: added controll for magnetic field modes [JC]
 // 22.01.2017: added correction function computation as standard output [LH]
 // 22.01.2017: added Recfast++ variation of fundamental constants setup [LH & JC]
@@ -82,12 +83,19 @@ int CosmoRec(int narg, char *args[]);
 //
 // runpars[4]> 0: B0 in nG. For ==0 no heating is added.
 // runpars[5]   : nB spectral index for magnetic fields
-// runpars[6]   : magnetic field heating mode
-//             0: turbulent decay; 1: ambipolar diffusion; 2: both
+// runpars[6]  0: turbulent decay; 1: ambipolar diffusion; 2: both
 //            <0: same but using Paoletti & Finelli norm for B0
 //
+//-----------------------------------------------------------------------------------------------------------
+// runpars[7]!=1: Fine structure constant rescaled
+// runpars[8]!=1: Mass of electron rescaled
+// runpars[9]!=0: Redshift dependent power law of fundamental constants scaling
+// runpars[10] 0: no rescaling;    1: Boltzmann/T rescaling; 2: sigma_T rescaling
+//             3: A2s1s rescaling; 4: Phot rates rescaled; 5: Pesc rescaled (only for Recfast++ runmodes)
+//             6: All components rescaled
+//
 //===========================================================================================================
-int CosmoRec(const int runmode, const double runpars[6],
+int CosmoRec(const int runmode, const double runpars[11],
              const double omegac, const double omegab, 
              const double omegak, const double Nnu,  
              const double h0, const double tcmb, const double yhe, 

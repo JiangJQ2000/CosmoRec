@@ -227,7 +227,7 @@ void arm_PDE_solver_HeI(double nu21, Cosmos &cos, Gas_of_HeI_Atoms &HeIAtoms,
         //==================================================================
         // HI Lyc photon-ionization cross section at grid-points
         //------------------------------------------------------------------
-        // needed for rescaling with alpha and me. Could be made improved by
+        // needed for rescaling with alpha and me. Could be improved by
         // simply renormalizing cross section.
         //==================================================================
         for(int k=0; k<(int)xarr.size(); k++)

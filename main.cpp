@@ -25,8 +25,8 @@ int main_random()
     int runmode=0;
     //int runmode=3;
     // 0: DM annihilation; 1: run settings; 2: outputs; 3: A2s1s; 4: B0; 5: nB; 6: PMF_mode
-    double runpars[7]={0.0, 0, 0, 0.0, 3.0, -1.0, 2};
-
+    // 7: alpha_scale; 8: me_scale; 9: p_scale; 10: VFCmode
+    double runpars[11]={0.0, 0, 0, 0.0, 3.0, -1.0, 2, 1.0, 1.0, 0.0, 0};
 
     //==============================================================================================
     double ombh2_l = 0.01;
@@ -133,7 +133,9 @@ int main_random()
 int main_batch_mode()
 { 
     int runmode=0, label=1;
-    double runpars[7]={0.0, 0, 0, 0.0, 0.0, 0.0};
+    // 0: DM annihilation; 1: run settings; 2: outputs; 3: A2s1s; 4: B0; 5: nB; 6: PMF_mode
+    // 7: alpha_scale; 8: me_scale; 9: p_scale; 10: VFCmode
+    double runpars[11]={0.0, 0, 1, 0.0, 0.0, 0.0, 0, 1.0, 1.0, 0.0, 6};
     
     double omegac=0.216;
     double omegab=0.044;
@@ -156,26 +158,32 @@ int main_batch_mode()
     int count=0;
     for(int k=0; k<2; k++)
     {
-        tcmb=2.725;
-        CosmoRec(runmode, runpars, omegac, omegab, omegak, Nnu, 
+        //tcmb=2.725;
+        runpars[7]=1.05;
+        CosmoRec(runmode, runpars, omegac, omegab, omegak, Nnu,
                  h0, tcmb, yhe, nz, z_arr, Xe_arr, Te_arr, label);
         
-        tcmb=2.8; label++;
-        CosmoRec(runmode, runpars, omegac, omegab, omegak, Nnu, 
+        //tcmb=2.8; label++;
+        runpars[7]=1.0; label++;
+        CosmoRec(runmode, runpars, omegac, omegab, omegak, Nnu,
                  h0, tcmb, yhe, nz, z_arr, Xe_arr, Te_arr, label);
         
-        tcmb=2.65; label++;
-        CosmoRec(runmode, runpars, omegac, omegab, omegak, Nnu, 
+        //tcmb=2.65; label++;
+        runpars[7]=0.95; label++;
+        CosmoRec(runmode, runpars, omegac, omegab, omegak, Nnu,
                  h0, tcmb, yhe, nz, z_arr, Xe_arr, Te_arr, label);
         
-        tcmb=2.75; label++;
-        CosmoRec(runmode, runpars, omegac, omegab, omegak, Nnu, 
+        //tcmb=2.75; label++;
+        runpars[7]=1.0; label++;
+        CosmoRec(runmode, runpars, omegac, omegab, omegak, Nnu,
                  h0, tcmb, yhe, nz, z_arr, Xe_arr, Te_arr, label);
-        
-        tcmb=2.7; label++;
-        CosmoRec(runmode, runpars, omegac, omegab, omegak, Nnu, 
+
+        //tcmb=2.7; label++;
+        runpars[7]=1.05; label++;
+        CosmoRec(runmode, runpars, omegac, omegab, omegak, Nnu,
                  h0, tcmb, yhe, nz, z_arr, Xe_arr, Te_arr, label);
-        
+        exit(0);
+
         tcmb=2.764; label++;
         CosmoRec(runmode, runpars, omegac, omegab, omegak, Nnu, 
                  h0, tcmb, yhe, nz, z_arr, Xe_arr, Te_arr, label);
@@ -211,6 +219,6 @@ int main_batch_mode()
 int main(int narg, char *args[])
 { 
     if(narg>=2) return CosmoRec(narg, args);
-//    return main_batch_mode();
-    return main_random();
+    return main_batch_mode();
+//    return main_random();
 }

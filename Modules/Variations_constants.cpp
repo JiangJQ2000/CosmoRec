@@ -21,6 +21,7 @@ void rescale_variables_all(double alpha_scale, double me_scale, size_t run_mode,
     // Ignore all scalings if the alpha and mu values are already set to 1
     //=======================================================================================================
     const_HI_A2s_1s = const_HI_A2s_1s_0;
+    const_HeI_A2s_1s = const_HeI_A2s_1s_0;
     const_sigT = const_sigT_0;
     Ascale=Bscale=Tscale=1.0;
     

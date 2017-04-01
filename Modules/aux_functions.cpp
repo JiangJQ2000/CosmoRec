@@ -129,14 +129,25 @@ void read_entries_from_parameter_file(ifstream &paramfile, double *param)
     paramfile >> mS;
     paramfile >> pS;
     paramfile >> RM;
-    // set Recfast++ parameters
-    if(RM>0) Set_VFC_params(aS, mS, pS, RM);
-    else Switch_VFC_off(); // switch VFC off
-
-    FC_CosmoRec.a_scale = aS;
-    FC_CosmoRec.m_scale = mS;
-    FC_CosmoRec.p_scale = pS;
-    FC_CosmoRec.runmode = RM;
+    if(RM>0)
+    {
+        // set Recfast++ parameters
+        Set_VFC_params(aS, mS, pS, RM);
+        // set CosmoRec parameters
+        FC_CosmoRec.a_scale = aS;
+        FC_CosmoRec.m_scale = mS;
+        FC_CosmoRec.p_scale = pS;
+        FC_CosmoRec.runmode = RM;
+    }
+    else
+    {
+        // set Recfast++ parameters
+        Switch_VFC_off(); // switch VFC off
+        // set CosmoRec parameters
+        FC_CosmoRec.a_scale = FC_CosmoRec.m_scale = 1.0;
+        FC_CosmoRec.p_scale = 0.0;
+        FC_CosmoRec.runmode = 0;
+    }
     
     paramfile >> nShells;
     paramfile >> nS_effective;

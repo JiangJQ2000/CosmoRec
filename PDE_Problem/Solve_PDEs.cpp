@@ -318,8 +318,8 @@ void arm_PDE_solver(Cosmos &cos, Gas_of_Atoms &HIA, vector<double> &xarr,
         {
             for(int m=0; m<(int)resonances.size(); m++)
             {
-                PDE_funcs.Voigt_profiles_A_npns[m][k]=Get_A_npks(m+2, k+2);
-                PDE_funcs.Voigt_profiles_A_npnd[m][k]=Get_A_npkd(m+2, k+2);
+                PDE_funcs.Voigt_profiles_A_npns[m][k]=Get_A_npks(m+2, k+2)*Solve_PDE_HI_Eins_scale;
+                PDE_funcs.Voigt_profiles_A_npnd[m][k]=Get_A_npkd(m+2, k+2)*Solve_PDE_HI_Eins_scale;
             }
             //
             for(; index<npts; index++) if(xarr[index]>=resonances[k])

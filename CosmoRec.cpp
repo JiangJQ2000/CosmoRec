@@ -806,8 +806,10 @@ int CosmoRec(const int runmode, const double runpars[11],
         // set Recfast++ parameters
         Set_VFC_params(runpars[7], runpars[8], runpars[9], runpars[10]);
         // set CosmoRec parameters
-        FC_CosmoRec.a_scale=runpars[7];
-        FC_CosmoRec.m_scale=runpars[8];
+        FC_CosmoRec.a_scale=(runpars[7]<=0.0 ? 1.0 : runpars[7]);
+        FC_CosmoRec.m_scale=(runpars[8]<=0.0 ? 1.0 : runpars[8]);
+        FC_CosmoRec.p_scale = 0.0;
+
         if(runpars[9] != 0.0 && runmode < 2)
         {
             cerr << "Cannot currently run CosmoRec with the power law!" << endl;

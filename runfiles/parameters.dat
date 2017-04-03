@@ -12,8 +12,8 @@
 3.046
 1.14
 
-1.05
-1.
+1.0
+1.0
 0.0
 6
 
@@ -58,9 +58,9 @@
 3.046     == N_nu
 1.14      == Recfast++ fudge factor (usually leave unchanged)
 
-1. 	      == Scaling of the fine structure constant
-1. 	  	  == Scaling of the m_e/m_p ratio
-0. 	  	  == scaling [(1+z)/1100]^p [only Recfast++ mode, but ignored in CosmoRec]
+1.0	      == Scaling of the fine structure constant [no rescaling for <=0; ignored when mode==0]
+1.0	  	  == Scaling of the m_e/m_p ratio  [no rescaling for <=0; ignored when mode==0]
+0.0	  	  == scaling [(1+z)/1100]^p [only Recfast++ mode, but ignored in CosmoRec]
 1  	  	  == Running mode for the omissions of the scaling of alpha 
 			 (0: previous values omitted; 
 			  1: Boltz; 2: sigT; 3: A2s1s

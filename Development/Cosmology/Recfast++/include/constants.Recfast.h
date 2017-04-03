@@ -114,6 +114,7 @@ namespace RECFAST_atomic_constants
     // helium
     const double RF_EionHe2s=6.363254e-19;  // HeI 2s ionization energy in [J]      --> nu = 9.60336246 10^14 Hz
     const double RF_EionHeII=8.7186944e-18; // HeII ionization energy in [J]        --> nu = 1.315817072 10^16 Hz
+    const double RF_EionHeI =3.93933e-18;   // HeI ionization energy in [J]
     
     const double RF_E2s1sHe=3.30301387e-18; // HeI 2s energy from 1s^2 in [J]       --> nu = 4.984877142 10^15 Hz
     const double RF_E2p2sHe=9.64908313e-20; // HeI 2p - 2s energy difference in [J] --> nu = 1.456230456 10^14 Hz 

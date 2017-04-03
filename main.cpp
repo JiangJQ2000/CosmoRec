@@ -22,11 +22,10 @@ using namespace std;
 int main_random()
 { 
     int nrep = 10000;
-    int runmode=0;
-    //int runmode=3;
+    int runmode=3;
     // 0: DM annihilation; 1: run settings; 2: outputs; 3: A2s1s; 4: B0; 5: nB; 6: PMF_mode
     // 7: alpha_scale; 8: me_scale; 9: p_scale; 10: VFCmode
-    double runpars[11]={0.0, 0, 0, 0.0, 3.0, -1.0, 2, 1.0, 1.0, 0.0, 0};
+    double runpars[11]={0.0, 0, 1, 0.0, 3.0, -1.0, 2, 1.0, 1.0, 0.0, 6};
 
     //==============================================================================================
     double ombh2_l = 0.01;
@@ -55,10 +54,16 @@ int main_random()
     
     double nB_l    = -2.9;
     double nB_u    =  2.0;
+
+    double aS_l    =  0.9;
+    double aS_u    =  1.1;
+
+    double pS_l    = -0.1;
+    double pS_u    =  0.1;
     //==============================================================================================
     
     double h0, omegab, omegac, omegak=0.0;
-    double tcmb, yhe, Nnu, A2s1s, B0, nB;
+    double tcmb, yhe, Nnu, A2s1s, B0, nB, aS, pS;
     
     int nz=10000;
     double *z_arr=new double[nz];
@@ -84,9 +89,14 @@ int main_random()
         yhe = yhe_l + (yhe_u - yhe_l) * drand48();
         Nnu = Nnu_l + (Nnu_u - Nnu_l) * drand48();
         A2s1s = A2s1s_l + (A2s1s_u - A2s1s_l) * drand48();
+        
         B0 = B0_l + (B0_u - B0_l) * drand48();
         nB = nB_l + (nB_u - nB_l) * drand48();
         B0 = nB = 0.0;
+        
+        aS = aS_l + (aS_u - aS_l) * drand48();
+        pS = pS_l + (pS_u - pS_l) * drand48();
+        pS = 0.0;
         
         cout << " omegab= " << omegab << endl;
         cout << " omegac= " << omegac << endl;
@@ -98,10 +108,17 @@ int main_random()
         cout << " A2s1s=  " << A2s1s << endl;
         cout << " B0=  " << B0 << endl;
         cout << " nB=  " << nB << endl;
+        cout << " aS=  " << aS << endl;
+        cout << " pS=  " << pS << endl;
         
         runpars[3]=A2s1s;
+        
         runpars[4]=B0;
         runpars[5]=nB;
+        
+        runpars[7]=aS;
+        runpars[9]=pS;
+        
         CosmoRec(runmode, runpars, omegac, omegab, omegak, Nnu,
                  h0, tcmb, yhe, nz, z_arr, Xe_arr, Te_arr, 0);
         
@@ -110,7 +127,7 @@ int main_random()
         cout << " The run took " << seconds_Drun << " sec. " << endl;    
         seconds_start=seconds_end;
 
-        cout << " **** Done. ****" << endl << endl;    
+        cout << " **** Done. ****" << endl << endl;
     }
 
     //===============================================================
@@ -132,7 +149,7 @@ int main_random()
 //==================================================================================================
 int main_batch_mode()
 { 
-    int runmode=0, label=1;
+    int runmode=3, label=1;
     // 0: DM annihilation; 1: run settings; 2: outputs; 3: A2s1s; 4: B0; 5: nB; 6: PMF_mode
     // 7: alpha_scale; 8: me_scale; 9: p_scale; 10: VFCmode
     double runpars[11]={0.0, 0, 1, 0.0, 0.0, 0.0, 0, 1.0, 1.0, 0.0, 6};
@@ -219,6 +236,6 @@ int main_batch_mode()
 int main(int narg, char *args[])
 { 
     if(narg>=2) return CosmoRec(narg, args);
-    return main_batch_mode();
-//    return main_random();
+//    return main_batch_mode();
+    return main_random();
 }

@@ -920,7 +920,7 @@ int ODE_Solver_compute_new_Solution(int order, const double zout, const double r
             if(!(Jac_loops%5))
             { 
                 tolJac/=2.0; 
-                cout << " RECFAST++: Tightening Jac error setting at it-# " << Jac_loops << endl; 
+                cout << " RECFAST++: Tightening Jac error setting at it-# " << Jac_loops << " t= " << zin << endl;
             }
             
             if(Jac_loops>25) 

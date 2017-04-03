@@ -4,6 +4,7 @@
 // CITA, University of Toronto
 // All rights reserved.
 //========================================================================================
+// 03.04.2017: added switches using Saha and changed redshift grid (JC)
 // 04.01.2017: added new routines for separate H and HeI correction functions (LH)
 // 05.12.2016: added dependence of Saha_HeIII on fundamental constants
 
@@ -43,6 +44,18 @@ double SahaBoltz_HeIII(double nH, double fHe, double T)
     double c1 = 2.0*RF_PI*RF_mElect*RF_kBoltz*T/(RF_hPlanck*RF_hPlanck);
     double g = pow(c1, 1.5)*exp(-RF_EionHeII/(RF_kBoltz*T))/nH, d=1.0+fHe-g;
     double Xe= 0.5*(d + sqrt(d*d + 4.0*g*(1.0+2.0*fHe)));
+    
+    return Xe;
+}
+
+//========================================================================================
+// Saha formula for HeII
+//========================================================================================
+double SahaBoltz_HeII(double nH, double fHe, double T)
+{
+    double c1 = 2.0*RF_PI*RF_mElect*RF_kBoltz*T/(RF_hPlanck*RF_hPlanck);
+    double g = 4.0*pow(c1, 1.5)*exp(-RF_EionHeII/(RF_kBoltz*T))/nH, d=1.0-g;
+    double Xe= 0.5*(d + sqrt(d*d + 4.0*g*(1.0+fHe)));
     
     return Xe;
 }
@@ -127,15 +140,17 @@ int Xe_frac(double params[14], double *zarr, double *Xe_H, double *Xe_He, double
     // zs, ze: starting and ending redshift; 
     // if the fudge factor ==0.0 --> will use standard value 1.14
     //====================================================================================
-    long int i, j=0, nzpts=(int)params[0];
+    long int j=0, nzpts=(int)params[0];
     double zc_HeIII=9000.0, zc_HeIIIS=4800.0, zc_HeII=3600.0;
+    // setting for quasi-constant parts and recombination parts
+    int n_low_res=100, n_high_res=(nzpts-2*n_low_res)/3;
     
     //====================================================================================
     // Set in starting values
     //====================================================================================
     Set_input_variables(params);
-    double fHe=input.fHe;
-
+    double fHe=input.fHe, Xe_Saha, Saha_eps_I=5.0e-4, Saha_eps_II=1.0e-5;
+    
     //====================================================================================
     // inclusion of fundamental constants [04.12.16: added JC]
     //====================================================================================
@@ -152,29 +167,35 @@ int Xe_frac(double params[14], double *zarr, double *Xe_H, double *Xe_He, double
     //====================================================================================
     // above zc_HeIII everything is completely ionized
     //====================================================================================
-    if (input.zstart > zc_HeIII && input.zstart > input.zend) 
+    double z=input.zstart, zend=max(zc_HeIII, input.zend), Dz=(z-zend)/n_low_res;
+    if (z > zc_HeIII && z > zend)
     {
-        for (j=0, i=(int)input.zstart; i>=max(zc_HeIII, input.zend)+10; i-=10, j++) 
+        for (j=0; z>=zend+Dz; z-=Dz, j++)
         {
-            zarr[j] = i;
+            zarr[j] = z;
             Xe_H[j] = 1.0;
             Xe_He[j]= fHe;
             TM[j]   = input.To*(1.0+zarr[j]);
             Xe[j]   = 1.0+2.0*fHe;
             dXe[j]  = 0.0;
             dX_H[j] = 0.0;
+            
+            // check Saha value
+            Set_var_const_scale_factors(zarr[j], VC_Data);
+            Xe_Saha = SahaBoltz_HeIII(NH(zarr[j])*VC_Data.fAp/VC_Data.fBp, fHe, TM[j]/VC_Data.fT);
+            if(fabs(Xe[j]/Xe_Saha-1.0)>=Saha_eps_I){ zend = z; break; }
         }
-        input.zstart = max(zc_HeIII, input.zend);
     }
     
     //====================================================================================
     // now HeIII recombination starts and HeII <--> HeIII are in Saha equilibrium
     //====================================================================================
-    if (input.zstart > zc_HeIIIS && input.zstart > input.zend) 
+    z=zend; zend=max(zc_HeIIIS, input.zend); Dz=(z-zend)/n_high_res;
+    if (z > zc_HeIIIS && z > zend)
     {
-        for (i=(int)input.zstart; i>=max(zc_HeIIIS, input.zend)+1; i--, j++) 
+        for (; z>=zend+Dz; z-=Dz, j++)
         {
-            zarr[j] = i;
+            zarr[j] = z;
             Xe_H[j] = 1.0;
             Xe_He[j]= fHe;
             TM[j]   = input.To*(1.0+zarr[j]);
@@ -183,30 +204,38 @@ int Xe_frac(double params[14], double *zarr, double *Xe_H, double *Xe_He, double
             Xe[j]   = SahaBoltz_HeIII(NH(zarr[j])*VC_Data.fAp/VC_Data.fBp, fHe, TM[j]/VC_Data.fT);
             dXe[j]   = 0.0;
             dX_H[j]   = 0.0;
+            
+            // check Saha value
+            if(fabs(Xe[j]/(1.0+fHe)-1.0)<=Saha_eps_II){ zend = z; break; }
         }
-        input.zstart = max(zc_HeIIIS, input.zend);
     }
     
     //====================================================================================
     // Only need to start integrating ODE before HeI recombination. Anything before that 
     // time is just a constant ionization fraction. xe = 1.0 + fHe 
     //====================================================================================  
-    if (input.zstart > zc_HeII && input.zstart > input.zend) 
+    z=zend; zend=max(zc_HeII, input.zend); Dz=(z-zend)/n_low_res;
+    if (z > zc_HeII && z > zend)
     {
-        for (i=(int)input.zstart; i>=max(zc_HeII, input.zend)+10; i-=10, j++) 
+        for (; z>=zend+Dz; z-=Dz, j++)
         {
-            zarr[j] = i;
+            zarr[j] = z;
             Xe_H[j] = 1.0;
             Xe_He[j]= fHe;
             TM[j]   = input.To*(1.0+zarr[j]);
             Xe[j]   = 1.0+fHe;
             dXe[j]   = 0.0;
             dX_H[j]   = 0.0;
+            
+            // check Saha value
+            Set_var_const_scale_factors(zarr[j], VC_Data);
+            Xe_Saha = SahaBoltz_HeII(NH(zarr[j])*VC_Data.fAp/VC_Data.fBp, fHe, TM[j]/VC_Data.fT);
+            if(fabs(Xe[j]/Xe_Saha-1.0)>=Saha_eps_I){ zend = z; break; }
         }
-        input.zstart = max(zc_HeII, input.zend);
     }
-    
-    zarr[j] = input.zstart;
+
+    z=zend;
+    zarr[j] = z;
     Xe_H[j] = 1.0;
     Xe_He[j]= fHe;
     TM[j]   = input.To*(1.0+zarr[j]);
@@ -222,15 +251,16 @@ int Xe_frac(double params[14], double *zarr, double *Xe_H, double *Xe_He, double
     //====================================================================================
     // Now He I recombination starts
     //====================================================================================
-    if (input.zstart > input.zend) 
+    if (z > input.zend)
     {
         double zs, ze;
         
         //================================================================================
         // initialise zarr (linear in z)
         //================================================================================
-        double Dz=(input.zstart-input.zend)/(double)(nzpts-j-1);
-        for(zarr[j]=input.zstart, i=j+1; i<nzpts; i++) zarr[i]=zarr[i-1]-Dz;
+        double Dz=(z-input.zend)/(double)(nzpts-j-1);
+        long int i;
+        for(zarr[j]=z, i=j+1; i<nzpts; i++) zarr[i]=zarr[i-1]-Dz;
         zarr[nzpts-1]=0.0;
         
         //================================================================================

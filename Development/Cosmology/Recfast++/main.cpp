@@ -194,7 +194,7 @@ int main(int narg, char *args[])
     //====================================================================================
     vector<double> params(15);
     int npz=10000;
-    double zstart=1.0e+4, zend=0.001;
+    double zstart=2.5e+4, zend=0.001;
     
     params[0]=npz;
     params[1]=zstart;
@@ -224,8 +224,8 @@ int main(int narg, char *args[])
         if(Get_ambi_setting()) oname+=".ambi";
     }
 
-    if(Get_aScale()!=1.0) oname+=".alp";
-    if(Get_mScale()!=1.0) oname+=".me";
+    if((Get_aScale()!=1.0 || Get_pScale()!=0.0) && Get_aScale()>0.0) oname+=".alp";
+    if((Get_mScale()!=1.0 || Get_pScale()!=0.0) && Get_mScale()>0.0) oname+=".me";
     if(Get_pScale()!=0.0) oname+=".power";
     if(Get_rMode()==1) oname+=".Boltz";
     else if(Get_rMode()==2) oname+=".sigT";

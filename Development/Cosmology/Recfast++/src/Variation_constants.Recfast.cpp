@@ -102,8 +102,8 @@ void Set_var_const_scale_factors(double aS, double mS, int rmode, Variables_Fund
 void Set_var_const_scale_factors(double z, Variables_Fund_Consts &D)
 {
     double p  =RF_pScale;
-    double alp=RF_aScale*pow((1.0+z)/1100.0, p);
-    double me =RF_mScale*pow((1.0+z)/1100.0, p);
+    double alp=( RF_aScale<=0.0 ? 1.0 : RF_aScale*pow((1.0+z)/1100.0, p) );
+    double me =( RF_mScale<=0.0 ? 1.0 : RF_mScale*pow((1.0+z)/1100.0, p) );
     
     Set_var_const_scale_factors(alp, me, RF_rMode, D);
     return;

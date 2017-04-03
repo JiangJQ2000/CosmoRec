@@ -147,7 +147,7 @@ private:
     int calc_coeff_X_spline(int M, double zstart, double zend);
     
     int n_Xe;
-    int memindex_Xe; 
+    int memindex_Xe;
     int memindex_dXe; 
     int memindex_XeH; 
     int memindex_dXeH; 
@@ -178,15 +178,13 @@ public:
     Cosmos();
     Cosmos(const double h100, const double T0, const double Yp, 
            const double densities[7], const double zstart, 
-           const double zend, const int n_Xe_pts, 
-           const double Nnu=3.04);
+           const double zend, const double Nnu=3.046);
     
     ~Cosmos();
 
     void init(const double h100, const double T0, const double Yp, 
               const double densities[7], const double zstart, 
-              const double zend, const int n_Xe_pts, 
-              const double Nnu=3.04);
+              const double zend, const double Nnu=3.046);
     
     void init_splines();
     

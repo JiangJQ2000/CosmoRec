@@ -39,8 +39,7 @@ void set_cosmology(Parameters_form_initfile &inparams, Cosmos &cosmos, double fD
     //=======================================================================================================
     // for the interpolation function for Xe in Cosmos class
     //=======================================================================================================
-    int n_Xe=10000;
-    double dens[7]; 
+    double dens[7];
     //=======================================================================================================
     
     if(show_CosmoRec_mess>=1) print_message(" Initializing cosmology object ");
@@ -56,7 +55,7 @@ void set_cosmology(Parameters_form_initfile &inparams, Cosmos &cosmos, double fD
     //=======================================================================================================
     // initializing cosmos object...
     //=======================================================================================================
-    cosmos.init(inparams.h100, inparams.To, inparams.YP, dens, inparams.zstart, 1.0e-10, n_Xe, inparams.Nnu);
+    cosmos.init(inparams.h100, inparams.To, inparams.YP, dens, inparams.zstart, 1.0e-10, inparams.Nnu);
     cosmos.init_splines();
     
     if(show_CosmoRec_mess>=1) cosmos.display_cosmology();
@@ -134,9 +133,9 @@ void read_entries_from_parameter_file(ifstream &paramfile, double *param)
         // set Recfast++ parameters
         Set_VFC_params(aS, mS, pS, RM);
         // set CosmoRec parameters
-        FC_CosmoRec.a_scale = aS;
-        FC_CosmoRec.m_scale = mS;
-        FC_CosmoRec.p_scale = pS;
+        FC_CosmoRec.a_scale =(aS<=0.0 ? 1.0 : aS);
+        FC_CosmoRec.m_scale =(mS<=0.0 ? 1.0 : mS);
+        FC_CosmoRec.p_scale = 0.0;
         FC_CosmoRec.runmode = RM;
     }
     else

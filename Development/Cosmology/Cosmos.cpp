@@ -194,8 +194,8 @@ double Hubble :: H(double z)
 //========================================================================================
 void Cosmos :: init(const double h, const double T0, const double Yp, 
                     const double densities[7], 
-                    const double zstart, const double zend, 
-                    const int n_Xe_pts, const double Nnuval)
+                    const double zstart, const double zend,
+                    const double Nnuval)
 {
     //====================================================================================
     // The array densities[] has to contain the densities in the sequence:     
@@ -216,9 +216,8 @@ void Cosmos :: init(const double h, const double T0, const double Yp,
     //====================================================================================
     // for Xe-spline interpolations...
     //====================================================================================
-    zs=zstart; ze=zend; 
-    n_Xe=n_Xe_pts;
-
+    zs=zstart; ze=zend;
+    
     calc_dependent_consts();
  
     splines_are_charged=0;
@@ -259,10 +258,10 @@ Cosmos :: Cosmos(){ spline_memory_allocated=0; }
 Cosmos :: Cosmos(const double h, const double T0, const double Yp, 
                  const double densities[7], 
                  const double zstart, const double zend, 
-                 const int n_Xe_pts, const double Nnu)
+                 const double Nnu)
 { 
     spline_memory_allocated=0; 
-    init(h, T0, Yp, densities, zstart, zend, n_Xe_pts, Nnu); 
+    init(h, T0, Yp, densities, zstart, zend, Nnu);
 }
 
 Cosmos :: ~Cosmos(){}
@@ -273,7 +272,10 @@ Cosmos :: ~Cosmos(){}
 void Cosmos :: set_initials(double Nnuval)
 {
     g_rel=1.0+Nnuval*(7.0/8.0)*pow(4.0/11.0, 4.0/3.0);
-    zsRe=1.0e+4;
+    
+    // parameters for recombination history
+    n_Xe=6000;
+    zsRe=2.5e+4;
 
     return;
 }

@@ -1,8 +1,14 @@
 //========================================================================================
 // Author: Jens Chluba (May 2003)
-// Last modification: Dec 2015
+// Last modification: May 2017
 // CITA, University of Toronto
 // All rights reserved.
+//========================================================================================
+
+//========================================================================================
+// 06.05.2017
+//========================================================================================
+// added several useful cosmology functions [JC & Luke Hart]
 //========================================================================================
 
 //========================================================================================
@@ -382,6 +388,7 @@ public:
     //====================================================================================
     double Te_Tg(double z){ if(z>=zsRe) return 1.0; return calc_spline(z, memindex_rho); } 
     double Te(double z){return TCMB(z)*Te_Tg(z);} 
+    double dTe_dz(double z); 
 
     //====================================================================================
     // different number densities
@@ -403,6 +410,9 @@ public:
     double rho_g_g_cm3(double zz){return rho_g*pow(1.0+zz, 4);}                     // photon energy density g/cm^3
     double rho_g_1_cm3(double zz){return rho_g_gr*pow(1.0+zz, 4);}                  // photon energy density 1/cm^3 (mec2)
     double n_gamma(double zz){return 2.0*1.20206*1.7595e+30*pow(ThetaCMB(zz), 3);}  // photon number density in 1/cm^3
+
+    double rho_tot(double z){ return 3.0*pow(H(z), 2)/(8.0*PI*const_G); }           // total energy density g/cm^3
+    double rho_tot_eV(double z){ return rho_tot(z)*const_me*1.0e+3/const_me_gr; }   // total energy density eV/cm^3
 
     //====================================================================================
     // Hubble parameter 
@@ -435,11 +445,45 @@ public:
     double t_ep(double z);                                                            // Spitzer formula
     double tau_C(double z);                                                           // Thomson optical depth
     double g_visi(double z);                                                          // Thomson visibility fcn (LH 2017)
+
     //====================================================================================
     // Integral^zh_z (1+z)^pow |dt_dz| dz 
     //====================================================================================
     double E_Int(double zh, double z, double pow);
     
+    //====================================================================================
+    // functions to compute energy release caused by acoustic damping (added 06.05.2017, JC)
+    //====================================================================================
+    double eta(double z){ return const_cl*E_Int(1.0e+16, z, 1); }                     // conformal time
+    double deta_dz(double z){ return -const_cl/H(z); }                                // d eta/ dz 
+    
+    double Get_O_r() const  { return O_g*g_rel;   } 
+    double Get_H0() const  { return H0;   } 
+    
+    double rho_rel(double z){return rho_c*O_g*g_rel*pow(1.0+z, 4); }                  // energy density of relativistic species g/cm^3
+    double rho_gamma(double z){return rho_c*O_g*pow(1.0+z, 4); }                      // photon energy density g/cm^3
+    double rho_Nu(double z){return rho_c*O_g*(g_rel-1.0)*pow(1.0+z, 4); }             // Neutrino energy density g/cm^3
+    double rho_baryon(double z){return rho_c*O_b*pow(1.0+z,3); }                      // baryon energy density g/cm^3
+    double rho_dm(double z){return rho_c*(O_m-O_b)*pow(1.0+z,3); }                    // dark matter energy density g/cm^3
+    double rho_m(double z){return rho_c*O_m*pow(1.0+z,3); }                           // matter energy density g/cm^3
+    
+    double R_bg(double z){ return 3.0*rho_baryon(z)/4.0/rho_gamma(z); }               // 'baryon loading'
+    double R_Nu(double z){ return rho_Nu(z)/rho_rel(z); }                             // 'Neutrino loading'
+    double R_b(double z){ return rho_baryon(z)/rho_m(z); }                            // 'baryon fraction'
+    double R_c(double z){ return rho_dm(z)/rho_m(z); }                                // 'CDM fraction'
+    double c_s(double z){ return 1.0/sqrt(3.0*(1.0+R_bg(z))); }                       // 'sound speed' of photon + baryon fluid
+    double c_sb(double z);                                                            // 'sound speed' of baryons
+    double r_s(double z);                                                             // 'sound horizon'
+    double Nnu_func(double Rnu){ return 11.0/7.0*pow(22.0, 1.0/3.0)*Rnu/(1.0-Rnu); }  // 'Neff'
+    
+    double dtau_deta(double z){ return const_sigT*Ne(z)/(1.0+z); }                    // 'dtau_deta'
+    double k_D(double z);                                                             // 'damping wavenumber'
+    double k_lambda(double z);                                                        // 'damping wavenumber' for magnetic heating
+    double dkm2_D_deta(double z);                                                     // eta-derivative of 1/kD^2
+    double dkm2_D_dz(double z);                                                       // z-derivative of 1/kD^2
+    double k_mfp(double z){ return const_sigT*Ne(z)/(1.0+z); }                        // scale of comoving 'mean free path'
+    double k_eq();                                                                    // k_eq=(2 Om H0^2 a0/aeq)^0.5
+
     //====================================================================================
     // y-parameters
     //====================================================================================

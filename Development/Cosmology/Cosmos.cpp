@@ -1,8 +1,14 @@
 //========================================================================================
 // Author: Jens Chluba (May 2003)
-// Last modification: Dec 2015
+// Last modification: May 2017
 // CITA, University of Toronto
 // All rights reserved.
+//========================================================================================
+
+//========================================================================================
+// 06.05.2017
+//========================================================================================
+// added several useful cosmology functions [JC & Luke Hart]
 //========================================================================================
 
 //========================================================================================
@@ -602,19 +608,18 @@ double Cosmos :: H(double z)
 //========================================================================================
 double dtdz_GSL(double logz, void *p)
 { 
+    Cosmos *c =(Cosmos *) p;
     double zz=exp(logz); 
-    return -zz*GSL_cosmosptr->dt_dz(zz);
+    return -zz*c->dt_dz(zz-1.0);
 }
 
 double Cosmos :: t(double z)
 {
-    GSL_cosmosptr=this;
-    double epsInt=1.0e-12, epsabs=0.0;
-    double a=log(z), b=log(zs), r=0.0;
+    double epsInt=1.0e-12, epsabs=0.0, a=log(1.0+z), b=log(1.0+zs*1.0e+5), r=0.0;
+    void *p=this;
     
-    r=Integrate_gk_GSL(6, a, b, epsInt, epsabs, dtdz_GSL);  
+    r=Integrate_gk_GSL(6, a, b, epsInt, epsabs, dtdz_GSL, p);  
 
-    GSL_cosmosptr=NULL;
     return r;
 }
 
@@ -632,21 +637,18 @@ double Cosmos :: t_ep(double z)
 //========================================================================================
 double dE_GSL(double logz, void *p)
 { 
+    Cosmos *c =(Cosmos *) p;
     double z1=exp(logz); 
-    return -z1*pow(z1, GSL_cosmosptr->Get_power())*GSL_cosmosptr->dt_dz(z1-1.0);
+    return -z1*pow(z1, c->Get_power())*c->dt_dz(z1-1.0);
 }
 
 double Cosmos :: E_Int(double zh, double z, double pow)
 {
-    GSL_cosmosptr=this;
     power=pow;
-    double epsInt=1.0e-12, epsabs=0.0;
-    double a=log(z+1.0), b=log(zh+1.0), r=0.0;
+    double epsInt=1.0e-12, epsabs=0.0, a=log(z+1.0), b=log(zh+1.0);
+    void *p=this;
 
-    r=Integrate_gk_GSL(6, a, b, epsInt, epsabs, dE_GSL);
-
-    GSL_cosmosptr=NULL;
-    return r;
+    return Integrate_gk_GSL(6, a, b, epsInt, epsabs, dE_GSL, p);
 }
 
 //========================================================================================
@@ -732,47 +734,152 @@ int Cosmos :: recombine_using_Recfast_system(int nzpts, double zi, double ze, do
     return 0;
 }
 
+//====================================================================================
+// functions to compute energy release caused by acoustic damping (added 15.10.2011)
+//====================================================================================
+//double eff_fact_pol=8.0/9.0;
+double eff_fact_pol=16.0/15.0;
+
+double dr_s_GSL(double logz, void *p)
+{ 
+    Cosmos *c =(Cosmos *) p;
+    double z1=exp(logz), z=z1-1.0; 
+    return z1*const_cl/c->H(z)*c->c_s(z);
+}
+
+double Cosmos :: r_s(double z) // 'sound horizon'
+{
+    double epsInt=1.0e-7, epsabs=0.0, a=log(z+1.0), b=log(1.0e+16);
+    void *p=this;
+
+    return Integrate_using_Patterson_adaptive(a, b, epsInt, epsabs, dr_s_GSL, p);
+}
+
+//====================================================================================
+double dk_D_GSL(double logz, void *p)
+{ 
+    Cosmos *c =(Cosmos *) p;
+    double z1=exp(logz), z=z1-1.0;
+    double R=c->R_bg(z);
+    double tau_d=c->dtau_deta(z);
+    return z1*const_cl/c->H(z)/(6.0*(1.0+R))*(R*R/(1.0+R)+eff_fact_pol)/tau_d;
+}
+
+double Cosmos :: k_D(double z) // 'damping wavenumber'
+{
+    double epsInt=1.0e-7, epsabs=0.0, a=log(z+1.0), b=log(1.0e+16), r=0.0;
+    void *p=this;
+
+    r=Integrate_using_Patterson_adaptive(a, b, epsInt, epsabs, dk_D_GSL, p);
+    
+    return sqrt(1.0/r);
+}
+
+//====================================================================================
+double dk_lambda_GSL(double logz, void *p)
+{
+    Cosmos *c =(Cosmos *) p;
+    double z1=exp(logz), z=z1-1.0;
+    double tau_d=c->dtau_deta(z);
+    //double R=c->R_bg(z);
+    //if(z>3000) return z1*const_cl/c->H(z)/tau_d*R/(1.0+R); // == int dt / Ne sigT a^2 x R/(1+R)
+    return z1*const_cl/c->H(z)/tau_d;           // == int dt / Ne sigT a^2
+}
+
+double Cosmos :: k_lambda(double z) // 'damping wavenumber' for magnetic stuff
+{
+    double epsInt=1.0e-7, epsabs=0.0, a=log(z+1.0), b=log(1.0e+16), r=0.0;
+    void *p=this;
+    
+    r=Integrate_using_Patterson_adaptive(a, b, epsInt, epsabs, dk_lambda_GSL, p);
+    
+    return sqrt(1.0/r);
+}
+
+//====================================================================================
+double Cosmos :: dkm2_D_deta(double z) // eta-derivative of 1/kD^2
+{
+    double R=R_bg(z);
+    double tau_d=dtau_deta(z);
+    
+    return 1.0/(6.0*(1.0+R))*(R*R/(1.0+R)+eff_fact_pol)/tau_d;
+}
+
+double Cosmos :: dkm2_D_dz(double z) // z-derivative of 1/kD^2
+{
+    double R=R_bg(z);
+    double tau_d=dtau_deta(z);
+    
+    return const_cl/H(z)/(6.0*(1.0+R))*(R*R/(1.0+R)+eff_fact_pol)/tau_d;
+}
+
+//====================================================================================
+// 'sound speed' of baryons
+//====================================================================================
+double Cosmos :: dTe_dz(double z)
+{ 
+    double dz=z*1.0e-6;
+    return ( Te(z+dz)-Te(z-dz) )/(2.0*dz); 
+}
+
+double Cosmos :: c_sb(double z)
+{
+    double Xev=Xe(z);
+    double mu_mol=const_mp_gr/(1.0-Y_p)/(1.0+fHe()+Xev);
+    double Tb=Te(z);
+    double cs2=const_kB*Tb/(const_cl*const_cl)/mu_mol;
+    
+//    cs2*=1.0+z/Tb/3.0*dTe_dz(z);  // Ma & Bertschinger 1995
+    cs2*=1.0;                     // Lewis 2007 (10.1103/PhysRevD.76.063001), with Delta_Tg ~ 0
+//    cs2*=5.0/3.0;
+//    cout << " Cosmos :: c_sb " << 1.0+z/Tb/3.0*dTe_dz(z) << " " << z/Tb/3.0*dTe_dz(z) << endl;
+ 
+    return sqrt(cs2);
+}
+    
+double Cosmos :: k_eq()
+{
+    // k_eq=(2 Om H0^2 a0/aeq)^0.5
+    double a0_aeq=Get_O_m()/Get_O_r()-1.0;
+    
+    return sqrt(2.0*Get_O_m()*a0_aeq)*Get_H0()/const_cl;
+}
+
 //========================================================================================
 // y-parameters
 //========================================================================================
 double dy_gamma_GSL(double logz, void *p)
 {
+    Cosmos *c =(Cosmos *) p;
     double z1=exp(logz), z=z1-1.0;
-    double dtau_dt=1.0/GSL_cosmosptr->t_eg(z);
-    double Thg=GSL_cosmosptr->ThetaCMB(z);
-    return -z1*Thg*dtau_dt*GSL_cosmosptr->dt_dz(z1-1.0);
+    double dtau_dt=1.0/c->t_eg(z);
+    double Thg=c->ThetaCMB(z);
+    return -z1*Thg*dtau_dt*c->dt_dz(z);
 }
 
 double Cosmos :: y_gamma(double zlow, double zup)
 {
-    GSL_cosmosptr=this;
-    double epsInt=1.0e-5, epsabs=0.0;
-    double a=log(zlow+1.0), b=log(zup+1.0), r=0.0;
-    
-    r=Integrate_gk_GSL(6, a, b, epsInt, epsabs, dy_gamma_GSL);
-    
-    GSL_cosmosptr=NULL;
-    return r;
+    double epsInt=1.0e-5, epsabs=0.0, a=log(zlow+1.0), b=log(zup+1.0);
+    void *p=this;
+
+    return Integrate_gk_GSL(6, a, b, epsInt, epsabs, dy_gamma_GSL, p);
 }
 
 double dy_elect_GSL(double logz, void *p)
 {
+    Cosmos *c =(Cosmos *) p;
     double z1=exp(logz), z=z1-1.0;
-    double dtau_dt=1.0/GSL_cosmosptr->t_eg(z);
-    double The=GSL_cosmosptr->ThetaCMB(z)*GSL_cosmosptr->Te_Tg(z);
-    return -z1*The*dtau_dt*GSL_cosmosptr->dt_dz(z1-1.0);
+    double dtau_dt=1.0/c->t_eg(z);
+    double The=c->ThetaCMB(z)*c->Te_Tg(z);
+    return -z1*The*dtau_dt*c->dt_dz(z);
 }
 
 double Cosmos :: y_elect(double zlow, double zup)
 {
-    GSL_cosmosptr=this;
-    double epsInt=1.0e-5, epsabs=0.0;
-    double a=log(zlow+1.0), b=log(zup+1.0), r=0.0;
-    
-    r=Integrate_gk_GSL(6, a, b, epsInt, epsabs, dy_elect_GSL);
-    
-    GSL_cosmosptr=NULL;
-    return r;
+    double epsInt=1.0e-5, epsabs=0.0, a=log(zlow+1.0), b=log(zup+1.0);
+    void *p=this;
+
+    return Integrate_gk_GSL(6, a, b, epsInt, epsabs, dy_elect_GSL, p);
 }
 
 //========================================================================================
@@ -780,73 +887,69 @@ double Cosmos :: y_elect(double zlow, double zup)
 //========================================================================================
 double dtau_ff_GSL(double logz, void *p)
 {
+    Cosmos *c =(Cosmos *) p;
     double z1=exp(logz), z=z1-1.0;
-    double x=GSL_cosmosptr->Get_power();
+    double x=c->Get_power();
     
-    double Thg=GSL_cosmosptr->ThetaCMB(z);
-    double Np=GSL_cosmosptr->Np(z), NHeII=GSL_cosmosptr->NHeII(z), NHeIII=GSL_cosmosptr->NHeIII(z);
+    double Thg=c->ThetaCMB(z);
+    double Np=c->Np(z), NHeII=c->NHeII(z), NHeIII=c->NHeIII(z);
     double gff=( x<0.37 ? sqrt(3.0)/PI*log(2.25/x) : 1.0);
     double KBR=const_alpha/TWOPI*pow(const_lambdac, 3)/sqrt(3.0*TWOPI)/pow(Thg, 3.5)*gff*(Np+NHeII+4.0*NHeIII);
-    double dtau_dt=1.0/GSL_cosmosptr->t_eg(z);
+    double dtau_dt=1.0/c->t_eg(z);
     
-    return -z1*dtau_dt*GSL_cosmosptr->dt_dz(z1-1.0)*KBR*(1.0-exp(-x))/pow(x, 3);
+    return -z1*dtau_dt*c->dt_dz(z)*KBR*(1.0-exp(-x))/pow(x, 3);
 }
 
 double dtau_ff_GSL_e(double logz, void *p)
 {
+    Cosmos *c =(Cosmos *) p;
     double z1=exp(logz), z=z1-1.0;
-    double x=GSL_cosmosptr->Get_power();
+    double x=c->Get_power();
     
-    double Thg=GSL_cosmosptr->ThetaCMB(z);
-    double The=Thg*GSL_cosmosptr->Te_Tg(z);
-    double Np=GSL_cosmosptr->Np(z), NHeII=GSL_cosmosptr->NHeII(z), NHeIII=GSL_cosmosptr->NHeIII(z);
-    double Ne=GSL_cosmosptr->Ne(z);
+    double Thg=c->ThetaCMB(z);
+    double The=Thg*c->Te_Tg(z);
+    double Np=c->Np(z), NHeII=c->NHeII(z), NHeIII=c->NHeIII(z);
+    double Ne=c->Ne(z);
     
-    //if(z<=10.0){ Np=Ne=GSL_cosmosptr->NH(z); The=GSL_cosmosptr->ThetaCMB(3600.0); }
+    //if(z<=10.0){ Np=Ne=c->NH(z); The=c->ThetaCMB(3600.0); }
     
     double gff=( x<0.37 ? sqrt(3.0)/PI*log( 2.25/(x*Thg/The) ) : 1.0);
     double KBR=const_alpha/TWOPI*pow(const_lambdac, 3)/sqrt(3.0*TWOPI)/pow(The, 1.5)/pow(Thg, 2)*gff*(Np+NHeII+4.0*NHeIII);
-    double dtau_dt=1.0/GSL_cosmosptr->t_eg(z)*Ne/GSL_cosmosptr->Ne(z);
+    double dtau_dt=1.0/c->t_eg(z)*Ne/c->Ne(z);
     
-    return -z1*dtau_dt*GSL_cosmosptr->dt_dz(z1-1.0)*KBR/pow(x, 2);
+    return -z1*dtau_dt*c->dt_dz(z)*KBR/pow(x, 2);
 }
 
 double Cosmos :: tau_ff(double x, double z)
 {
-    GSL_cosmosptr=this;
     power=x;
-    double epsInt=1.0e-5, epsabs=0.0;
-    double a=log(1.0), b=log(z+1.0), r=0.0;
-    
-    r=Integrate_gk_GSL(6, a, b, epsInt, epsabs, dtau_ff_GSL_e);
-    
-    GSL_cosmosptr=NULL;
-    return r;
+    double epsInt=1.0e-5, epsabs=0.0, a=log(1.0), b=log(z+1.0);
+    void *p=this;
+
+    return Integrate_gk_GSL(6, a, b, epsInt, epsabs, dtau_ff_GSL_e, p);
 }
 
 //========================================================================================
 // Thomson visibility function (LH 2017)
 //========================================================================================
-// Needs work into how we can do this since the integration routine takes in a logarithmic function as an argument
 double dtau_dz_GSL(double logz,void *p)
 {
+    Cosmos *c =(Cosmos *) p;
     double z1=exp(logz);
-    return -z1*GSL_cosmosptr->dtau_C_dz(z1);
+    return -z1*c->dtau_C_dz(z1-1.0);
 }
 
 double Cosmos :: tau_C(double z)
 {
-    GSL_cosmosptr=this;
-    double epsInt=1.0e-5, epsabs=0.0, i=log(1.0), f=log(1.0+z),r=0.0;
-    r=Integrate_gk_GSL(6, i, f, epsInt, epsabs, dtau_dz_GSL);
-    GSL_cosmosptr=NULL;
-    
-    // g(z) = dtau/dz * exp(-tau(z))
-    return r;
+    double epsInt=1.0e-5, epsabs=0.0, i=log(1.0), f=log(1.0+z);
+    void *p=this;
+
+    return Integrate_gk_GSL(6, i, f, epsInt, epsabs, dtau_dz_GSL, p);
 }
 
 double Cosmos::g_visi(double z)
 {
+    // g(z) = dtau/dz * exp(-tau(z))
     return -dtau_C_dz(z)*exp(-tau_C(z));
 }
 //========================================================================================

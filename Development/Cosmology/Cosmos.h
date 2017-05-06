@@ -433,7 +433,8 @@ public:
     double t_K(double z){return t_eg(z)/(4.0*ThetaCMB(z));}                           // 1/(4 Theta sigT ne c)
     double dtau_C_dz(double z){ return dt_dz(z)/t_eg(z);}                             // dtau_C/dz 
     double t_ep(double z);                                                            // Spitzer formula
-
+    double tau_C(double z);                                                           // Thomson optical depth
+    double g_visi(double z);                                                          // Thomson visibility fcn (LH 2017)
     //====================================================================================
     // Integral^zh_z (1+z)^pow |dt_dz| dz 
     //====================================================================================

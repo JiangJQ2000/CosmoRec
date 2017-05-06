@@ -188,7 +188,8 @@ void evaluate_Recfast_System(double z, double y[], double fvec[], int n)
     betaH *=VCD.fBp; betaHe *=VCD.fBp;
 
     //====================================================================================
-    // tau-Sobolev for helium and hydrogen
+    // Sobolev-terms for helium and hydrogen
+    // Ki = tauS/(A1g NH1); this is related to A1g_eff = PS A1g
     //====================================================================================
     KHe = pow(lambda21He, 3)/(Hz*8.0*RF_PI);
     KH  = pow(lambda21H , 3)/(Hz*8.0*RF_PI);

@@ -15,7 +15,7 @@ bool hydrogen_and_helium_atom_are_set=0;
 //==================================================================================================
 string path, detailedname;
 string addname;
-ofstream *Xfiles=new ofstream[8];
+ofstream *Xfiles=new ofstream[9];
 vector<vector<double> > output_CosmoRec;
 vector<vector<double> > pass_on_the_Solution_CosmoRec;
 vector<vector<double> > pass_on_the_Solution_CosmoRec_HeI; //JF 
@@ -28,6 +28,7 @@ bool write_corrections=0;   // output correction functions from Recfast++ and Co
 bool write_Xe_Te_sol=1;     // output Xe & Te
 bool write_HI_distortion=0; // output approximate HI distortion (added July 2nd 2012)
 bool write_split=0;         // output that splits the Xe for H and He so they can be individually analysed
+bool write_RF_visi=0;       // output thomson visibility function in RF mode (LH)
 
 //==================================================================================================
 // path to the effective rate database

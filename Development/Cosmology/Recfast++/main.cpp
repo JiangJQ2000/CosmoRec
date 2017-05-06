@@ -231,7 +231,7 @@ int main(int narg, char *args[])
     else if(Get_rMode()==2) oname+=".sigT";
     else if(Get_rMode()==3) oname+=".A2s1s";
     else if(Get_rMode()==4) oname+=".phot";
-    else if(Get_rMode()==5) oname+=".Pesc";
+    else if(Get_rMode()==5) oname+=".Ly-a";
     else if(Get_rMode()==6) oname+=".all";
     if(Get_T_eval()) oname+=".Tr";
     oname+=".dat";

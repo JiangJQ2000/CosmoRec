@@ -825,4 +825,29 @@ double Cosmos :: tau_ff(double x, double z)
 }
 
 //========================================================================================
+// Thomson visibility function (LH 2017)
+//========================================================================================
+// Needs work into how we can do this since the integration routine takes in a logarithmic function as an argument
+double dtau_dz_GSL(double logz,void *p)
+{
+    double z1=exp(logz);
+    return -z1*GSL_cosmosptr->dtau_C_dz(z1);
+}
+
+double Cosmos :: tau_C(double z)
+{
+    GSL_cosmosptr=this;
+    double epsInt=1.0e-5, epsabs=0.0, i=log(1.0), f=log(1.0+z),r=0.0;
+    r=Integrate_gk_GSL(6, i, f, epsInt, epsabs, dtau_dz_GSL);
+    GSL_cosmosptr=NULL;
+    
+    // g(z) = dtau/dz * exp(-tau(z))
+    return r;
+}
+
+double Cosmos::g_visi(double z)
+{
+    return -dtau_C_dz(z)*exp(-tau_C(z));
+}
+//========================================================================================
 //========================================================================================

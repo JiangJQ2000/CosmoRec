@@ -8,6 +8,7 @@
 #include <fstream>
 #include <cmath>
 #include <vector>
+#include <cstdlib>
 
 #include "Load.Populations.HeI.h"
 #include "routines.h"

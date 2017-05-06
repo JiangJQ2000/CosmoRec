@@ -92,7 +92,7 @@ void Set_var_const_scale_factors(double aS, double mS, int rmode, Variables_Fund
         D.fm=mS;
     }
     
-    // rescaling of wavelength to change Pesc
+    // rescaling of wavelength to change Ly-a channel
     if (rmode == 5 || rmode == 6) D.fl=pow(aS, 2)*mS;
     
     return;

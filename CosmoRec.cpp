@@ -261,9 +261,29 @@ void run_RECFAST(string filename, int corr_fac)
                                              << cosmos.Xe_Seager(za[l]) << " " 
                                              << cosmos.Te(za[l]) << endl;
     
-    if(show_CosmoRec_mess>=0) cout << " finished RECFAST++ run. Now exiting program ... " 
-                                   << endl << endl;
+    if(show_CosmoRec_mess>=0) cout << " finished RECFAST++ run." << endl;
 
+    //=======================================================================================================
+    // write visibility function given the ionization history (LH)
+    //=======================================================================================================
+    if (write_RF_visi)
+    {
+        if(show_CosmoRec_mess>=0) cout << " writing visibility function output ..." << endl;
+        
+        ofstream vfile;
+        string vname=path;
+        if (corr_fac == 1) vname += "visiblity.corr_fac.dat";
+        else vname+="visibility.dat";
+        vfile.open(vname.c_str());
+        vfile.precision(10);
+        
+        vfile << "# Visibility function output. Columsn are z, g(z)\n#" << endl;
+        
+        for (int l=0; l<parameters.nz; l++) vfile << scientific << za[l] << " "
+                                                  << cosmos.g_visi(za[l]) << " " << endl;
+        if (show_CosmoRec_mess>=0) cout << " written visibility function to file." << endl;
+    }
+    
     //=======================================================================================================
     // compute Compton y-parameter
     //=======================================================================================================
@@ -281,7 +301,11 @@ void run_RECFAST(string filename, int corr_fac)
                             /(0.26*const_e*pow(1.0+zeval, 4))*dt;
     }
     
-    if(show_CosmoRec_mess>=0) cout << " y= " << r << " y_max= " << r2/4.0 << endl;
+    if(show_CosmoRec_mess>=0)
+    {
+        cout << " y= " << r << " y_max= " << r2/4.0 << endl;
+        cout <<  "Now exiting program ..." << endl << endl;
+    }
     
     delete [] za;
     

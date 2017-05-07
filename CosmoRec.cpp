@@ -268,12 +268,12 @@ void run_RECFAST(string filename, int corr_fac)
     //=======================================================================================================
     if (write_RF_visi)
     {
-        if(show_CosmoRec_mess>=0) cout << " writing visibility function output ..." << endl;
+        if(show_CosmoRec_mess>=0) cout << " writing visibility function output ..." << flush;
         
         ofstream vfile;
         string vname=path;
-        if (corr_fac == 1) vname += "visiblity.corr_fac.dat";
-        else vname+="visibility.dat";
+        if (corr_fac == 1) vname += "Visiblity_Recfast.corr_fac.dat";
+        else vname+="Visiblity_Recfast.dat";
         vfile.open(vname.c_str());
         vfile.precision(10);
         
@@ -281,7 +281,8 @@ void run_RECFAST(string filename, int corr_fac)
         
         for (int l=0; l<parameters.nz; l++) vfile << scientific << za[l] << " "
                                                   << cosmos.g_visi(za[l]) << " " << endl;
-        if (show_CosmoRec_mess>=0) cout << " written visibility function to file." << endl;
+        
+        if (show_CosmoRec_mess>=0) cout << " done. " << endl;
     }
     
     //=======================================================================================================
@@ -304,7 +305,7 @@ void run_RECFAST(string filename, int corr_fac)
     if(show_CosmoRec_mess>=0)
     {
         cout << " y= " << r << " y_max= " << r2/4.0 << endl;
-        cout <<  "Now exiting program ..." << endl << endl;
+        cout << " Now exiting program ..." << endl << endl;
     }
     
     delete [] za;

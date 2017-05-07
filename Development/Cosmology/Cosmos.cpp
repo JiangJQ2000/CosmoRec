@@ -950,6 +950,7 @@ double Cosmos :: tau_C(double z)
 double Cosmos::g_visi(double z)
 {
     // g(z) = dtau/dz * exp(-tau(z))
+    //return -dtau_C_dz(z)*pow(1.05, 2)*exp(-tau_C(z)*pow(1.05, 2));
     return -dtau_C_dz(z)*exp(-tau_C(z));
 }
 //========================================================================================

@@ -79,8 +79,8 @@ void Set_var_const_scale_factors(double aS, double mS, int rmode, Variables_Fund
     if (rmode == 1 || rmode == 6) D.fT=pow(aS, 2)*mS;
     
     // Re-scaled Thomson cross section and cooling
-    // extra 1/me from rho_g/me in coefficient
-    if (rmode == 2 || rmode == 6) D.fC=pow(aS/mS, 2)/mS;
+    // extra 1/me from rho_g/me in coefficient is neglected....
+    if (rmode == 2 || rmode == 6) D.fC=pow(aS/mS, 2);
     
     // Rescaling of the two photon rates for the Lambda values
     if (rmode == 3 || rmode == 6) D.fA2g=pow(aS, 8)*mS;

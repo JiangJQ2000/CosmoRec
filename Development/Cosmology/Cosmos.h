@@ -4,12 +4,8 @@
 // CITA, University of Toronto
 // All rights reserved.
 //========================================================================================
-
-//========================================================================================
-// 06.05.2017
-//========================================================================================
-// added several useful cosmology functions [JC & Luke Hart]
-//========================================================================================
+// 16.05.2017: added sigT(z) to explicitly account for variations of fundamental constants
+// 06.05.2017: added several useful cosmology functions [JC & Luke Hart]
 
 //========================================================================================
 // 22.07.2015
@@ -174,6 +170,11 @@ private:
     //====================================================================================
     Hubble loaded_Hz;
     
+    //====================================================================================
+    // to set models for varying consts [JC]
+    //====================================================================================
+    double ascale, mscale, pval;
+
 public:
 
     double zs, ze;
@@ -438,13 +439,17 @@ public:
     //====================================================================================
     // times for energy exchange
     //====================================================================================
-    double t_eg(double z){ return 1.0/(const_sigT*const_cl*Ne(z));}                   // 1/(sigT ne c) 
-    double t_C(double z){ return t_eg(z);}                                            // 1/(sigT ne c) 
+    double t_eg(double z){ return 1.0/(sigT(z)*const_cl*Ne(z));}                      // 1/(sigT ne c)
+    double t_C(double z){ return t_eg(z);}                                            // 1/(sigT ne c)
     double t_K(double z){return t_eg(z)/(4.0*ThetaCMB(z));}                           // 1/(4 Theta sigT ne c)
     double dtau_C_dz(double z){ return dt_dz(z)/t_eg(z);}                             // dtau_C/dz 
     double t_ep(double z);                                                            // Spitzer formula
     double tau_C(double z);                                                           // Thomson optical depth
     double g_visi(double z);                                                          // Thomson visibility fcn (LH 2017)
+    // 16.05.2017: JC
+    double sigT(double z);                                                            // to allow Thomson cross sec to vary
+    void reset_sigT_function();                                                       // sigT(z)=sigT_0=const
+    void set_sigT_function(double aS, double mS, double p);                           // to set models for varying consts
 
     //====================================================================================
     // Integral^zh_z (1+z)^pow |dt_dz| dz 
@@ -476,12 +481,12 @@ public:
     double r_s(double z);                                                             // 'sound horizon'
     double Nnu_func(double Rnu){ return 11.0/7.0*pow(22.0, 1.0/3.0)*Rnu/(1.0-Rnu); }  // 'Neff'
     
-    double dtau_deta(double z){ return const_sigT*Ne(z)/(1.0+z); }                    // 'dtau_deta'
+    double dtau_deta(double z){ return sigT(z)*Ne(z)/(1.0+z); }                       // 'dtau_deta'
     double k_D(double z);                                                             // 'damping wavenumber'
     double k_lambda(double z);                                                        // 'damping wavenumber' for magnetic heating
     double dkm2_D_deta(double z);                                                     // eta-derivative of 1/kD^2
     double dkm2_D_dz(double z);                                                       // z-derivative of 1/kD^2
-    double k_mfp(double z){ return const_sigT*Ne(z)/(1.0+z); }                        // scale of comoving 'mean free path'
+    double k_mfp(double z){ return sigT(z)*Ne(z)/(1.0+z); }                           // scale of comoving 'mean free path'
     double k_eq();                                                                    // k_eq=(2 Om H0^2 a0/aeq)^0.5
 
     //====================================================================================

@@ -31,7 +31,7 @@ void rescale_variables_all(double alpha_scale, double me_scale, size_t run_mode,
         
         // Rescaled Thomson scattering
         if (run_mode == 2 || run_mode == 6) {
-            const_sigT = const_sigT_0*pow(alpha_scale,2)*pow(me_scale,-1);
+            const_sigT = const_sigT_0*pow(alpha_scale/me_scale, 2);
         }
         
         // Rescaled 2 photon rate

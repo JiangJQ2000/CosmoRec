@@ -240,7 +240,7 @@ void run_RECFAST(string filename, int corr_fac)
     //=======================================================================================================
     read_startup_data_RECFAST(filename, parameters, cosmos, corr_fac);
     
-    double *za=new double[parameters.nz]; 
+    double *za=new double[parameters.nz];
     //=======================================================================================================
     // initialise zarr
     //=======================================================================================================

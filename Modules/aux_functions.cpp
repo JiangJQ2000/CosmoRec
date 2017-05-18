@@ -57,6 +57,7 @@ void set_cosmology(Parameters_form_initfile &inparams, Cosmos &cosmos, double fD
     //=======================================================================================================
     cosmos.init(inparams.h100, inparams.To, inparams.YP, dens, inparams.zstart, 1.0e-10, inparams.Nnu);
     cosmos.init_splines();
+    cosmos.set_sigT_function(FC_CosmoRec.a_scale, FC_CosmoRec.m_scale, FC_CosmoRec.p_scale); // 16.05.2017: JC
     
     if(show_CosmoRec_mess>=1) cosmos.display_cosmology();
     
@@ -135,7 +136,7 @@ void read_entries_from_parameter_file(ifstream &paramfile, double *param)
         // set CosmoRec parameters
         FC_CosmoRec.a_scale =(aS<=0.0 ? 1.0 : aS);
         FC_CosmoRec.m_scale =(mS<=0.0 ? 1.0 : mS);
-        FC_CosmoRec.p_scale = 0.0;
+        FC_CosmoRec.p_scale = pS; // not really used yet in CosmoRec! [JC]
         FC_CosmoRec.runmode = RM;
     }
     else

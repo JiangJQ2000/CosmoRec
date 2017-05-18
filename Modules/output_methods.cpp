@@ -35,12 +35,15 @@ void set_detailed_name()
     {
         if(FC_CosmoRec.a_scale!=1.0) detailedname+="alp.";
         if(FC_CosmoRec.m_scale!=1.0) detailedname+="me.";
-        if(FC_CosmoRec.runmode==1) detailedname+="Boltz.";
-        else if(FC_CosmoRec.runmode==2) detailedname+="sigT.";
-        else if(FC_CosmoRec.runmode==3) detailedname+="A2s1s.";
-        else if(FC_CosmoRec.runmode==4) detailedname+="phot.";
-        else if(FC_CosmoRec.runmode==5) detailedname+="Pesc.";  // currently not included...
-        else if(FC_CosmoRec.runmode==6) detailedname+="all.";
+        if(FC_CosmoRec.a_scale!=1.0 || FC_CosmoRec.m_scale!=1.0)
+        {
+            if(FC_CosmoRec.runmode==1) detailedname+="Boltz.";
+            else if(FC_CosmoRec.runmode==2) detailedname+="sigT.";
+            else if(FC_CosmoRec.runmode==3) detailedname+="A2s1s.";
+            else if(FC_CosmoRec.runmode==4) detailedname+="phot.";
+            else if(FC_CosmoRec.runmode==5) detailedname+="Pesc.";  // currently not included...
+            else if(FC_CosmoRec.runmode==6) detailedname+="all.";
+        }
     }
     
     if(show_CosmoRec_mess>=0)

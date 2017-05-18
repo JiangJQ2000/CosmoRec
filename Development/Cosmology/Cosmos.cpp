@@ -4,12 +4,8 @@
 // CITA, University of Toronto
 // All rights reserved.
 //========================================================================================
-
-//========================================================================================
-// 06.05.2017
-//========================================================================================
-// added several useful cosmology functions [JC & Luke Hart]
-//========================================================================================
+// 16.05.2017: added sigT(z) to explicitly account for variations of fundamental constants
+// 06.05.2017: added several useful cosmology functions [JC & Luke Hart]
 
 //========================================================================================
 // 22.07.2015
@@ -234,7 +230,12 @@ void Cosmos :: init(const double h, const double T0, const double Yp,
     RF_hPlanck  =const_h*1.0e-7;      // Planck's constant [Js]    
     RF_kBoltz   =const_kB_J;          // Boltzman's constant [J/K] 
     RF_mElect   =const_me_gr*1.0e-3;  // Electron mass [kg]        
-    
+
+    //====================================================================================
+    // to set default model for varying consts [JC]
+    //====================================================================================
+    reset_sigT_function();
+
     return;
 }
 
@@ -260,7 +261,7 @@ void Cosmos :: init_Hubble(double (* Hptr)(const double *))
 }
 
 //========================================================================================
-Cosmos :: Cosmos(){ spline_memory_allocated=0; }
+Cosmos :: Cosmos(){ spline_memory_allocated=0; reset_sigT_function(); }
 Cosmos :: Cosmos(const double h, const double T0, const double Yp, 
                  const double densities[7], 
                  const double zstart, const double zend, 
@@ -932,6 +933,12 @@ double Cosmos :: tau_ff(double x, double z)
 //========================================================================================
 // Thomson visibility function (LH 2017)
 //========================================================================================
+// to allow Thomson cross section to vary
+double Cosmos :: sigT(double z){ return const_sigT_0*pow(ascale/mscale, 2)*pow((1.0+z)/1100.0, pval);}
+
+void Cosmos :: reset_sigT_function(){ ascale=mscale=1.0; pval=0.0; return; } // --> sigT(z)=sigT_0=const
+void Cosmos :: set_sigT_function(double aS, double mS, double p){ ascale=aS; mscale=mS; pval=p; return; }
+
 double dtau_dz_GSL(double logz,void *p)
 {
     Cosmos *c =(Cosmos *) p;
@@ -950,7 +957,6 @@ double Cosmos :: tau_C(double z)
 double Cosmos::g_visi(double z)
 {
     // g(z) = dtau/dz * exp(-tau(z))
-    //return -dtau_C_dz(z)*pow(1.05, 2)*exp(-tau_C(z)*pow(1.05, 2));
     return -dtau_C_dz(z)*exp(-tau_C(z));
 }
 //========================================================================================

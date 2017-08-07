@@ -28,7 +28,7 @@ bool write_corrections=0;   // output correction functions from Recfast++ and Co
 bool write_Xe_Te_sol=1;     // output Xe & Te
 bool write_HI_distortion=0; // output approximate HI distortion (added July 2nd 2012)
 bool write_split=0;         // output that splits the Xe for H and He so they can be individually analysed
-bool write_RF_visi=1;       // output thomson visibility function in RF mode (LH)
+bool write_RF_visi=0;       // output thomson visibility function in RF mode (LH)
 
 //==================================================================================================
 // path to the effective rate database

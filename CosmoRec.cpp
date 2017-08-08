@@ -180,6 +180,11 @@ void compute_fractions(const Data_Level_I &LI, double &Xe, double &Xp, double &X
 #include "./Modules/Variations_constants.cpp"
 
 //===========================================================================================================
+// PCA functions [JC, Aug 2017]
+//===========================================================================================================
+#include "./Modules/PCA_functions.cpp"
+
+//===========================================================================================================
 // additional definitions for CosmoRec-ODE system
 //===========================================================================================================
 #include "./Modules/ODEdef_CosmoRec.cpp"
@@ -672,7 +677,8 @@ void return_solution_to_calling_program(const int nz, double *z_arr, double *Xe_
 // Just return Recfast++ output
 //===========================================================================================================
 void run_RECFAST_pp(double param[12], const int nz, double *z_arr, 
-                    double *Xe_arr, double *Te_arr, double fDM, int CT_corr=0)
+                    double *Xe_arr, double *Te_arr, double fDM,
+                    double mu1, double mu2, double mu3, double mu4, int CT_corr=0)
 {
     //======================================================================
     // compute Omega_L according to Omega_K
@@ -702,6 +708,11 @@ void run_RECFAST_pp(double param[12], const int nz, double *z_arr,
         Te_arr[l]=cosmos.Te(z_arr[l]);
     }
     
+    //======================================================================
+    // Add PCA terms if mode amplitudes are non-zero
+    //======================================================================
+    add_PCA_functions(mu1, mu2, mu3, mu4, nz, z_arr, Xe_arr);
+
     if(write_Xe_Te_sol>0)
     {
         if(show_CosmoRec_mess>=0) cout << " writing data to " << path << endl;
@@ -787,8 +798,13 @@ void run_RECFAST_pp(double param[12], const int nz, double *z_arr,
 //             3: A2s1s rescaling; 4: Phot rates rescaled; 5: Pesc rescaled (only for Recfast++ runmodes)
 //             6: All components rescaled
 //
+//-----------------------------------------------------------------------------------------------------------
+// PCA terms EM1-EM4 from Farhang et al., 2012 & 2013 [only when calling in batch mode]
+//
+// runpars[11-14]: EM1..EM4
+//
 //===========================================================================================================
-int CosmoRec(const int runmode, const double runpars[11],
+int CosmoRec(const int runmode, const double runpars[15],
              const double omegac, const double omegab, 
              const double omegak, const double Nnu,  
              const double h0, const double tcmb, const double yhe,
@@ -884,7 +900,8 @@ int CosmoRec(const int runmode, const double runpars[11],
     //======================================================================
     if(runmode==2) 
     {
-        run_RECFAST_pp(params, nz, z_arr, Xe_arr, Te_arr, runpars[0], 0);
+        run_RECFAST_pp(params, nz, z_arr, Xe_arr, Te_arr, runpars[0],
+                       runpars[11], runpars[12], runpars[13], runpars[14], 0);
         return 0;
     }
 
@@ -893,7 +910,8 @@ int CosmoRec(const int runmode, const double runpars[11],
     //======================================================================
     if(runmode==3) 
     {
-        run_RECFAST_pp(params, nz, z_arr, Xe_arr, Te_arr, runpars[0], 1);
+        run_RECFAST_pp(params, nz, z_arr, Xe_arr, Te_arr, runpars[0],
+                       runpars[11], runpars[12], runpars[13], runpars[14], 1);
         return 0;
     }
     
@@ -990,6 +1008,11 @@ int CosmoRec(const int runmode, const double runpars[11],
     // copy solution to output arrays
     //======================================================================
     return_solution_to_calling_program(nz, z_arr, Xe_arr, Te_arr);
+
+    //======================================================================
+    // Add PCA terms if mode amplitudes are non-zero
+    //======================================================================
+    add_PCA_functions(runpars[11], runpars[12], runpars[13], runpars[14], nz, z_arr, Xe_arr);
     
     //======================================================================
     // exiting CosmoRec

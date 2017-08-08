@@ -94,8 +94,13 @@ int CosmoRec(int narg, char *args[]);
 //             3: A2s1s rescaling; 4: Phot rates rescaled; 5: Pesc rescaled (only for Recfast++ runmodes)
 //             6: All components rescaled
 //
+//-----------------------------------------------------------------------------------------------------------
+// PCA terms EM1-EM4 from Farhang et al., 2012 & 2013 [only when calling in batch mode]
+//
+// runpars[11-14]: EM1..EM4
+//
 //===========================================================================================================
-int CosmoRec(const int runmode, const double runpars[11],
+int CosmoRec(const int runmode, const double runpars[15],
              const double omegac, const double omegab, 
              const double omegak, const double Nnu,  
              const double h0, const double tcmb, const double yhe, 

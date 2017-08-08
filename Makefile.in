@@ -183,7 +183,8 @@ CosmoRec.o: ./Modules/aux_functions.cpp ./Modules/output_methods.cpp \
             ./Modules/Magnetic_fields.cpp \
             ./Modules/ODEdef_CosmoRec.cpp \
             ./Modules/DPesc_HI_abs_tabulation.cpp \
-            ./Modules/Variations_constants.cpp
+            ./Modules/Variations_constants.cpp \
+            ./Modules/PCA_functions.cpp
 
 Solve_PDEs.o: ./PDE_Problem/Solve_PDEs_Grace.cpp
 

@@ -22,7 +22,7 @@ using namespace std;
 int main_random()
 { 
     int nrep = 10000;
-    int runmode=3;
+    int runmode=0;
     // 0: DM annihilation; 1: run settings; 2: outputs; 3: A2s1s; 4: B0; 5: nB; 6: PMF_mode
     // 7: alpha_scale; 8: me_scale; 9: p_scale; 10: VFCmode
     // 11-14: mui for PCA
@@ -56,8 +56,8 @@ int main_random()
     double nB_l    = -2.9;
     double nB_u    =  2.0;
 
-    double aS_l    =  0.9;
-    double aS_u    =  1.1;
+    double aS_l    =  0.85;
+    double aS_u    =  1.15;
 
     double pS_l    = -0.1;
     double pS_u    =  0.1;
@@ -114,7 +114,7 @@ int main_random()
         
         runpars[3]=A2s1s;
         
-        runpars[4]=B0;
+        runpars[4]=B0*0;
         runpars[5]=nB;
         
         runpars[7]=aS;
@@ -244,6 +244,6 @@ int main_batch_mode()
 int main(int narg, char *args[])
 { 
     if(narg>=2) return CosmoRec(narg, args);
-    return main_batch_mode();
-//    return main_random();
+//    return main_batch_mode();
+    return main_random();
 }

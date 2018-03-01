@@ -1,10 +1,12 @@
 //======================================================================================
 // Author: Jens Chluba 
 // first implementation: Jan 2002
-// last modification: June 2012
+// last modification: Oct 2013
 //
 // Purpose: collection of several simple routines
 //======================================================================================
+// Oct 2013: added Ei(x) function
+// Jul 2012: fixed a memory problem with gsl-1.15 compatibility of splines.
 // Jun 2012: fixed a memory issue with spline setup routines.
 // Jan 2012: added simple routines to load tables of data and create splines
 // Dec 2011: added routines for Gamma and incomplete Gamma functions
@@ -26,6 +28,8 @@ double erf_JC(const double &x);     // Error function for a real argument
 double erfc_JC(const double &x);    // complementary Error function for a real argument
 double Gamma_JC(const double &x);                    // Gamma-function
 double Gamma_JC(const double &x, const double &a);   // incomplete Gamma-function
+double Ei_JC(double x);             // Ei(x) = - E_1(x) = - int_{-x}^infty e^{-t}/t dt
+double ex_Ei_JC(double x);          // exp(x) Ei(x)
 
 double max(double a, double b);
 double min(double a, double b);

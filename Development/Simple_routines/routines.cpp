@@ -1,10 +1,11 @@
 //======================================================================================
-// Author: Jens Chluba 
+// Author: Jens Chluba
 // first implementation: Jan 2002
-// last modification: June 2012
+// last modification: Oct 2013
 //
 // Purpose: collection of several simple routines
 //======================================================================================
+// Oct 2013: added Ei(x) function
 // Jul 2012: fixed a memory problem with gsl-1.15 compatibility of splines.
 // Jun 2012: fixed a memory issue with spline setup routines.
 // Jan 2012: added simple routines to load tables of data and create splines
@@ -23,6 +24,7 @@
 #include <gsl/gsl_spline.h>
 #include <gsl/gsl_sf_coupling.h>
 #include <gsl/gsl_sf_gamma.h>
+#include <gsl/gsl_sf_expint.h>
 
 //======================================================================================
 // for xmgrace output
@@ -234,6 +236,13 @@ double Gamma_JC(const double &x)                     // Gamma-function
 //======================================================================================
 double Gamma_JC(const double &x, const double &a)   // incomplete Gamma-function
 { return gsl_sf_gamma_inc(a, min(x, 500.0)); }
+
+//======================================================================================
+double Ei_JC(double x)              // Ei(x) = - E_1(x) = - int_{-x}^infty e^{-t}/t dt
+{ return gsl_sf_expint_Ei(x); }
+
+double ex_Ei_JC(double x)           // exp(x) Ei(x)
+{ return gsl_sf_expint_Ei_scaled(x); }
 
 //======================================================================================
 double max(double a, double b){ return a>b ? a : b;}

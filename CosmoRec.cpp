@@ -881,6 +881,11 @@ int CosmoRec(const int runmode, const double runpars[15],
     params[2]=0;    // ending redshift
 
     //======================================================================
+    // rescale upper redshift when varying alpha & me
+    //======================================================================
+    params[1]=min(params[1], 3350.0*(pow(FC_CosmoRec.a_scale, 2)*FC_CosmoRec.m_scale));
+    
+    //======================================================================
     // cosmological parameters 
     //======================================================================
     params[3]= yhe;              // Helium mass fraction

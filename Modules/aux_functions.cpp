@@ -36,26 +36,24 @@ void set_startup_data(double params[12], Parameters_form_initfile &inparams)
 //===========================================================================================================
 void set_cosmology(Parameters_form_initfile &inparams, Cosmos &cosmos, double fDM_ann, int CR_corr)
 {
-    //=======================================================================================================
-    // for the interpolation function for Xe in Cosmos class
-    //=======================================================================================================
-    double dens[7];
-    //=======================================================================================================
-    
     if(show_CosmoRec_mess>=1) print_message(" Initializing cosmology object ");
     
-    dens[0]=inparams.Omega0+inparams.OmegaL+inparams.OmegaK; 
-    dens[1]=inparams.Omega0*pow(inparams.h100, 2);
-    dens[2]=inparams.OmegaB*pow(inparams.h100, 2);
-    dens[3]=inparams.OmegaL;
-    dens[4]=inparams.F;
-    dens[5]=fDM_ann;
-    dens[6]=CR_corr;
+    Cosmos::parameters cosm_pars;
+    cosm_pars.h100=inparams.h100;
+    cosm_pars.T0=inparams.To;
+    cosm_pars.Yp=inparams.YP;
+    cosm_pars.Nnu=inparams.Nnu;
+    cosm_pars.Omega_m=inparams.Omega0; cosm_pars.Omega_b=inparams.OmegaB;
+    cosm_pars.Omega_L=inparams.OmegaL, cosm_pars.Omega_k=inparams.OmegaK;
+    cosm_pars.fudge=inparams.F;
+    
+    cosm_pars.fDM_annihilation=fDM_ann;
+    cosm_pars.CR_correction=CR_corr;
     
     //=======================================================================================================
     // initializing cosmos object...
     //=======================================================================================================
-    cosmos.init(inparams.h100, inparams.To, inparams.YP, dens, inparams.zstart, 1.0e-10, inparams.Nnu);
+    cosmos.init(cosm_pars);
     cosmos.init_splines();
     cosmos.set_sigT_function(FC_CosmoRec.a_scale, FC_CosmoRec.m_scale, FC_CosmoRec.p_scale); // 16.05.2017: JC
     

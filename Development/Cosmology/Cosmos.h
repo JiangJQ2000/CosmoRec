@@ -1,9 +1,12 @@
 //========================================================================================
 // Author: Jens Chluba (May 2003)
-// Last modification: May 2017
 // CITA, University of Toronto
 // All rights reserved.
 //========================================================================================
+// 19.05.2018: updated Recfast++ part with better parameter control [JC]
+// 09.02.2018: initialization parameters now passed on as structure [JC]
+// 10.01.2018: added DTe-function for high redshifts
+// 04.12.2017: restructured Saha solution parts
 // 16.05.2017: added sigT(z) to explicitly account for variations of fundamental constants
 // 06.05.2017: added several useful cosmology functions [JC & Luke Hart]
 
@@ -32,6 +35,12 @@
 //========================================================================================
 
 //========================================================================================
+// 15.10.2011
+//========================================================================================
+// added simple routines that are needed to describe acoustic damping of modes
+//========================================================================================
+
+//========================================================================================
 // 28.05.2008
 //========================================================================================
 // Set the variable fac_mHemH in "physical_consts.h" to take into
@@ -49,6 +58,7 @@
 #include <vector>
 
 #include "physical_consts.h"
+#include "Recfast++.h"
 
 using namespace std;
 
@@ -106,10 +116,7 @@ private:
     double O_mh2;                               // matter energy density 
     double O_bh2;                               // baryon energy density 
     double O_L;                                 // cosmological constant
-    double fudge;                               // Recfast fudge factor
-    double fDM_annihilation;
-    int CR_correction; 
-    
+
     //====================================================================================
     // dependent consts
     //====================================================================================
@@ -126,7 +133,6 @@ private:
     // auxilliary variables
     //====================================================================================
     void set_initials(double Nnuval);
-    double power;
     
     //====================================================================================
     // auxilliary functions
@@ -136,12 +142,19 @@ private:
     //====================================================================================
     // setup for Xe & X1s etc
     //====================================================================================
-    int recombination_history(int nzpts, double zs, double ze, double *zarr, double *Xe_H, 
-                              double *Xe_He, double *Xe, double *TM);
+    CosmoPars CosmoRF;
+    RecPars RecRF;
+
+    int recombination_history(int nzpts, double zstart, double zend,
+                              vector<double> &zarr,
+                              vector<double> &Xe_H, vector<double> &Xe_He,
+                              vector<double> &Xe, vector<double> &TM);
     
-    int recombination_history(int nzpts, double zs, double ze, double *zarr, 
-                              double *Xe_H, double *Xe_He, double *Xe, 
-                              double *dXe, double *dX_H, double *TM);
+    int recombination_history(int nzpts, double zstart, double zend,
+                              vector<double> &zarr,
+                              vector<double> &Xe_H, vector<double> &Xe_He,
+                              vector<double> &Xe, vector<double> &dXe,
+                              vector<double> &dX_H, vector<double> &TM);
 
     //====================================================================================
     // spline setup
@@ -177,21 +190,45 @@ private:
 
 public:
 
-    double zs, ze;
+    //====================================================================================
+    // structure to communicate parameters. Default values are set
+    //====================================================================================
+    struct parameters
+    {
+        //================================================================================
+        // usual cosmological parameters
+        //================================================================================
+        double h100, T0, Yp, Nnu;
+        double Omega_m, Omega_b; // Omega_m == Omega_cdm + Omega_b
+        double Omega_L, Omega_k; // if Omega_L <= 0 set internally assuming Omega_tot=1
+        
+        //================================================================================
+        // recombination specific
+        //================================================================================
+        double fudge;                 // old recfast recombination fudge factor
+        double fDM_annihilation;      // DM annihilation efficiency
+        bool CR_correction;           // switch to include CosmoRec correction functions
+        
+        //================================================================================
+        // default values set through constructor
+        //================================================================================
+        parameters()
+        {
+            h100=0.71; T0=2.726; Yp=0.24, Nnu=3.046;
+            Omega_m=0.26, Omega_b=0.044, Omega_L=0.0; Omega_k=0.0;
+            fudge=1.14; fDM_annihilation=0; CR_correction=1;
+        }
+    };
 
     //====================================================================================
     // Konstructors and Destructors
     //====================================================================================
     Cosmos();
-    Cosmos(const double h100, const double T0, const double Yp, 
-           const double densities[7], const double zstart, 
-           const double zend, const double Nnu=3.046);
+    Cosmos(const parameters &pars);
     
     ~Cosmos();
 
-    void init(const double h100, const double T0, const double Yp, 
-              const double densities[7], const double zstart, 
-              const double zend, const double Nnu=3.046);
+    void init(const parameters &pars);
     
     void init_splines();
     
@@ -227,7 +264,6 @@ public:
     double Get_rho_g() const { return rho_g; } 
     double Get_T27()   const { return T27;   } 
     double Get_T_CMB0() const{ return T_CMB0;} 
-    double Get_power() const { return power; } 
 
     //====================================================================================
     // CMB temperature
@@ -261,13 +297,14 @@ public:
     //====================================================================================
     int recombine_using_Recfast_system(int nzpts, double zi, double ze, double fDM, 
                                        double Xe_Hi, double Xe_Hei, double Xei, double TMi, 
-                                       double dXei, const double *zarr, double *Xe_H, 
-                                       double *Xe_He, double *Xe, double *TM);
+                                       double dXei, const vector<double> &zarr,
+                                       vector<double> &Xe_H, vector<double> &Xe_He,
+                                       vector<double> &Xe, vector<double> &TM);
 
     //====================================================================================
     // Xe & X1s
     //====================================================================================
-    double Xe(double z)                // this is Ne/Nb/[Ne(inf)/Nb(inf)] ~ Ne/Nb/(1-Yp/2)
+    double Xe_b(double z)              // this is Ne/Nb/[Ne(inf)/Nb(inf)] ~ Ne/Nb/(1-Yp/2)
     { 
         if(z>=zsRe) return 1.0; 
         // --- Xe (1-Y_p/2) =ne/nb ! but in recombination Xe=ne/nh 
@@ -309,94 +346,45 @@ public:
     } 
 
     //====================================================================================
-    // 30.06.2009
+    // 30.06.2009 & Dec 2017 [JC]
     //====================================================================================
-    double SahaBoltz_HeIII(double T)
-    {
-        // HeII ionization energy in [J] --> nu = 1.315817072 10^16 Hz
-        //double RF_EionHeII =8.7186944e-18;
-        double RF_EionHeII =4.0*const_EH_inf_ergs*1.0e-7/(1.0+const_me_malp);
-        
-        double c1 = 2.0*PI*RF_mElect*RF_kBoltz*T/(RF_hPlanck*RF_hPlanck);
-        double NHm3=NH(Ttoz(T))*1.0e+6;
-        double g = pow(c1, 1.5)*exp(-RF_EionHeII/(RF_kBoltz*T))/NHm3, d=1.0+fHe()-g;
-        double Xe= 0.5*(d + sqrt(d*d + 4.0*g*(1.0+2.0*fHe())));
-        
-        return Xe;
-    }
-    
-    double SahaBoltz_HeII(double T)
-    {
-        double RF_EionHeI  =3.93933e-18;         // HeI ionization energy in [J]
-        
-        double c1 = 2.0*PI*RF_mElect*RF_kBoltz*T/(RF_hPlanck*RF_hPlanck);
-        double NHm3=NH(Ttoz(T))*1.0e+6;
-        double g = 4.0*pow(c1, 1.5)*exp(-RF_EionHeI/(RF_kBoltz*T))/NHm3, d=1.0-g;
-        double Xe= 0.5*(d + sqrt(d*d + 4.0*g*(1.0+fHe())));
-        
-        return Xe;
-    }
-    
-    double SahaBoltz_HeI1s(double T)             // Xp ~ 0
-    {
-        double RF_EionHeI  =3.93933e-18;         // HeI ionization energy in [J]
-        
-        double c1 = 2.0*PI*RF_mElect*RF_kBoltz*T/(RF_hPlanck*RF_hPlanck);
-        double NHm3=NH(Ttoz(T))*1.0e+6;
-        double g = 4.0*pow(c1, 1.5)*exp(-RF_EionHeI/(RF_kBoltz*T))/NHm3;
-        double Xe=Xe_Seager(Ttoz(T));
-        double XHeI1s=Xe*(1.0+2.0*fHe()-Xe)/(2.0*Xe+g);
-        
-        return XHeI1s;
-    }
-    
-    double XHe1s(double z)
-    { 
-        if(z>=zsRe) return 0.0; 
-        if(z>=3500.0) return SahaBoltz_HeI1s(TCMB(z));
-        return fHe()-calc_spline_log(z, memindex_XeHe); 
-    }
-    
-    double SahaBoltz_HI1s(double T)
-    {
-        // HeI ionization energy in [J] 
-        //double RF_EionHI   =2.17869e-18;               
-        double RF_EionHI   =const_EH_inf_ergs*1.0e-7/(1.0+const_me_mp);
-        
-        double c1 = 2.0*PI*RF_mElect*RF_kBoltz*T/(RF_hPlanck*RF_hPlanck);
-        double NHm3=NH(Ttoz(T))*1.0e+6;
-        double g = pow(c1, 1.5)*exp(-RF_EionHI/(RF_kBoltz*T))/NHm3;
-        double Xe=Xe_Seager(Ttoz(T));
-        double X1s=Xe/(Xe+g);
-        
-        return X1s;
-    }
+    double SahaBoltz_HeIII(double T);  // Xe^Saha during HeIII --> HeII recombination
+    double SahaBoltz_HeII(double T);   // Xe^Saha during HeII  --> HeI  recombination
 
-    double X1s(double z)
-    { 
-        if(z>=zsRe) return 0.0; 
-        if(z>=3500.0) return SahaBoltz_HI1s(TCMB(z));
-        return 1.0-calc_spline_log(z, memindex_XeH);
-    }
+    double SahaBoltz_HeII1s(double T);
+    double SahaBoltz_HeI1s(double T);
+    double SahaBoltz_HI1s(double T);
+    
+    double XHeII1s(double z);
+    double XHeI1s(double z);
+    double X1s(double z);
+    double XeSaha_corr(double z);     // correction to Saha problem
 
     //====================================================================================
     // (approximate) free proton fraction from Recfast
     //====================================================================================
-    double Xp(double z){ return 1.0-X1s(z);}          
+    double Xe(double z){ return Xe_Seager(z); }                                   // Ne/NH
+    double Xp(double z){ return 1.0-X1s(z);}
     
     //====================================================================================
     // Te_Tg from Recfast
     //====================================================================================
-    double Te_Tg(double z){ if(z>=zsRe) return 1.0; return calc_spline(z, memindex_rho); } 
-    double Te(double z){return TCMB(z)*Te_Tg(z);} 
-    double dTe_dz(double z); 
+    double Te_Tg(double z){ return z>=zsRe ? 1.0/(1.0+1.0/kappa_cool(z)):calc_spline(z, memindex_rho); }
+    double Te(double z){return TCMB(z)*Te_Tg(z);}
+    double dTe_dz(double z);
+    // added 10.01.2018 [JC]
+    double Ntot(double z){ return NH(z)*(1.0+fHe()+Xe(z)); } // Ntot = Ne + Np + NHI + helium
+    double kappa_cool(double z){ return 8.0/3.0*sigT(z)*const_cl/H(z)*rho_g_1_cm3(z)*Ne(z)/Ntot(z); }
+    double DTe_high(double z){return -TCMB(z)/(1.0+kappa_cool(z));}
 
     //====================================================================================
     // different number densities
     //====================================================================================
     double Nb(double z){return Nb0*pow(1.0+z,3);}                                   // Nb==rho_b/mH
-    double Ne(double z){return Xe(z)*(1.0-Y_p/2.0*(2.0-1.0/fac_mHemH))*Nb(z);}
+    double Ne(double z){return Xe_b(z)*(1.0-Y_p/2.0*(2.0-1.0/fac_mHemH))*Nb(z);}
     double N1s(double z){return X1s(z)*NH(z);}
+    double NHeI1s(double z){return XHeI1s(z)*NH(z);}
+    double NHeII1s(double z){return XHeII1s(z)*NH(z);}
     double NH(double z){return (1.0-Y_p)*Nb(z); }                                   // number density of hydrogen nuclei 1/cm^3
     double Np(double z){return Xp(z)*NH(z); }                                       // number density of free protons    1/cm^3
     //
@@ -446,7 +434,9 @@ public:
     double t_ep(double z);                                                            // Spitzer formula
     double tau_C(double z);                                                           // Thomson optical depth
     double g_visi(double z);                                                          // Thomson visibility fcn (LH 2017)
+    //-----------------------------------------------------------------------------------
     // 16.05.2017: JC
+    //-----------------------------------------------------------------------------------
     double sigT(double z);                                                            // to allow Thomson cross sec to vary
     void reset_sigT_function();                                                       // sigT(z)=sigT_0=const
     void set_sigT_function(double aS, double mS, double p);                           // to set models for varying consts
@@ -490,11 +480,15 @@ public:
     double k_eq();                                                                    // k_eq=(2 Om H0^2 a0/aeq)^0.5
 
     //====================================================================================
-    // y-parameters
+    // y-parameters && free-free functions
     //====================================================================================
     double y_gamma(double zlow, double zup);
     double y_elect(double zlow, double zup);
     double tau_ff(double x, double z);
+    double compute_z_for_given_y(double y_val);
+    double compute_x_abs(double z, double val=1.0);
+    double compute_x_h_low(double z);
+    double compute_x_h_high(double z);
 };
 
 #endif

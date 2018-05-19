@@ -4,44 +4,45 @@
 // CITA, University of Toronto
 // All rights reserved.
 //========================================================================================
+// May     2018: A2s1s control now as parameter that is passed on [JC]
+// April   2018: restructured code variables and functions
 // March   2017: added control over photoionization evaluation [JC]
 // Oct-Dec 2016: added effects for variations of alpha and me/mp
 // Oct 11  2014: added switch that allows to change T=TR instead of T=TM for beta_ion
 // Oct 10  2014: added heating by magnetic fields
 
 //========================================================================================
-// This module contains the evaluation of the RECFAST ODE-system. The code is based on the
-// C-version for RECFAST from Seager 1999
+// This module contains the evaluation of the RECFAST ODE-system. The code was initially
+// based on the C-version for RECFAST from Seager 1999
 //========================================================================================
 
 #include <cmath>
 #include <iostream>
 #include <cstdlib>
 
+#include "Recfast++.h"
 #include "cosmology.Recfast.h"
-#include "constants.Recfast.h"
 #include "evalode.Recfast.h"
-#include "DM_annihilation.Recfast.h"
+#include "DM_annihilation_decay.Recfast.h"
 #include "Magnetic_fields.Recfast.h"
 #include "Variation_constants.Recfast.h"
 
 using namespace std;
 using namespace RECFAST_physical_constants; // defined in constants.Recfast.h
 using namespace RECFAST_atomic_constants;   // defined in constants.Recfast.h
+using namespace Recfastpp_Cosmology;        // defined in cosmology.Recfast.h
 
 //========================================================================================
-// Photo-ionization with T=Te (Recfast default, although incorrect) or T=Tg (phys.correct)
+// Global Variables; defined in Recfast++.h
 //========================================================================================
-bool RF_eval_ion_Tr=0;
-void Set_Te_eval(){ RF_eval_ion_Tr=0; return; }
-void Set_Tr_eval(){ RF_eval_ion_Tr=1; return; }
-void Set_default(){ Set_Te_eval(); return; }
-bool Get_T_eval(){ return RF_eval_ion_Tr; }
+RecPars RecVars;
 
-//========================================================================================
-// Global Variables; defined in cosmology.Recfast.h
-//========================================================================================
-extern struct Input input;
+double RECFAST_atomic_constants::RF_Lam2s1sH=8.22458;           // Recfast default value
+
+void Set_evalode_Vars(const RecPars &RecInputs)
+{ RecVars=RecInputs; RECFAST_atomic_constants::RF_Lam2s1sH=RecInputs.A2s1s;}
+
+const RecPars& Get_evalode_Vars(){ return RecVars; }
 
 //========================================================================================
 // Boltzmann factor
@@ -50,24 +51,29 @@ double Boltzmann(double gj, double gi, double E, double T )
 { return max(1.0e-300, ( (gj/gi) * exp(-E/(RF_kBoltz*T)) )); }
 
 //========================================================================================
-// Boltzmann factor for detailed balance relation
+// Saha-Boltzmann factor for detailed balance relations
 //========================================================================================
-double SahaBoltz(double gi, double gc, double ne, double E_ion, double T)
+double SahaBoltz(double gi, double gc, double ge, double E_ion, double T)
 {
-    double c1;
-    c1 = (RF_hPlanck/(2.0*RF_PI*RF_mElect)) * (RF_hPlanck/RF_kBoltz);
-    return (ne * gi/(2.0*gc) * pow(c1, 1.5) * pow(T, -1.5) 
+    double c1 = (RF_hPlanck/(2.0*RF_PI*RF_mElect)) * (RF_hPlanck/RF_kBoltz);
+    return (ge * gi/(2.0*gc) * pow(c1, 1.5) * pow(T, -1.5)
                * exp(min(680.0, E_ion/(RF_kBoltz*T))) );
 }
 
 //========================================================================================
-// case B recombination rate for Hydrogen (in m^3 / s)
+// case B recombination rate for Hydrogen (in m^3 / s) including fudge factor [F~1.14]
 //========================================================================================
 double alphaH_func(double TM)
 {
   double a1 = 4.309, a2 = -0.6166, a3=0.6703, a4=0.5300, t=TM/1.0e+4;
-  return a1*1.0e-19*pow(t, a2)/(1.0+a3*pow(t, a4)); 
+  return RecVars.F * a1*1.0e-19*pow(t, a2)/(1.0+a3*pow(t, a4));
 }
+
+//----------------------------------------------------------------------------------------
+// photo-ionization rate HI where T=TM or Tr depending on the setting of 'eval_ion_Tr'
+//----------------------------------------------------------------------------------------
+double betaH_func(double T)
+{ return alphaH_func(T)/SahaBoltz(2.0, 1.0, 1.0, RF_EionH2s, T); }
 
 //========================================================================================
 // case B recombination rate for neutral Helium (in m^3 / s)
@@ -79,6 +85,12 @@ double alphaHe_func(double TM)
   return a1/(sqrt_TMT0*pow(1.0+sqrt_TMT0, 1.0-a2)*pow(1.0+sqrt_TMT1, 1.0+a2));
 }
 
+//----------------------------------------------------------------------------------------
+// photo-ionization rate HeI where T=TM or Tr depending on the setting of 'eval_ion_Tr'
+//----------------------------------------------------------------------------------------
+double betaHe_func(double T)
+{ return alphaHe_func(T)/SahaBoltz(1.0, 2.0, 1.0, RF_EionHe2s, T); }
+
 //========================================================================================
 // evaluation of Recfast-system
 //========================================================================================
@@ -89,22 +101,25 @@ void evaluate_Recfast_System(double z, double y[], double fvec[], int n)
     //====================================================================================
     double xe, xp, xHep, nH1, nHe1;
     double TR, TM, Comp;
-    double Hz;
+    double Hz, t_cos;        // Hubble and cosmic time
     
-    double nHTot;
-    double KH, KHe, fHe;
-    double alphaH, betaH;
-    double alphaHe, betaHe;
-    double BH, BHe, BHe2p2s;
-    double SH, SHe;
-    double CH, CHe;
+    double nHTot, fHe;       // number of H nuclei and NHe/NH
+    double alphaH, betaH;    // recombination and photo-ionization rates
+    double alphaHe, betaHe;  // recombination and photo-ionization rates
+    double BH, BHe, BHe2p2s; // Boltzmann and detailed balance factors
+    
+    double KH, KHe;          // Sobolev-terms for helium and hydrogen Ki = tauS/(A1g NH1).
+                             // This is related to the effective Lyman-alpha transition
+                             // rate A1g_eff = PS A1g as Ki ~ (A1g_eff NH1)^-1
+
+    double CH, CHe;          // Peebles inhibition factors for HeI & HI
     
     //====================================================================================
     // get Hubble & NH
     //====================================================================================
     Hz=H_z(z);
     nHTot = NH(z);
-    fHe = input.fHe;
+    fHe = f_He();
     
     //====================================================================================
     // set variables
@@ -112,6 +127,7 @@ void evaluate_Recfast_System(double z, double y[], double fvec[], int n)
     xHep = y[0]; 
     xp   = y[1];
     TM   = y[2];
+    t_cos= y[3];
     xe   = xp+xHep;
     
     nH1 = (1.0-xp)*nHTot;
@@ -140,45 +156,37 @@ void evaluate_Recfast_System(double z, double y[], double fvec[], int n)
     Comp*=VCD.fC;
 
     //====================================================================================
-    // Boltzmann and detailed balance factors
-    //====================================================================================
-    SHe = SahaBoltz(1.0, 2.0, 1.0, RF_EionHe2s, TMeval);
-    BHe = Boltzmann(1.0, 1.0, RF_E2s1sHe, TMeval);
-    
-    SH  = SahaBoltz(2.0, 1.0, 1.0, RF_EionH2s, TMeval);
-    BH  = Boltzmann(1.0, 1.0, RF_E2s1sH,  TMeval);
-    
-    //====================================================================================
-    // For HeI, the energy levels of 2s and 2p are different,
-    // so that a boltzmann factor remains.
-    //====================================================================================
-    BHe2p2s = 1.0/Boltzmann(1.0, 1.0, RF_E2p2sHe, TMeval);
-    
-    //====================================================================================
-    // H recombination coefficient + fugde-factor
+    // H recombination coefficient (including fugde-factor F~1.14)
     //====================================================================================
     alphaH = alphaH_func(TMeval);
-    alphaH*= input.F;
-    betaH  = alphaH/SH;
 
     //====================================================================================
-    // He recombination coefficient 
+    // He recombination coefficient
     //====================================================================================
     alphaHe = alphaHe_func(TMeval);
-    betaHe  = alphaHe/SHe;
 
     //====================================================================================
-    // photo-ionization rates should be evaluated at T=TR!
+    // photo-ionization rates and Boltzmann factors
     //====================================================================================
-    if(RF_eval_ion_Tr)
+    if(RecVars.eval_ion_Tr) // should be evaluated at T=TR to be physically consistent!
     {
-        SH  = SahaBoltz(2.0, 1.0, 1.0, RF_EionH2s, TReval);
         BH  = Boltzmann(1.0, 1.0, RF_E2s1sH,  TReval);
-        betaH  = alphaH_func(TReval)*input.F/SH;
+        betaH  = betaH_func(TReval);
 
-        SHe = SahaBoltz(1.0, 2.0, 1.0, RF_EionHe2s, TReval);
         BHe = Boltzmann(1.0, 1.0, RF_E2s1sHe, TReval);
-        betaHe  = alphaHe_func(TReval)/SHe;
+        // energy levels of HeI 2s and 2p differ -> 2. boltzmann factor
+        BHe2p2s = 1.0/Boltzmann(1.0, 1.0, RF_E2p2sHe, TReval);
+        betaHe  = betaHe_func (TReval);
+    }
+    else // this is the usual (but incorrect) evaluation that Recfast would do T==TM
+    {
+        BH  = Boltzmann(1.0, 1.0, RF_E2s1sH,  TMeval);
+        betaH  = betaH_func (TMeval);
+
+        BHe = Boltzmann(1.0, 1.0, RF_E2s1sHe, TMeval);
+        // energy levels of HeI 2s and 2p differ -> 2. boltzmann factor
+        BHe2p2s = 1.0/Boltzmann(1.0, 1.0, RF_E2p2sHe, TMeval);
+        betaHe  = betaHe_func (TMeval);
     }
     
     //====================================================================================
@@ -188,8 +196,7 @@ void evaluate_Recfast_System(double z, double y[], double fvec[], int n)
     betaH *=VCD.fBp; betaHe *=VCD.fBp;
 
     //====================================================================================
-    // Sobolev-terms for helium and hydrogen
-    // Ki = tauS/(A1g NH1); this is related to A1g_eff = PS A1g
+    // Sobolev-terms for helium and hydrogen Ki = tauS/(A1g NH1) == lam^3/ [8 pi H]
     //====================================================================================
     KHe = pow(lambda21He, 3)/(Hz*8.0*RF_PI);
     KH  = pow(lambda21H , 3)/(Hz*8.0*RF_PI);
@@ -201,26 +208,40 @@ void evaluate_Recfast_System(double z, double y[], double fvec[], int n)
     CH  = (1.0+KH *A2s1sH *nH1         )/(1.0+KH *(A2s1sH +betaH )*nH1         );
     
     //====================================================================================
-    // derivatives; 1 == He, 2 == H,  3 == TM 
+    // derivatives; 1 == He, 2 == H,  3 == TM, 4 == t_cos
     //====================================================================================
     fvec[0] = (alphaHe*xe*xHep*nHTot - betaHe*(fHe-xHep)*BHe)*CHe/((1.0+z)*Hz);
-    fvec[1] = (alphaH* xe*xp  *nHTot - betaH *(1.0-xp  )*BH )*CH /((1.0+z)*Hz);
+    fvec[1] = (alphaH *xe*xp  *nHTot - betaH *(1.0-xp  )*BH )*CH /((1.0+z)*Hz);
     fvec[2] = Comp*xe/(1.0+xe+fHe)*(TM-TR) + 2.0*TM/(1.0+z);
-    
+    fvec[3] = -1.0/(Hz*(1.0+z));
+
     //====================================================================================
     // add terms due to DM annihilation
     //====================================================================================
-    if(input.fDM!=0.0) 
-        evaluate_DM_annihilation_terms(z, Hz, fHe, xp, xHep, CHe, CH, input.fDM, fvec);
+    if(RecVars.f_ann!=0.0)
+        evaluate_DM_annihilation_terms(z, Hz, xp, xHep, CHe, CH, RecVars.f_ann, fvec);
+    
+    //====================================================================================
+    // add terms due to DM decay
+    //====================================================================================
+    if(RecVars.f_dec!=0.0)
+        evaluate_DM_decay_terms(z, Hz, t_cos, xp, xHep, CHe, CH,
+                                RecVars.f_dec, RecVars.Gamma_dec, fvec);
     
     //====================================================================================
     // add terms due to magnetic field heating
     //====================================================================================
     if(Get_B0_PMF()!=0.0)
         evaluate_magnetic_field_heating_RF(z, Hz, fHe, nHTot, xp, xHep,
-                                           TM, nHTot/(1.0-input.YP),
+                                           TM, nHTot/(1.0-Y_p()),
                                            Get_B0_PMF(), Get_nB_PMF(),
                                            Get_kD_PMF(), fvec);
+
+    //====================================================================================
+    // add collisional processes for cases with potentially lots of heating
+    //====================================================================================
+    if(Get_B0_PMF()!=0.0 || RecVars.f_dec!=0.0)
+        evaluate_magnetic_field_heating_RF_colls(z, Hz, fHe, nHTot, xp, xHep, TM, fvec);
 
     return;
 }

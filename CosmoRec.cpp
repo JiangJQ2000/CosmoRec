@@ -125,14 +125,6 @@ double const_HeI_A2s_1s = const_HeI_A2s_1s_0;
 double RECFAST_atomic_constants::RF_Lam2s1sH     = 8.22458; // Recfast++ default value (old value)
 
 //===========================================================================================================
-// Photo-ionization with T=Te (Recfast default, although incorrect) or T=Tg (phys.correct)
-//===========================================================================================================
-// defined in Recfast++/src/evalode.Recfast.cpp
-void Set_Te_eval();
-void Set_Tr_eval();
-bool Get_T_eval();
-
-//===========================================================================================================
 // for Magnetic field heating module
 //===========================================================================================================
 // defined in Recfast++/src/Magnetic_fields.Recfast.cpp
@@ -337,13 +329,9 @@ void compute_Recfast_part(double zi, double ze, double Xe_Hi, double Xe_Hei,
              << " solving the Recfast system" << endl;
     
     int nz=nz_Recfast_part;
-    double *zarr=new double[nz];
-    double *Xe_H=new double[nz];
-    double *Xe_He=new double[nz];
-    double *Xe=new double[nz];
-    double *TM=new double[nz];
+    vector<double> zarr(nz), Xe_H(nz), Xe_He(nz), Xe(nz), TM(nz);
     
-    init_xarr(zi, max(1.0e-5, ze), zarr, nz, 0, 0);
+    init_xarr(zi, max(1.0e-5, ze), &zarr[0], nz, 0, 0);
     
     double TMi=cosmos.TCMB(zi)*rhoi;
     cosmos.recombine_using_Recfast_system(nz, zi, ze, fDM_CosmoRec, Xe_Hi, max(1.0e-30, Xe_Hei),  
@@ -374,11 +362,7 @@ void compute_Recfast_part(double zi, double ze, double Xe_Hi, double Xe_Hei,
         }
     }
     
-    delete [] zarr;
-    delete [] Xe_H;
-    delete [] Xe_He;
-    delete [] Xe;
-    delete [] TM;
+    zarr.clear(); Xe_H.clear(); Xe_He.clear(); Xe.clear(); TM.clear();
     
     return;
 }

@@ -2,6 +2,7 @@
 // Author: Jens Chluba (Oct. 2014)
 // Johns Hopkins University
 //========================================================================================
+// 21.02.2018: added separate function to evaluate collisions
 // 30.03.2017: added set functions for parameters related to PMF [JC]
 // 01.12.2016: added settings for transition from no heating before z>1088
 
@@ -144,7 +145,7 @@ double Gamma_ambi_RF(double z, double Tm, double nbar, double Xp,
 }
 
 //========================================================================================
-// evalutation of ODE terms
+// evaluation of ODE terms for magnetic heating
 //========================================================================================
 void evaluate_magnetic_field_heating_RF(double z, double Hz, double fHe, double NH,
                                         double xp, double xHep, double Tm, double nbar,
@@ -157,6 +158,20 @@ void evaluate_magnetic_field_heating_RF(double z, double Hz, double fHe, double 
     double dE_dz=0.0;
     if(RF_decaying_turb_on)  dE_dz+=Gamma_decay_RF(z, Hz, B0, nB, kD)/Hz/(1.0+z);
     if(RF_ambipolar_heat_on) dE_dz+=Gamma_ambi_RF(z, Tm, nbar, xp, B0, nB, kD)/Hz/(1.0+z);
+    
+    fvec[2]-=fheat*dE_dz;
+   
+    return;
+}
+
+//========================================================================================
+// evaluation of ODE terms for collisions
+//========================================================================================
+void evaluate_magnetic_field_heating_RF_colls(double z, double Hz, double fHe, double NH,
+                                              double xp, double xHep, double Tm, double fvec[])
+{
+    double Xe=xp+xHep;
+    double dE_dz=0.0, fheat=2.0/3.0/RF_kBoltz/(1.0+fHe+Xe)/NH;
     
     //====================================================================================
     // add collisional ionization for H & He (kci in m^3 / sec from Bell et al. 1983)
@@ -173,7 +188,7 @@ void evaluate_magnetic_field_heating_RF(double z, double Hz, double fHe, double 
     dE_dz-=24.6*1.602176487e-19*kciHe*Xe*(fHe-xHep)*NH*NH/Hz/(1.0+z);
     
     fvec[2]-=fheat*dE_dz;
-   
+    
     return;
 }
 

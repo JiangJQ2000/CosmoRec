@@ -356,7 +356,7 @@ void ODE_Solver_set_up_solution_and_memory(double z, ODE_solver_Solution &Sz,
                                            void (*fcn_ptr)(int *neq, double *z, double *y, double *f))
 {
     int neq=Sz.y.size();
-    if(neq!=3){ cerr << " please set initial condition for system \n "; exit(0); }
+    if(neq!=4){ cerr << " please set initial condition for system \n "; exit(0); }
     
     ODE_Solver_info.fcn_ptr=fcn_ptr;
     

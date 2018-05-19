@@ -13,23 +13,31 @@ LXXFLAGS =
 #===============================================================================
 # object-files
 #===============================================================================
-OBJS = ./src/cosmology.Recfast.o \
+OBJSLIB = ./Recfast++.o \
+	   ./src/cosmology.Recfast.o \
 	   ./src/evalode.Recfast.o \
-	   ./src/recombination.Recfast.o \
 	   ./src/ODE_solver.Recfast.o \
-	   ./src/DM_annihilation.Recfast.o \
+	   ./src/DM_annihilation_decay.Recfast.o \
 	   ./src/Magnetic_fields.Recfast.o \
 	   ./src/Variation_constants.Recfast.o \
 	   ./src/Rec_corrs_CT.Recfast.o
 
+OBJS = ./src/parser.Recfast.o
+
 #===============================================================================
 # program	 
 #===============================================================================
-all: Recfast++
+all: Recfast++lib Recfast++
 
-Recfast++:  $(OBJS) main.o 
+Recfast++:  $(OBJS) main_Recfast++.o
 			 @echo "Linking..."
-			 $(CC) $(LXXFLAGS) $(OBJS) main.o -o Recfast++
+			 $(CC) $(LXXFLAGS) -L. -lRecfast++ $(OBJS) main_Recfast++.o -o Recfast++
+
+lib: Recfast++lib
+
+Recfast++lib: $(OBJSLIB)
+			 @echo "\n Creating Recfast++ lib library\n"
+			 ar rvs ./libRecfast++.a $?
 
 pub:
 	make -f Makefile.pub all
@@ -42,7 +50,7 @@ clean:
 
 tidy:
 	rm -f ./src/*.o ./src/*.o~ 
-	rm -f *.o *~ Recfast++
+	rm -f *.o *~ Recfast++ libRecfast++.a
 
 wipeDS:
 	find . -type f -name \.DS_Store -print | xargs rm
@@ -50,7 +58,7 @@ wipeDS:
 #===============================================================================
 # rules
 #===============================================================================
-INC_PATH = -I./include
+INC_PATH = -I./include -I.
 		   
 .cpp.o:
 	@echo "Producing object-file $@"

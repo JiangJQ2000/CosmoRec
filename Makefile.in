@@ -77,11 +77,11 @@ LIBS    = $(LIBSGSL) $(LIBSGR) $(LIBOPENMI) -lm
 #===============================================================================
 # Recfast++ object files
 #===============================================================================
-OBJSRecfast++ = $(DEV_DIR)/Cosmology/Recfast++/src/recombination.Recfast.o \
+OBJSRecfast++ = $(DEV_DIR)/Cosmology/Recfast++/Recfast++.o \
 		$(DEV_DIR)/Cosmology/Recfast++/src/ODE_solver.Recfast.o \
 		$(DEV_DIR)/Cosmology/Recfast++/src/cosmology.Recfast.o \
 		$(DEV_DIR)/Cosmology/Recfast++/src/evalode.Recfast.o \
-		$(DEV_DIR)/Cosmology/Recfast++/src/DM_annihilation.Recfast.o \
+		$(DEV_DIR)/Cosmology/Recfast++/src/DM_annihilation_decay.Recfast.o \
 		$(DEV_DIR)/Cosmology/Recfast++/src/Magnetic_fields.Recfast.o \
 		$(DEV_DIR)/Cosmology/Recfast++/src/Rec_corrs_CT.Recfast.o \
         $(DEV_DIR)/Cosmology/Recfast++/src/Variation_constants.Recfast.o
@@ -150,22 +150,22 @@ OBJS= $(OBJSRecfast++) $(OBJSDEV) $(OBJSRAMAN) $(OBJSDATA) $(OBJSHEDIF) $(OBJSHE
 # program 
 #===============================================================================
 
-all: Recfast++ CosmoRec CosmoReclib
+all: Recfast++ CosmoReclib CosmoRec
 
 lib: CosmoReclib
 
-bin: Recfast++ CosmoRec
+bin: Recfast++ CosmoReclib CosmoRec
 
-CosmoRec:  $(OBJS) CosmoRec.o main.o
+CosmoRec:  CosmoReclib main.o
 	   @echo "\n Linking CosmoRec binary\n"
-	   $(CC) $(LXXFLAGS) $(OBJS) CosmoRec.o main.o $(LIBS) -o CosmoRec
+	   $(CC) $(LXXFLAGS) -L. -lCosmoRec main.o $(LIBS) -o CosmoRec
 
 CosmoReclib: $(OBJS) CosmoRec.o
 	     @echo "\n Creating CosmoRec library\n"
 	     ar rvs ./libCosmoRec.a $?
 
 Recfast++: 
-	cd $(DEV_DIR)/Cosmology/Recfast++; make CC=$(CC) CXXFLAGS='$(CXXFLAGS)';
+	cd $(DEV_DIR)/Cosmology/Recfast++; make lib CC=$(CC) CXXFLAGS='$(CXXFLAGS)';
 
 #===============================================================================
 # dependencies
@@ -196,6 +196,7 @@ Solve_PDEs_HeI.o: ./PDE_Problem_HeI/Solve_PDEs_HeI_Grace.cpp
 
 INC_PATH = -I$(DEV_DIR)/Definitions -I$(DEV_DIR)/Recombination \
 	   -I$(DEV_DIR)/Integration -I$(DEV_DIR)/Cosmology \
+	   -I$(DEV_DIR)/Cosmology/Recfast++ \
 	   -I$(DEV_DIR)/Cosmology/Recfast++/include \
 	   -I$(DEV_DIR)/Hydrogenic -I$(DEV_DIR)/Line_profiles \
 	   -I$(DEV_DIR)/$(HELIUM_DIR) -I$(DEV_DIR)/Simple_routines \

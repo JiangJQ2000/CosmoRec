@@ -19,36 +19,21 @@
 #include <vector>
 #include <cstdlib>
 
-#include "constants.Recfast.h"
+#include "Recfast++.h"
+#include "evalode.Recfast.h"
 #include "Rec_corrs_CT.Recfast.h"
 
 using namespace std;
 
-bool Get_T_eval();  // defined in 'evalode.Recfast.cpp'
-
 //========================================================================================
-// boolean parameters for correction function settings
-// 0 for the f_h+f_he default and 1 for the new individual correction functions
+// files with correction function data
 //========================================================================================
-const bool RF_separate_corr = 1;
-
-//----------------------------------------------------------------------------------------
-// data-file with correction
-//----------------------------------------------------------------------------------------
-// if separate correction functions requested --> new file & scheme
-bool file_sect=(RF_separate_corr ? 1 : 0); // new file for fH & fHe but old for ftot
-//bool file_sect=(RF_separate_corr ? 1 : 1); // using new file for both
-
-// if Tr evaluation wanted --> new file with respective evaluation
-bool use_Tr=(Get_T_eval() ? 1 : 0);
-
-//----------------------------------------------------------------------------------------
+// original version using combined H+He correction function for T=Te only
 string Rec_corrs_CT_file_old=(string)RECFASTPPPATH+"./src/Data/DXe_Xe.CT2010.dat";
+
+// new separate correction function data also treating T=Tr and T=Te [LH 2017]
 string Rec_corrs_CT_file_Tr=(string)RECFASTPPPATH+"./src/Data/Corr_LH_Tr.dat";
 string Rec_corrs_CT_file_noTr=(string)RECFASTPPPATH+"./src/Data/Corr_LH.dat";
-
-string Rec_corrs_CT_file_new=(use_Tr ? Rec_corrs_CT_file_Tr : Rec_corrs_CT_file_noTr);
-string Rec_corrs_CT_file=(file_sect ? Rec_corrs_CT_file_new : Rec_corrs_CT_file_old);
 
 //========================================================================================
 // some global variables for compution
@@ -63,7 +48,19 @@ void read_recombination_correction(int mflag)
 {
     Rec_corrs_CT_start_index=0;
     if(Rec_corrs_CT_Data.size()>0) return;
+
+    //------------------------------------------------------------------------------------
+    // determine which file to read
+    //------------------------------------------------------------------------------------
+    bool RF_separate_corr = Get_evalode_Vars().do_separate_H_He;
+    bool use_Tr = Get_evalode_Vars().eval_ion_Tr;
+    bool file_sect=1; // new files have 4 columns for correction functions
+
+    string Rec_corrs_CT_file;
+    if(!RF_separate_corr){ Rec_corrs_CT_file=Rec_corrs_CT_file_old; file_sect=0; }
+    else Rec_corrs_CT_file=(use_Tr ? Rec_corrs_CT_file_Tr : Rec_corrs_CT_file_noTr);
     
+    //------------------------------------------------------------------------------------
     ifstream ifile(Rec_corrs_CT_file.c_str());
     if(!ifile)
     { 
@@ -110,7 +107,7 @@ double interpolate_data(double z,int cflag)
     //====================================================================================
     // find next k index with z>z(k)
     //====================================================================================
-    if(z<=Rec_corrs_CT_Data[Rec_corrs_CT_start_index][0]) Rec_corrs_CT_start_index++;
+    while(z<=Rec_corrs_CT_Data[Rec_corrs_CT_start_index][0]) Rec_corrs_CT_start_index++;
     
     //====================================================================================
     // simple linear interpolation [added LH]
@@ -147,15 +144,14 @@ double interpolate_data(double z,int cflag)
 //========================================================================================
 double Recombination_correction_factor(double z, int cflag)
 {
-    int nz=Rec_corrs_CT_Data.size();
-    
     if(Rec_corrs_CT_Data[0][0]<=z) return 1.0;
-    if(Rec_corrs_CT_Data[nz-1][0]>=z) return 1.0+Rec_corrs_CT_Data[nz-1][cflag];
+    if(Rec_corrs_CT_Data.back()[0]>=z) return 1.0+Rec_corrs_CT_Data.back()[cflag];
     return interpolate_data(z, cflag);
 }
 
 void Recombination_correction_factor(double z, double &Xe, double &Xe_H, double &Xe_He)
 {
+    bool RF_separate_corr = Get_evalode_Vars().do_separate_H_He;
     
     if (RF_separate_corr == 0) Xe*=Recombination_correction_factor(z, 1);
     else if (RF_separate_corr == 1)

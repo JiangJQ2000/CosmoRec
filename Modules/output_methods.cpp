@@ -83,7 +83,7 @@ void open_files(ofstream *Xfiles, string path, int fresh=1)
     // Added for correction functions LH & JC
     if(write_corrections)
     {
-        if(Get_T_eval())
+        if(Get_evalode_Vars().eval_ion_Tr)
             Xfiles[6].open((prename+"correction_function.Tr"+addname).c_str(),wrmode);
         else Xfiles[6].open((prename+"correction_function"+addname).c_str(),wrmode);
     }
@@ -159,9 +159,9 @@ void write_correction_functions_to_file(ofstream &ofile, double zval, Cosmos &co
     // Refrain from considering the correction functions if the redshift is past the Recfast++ limit
     if (zval < 50.) return;
     double f_H, f_He, f_tot;
-    f_tot = (1.0-Hydrogen_Atoms.X_tot()+parameters.fHe-HeI_Atoms.X_tot())/(cosmos.Xp(zval)+parameters.fHe-cosmos.XHe1s(zval))-1;
+    f_tot = (1.0-Hydrogen_Atoms.X_tot()+parameters.fHe-HeI_Atoms.X_tot())/(cosmos.Xp(zval)+parameters.fHe-cosmos.XHeI1s(zval))-1;
     f_H  = (1.0-Hydrogen_Atoms.X_tot())/cosmos.Xp(zval)-1;
-    f_He = (parameters.fHe-HeI_Atoms.X_tot())/(parameters.fHe-cosmos.XHe1s(zval))-1;
+    f_He = (parameters.fHe-HeI_Atoms.X_tot())/(parameters.fHe-cosmos.XHeI1s(zval))-1;
     // Write correction functions to the file along with the redshift
     ofile << scientific << zval << " " << f_tot << " " << f_H << " " << f_He;
     ofile << endl;

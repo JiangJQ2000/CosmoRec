@@ -1,11 +1,12 @@
 //===========================================================================================================
 //
-// Author: Jens Chluba & Luke Hart
+// Author: Jens Chluba with contributions from Rajat Thomas, Luke Hart, Vivian Poulin
 // first implementation: April 2010
-// last modification   : March 2017
+// last modification   : March 2018
 // purpose: to access main CosmoRec code
 //
 //===========================================================================================================
+// 01.03.2018: added decaying particle cases [JC]
 // 31.03.2017: added VFC control for batch mode / CAMB runs [LH & JC]
 // 15.02.2017: added controll for magnetic field modes [JC]
 // 22.01.2017: added correction function computation as standard output [LH]
@@ -26,6 +27,8 @@
 
 #ifndef COSMOREC_H
 #define COSMOREC_H
+
+#ifdef __cplusplus
 
 //===========================================================================================================
 // CosmoRec for run from console
@@ -107,6 +110,7 @@ int CosmoRec(const int runmode, const double runpars[15],
              const int nz, double *z_arr, double *Xe_arr, double *Te_arr,
              const int label);
 
+#endif /* __cplusplus */
 
 //===========================================================================================================
 // Wrap the C++ Fortran routine to be allow calling from Fortran. Arguments are as above.
@@ -115,7 +119,9 @@ int CosmoRec(const int runmode, const double runpars[15],
 // 18.06.2012: Added version to communicate Hubble using pointer
 // 08.06.2012: Added version to communicate Hubble
 //===========================================================================================================
+#ifdef __cplusplus
 extern "C" {
+#endif /* __cplusplus */
     
     void cosmorec_calc_cpp_(const int * runmode, const double * runpars, 
                             const double * omega_c, const double * omega_b, const double * omega_k, 
@@ -139,7 +145,17 @@ extern "C" {
                                  double (* Hptr)(const double * z), 
                                  double * za_in, double * xe_out, double * tb_out, 
                                  const int * len, const int* label);
+
+    //=======================================================================================================
+    //
+    // electron temperature equation (rho=Te/Tg) [added by Vivian Poulin, summer 2017]
+    //
+    //=======================================================================================================
+    void evaluate_TM(double z, double Xe, double fHe, double rho, double Tg, double Hz, double * drho_dt);
+
+#ifdef __cplusplus
 }
+#endif /* __cplusplus */
 
 //===========================================================================================================
 // to cleanup after finishing with CosmoRec

@@ -1,11 +1,12 @@
 //===========================================================================================================
 //
-// Author: Jens Chluba & Luke Hart
+// Author: Jens Chluba with contributions from Rajat Thomas, Luke Hart, Vivian Poulin
 // first implementation: April 2010
-// last modification   : March 2017
+// last modification   : March 2018
 // purpose: to access main CosmoRec code
 //
 //===========================================================================================================
+// 01.03.2018: added decaying particle cases [JC]
 // 31.03.2017: added VFC control for batch mode / CAMB runs [LH & JC]
 // 15.02.2017: added controll for magnetic field modes [JC]
 // 22.01.2017: added correction function computation as standard output [LH]
@@ -1105,6 +1106,17 @@ extern "C" {
         
         return;
     } 
+    
+    //=======================================================================================================
+    //
+    // electron temperature equation (rho=Te/Tg) [added by Vivian Poulin, summer 2017]
+    //
+    //=======================================================================================================
+    void evaluate_TM(double z, double Xe, double fHe, double rho, double Tg, double Hz, double * drho_dt)
+    {
+        ODE_effective::evaluate_TM(z, Xe, fHe, rho, Tg, Hz, *drho_dt);
+        return;
+    }
 }
 
 //===========================================================================================================

@@ -245,6 +245,8 @@ void Cosmos :: init(const parameters &pars)
     RecRF.F=(pars.fudge==0.0 ? 1.14 : pars.fudge);
     RecRF.include_CF=pars.CR_correction;
     RecRF.f_ann=pars.fDM_annihilation;
+    RecRF.A2s1s=pars.A2s1s;
+    RecRF.eval_ion_Tr=pars.eval_ion_Tr;
 /*
      double f_dec, Gamma_dec;   // decay cases
      

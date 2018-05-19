@@ -47,7 +47,7 @@ void set_PMF_parameters_KK_PF(double B0, double nB, int PMF_mode, double h0)
 
         // Recfast++ settings
         Set_PMF(decaying_turb_on, ambipolar_heat_on, KK_or_PF_Lorentz, B0, nB, kD);
-        Set_Tr_eval();
+        Tr_Te_eval=1;
     }
     else
     {
@@ -56,8 +56,8 @@ void set_PMF_parameters_KK_PF(double B0, double nB, int PMF_mode, double h0)
 
         // Recfast++ settings
         Switch_PMF_off();           // switch PMF heating off
-        Set_Te_eval();              // do old recfast evaluation
-        //Set_Tr_eval();            // do new recfast evaluation
+        Tr_Te_eval=0;               // do old recfast evaluation
+        //Tr_Te_eval=1;             // do new recfast evaluation
     }
 
     return;

@@ -121,9 +121,6 @@ double const_HI_A2s_1s = const_HI_A2s_1s_0;                                  // 
 double const_sigT      = const_sigT_0;
 double const_HeI_A2s_1s = const_HeI_A2s_1s_0;
 
-#include "constants.Recfast.h"
-double RECFAST_atomic_constants::RF_Lam2s1sH     = 8.22458; // Recfast++ default value (old value)
-
 //===========================================================================================================
 // for Magnetic field heating module
 //===========================================================================================================
@@ -817,7 +814,7 @@ int CosmoRec(const int runmode, const double runpars[15],
     //======================================================================
     // explicitly set value of A2s1s rate (added July 23.07.2014)
     //======================================================================
-    if(runpars[3] > 0.0) const_HI_A2s_1s=RECFAST_atomic_constants::RF_Lam2s1sH=runpars[3];
+    if(runpars[3] > 0.0) const_HI_A2s_1s=runpars[3];
 
     //======================================================================
     // magnetic field heating (added 11.10.2014)

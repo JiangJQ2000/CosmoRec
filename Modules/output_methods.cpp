@@ -83,7 +83,7 @@ void open_files(ofstream *Xfiles, string path, int fresh=1)
     // Added for correction functions LH & JC
     if(write_corrections)
     {
-        if(Get_evalode_Vars().eval_ion_Tr)
+        if(Tr_Te_eval)
             Xfiles[6].open((prename+"correction_function.Tr"+addname).c_str(),wrmode);
         else Xfiles[6].open((prename+"correction_function"+addname).c_str(),wrmode);
     }

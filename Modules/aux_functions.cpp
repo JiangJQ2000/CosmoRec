@@ -49,6 +49,8 @@ void set_cosmology(Parameters_form_initfile &inparams, Cosmos &cosmos, double fD
     
     cosm_pars.fDM_annihilation=fDM_ann;
     cosm_pars.CR_correction=CR_corr;
+    cosm_pars.A2s1s=const_HI_A2s_1s;
+    cosm_pars.eval_ion_Tr=Tr_Te_eval;
     
     //=======================================================================================================
     // initializing cosmos object...
@@ -156,7 +158,7 @@ void read_entries_from_parameter_file(ifstream &paramfile, double *param)
     //======================================================================
     double dumA2s1s;
     paramfile >> dumA2s1s;
-    if(dumA2s1s>0.0) const_HI_A2s_1s=RECFAST_atomic_constants::RF_Lam2s1sH=dumA2s1s;
+    if(dumA2s1s>0.0) const_HI_A2s_1s=dumA2s1s;
     
     //======================================================================
     // magnetic field parameters (added 10.10.2014)

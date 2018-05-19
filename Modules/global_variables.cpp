@@ -74,6 +74,7 @@ double fDM_CosmoRec=0.0;
 //==================================================================================================
 bool magnetic_fields=0;
 double B0_CosmoRec=0.0, nB_CosmoRec=0.0, kD_CosmoRec=0.0;
+bool Tr_Te_eval=0;
 
 bool decaying_turb_on =0;  // default mode set in "./Modules/Magnetic_fields.cpp"
 bool ambipolar_heat_on=0;  // default mode set in "./Modules/Magnetic_fields.cpp"

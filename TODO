@@ -1,3 +1,19 @@
-22 July 2014: 
+next (urgent) updates:
 
-update README file: added precomputed DP rate to distribution.
+- add parser like for CosmoTherm
+
+- how to best communicate to CAMB and Class?
+
+- decaying particle scenarios
+
+- updated magnetic field description (Abir...)
+
+
+
+Long-term updates:
+
+- get rid of spline setups for PDE-problem?
+
+- do frequency integrals using Lagrange-coefficients instead of Patterson scheme?
+
+- implement iterative scheme for each time-step

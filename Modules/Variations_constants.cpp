@@ -45,7 +45,7 @@ void Set_VFC_pars(double aS, double mS, double pS, int RM)
 // Rescaling functions for all the rates used in CosmoRec
 //===========================================================================================================
 void rescale_variables_all(double alpha_scale, double me_scale, size_t run_mode,
-                          double &Ascale, double &Bscale, double &Tscale, int &use_He)
+                           double &Ascale, double &Bscale, double &Tscale, int &use_He)
 {
     //=======================================================================================================
     // This function is designed to rescale all the explicit scalings we need to worry about and drop this
@@ -134,6 +134,3 @@ void rescale_rates(vector<double>&A,vector<double>&B,vector<vector<double> >&R)
 
 //==================================================================================================
 //==================================================================================================
-
-
-

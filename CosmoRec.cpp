@@ -504,23 +504,6 @@ int CosmoRec()
 
 //===========================================================================================================
 //
-// to cleanup after finishing with CosmoRec
-//
-//===========================================================================================================
-void cleanup_CosmoRec()
-{
-    //======================================================================
-    // clean up memory
-    //======================================================================
-    deallocate();
-    clear_atoms();
-    free_all_splines_JC();
-    
-    return;
-}
-
-//===========================================================================================================
-//
 // CosmoRec for run from console giving a parameter file
 //
 //===========================================================================================================
@@ -531,7 +514,6 @@ int CosmoRec(int narg, char *args[])
     if(narg==2){}
     else if(narg==3)
     {
-        string solvermode=args[narg-2];
         mode=args[narg-2];
         if(mode=="REC") print_message(" Running Recfast++ module.");
         else if(mode=="RECcf") print_message(" Running Recfast++ module with correction function."); 
@@ -551,7 +533,7 @@ int CosmoRec(int narg, char *args[])
     print_message(" You are entering CosmoRec "+CosmoRec_version+".");
     read_startup_data(filename, parameters, cosmos);
     set_array_dimensions_and_parameters();
-    allocate();
+    allocate_memory();
     
     //========================================================================
     // initialise zarr (linear)
@@ -933,7 +915,7 @@ int CosmoRec(const int runmode, const double runpars[15],
         set_startup_data("", params, parameters, cosmos);
         set_array_dimensions_and_parameters();  
         
-        if(!CosmoRec_is_initialized && err==0) allocate();
+        if(!CosmoRec_is_initialized && err==0) allocate_memory();
         
         //========================================================================
         // write info about cosmology

@@ -58,31 +58,19 @@ void set_cosmology(Cosmos::parameters &cosm_pars, Cosmos &cosmos, double fDM_ann
 void set_array_dimensions_and_parameters(int wait=0)
 {
     //=======================================================================================================
-    // setup Level I
+    // setup Level I and start indices of HI and HeI
     //=======================================================================================================
     Level_I.nHIeq=Hydrogen_Atoms.Get_total_number_of_Levels();
-    Level_I_temp.nHIeq=Level_I.nHIeq;
-    Level_I_temp_JAC.nHIeq=Level_I.nHIeq;
-    //
     Level_I.nHeIeq=HeI_Atoms.Get_total_number_of_Levels();
-    Level_I_temp.nHeIeq=Level_I.nHeIeq;
-    Level_I_temp_JAC.nHeIeq=Level_I.nHeIeq;
-    //
     Level_I.neq=Level_I.nHIeq+Level_I.nHeIeq+2;
-    Level_I_temp.neq=Level_I.neq;
-    Level_I_temp_JAC.neq=Level_I.neq;
-    
-    //=======================================================================================================
-    // start index of HI and HeI
-    //=======================================================================================================
     Level_I.index_HI=1;
-    Level_I_temp.index_HI=Level_I.index_HI;
-    Level_I_temp_JAC.index_HI=Level_I.index_HI;
-    //
     Level_I.index_HeI=Level_I.nHIeq+1;
-    Level_I_temp.index_HeI=Level_I.index_HeI;
-    Level_I_temp_JAC.index_HeI=Level_I.index_HeI;
 
+    //-------------------------------------------------------------------------------------------------------
+    // copy info to other arrays
+    //-------------------------------------------------------------------------------------------------------
+    Level_I_temp=Level_I_temp_JAC=Level_I;
+    
     //=======================================================================================================
     if(show_CosmoRec_mess>=2)
     {
@@ -90,12 +78,11 @@ void set_array_dimensions_and_parameters(int wait=0)
              << "\n Hydrogen equations: " << Level_I.nHIeq
              << "\n Helium equations: " << Level_I.nHeIeq << endl;
     
-        cout << " nShells: " << nShells << "\n included number of hydrogen levels: " 
-             << Level_I.nHIeq << endl;
+        cout << " nShells: " << nShells
+             << "\n included number of hydrogen levels: " << Level_I.nHIeq << endl;
     
         cout << " nShellsHeI: " << nShellsHeI 
-             << "\n included number of neutral helium levels: " 
-             << Level_I.nHeIeq << endl;
+             << "\n included number of neutral helium levels: " << Level_I.nHeIeq << endl;
     }
     //=======================================================================================================
 
@@ -393,9 +380,9 @@ void save_sol_for_PDE_solver(int iz, double z)
     return;
 }
 
-//========================================================================================
+//===========================================================================================================
 // Save results for output to CosmoMC
-//========================================================================================
+//===========================================================================================================
 void save_Xe_Te_for_output(double z)
 {
     if(!Diffusion_correction || (Diffusion_correction && iteration_count==Diff_iteration_max) )
@@ -435,7 +422,7 @@ void clear_atoms()
 }
 
 //===========================================================================================================
-void allocate()
+void allocate_memory()
 {
     zarr =new double[parameters.nz];
     // Level I
@@ -454,7 +441,7 @@ void allocate()
 }
 
 //===========================================================================================================
-void deallocate()
+void deallocate_memory()
 {
     delete[] zarr;
     // Level I
@@ -470,6 +457,23 @@ void deallocate()
     delete[] Xfiles;
     
     clear_all_memory(Sz, tols, ODE_Solver_info_CR);
+    
+    return;
+}
+
+//===========================================================================================================
+//
+// to cleanup after finishing with CosmoRec
+//
+//===========================================================================================================
+void cleanup_CosmoRec()
+{
+    //======================================================================
+    // clean up memory
+    //======================================================================
+    deallocate_memory();
+    clear_atoms();
+    free_all_splines_JC();
     
     return;
 }

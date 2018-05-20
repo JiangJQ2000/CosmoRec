@@ -127,8 +127,7 @@ ODE_solver_Rec::ODE_Solver_data ODE_Solver_info_CR;
 struct Parameters_form_initfile
 {
     int nz;
-    double zstart;
-    double zend;
+    double zstart, zend;
     
     Cosmos::parameters cosm_pars;
 };
@@ -146,6 +145,8 @@ struct Data_Level_I {
     int index_HeI;
     double *X;
     double *g;
+    
+    Data_Level_I(){ X=NULL; g=NULL; }
 };
 
 Data_Level_I Level_I, Level_I_temp, Level_I_temp_JAC;

@@ -69,8 +69,12 @@ void set_array_dimensions_and_parameters(int wait=0)
     //-------------------------------------------------------------------------------------------------------
     // copy info to other arrays
     //-------------------------------------------------------------------------------------------------------
-    Level_I_temp=Level_I_temp_JAC=Level_I;
-    
+    Level_I_temp.nHIeq=Level_I_temp_JAC.nHIeq=Level_I.nHIeq;
+    Level_I_temp.nHeIeq=Level_I_temp_JAC.nHeIeq=Level_I.nHeIeq;
+    Level_I_temp.neq=Level_I_temp_JAC.neq=Level_I.neq;
+    Level_I_temp.index_HI=Level_I_temp_JAC.index_HI=Level_I.index_HI;
+    Level_I_temp.index_HeI=Level_I_temp_JAC.index_HeI=Level_I.index_HeI;
+
     //=======================================================================================================
     if(show_CosmoRec_mess>=2)
     {
@@ -165,16 +169,17 @@ void read_entries_from_parameter_file(string filename, double *param)
     //==============================================================================================
     // reset verbosity level
     //==============================================================================================
-    parser_read(pfc, "verbosity level Recfast++", ival, found, 0);
+    parser_read(pfc, "verbosity level CosmoRec", ival, found, 0);
     if(found) inp.verbosity=inp.cosm_pars.Rec.verbosity=ival;
     
     if(inp.verbosity>-1)
-        cout << " Recfast++ :: read_parameter_file : reading parameters from: " << filename << endl;
+        cout << " CosmoRec :: read_entries_from_parameter_file : reading parameters from: "
+             << filename << endl;
     
     bool show_params=(inp.verbosity > 3 ? 1 : 0);
     // read again to show the parameter...
-    if(show_params) parser_read(pfc, "verbosity level Recfast++", ival, found, show_params);
-/*
+    if(show_params) parser_read(pfc, "verbosity level CosmoRec", ival, found, show_params);
+
     //==============================================================================================
     // path etc
     //==============================================================================================
@@ -184,6 +189,7 @@ void read_entries_from_parameter_file(string filename, double *param)
     parser_read(pfc, "addition to name for output", sval, found, show_params);
     if(found) inp.addname=sval;
     
+/*
     //==============================================================================================
     // cosmological parameters
     //==============================================================================================

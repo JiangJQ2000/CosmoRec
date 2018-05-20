@@ -1,9 +1,4 @@
 //==================================================================================================
-// CosmoRec version
-//==================================================================================================
-string CosmoRec_version="v3.0 beta";
-
-//==================================================================================================
 // setting for two-gamma and Raman corrections
 //==================================================================================================
 int ntg_max=0;
@@ -13,8 +8,8 @@ bool hydrogen_and_helium_atom_are_set=0;
 //==================================================================================================
 // for data output
 //==================================================================================================
-string path, detailedname;
-string addname;
+string path, addname;
+string detailedname;
 ofstream *Xfiles=new ofstream[9];
 vector<vector<double> > output_CosmoRec;
 vector<vector<double> > pass_on_the_Solution_CosmoRec;
@@ -129,7 +124,9 @@ struct Parameters_form_initfile
     int verbosity;
     int nz;
     double zstart, zend;
-    
+
+    string path, addname;
+
     Cosmos::parameters cosm_pars;
     
     Parameters_form_initfile()
@@ -153,16 +150,14 @@ Parameters_form_initfile parameters;
 //==================================================================================================
 // Level I: Xi=Ni/NHtot 
 //==================================================================================================
-struct Data_Level_I {
+struct Data_Level_I
+{
     int neq;
     int nHIeq;
     int nHeIeq;
     int index_HI;
     int index_HeI;
-    double *X;
-    double *g;
-    
-    Data_Level_I(){ X=NULL; g=NULL; }
+    double *X, *g;
 };
 
 Data_Level_I Level_I, Level_I_temp, Level_I_temp_JAC;

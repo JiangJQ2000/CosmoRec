@@ -2,10 +2,11 @@
 //
 // Author: Jens Chluba with contributions from Rajat Thomas, Luke Hart, Vivian Poulin
 // first implementation: April 2010
-// last modification   : March 2018
+// last modification   : May   2018
 // purpose: to access main CosmoRec code
 //
 //===========================================================================================================
+// 20.05.2018: added parser for parameters reading [JC]
 // 01.03.2018: added decaying particle cases [JC]
 // 31.03.2017: added VFC control for batch mode / CAMB runs [LH & JC]
 // 15.02.2017: added controll for magnetic field modes [JC]

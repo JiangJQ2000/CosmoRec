@@ -57,6 +57,7 @@
 
 #include "physical_consts.h"
 #include "routines.h"
+#include "parser.h"
 
 #include "Quadrupole_lines_HI.h" 
 
@@ -182,11 +183,8 @@ void compute_fractions(const Data_Level_I &LI, double &Xe, double &Xp, double &X
 void read_startup_data_RECFAST(string filename, Parameters_form_initfile &inparams, 
                                Cosmos &cosmos, int corr_fac)
 {
-    ifstream paramfile(filename.c_str());
-    if(!paramfile) { cerr << " Error opening parameter file. Exiting. " << endl; exit(1); }
-    
     double param[12];
-    read_entries_from_parameter_file(paramfile, param);
+    read_entries_from_parameter_file(filename, param);
     
     // compute Omega_L according to Omega_K
     if(param[7]<=0.0) param[7]=1.0-param[5]-param[8]-cosmos.calc_Orel(param[4], param[10], param[9]);

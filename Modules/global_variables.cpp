@@ -126,10 +126,26 @@ ODE_solver_Rec::ODE_Solver_data ODE_Solver_info_CR;
 //==================================================================================================
 struct Parameters_form_initfile
 {
+    int verbosity;
     int nz;
     double zstart, zend;
     
     Cosmos::parameters cosm_pars;
+    
+    Parameters_form_initfile()
+    {
+        verbosity=show_CosmoRec_mess;
+        nz=2000;
+        zstart=3000; zend=0.0;
+    }
+    
+    void show()
+    {
+        cout << " Parameters_form_initfile :: show()" << endl;
+        cout << " Verbosity level " << verbosity << endl;
+        cout << " nz = " << nz << " zstart= " << zstart << " zend= " << zend << endl;
+        cosm_pars.show();
+    }
 };
 
 Parameters_form_initfile parameters;

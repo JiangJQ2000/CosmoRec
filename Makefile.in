@@ -91,6 +91,7 @@ OBJSRecfast++ = $(DEV_DIR)/Cosmology/Recfast++/Recfast++.o \
 #===============================================================================
 OBJSDEV = $(DEV_DIR)/Simple_routines/File.o \
 	   $(DEV_DIR)/Simple_routines/routines.o \
+	   $(DEV_DIR)/Simple_routines/parser.o \
 	   $(DEV_DIR)/Cosmology/Cosmos.o \
 	   $(DEV_DIR)/Integration/Patterson.o \
 	   $(DEV_DIR)/Integration/Integration_routines.GSL.o \

@@ -36,7 +36,7 @@ void compute_fractions(const Data_Level_I &LI, double &Xe, double &Xp, double &X
     
     if(flag_He==1)
     {
-        XHeII =parameters.fHe-LI.X[iHeI];
+        XHeII =cosmos.fHe()-LI.X[iHeI];
         XHeIII=0.0;
     }
 
@@ -353,7 +353,7 @@ void fcn_effective(double z, Data_Level_I &LI)
     //==================================================================
     // Te part
     //==================================================================
-    ODE_effective::evaluate_TM(z, Xe, parameters.fHe, rho, Tg, H_z, LI.g[LI.neq-1]);
+    ODE_effective::evaluate_TM(z, Xe, cosmos.fHe(), rho, Tg, H_z, LI.g[LI.neq-1]);
     
     //==================================================================
     // hydrogen part
@@ -369,17 +369,17 @@ void fcn_effective(double z, Data_Level_I &LI)
     // DM annihilation
     //==================================================================
     if(DM_annihilation)
-//        evaluate_DM_annihilation_terms(z, parameters.fHe, Tg, Xp, XHeII, fDM_CosmoRec,
+//        evaluate_DM_annihilation_terms(z, cosmos.fHe(), Tg, Xp, XHeII, fDM_CosmoRec,
 //                                       LI.g[iHI], LI.g[iHeI], LI.g[LI.neq-1]);
         
-        evaluate_DM_decay_terms(z, parameters.fHe, Tg, Xp, XHeII, fDM_CosmoRec, 1.0,
+        evaluate_DM_decay_terms(z, cosmos.fHe(), Tg, Xp, XHeII, fDM_CosmoRec, 1.0,
                                 LI.g[iHI], LI.g[iHeI], LI.g[LI.neq-1]);
     
     //==================================================================
     // heating by magnetic fields
     //==================================================================
     if(magnetic_fields)
-        evaluate_magnetic_field_heating(z, parameters.fHe, Tg, Tg*rho,
+        evaluate_magnetic_field_heating(z, cosmos.fHe(), Tg, Tg*rho,
                                         Xp, XHeII,
                                         B0_CosmoRec, nB_CosmoRec, kD_CosmoRec,
                                         LI.g[iHI], LI.g[LI.neq-1]);
@@ -542,10 +542,10 @@ void fcn_for_jacobian_eval(int jX, int neq, double DXj, double z, double Tg,
     //==============================================================================================
     if(DM_annihilation && (jX==LI0.index_HI || jX==LI0.index_HeI || jX==LI0.neq-1))
     {
-        //evaluate_DM_annihilation_terms(z, parameters.fHe, Tg, Xp, XHeII, fDM_CosmoRec,
+        //evaluate_DM_annihilation_terms(z, cosmos.fHe(), Tg, Xp, XHeII, fDM_CosmoRec,
         //                               f[LI0.index_HI], f[LI0.index_HeI], f[LI0.neq-1]);
 
-        evaluate_DM_decay_terms(z, parameters.fHe, Tg, Xp, XHeII, fDM_CosmoRec, 1.0,
+        evaluate_DM_decay_terms(z, cosmos.fHe(), Tg, Xp, XHeII, fDM_CosmoRec, 1.0,
                                 f[LI0.index_HI], f[LI0.index_HeI], f[LI0.neq-1]);
     }
 
@@ -554,7 +554,7 @@ void fcn_for_jacobian_eval(int jX, int neq, double DXj, double z, double Tg,
     //==============================================================================================
     if(magnetic_fields && (jX==LI0.index_HI || jX==LI0.index_HeI || jX==LI0.neq-1))
     {
-        evaluate_magnetic_field_heating(z, parameters.fHe, Tg, Tg*LI0.X[LI0.neq-1],
+        evaluate_magnetic_field_heating(z, cosmos.fHe(), Tg, Tg*LI0.X[LI0.neq-1],
                                         Xp, XHeII,
                                         B0_CosmoRec, nB_CosmoRec, kD_CosmoRec,
                                         f[LI0.index_HI], f[LI0.neq-1]);
@@ -693,7 +693,7 @@ void jac_effective(double z, Data_Level_I &LI, int col)
     //==================================================================
     if(col==0)
     {
-        ODE_effective::df_drho_evaluate_TM(z, Xe, parameters.fHe, Tg, H_z, 
+        ODE_effective::df_drho_evaluate_TM(z, Xe, cosmos.fHe(), Tg, H_z, 
                                            LI.g[LI.neq-1]);
         
         compute_numerical_derivative(LI.neq-1, neq, neq_HI, neq_HeI, 
@@ -704,7 +704,7 @@ void jac_effective(double z, Data_Level_I &LI, int col)
     //==================================================================
     else if(col==1)
     {
-        ODE_effective::df_dXHI1s_evaluate_TM(z, Xe, parameters.fHe, rho, Tg, H_z, 
+        ODE_effective::df_dXHI1s_evaluate_TM(z, Xe, cosmos.fHe(), rho, Tg, H_z, 
                                              LI.g[LI.neq-1]);
         
         ODE_effective::df_dX1s_evaluate_2s_two_photon_decay(z, Tg, 
@@ -799,7 +799,7 @@ void jac_effective(double z, Data_Level_I &LI, int col)
     //==================================================================
     else if(flag_He==1 && col==2+neq_HI)
     {
-        ODE_effective::df_dXHeI1s_evaluate_TM(z, Xe, parameters.fHe, rho, Tg, H_z, 
+        ODE_effective::df_dXHeI1s_evaluate_TM(z, Xe, cosmos.fHe(), rho, Tg, H_z, 
                                               LI.g[LI.neq-1]);
         
         ODE_effective::df_dX1s_evaluate_2s_two_photon_decay(z, Tg, 

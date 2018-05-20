@@ -15,7 +15,9 @@
 #include <iostream>
 #include <cstdlib>
 
-#include "constants.Recfast.h"
+#include "Recfast++.h"
+#include "evalode.Recfast.h"
+#include "cosmology.Recfast.h"
 #include "Magnetic_fields.Recfast.h"
 
 using namespace std;
@@ -23,58 +25,40 @@ using namespace RECFAST_physical_constants; // defined in constants.Recfast.h
 using namespace RECFAST_atomic_constants;
 
 //========================================================================================
-// runmodes and parameters
+// define kD mapping for given B0 and nB
 //========================================================================================
-double RF_B0_heating=0.0;
-double RF_nB_heating=0.0;
-double RF_kD_heating=0.0;
-
-bool RF_decaying_turb_on=0;
-bool RF_ambipolar_heat_on=0;
-bool RF_KK_or_PF_Lorentz=0;  // KK or PF integral for Lorentz force (when called from CosmoRec)
-
-//========================================================================================
-// access values
-//========================================================================================
-double Get_B0_PMF(){ return RF_B0_heating; }
-double Get_nB_PMF(){ return RF_nB_heating; }
-double Get_kD_PMF(){ return RF_kD_heating; }
-
-bool Get_decay_setting(){ return RF_decaying_turb_on; }
-bool Get_ambi_setting(){ return RF_ambipolar_heat_on; }
-bool Get_Lorentz_setting(){ return RF_KK_or_PF_Lorentz; }
-
-void Switch_PMF_off()
+double kD_func(double B0, double nB)
 {
-    RF_B0_heating=RF_nB_heating=0.0; RF_kD_heating=0.0;
-    RF_decaying_turb_on=RF_ambipolar_heat_on=RF_KK_or_PF_Lorentz=0;
-    return;
-}
+    //=======================================================================
+    // KK parametrization and interpretation; B0 and nB unchanged; (default)
+    //=======================================================================
+    double kD=286.91/B0; // in Mpc^-1; cos(theta)=1;
+    
+    //======================================================================
+    // set dissipation scale and convert B_lam --> B0 when using PF vars
+    //======================================================================
+    if(Get_evalode_Vars().KK_or_PF_Lorentz)
+    {
+        double lambda_Mpc=1.0, k_lambda=2.0*RF_PI/lambda_Mpc;
+        double B_lambda=B0, nBp3=nB+3.0, nBp5=nB+5.0;
+        double h0=Recfastpp_Cosmology::Get_Cosmology().h100;
+        
+        kD=pow(2.9e+4*h0, 1.0/nBp5)/pow(B_lambda, 2.0/nBp5)*pow(k_lambda, nBp3/nBp5);
+        //kD=pow(5.5e+4*h0, 1.0/nBp5)/pow(B_lambda, 2.0/nBp5)*pow(k_lambda, nBp3/nBp5);
+    }
 
-void Set_PMF_params(double B0, double nB, double kD)
-{ RF_B0_heating=B0; RF_nB_heating=nB; RF_kD_heating=kD; return; }
-
-void Set_PMF_mode(bool decay_on, bool ambi_on, bool Lorentz)
-{
-    RF_decaying_turb_on=decay_on; RF_ambipolar_heat_on=ambi_on; RF_KK_or_PF_Lorentz=Lorentz;
-    return;
-}
-
-void Set_PMF(bool decay_on, bool ambi_on, bool Lorentz, double B0, double nB, double kD)
-{
-    Set_PMF_mode(decay_on, ambi_on, Lorentz);
-    Set_PMF_params(B0, nB, kD);
-    return;
+    return kD;
 }
 
 //========================================================================================
 // magnetic field decay rate following Kunze & Komatsu, 2013.
 //========================================================================================
-double Gamma_decay_RF(double z, double Hz, double B0, double nB, double kd)
+double Gamma_decay_RF(double z, double Hz, double B0, double nB)
 {
     double zi=1088.0;
     
     // B0 is in nG
+    double kd=kD_func(B0, nB);
     double m=2.0*(nB+3.0)/(nB+5.0);
     double td_ti=14.8/B0/kd;
     double rhoB=0.1*B0*B0*1.0e-18/(8.0*RF_PI)*pow(1.0+z, 4);  // ergs cm^-3 == 0.1 J m^-3
@@ -114,14 +98,13 @@ double Gamma_decay_RF(double z, double Hz, double B0, double nB, double kd)
 //========================================================================================
 // magnetic field heating rate for ambipolar diffusion Kunze & Komatsu, 2013.
 //========================================================================================
-double Gamma_ambi_RF(double z, double Tm, double nbar, double Xp,
-                     double B0, double nB, double kd)
+double Gamma_ambi_RF(double z, double Tm, double nbar, double Xp, double B0, double nB)
 {
     // fit to the integral KK
     double L2=0.8313*pow(nB+3.0, 1.105)*(1.0-1.020e-2*(nB+3.0));
     
     // fit to the integral of Finelli
-    if(RF_KK_or_PF_Lorentz)
+    if(Get_evalode_Vars().KK_or_PF_Lorentz)
         L2=0.6615*pow(nB+3.0, 0.8874)*(1.0-0.1367*(nB+3.0)+7.574e-3*pow(nB+3.0, 2));
     
     // similar to Sethi & Subramanian, 2005
@@ -132,6 +115,7 @@ double Gamma_ambi_RF(double z, double Tm, double nbar, double Xp,
     double sig=0.649*pow(Tm, 0.375)*1.0e-9*1.0e-6;            // m^3 / sec
     double g=sig/(2.0*RF_mHatom);
     double rhobar=RF_mHatom*nbar;
+    double kd=kD_func(B0, nB);
     double Gamma=(1.0-Xp)/Xp/g*pow((1.0+z)*kd/(RF_Mpc*1.0e-2)*rhoB/rhobar, 2)*L2;
     
     // fit that reproduces KK. It seems this is ~1/(8pi)^2 times smaller than the correct rate
@@ -141,7 +125,7 @@ double Gamma_ambi_RF(double z, double Tm, double nbar, double Xp,
     //     << Gamma/L2/((1.0-Xp)/Xp) << endl;
 
     return Gamma;
-//    return Gamma/pow(8.0*RF_PI, 2);
+    //return Gamma/pow(8.0*RF_PI, 2);
 }
 
 //========================================================================================
@@ -149,15 +133,15 @@ double Gamma_ambi_RF(double z, double Tm, double nbar, double Xp,
 //========================================================================================
 void evaluate_magnetic_field_heating_RF(double z, double Hz, double fHe, double NH,
                                         double xp, double xHep, double Tm, double nbar,
-                                        double B0, double nB, double kD, double fvec[])
+                                        double B0, double nB, double fvec[])
 {
     double Xe=xp+xHep;
 //    double fheat=2.0/3.0/RF_kBoltz/NH;    // old expression for heat capacity
     double fheat=2.0/3.0/RF_kBoltz/(1.0+fHe+Xe)/NH;
     
     double dE_dz=0.0;
-    if(RF_decaying_turb_on)  dE_dz+=Gamma_decay_RF(z, Hz, B0, nB, kD)/Hz/(1.0+z);
-    if(RF_ambipolar_heat_on) dE_dz+=Gamma_ambi_RF(z, Tm, nbar, xp, B0, nB, kD)/Hz/(1.0+z);
+    if(Get_evalode_Vars().turb) dE_dz+=Gamma_decay_RF(z, Hz, B0, nB)/Hz/(1.0+z);
+    if(Get_evalode_Vars().ambi) dE_dz+=Gamma_ambi_RF(z, Tm, nbar, xp, B0, nB)/Hz/(1.0+z);
     
     fvec[2]-=fheat*dE_dz;
    

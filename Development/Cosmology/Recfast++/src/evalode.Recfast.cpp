@@ -231,16 +231,15 @@ void evaluate_Recfast_System(double z, double y[], double fvec[], int n)
     //====================================================================================
     // add terms due to magnetic field heating
     //====================================================================================
-    if(Get_B0_PMF()!=0.0)
+    if(RecVars.B0!=0.0)
         evaluate_magnetic_field_heating_RF(z, Hz, fHe, nHTot, xp, xHep,
                                            TM, nHTot/(1.0-Y_p()),
-                                           Get_B0_PMF(), Get_nB_PMF(),
-                                           Get_kD_PMF(), fvec);
+                                           RecVars.B0, RecVars.nB, fvec);
 
     //====================================================================================
     // add collisional processes for cases with potentially lots of heating
     //====================================================================================
-    if(Get_B0_PMF()!=0.0 || RecVars.f_dec!=0.0)
+    if(RecVars.B0!=0.0 || RecVars.f_dec!=0.0)
         evaluate_magnetic_field_heating_RF_colls(z, Hz, fHe, nHTot, xp, xHep, TM, fvec);
 
     return;

@@ -74,12 +74,13 @@ double fDM_CosmoRec=0.0;
 //==================================================================================================
 bool magnetic_fields=0;
 double B0_CosmoRec=0.0, nB_CosmoRec=0.0, kD_CosmoRec=0.0;
-bool Tr_Te_eval=0;
 
 bool decaying_turb_on =0;  // default mode set in "./Modules/Magnetic_fields.cpp"
 bool ambipolar_heat_on=0;  // default mode set in "./Modules/Magnetic_fields.cpp"
 bool KK_or_PF_Lorentz =0;  // choose parametrization of KK (==0) or PF (==1)
 
+// set functions defined in './Modules/Magnetic_fields.cpp'
+void Switch_PMF_off();
 void set_PMF_parameters_KK_PF(double B0, double nB, int PMF_mode, double h0);
 
 //==================================================================================================
@@ -94,12 +95,24 @@ struct Fund_Const_scaling
     double p_scale;
     // Scaling coefficients that we multiply rates/cross sections
     double f_a, f_b, f_t;
+    
+    Fund_Const_scaling() {
+        runmode=0;
+        a_scale=m_scale=1.0;
+        p_scale=0.0;
+        f_a=f_b=f_t=1.0;
+    }
 };
 
-Fund_Const_scaling FC_CosmoRec={0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0};
+Fund_Const_scaling FC_CosmoRec;
+
 // Switch to determine whether we are rescaling Helium recombination or not
 int FC_He_switch = 1;
-bool do_separate_H_He=0;
+
+// set functions defined in './Modules/Variation_constants.cpp'
+void Switch_VFC_off();
+void Set_VFC_pars(double aS, double mS, double pS, int RM);
+
 
 //==================================================================================================
 // memory for CosmoRec-ODE solver
@@ -111,21 +124,13 @@ ODE_solver_Rec::ODE_Solver_data ODE_Solver_info_CR;
 //==================================================================================================
 // for passing on the data about cosmology
 //==================================================================================================
-struct Parameters_form_initfile {
+struct Parameters_form_initfile
+{
     int nz;
-    double YP;
-    double fHe;
-    double To;
-    double Nnu;
-    double Omega0;    /* Omega matter    */
-    double OmegaB;    /* Omega Baryons   */
-    double OmegaK;    /* Omega Curvature */
-    double OmegaL;    /* Omega Lambda    */
     double zstart;
     double zend;
-    double F;
-    double H0;
-    double h100;
+    
+    Cosmos::parameters cosm_pars;
 };
 
 Parameters_form_initfile parameters;

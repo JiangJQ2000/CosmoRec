@@ -16,43 +16,30 @@ void set_startup_data(double params[12], Parameters_form_initfile &inparams)
     inparams.nz=(int)params[0];
     inparams.zstart=min(3400.0, params[1]);
     inparams.zend=params[2];
-    inparams.YP=params[3];
-    inparams.To=params[4];
-    inparams.Omega0=params[5];
-    inparams.OmegaB=params[6];
-    inparams.OmegaL=params[7];
-    inparams.OmegaK=params[8];
-    inparams.h100 = params[9];
-    inparams.Nnu = params[10];
-    if(params[11]==0.0) inparams.F=1.14;
-    else    inparams.F=params[11];
+    inparams.cosm_pars.Yp=params[3];
+    inparams.cosm_pars.T0=params[4];
+    inparams.cosm_pars.Omega_m=params[5];
+    inparams.cosm_pars.Omega_b=params[6];
+    inparams.cosm_pars.Omega_L=params[7];
+    inparams.cosm_pars.Omega_k=params[8];
+    inparams.cosm_pars.h100 = params[9];
+    inparams.cosm_pars.Nnu = params[10];
     
-    inparams.H0 = params[9]*100.0*1.0e+5/const_Mpc;
-    inparams.fHe=cosmos.fHe(params[3]);
+    if(params[11]==0.0) inparams.cosm_pars.Rec.F=1.14;
+    else inparams.cosm_pars.Rec.F=params[11];
     
     return;
 }
 
 //===========================================================================================================
-void set_cosmology(Parameters_form_initfile &inparams, Cosmos &cosmos, double fDM_ann, int CR_corr)
+void set_cosmology(Cosmos::parameters &cosm_pars, Cosmos &cosmos, double fDM_ann, int CR_corr)
 {
     if(show_CosmoRec_mess>=1) print_message(" Initializing cosmology object ");
     
-    Cosmos::parameters cosm_pars;
-    cosm_pars.h100=inparams.h100;
-    cosm_pars.T0=inparams.To;
-    cosm_pars.Yp=inparams.YP;
-    cosm_pars.Nnu=inparams.Nnu;
-    cosm_pars.Omega_m=inparams.Omega0; cosm_pars.Omega_b=inparams.OmegaB;
-    cosm_pars.Omega_L=inparams.OmegaL, cosm_pars.Omega_k=inparams.OmegaK;
-    cosm_pars.fudge=inparams.F;
-    
-    cosm_pars.fDM_annihilation=fDM_ann;
-    cosm_pars.CR_correction=CR_corr;
-    cosm_pars.A2s1s=const_HI_A2s_1s;
-    cosm_pars.eval_ion_Tr=Tr_Te_eval;
-    cosm_pars.do_separate_H_He=do_separate_H_He;
-    
+    cosm_pars.Rec.f_ann=fDM_ann;
+    cosm_pars.Rec.include_CF=CR_corr;
+    cosm_pars.Rec.A2s1s=const_HI_A2s_1s;
+
     //=======================================================================================================
     // initializing cosmos object...
     //=======================================================================================================
@@ -130,27 +117,7 @@ void read_entries_from_parameter_file(ifstream &paramfile, double *param)
     paramfile >> mS;
     paramfile >> pS;
     paramfile >> RM;
-    if(RM>0)
-    {
-        // set Recfast++ parameters
-        Set_VFC_params(aS, mS, pS, RM);
-        do_separate_H_He=1;
-        // set CosmoRec parameters
-        FC_CosmoRec.a_scale =(aS<=0.0 ? 1.0 : aS);
-        FC_CosmoRec.m_scale =(mS<=0.0 ? 1.0 : mS);
-        FC_CosmoRec.p_scale = pS; // not really used yet in CosmoRec! [JC]
-        FC_CosmoRec.runmode = RM;
-    }
-    else
-    {
-        // set Recfast++ parameters
-        Switch_VFC_off(); // switch VFC off
-        do_separate_H_He=0;
-        // set CosmoRec parameters
-        FC_CosmoRec.a_scale = FC_CosmoRec.m_scale = 1.0;
-        FC_CosmoRec.p_scale = 0.0;
-        FC_CosmoRec.runmode = 0;
-    }
+    Set_VFC_pars(aS, mS, pS, RM);
     
     paramfile >> nShells;
     paramfile >> nS_effective;
@@ -349,7 +316,7 @@ void set_startup_data(string filename, double param[12], Parameters_form_initfil
     
     if(wait==1) wait_f_r();
     
-    set_cosmology(inparams, cos, 0.0, 0);       
+    set_cosmology(inparams.cosm_pars, cos, 0.0, 0);       
 
     if(!hydrogen_and_helium_atom_are_set)
     { 

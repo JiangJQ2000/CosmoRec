@@ -122,20 +122,6 @@ double const_sigT      = const_sigT_0;
 double const_HeI_A2s_1s = const_HeI_A2s_1s_0;
 
 //===========================================================================================================
-// for Magnetic field heating module
-//===========================================================================================================
-// defined in Recfast++/src/Magnetic_fields.Recfast.cpp
-void Switch_PMF_off();
-void Set_PMF(bool decay_on, bool ambi_on, bool Lorentz, double B0, double nB, double kD);
-
-//===========================================================================================================
-// for variation of fundamental constants
-//===========================================================================================================
-// defined in Recfast++/src/Variation_constants.Recfast.cpp
-void Switch_VFC_off();
-void Set_VFC_params(double aS, double mS, double pS, int RM); // called once at the beginning
-
-//===========================================================================================================
 // these are several Modules (i.e. plugins) that are directly loaded when compiling.
 //===========================================================================================================
 #include "./Modules/global_variables.cpp"
@@ -220,7 +206,7 @@ void read_startup_data_RECFAST(string filename, Parameters_form_initfile &inpara
     }   
     
     set_startup_data(param, inparams);
-    set_cosmology(inparams, cosmos, fDM_CosmoRec, corr_fac);
+    set_cosmology(inparams.cosm_pars, cosmos, fDM_CosmoRec, corr_fac);
     
     return;
 }
@@ -682,7 +668,7 @@ void run_RECFAST_pp(double param[12], const int nz, double *z_arr,
     }   
     
     set_startup_data(param, parameters);
-    set_cosmology(parameters, cosmos, fDM, CT_corr);
+    set_cosmology(parameters.cosm_pars, cosmos, fDM, CT_corr);
     
     for(int l=0; l<nz; l++)
     {
@@ -824,31 +810,13 @@ int CosmoRec(const int runmode, const double runpars[15],
     //======================================================================
     // scaling of fundamental constants using input variables from camb
     //======================================================================
-    if(runpars[10] != 0)
+    if(runpars[10] != 0 && runpars[9] != 0.0 && runmode < 2)
     {
-        // set Recfast++ parameters
-        Set_VFC_params(runpars[7], runpars[8], runpars[9], runpars[10]);
-        // set CosmoRec parameters
-        FC_CosmoRec.a_scale=(runpars[7]<=0.0 ? 1.0 : runpars[7]);
-        FC_CosmoRec.m_scale=(runpars[8]<=0.0 ? 1.0 : runpars[8]);
-        FC_CosmoRec.p_scale = 0.0;
-
-        if(runpars[9] != 0.0 && runmode < 2)
-        {
-            cerr << "Cannot currently run CosmoRec with the power law!" << endl;
-            exit(1);
-        }
-        FC_CosmoRec.runmode=runpars[10];
+        cerr << "Cannot currently run CosmoRec with the power law!" << endl;
+        exit(1);
     }
-    else
-    {
-        // set Recfast++ parameters
-        Switch_VFC_off(); // switch VFC off
-        // set CosmoRec parameters
-        FC_CosmoRec.a_scale = FC_CosmoRec.m_scale = 1.0;
-        FC_CosmoRec.p_scale = 0.0;
-        FC_CosmoRec.runmode = 0;
-    }
+    
+    Set_VFC_pars(runpars[7], runpars[8], runpars[9], runpars[10]);
     
     //======================================================================
     double params[12];

@@ -66,50 +66,50 @@ struct main_Settings
 //====================================================================================================================
 // show parameters as they have been loaded (add parameters to the list here to show them; useful for debugging too)
 //====================================================================================================================
-void show_recombination_settings(const main_Settings &S)
+void show_recombination_settings(const CosmoPars &Cosmo, const RecPars &Rec)
 {
-    if(S.verbosity<=0) return;
+    if(Rec.verbosity<=0) return;
     
     cout << "\n Recfast++ :: show_recombination_settings: " << endl;
     cout << " running Recfast++ history for the following parameters: " << endl;
     
-    cout << "\n zs: " << S.Rec.zstart << "\t ze: " << S.Rec.zend << "\t nzpts: " << S.Rec.npts << endl;
-    cout << " Y_p: " << S.Cosmo.Yp << "\t TCMB: " << S.Cosmo.T0 << endl;
-    cout << " OmegaM: " << S.Cosmo.Omega_m << "\t OmegaB: " << S.Cosmo.Omega_b
-         << " OmegaL: " << S.Cosmo.Omega_L << "\t OmegaK: " << S.Cosmo.Omega_k << endl;
+    cout << "\n zs: " << Rec.zstart << "\t ze: " << Rec.zend << "\t nzpts: " << Rec.npts << endl;
+    cout << " Y_p: " << Cosmo.Yp << "\t TCMB: " << Cosmo.T0 << endl;
+    cout << " OmegaM: " << Cosmo.Omega_m << "\t OmegaB: " << Cosmo.Omega_b
+         << " OmegaL: " << Cosmo.Omega_L << "\t OmegaK: " << Cosmo.Omega_k << endl;
     cout << " Omega_rel (photons & neutrinos): "
-         << Recfastpp_Cosmology::calc_Orel(S.Cosmo.T0, S.Cosmo.Neff, S.Cosmo.h100)
-         << " Neff= " << S.Cosmo.Neff << endl;
+         << Recfastpp_Cosmology::calc_Orel(Cosmo.T0, Cosmo.Neff, Cosmo.h100)
+         << " Neff= " << Cosmo.Neff << endl;
     
-    cout << " Hubble constant in units of 100 km s-1 Mpc-1: " << S.Cosmo.h100 << endl;
-    cout << " Fudge factor for H recombination: " << S.Rec.F << endl;
+    cout << " Hubble constant in units of 100 km s-1 Mpc-1: " << Cosmo.h100 << endl;
+    cout << " Fudge factor for H recombination: " << Rec.F << endl;
     
-    cout << " Using HI A2s1s = " << S.Rec.A2s1s << " s^-1";
-    if(S.Rec.A2s1s==8.22458) cout << " (default value)";
+    cout << " Using HI A2s1s = " << Rec.A2s1s << " s^-1";
+    if(Rec.A2s1s==8.22458) cout << " (default value)";
     cout << endl;
     
-    if(S.Rec.f_ann!=0.0)
-        cout << " DM-annihilations with efficiency " << S.Rec.f_ann << " will be included " << endl;
+    if(Rec.f_ann!=0.0)
+        cout << " DM-annihilations with efficiency " << Rec.f_ann << " will be included " << endl;
     
-    if(S.Rec.f_dec!=0.0)
-        cout << " DM-decay parameters f_dec= " << S.Rec.f_dec << " and Gamma_dec= " << S.Rec.Gamma_dec << endl;
+    if(Rec.f_dec!=0.0)
+        cout << " DM-decay parameters f_dec= " << Rec.f_dec << " and Gamma_dec= " << Rec.Gamma_dec << endl;
     
-    if(S.Rec.include_CF)
+    if(Rec.include_CF)
         cout << " Including recombination corrections following Chluba & Thomas 2010 / Hart & Chluba 2017" << endl;
     
-    if(S.Rec.eval_ion_Tr) cout << " Using T=Tr for photo-ionization rate" << endl;
+    if(Rec.eval_ion_Tr) cout << " Using T=Tr for photo-ionization rate" << endl;
     else cout << " Using T=Te for photo-ionization rate (Recfast default)" << endl;
     
-    if(Get_B0_PMF()>0.0) cout << " Will include heating by magnetic fields "
-                              << "(decay==" << Get_decay_setting()
-                              << ", ambi==" << Get_ambi_setting()
-                              << ", Lorentz==" << Get_Lorentz_setting() << ")" << endl;
-    
-    if(Get_aScale()!=1.0 || Get_mScale()!=1.0  || Get_pScale()!=0.0)
-        cout << " Variation of fundamental constants: alp/alp_r== " << Get_aScale()
-             << " me/me_r== " << Get_mScale()
-             << " pow== " << Get_pScale()
-             << " mode== " << Get_rMode() << endl;
+    if(Rec.B0>0.0) cout << " Will include heating by magnetic fields "
+                          << "(decay==" << Rec.turb
+                          << ", ambi==" << Rec.ambi
+                          << ", Lorentz==" << Rec.KK_or_PF_Lorentz << ")" << endl;
+
+    if(Rec.aS!=1.0 || Rec.mS!=1.0 || Rec.pS!=0.0)
+        cout << " Variation of fundamental constants: alp/alp_r== " << Rec.aS
+             << " me/me_r== " << Rec.mS
+             << " pow== " << Rec.pS
+             << " mode== " << Rec.RM << endl;
     
     cout << endl;
 
@@ -249,50 +249,53 @@ void read_parameter_file(string fname, main_Settings &inp)
     if(found) inp.Rec.B0=dval;
     if(inp.Rec.B0<0){ cerr << " read_parameter_file : B0 >=0 " << endl; exit(1); }
 
-    parser_read(pfc, "include turbulent decay", ival, found, show_params);
-    if(found) inp.Rec.turb=(bool)ival;
-
-    parser_read(pfc, "include ambipolar diffusion", ival, found, show_params);
-    if(found) inp.Rec.ambi=(bool)ival;
-
-    if(inp.Rec.B0>0.0 && (inp.Rec.turb || inp.Rec.ambi) )
+    if(inp.Rec.B0>0.0)
     {
-        parser_read(pfc, "nB", dval, found, show_params);
-        if(found) inp.Rec.nB=dval;
-        if(inp.Rec.nB<-3.0){ cerr << " read_parameter_file : nB > -3.0 " << endl; exit(1); }
-
-        double kD=286.91/inp.Rec.B0; // in Mpc^-1; cos(theta)=1
-        Set_PMF(inp.Rec.turb, inp.Rec.ambi, 0, inp.Rec.B0, inp.Rec.nB, kD);
+        parser_read(pfc, "include turbulent decay", ival, found, show_params);
+        if(found) inp.Rec.turb=(bool)ival;
         
-        inp.Rec.eval_ion_Tr=1;       // use physical evaluation of temperature for decay
+        parser_read(pfc, "include ambipolar diffusion", ival, found, show_params);
+        if(found) inp.Rec.ambi=(bool)ival;
+
+        if(inp.Rec.turb || inp.Rec.ambi)
+        {
+            parser_read(pfc, "nB", dval, found, show_params);
+            if(found) inp.Rec.nB=dval;
+            if(inp.Rec.nB<-3.0){ cerr << " read_parameter_file : nB > -3.0 " << endl; exit(1); }
+            
+            parser_read(pfc, "Paoletti-Finelli Lorentz", ival, found, show_params);
+            if(found) inp.Rec.KK_or_PF_Lorentz=(inp.Rec.ambi ? (bool)ival : 0);
+
+            inp.Rec.eval_ion_Tr=1;       // use physical evaluation of temperature
+        }
     }
-    else Switch_PMF_off();           // switch PMF heating off
 
     //----------------------------------------------------------------------------------------------
     // variation of alpha and me/mp
     //----------------------------------------------------------------------------------------------
     parser_read(pfc, "Variation mode", ival, found, show_params);
-    if(found) inp.Rec.RM=(bool)ival;
+    if(found) inp.Rec.RM=ival;
     if(inp.Rec.RM>6){ cerr << " read_parameter_file : Variation mode <=6 " << endl; exit(1); }
 
     if(inp.Rec.RM>0)
     {
-        inp.Rec.do_separate_H_He=1;
-        
         parser_read(pfc, "alp/alp_ref", dval, found, show_params);
         if(found) inp.Rec.aS=dval;
-        if(inp.Rec.aS<=0){ cerr << " read_parameter_file : alp/alp_ref >0 " << endl; exit(1); }
 
         parser_read(pfc, "me/me_ref", dval, found, show_params);
         if(found) inp.Rec.mS=dval;
-        if(inp.Rec.mS<=0){ cerr << " read_parameter_file : me/me_ref >0 " << endl; exit(1); }
         
-        parser_read(pfc, "power for (1+z)^p", dval, found, show_params);
-        if(found) inp.Rec.pS=dval;
+        if(inp.Rec.aS<0 && inp.Rec.mS<0){ inp.Rec.aS=inp.Rec.mS=1.0; inp.Rec.RM=0; }
+        else if((inp.Rec.aS<0 && inp.Rec.mS==1.0) || (inp.Rec.aS==1.0 && inp.Rec.mS<0))
+        { inp.Rec.aS=inp.Rec.mS=1.0; inp.Rec.RM=0; }
+        else
+        {
+            parser_read(pfc, "power for (1+z)^p", dval, found, show_params);
+            if(found) inp.Rec.pS=dval;
 
-        Set_VFC_params(inp.Rec.aS, inp.Rec.mS, inp.Rec.pS, inp.Rec.RM);
+            inp.Rec.do_separate_H_He=1;
+        }
     }
-    else Switch_VFC_off(); // switch VFC off
 
     //==============================================================================================
     // cleanup
@@ -356,7 +359,7 @@ int main(int narg, char *args[])
     //====================================================================================
     main_Settings InputPars;
     read_parameter_file(fname, InputPars);
-    show_recombination_settings(InputPars);
+    show_recombination_settings(InputPars.Cosmo, InputPars.Rec);
     
     //====================================================================================
     // running Recfast part
@@ -378,22 +381,23 @@ int main(int narg, char *args[])
     if(InputPars.Rec.f_dec!=0.0) oname+=".DM_decay";
     if(InputPars.Rec.include_CF==1) oname+=".Rec_corrs_CT2010";
     
-    if(Get_B0_PMF()>0.0)
+    if(InputPars.Rec.B0>0.0)
     {
         oname+=".PMF_heating";
-        if(Get_decay_setting()) oname+=".turb";
-        if(Get_ambi_setting()) oname+=".ambi";
+        if(InputPars.Rec.turb) oname+=".turb";
+        if(InputPars.Rec.ambi) oname+=".ambi";
+        if(InputPars.Rec.KK_or_PF_Lorentz) oname+=".PF_Lorentz";
     }
     
-    if((Get_aScale()!=1.0 || Get_pScale()!=0.0) && Get_aScale()>0.0) oname+=".alp";
-    if((Get_mScale()!=1.0 || Get_pScale()!=0.0) && Get_mScale()>0.0) oname+=".me";
-    if(Get_pScale()!=0.0) oname+=".power";
-    if(Get_rMode()==1) oname+=".Boltz";
-    else if(Get_rMode()==2) oname+=".sigT";
-    else if(Get_rMode()==3) oname+=".A2s1s";
-    else if(Get_rMode()==4) oname+=".phot";
-    else if(Get_rMode()==5) oname+=".Ly-a";
-    else if(Get_rMode()==6) oname+=".all";
+    if((InputPars.Rec.aS!=1.0 || InputPars.Rec.pS!=0.0) && InputPars.Rec.aS>0.0) oname+=".alp";
+    if((InputPars.Rec.mS!=1.0 || InputPars.Rec.pS!=0.0) && InputPars.Rec.mS>0.0) oname+=".me";
+    if(InputPars.Rec.pS!=0.0) oname+=".power";
+    if(InputPars.Rec.RM==1) oname+=".Boltz";
+    else if(InputPars.Rec.RM==2) oname+=".sigT";
+    else if(InputPars.Rec.RM==3) oname+=".A2s1s";
+    else if(InputPars.Rec.RM==4) oname+=".phot";
+    else if(InputPars.Rec.RM==5) oname+=".Ly-a";
+    else if(InputPars.Rec.RM==6) oname+=".all";
     
     if(InputPars.Rec.eval_ion_Tr) oname+=".Tr";
     oname+=InputPars.addname;

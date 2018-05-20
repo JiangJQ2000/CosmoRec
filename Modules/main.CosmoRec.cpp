@@ -110,16 +110,16 @@ int Xe_frac_effective_rates()
         {
             zs=zarr[i-1]; ze=zarr[i];
             
-            if( (zs<200.0 || parameters.fHe-HeI_Atoms.Xi(0)<=Xi_HeI_switch) && flag_He==1)
+            if( (zs<200.0 || cosmos.fHe()-HeI_Atoms.Xi(0)<=Xi_HeI_switch) && flag_He==1)
             { 
-                print_var_change_message("Xe_frac :: switching off helium at XHeII =", parameters.fHe-HeI_Atoms.Xi(0));
+                print_var_change_message("Xe_frac :: switching off helium at XHeII =", cosmos.fHe()-HeI_Atoms.Xi(0));
                 flag_He=0;
                 HeI_was_switched_off_at_z=zs;
                 
                 //--------------------------------------------------------
                 // set helium to be completely recombined
                 //--------------------------------------------------------
-                Level_I.X[Level_I.index_HeI]=parameters.fHe;
+                Level_I.X[Level_I.index_HeI]=cosmos.fHe();
                 // crucial for log-spline setup; created nan in previous version [7th March, 2017, JC]
                 for(int i=Level_I.index_HeI+1; i<Level_I.index_HeI+Level_I.nHeIeq; i++) Level_I.X[i]=1.0e-300;
                 for(int i=0; i<(int)HeI_Atoms.Get_total_number_of_Levels(); i++)

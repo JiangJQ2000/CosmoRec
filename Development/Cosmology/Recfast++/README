@@ -1,6 +1,6 @@
 ====================================================================================================
 
-Recfast++ (v1.2, April 2018)
+Recfast++ (v2.0, May 2018)
 
 ====================================================================================================
 This directory contains the flexible cosmological recombination code Recfast++ (v1.2), 
@@ -11,7 +11,7 @@ although it is not maintained), but was then strongly rewritten and updated to:
  
 - perform the normal Recfast computation (Recfast v1.4.2 with normal helium rec)
 - include the recombination corrections of CosmoRec (Chluba & Thomas 2010). 
-- allow running a simple Dark matter annihilation and decay module.
+- allow running a simple Dark matter annihilation and decay module (Chluba, 2010, MNRAS, 402).
 - include of primordial magnetic field heating (Chluba et al., 2015, MNRAS, 451, 2244)
 - compute variations of fundamental constants (Hart & Chluba, 2017, 474, 1850-1861)
 

@@ -4,6 +4,7 @@
 // CITA, University of Toronto
 // All rights reserved.
 //====================================================================================================================
+// 20.05.2018: all recombination settings are now centrally controlled (JC)
 // 23.04.2018: added structures to controll all the parameters and data passed on
 // 21.02.2018: added cosmic time setup for internal use and decaying particles
 // 10.01.2018: compute better high-z Te solution (JC)
@@ -24,7 +25,7 @@
 #ifndef RECFAST_PP_H
 #define RECFAST_PP_H
 
-#define RECFASTPP_VERSION "Recfast++ v1.2"
+#define RECFASTPP_VERSION "Recfast++ v2.0"
 
 #include <stdlib.h>
 #include <iostream>
@@ -38,13 +39,13 @@ using namespace std;
 //====================================================================================================================
 struct CosmoPars
 {
-    double Yp;
+    double Yp;               // Helium mass fraction
     double T0;               // Temperature of CMB at z=0
     double Omega_m;          // Omega matter
     double Omega_b;          // Omega Baryons
     double Omega_k;          // Omega Curvature
     double Omega_L;          // Omega Lambda
-    double h100;
+    double h100;             // Hubble constant in units of 100 km s^-1 Mpc^-1
     double Neff;             // effective number of neutrinos
     
     //========================================================================================
@@ -61,6 +62,7 @@ struct CosmoPars
     //========================================================================================
     void show()
     {
+        cout << " CosmoPars :: show()" << endl;
         cout << " Yp= " << Yp << " T0= " << T0 << endl;
         cout << " Omega_m= " << Omega_m   << " Omega_b= " << Omega_b
              << " Omega_L= " << Omega_L   << " Omega_k= " << Omega_k
@@ -72,9 +74,9 @@ struct CosmoPars
 //====================================================================================================================
 struct RecPars
 {
-    int verbosity;
-    int npts;
-    double zstart, zend;
+    int verbosity;             // level of messages you will see
+    int npts;                  // number of redshift points
+    double zstart, zend;       // redshift range
     
     double A2s1s;              // Hydrogen 2gamma rate
     double F;                  // Recfast fudge factor
@@ -83,7 +85,8 @@ struct RecPars
     double f_dec, Gamma_dec;   // decay cases
     
     double B0, nB;             // primordial magnetic fields
-    bool turb, ambi;
+    bool turb, ambi;           // add turbulent decay and / or ambipolar diffusion
+    bool KK_or_PF_Lorentz;     // KK or PF integral for Lorentz force
     
     double aS, mS, pS;         // alp/alp_r, me/me_r, power for (1+z)^p
     int RM;                    // mode
@@ -113,9 +116,8 @@ struct RecPars
         include_CF=1;
         f_ann=0.0;
         f_dec=0.0; Gamma_dec=0.0;
-        B0=nB=0.0; turb=ambi=0;
+        B0=nB=0.0; turb=ambi=0; KK_or_PF_Lorentz=0;
         aS=mS=1.0; pS=0.0; RM=0;
-        //-------------------------------------//
         do_separate_H_He=eval_ion_Tr=0;
     }
     
@@ -124,6 +126,7 @@ struct RecPars
     //========================================================================================
     void show()
     {
+        cout << " RecPars :: show()" << endl;
         cout << " Recombination verbosity = " << verbosity << endl;
         cout << " zstart = " << zstart << " zend = " << zend << " npts= " << npts << endl;
         cout << " Hydrogen 2gamma rate = " << A2s1s << endl;
@@ -133,8 +136,11 @@ struct RecPars
         cout << " f_dec = " << f_dec << " Gamma_dec = " << Gamma_dec << endl;
         cout << " B0 = " << B0 << " nB = " << nB << endl;
         cout << " turb = " << turb << " ambi = " << ambi << endl;
+        cout << " KK_or_PF_Lorentz = " << KK_or_PF_Lorentz << endl;
         cout << " alp/alp_r = " << aS << " alp/alp_r = " << mS << " power for (1+z)^p = " << pS << endl;
         cout << " mode for variation of constants: " << RM << endl;
+        cout << " do separate H and He correction function: " << do_separate_H_He << endl;
+        cout << " evaluate beta(T=Tr): " << eval_ion_Tr << endl;
     }
 };
 

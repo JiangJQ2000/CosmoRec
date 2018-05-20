@@ -9,10 +9,30 @@
 //========================================================================================
 
 //========================================================================================
+// switch magnetic heating off
+//========================================================================================
+void Switch_PMF_off()
+{
+    magnetic_fields=0;
+    KK_or_PF_Lorentz=decaying_turb_on=ambipolar_heat_on=0;
+    B0_CosmoRec=nB_CosmoRec=0.0; kD_CosmoRec=1.0;
+    
+    // Recfast++ settings
+    Cosmos::parameters *Cpars=&parameters.cosm_pars;
+    Cpars->Rec.B0=0.0;          // switch PMF heating off
+    Cpars->Rec.eval_ion_Tr=0;   // do old recfast evaluation
+    //Cpars->Rec.eval_ion_Tr=1; // do new recfast evaluation
+
+    return;
+}
+
+//========================================================================================
 // convert parameters between KK and PF parametrizations
 //========================================================================================
 void set_PMF_parameters_KK_PF(double B0, double nB, int PMF_mode, double h0)
 {
+    Cosmos::parameters *Cpars=&parameters.cosm_pars;
+
     if(B0>0.0 && PMF_mode!=0)
     {
         //======================================================================
@@ -32,7 +52,8 @@ void set_PMF_parameters_KK_PF(double B0, double nB, int PMF_mode, double h0)
             //kD=pow(5.5e+4*h0, 1.0/nBp5)/pow(B_lambda, 2.0/nBp5)*pow(k_lambda, nBp3/nBp5);
             B0=sqrt( B_lambda*B_lambda*pow(kD*lambda_Mpc, nBp3)/Gamma_JC(nBp5/2.0) );
         }
-        
+        //======================================================================
+
         B0_CosmoRec=B0;
         nB_CosmoRec=nB;
         kD_CosmoRec=kD;
@@ -46,19 +67,13 @@ void set_PMF_parameters_KK_PF(double B0, double nB, int PMF_mode, double h0)
         else{ cerr << " PMF-mode not existing. Exiting..." << endl; exit(1); }
 
         // Recfast++ settings
-        Set_PMF(decaying_turb_on, ambipolar_heat_on, KK_or_PF_Lorentz, B0, nB, kD);
-        Tr_Te_eval=1;
+        Cpars->Rec.turb=decaying_turb_on;
+        Cpars->Rec.ambi=ambipolar_heat_on;
+        Cpars->Rec.KK_or_PF_Lorentz=KK_or_PF_Lorentz;
+        Cpars->Rec.B0=B0; Cpars->Rec.nB=nB;
+        Cpars->Rec.eval_ion_Tr=1;
     }
-    else
-    {
-        KK_or_PF_Lorentz=decaying_turb_on=ambipolar_heat_on=0;
-        B0_CosmoRec=nB_CosmoRec=kD_CosmoRec=0.0;
-
-        // Recfast++ settings
-        Switch_PMF_off();           // switch PMF heating off
-        Tr_Te_eval=0;               // do old recfast evaluation
-        //Tr_Te_eval=1;             // do new recfast evaluation
-    }
+    else Switch_PMF_off();
 
     return;
 }

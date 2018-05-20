@@ -158,7 +158,7 @@ void setup_Hydrogen_atom()
 //==================================================================================================
 void Set_Hydrogen_Levels_to_Saha(double z)
 {
-    Level_I.X[0]=min(cosmos.Xe_Seager(z), 1.0+parameters.fHe);// electrons
+    Level_I.X[0]=min(cosmos.Xe_Seager(z), 1.0+cosmos.fHe());// electrons
     double Xe=Level_I.X[0];
     double Xp=min(cosmos.Xp(z), 1.0);
     

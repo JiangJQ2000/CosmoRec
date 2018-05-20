@@ -4,6 +4,7 @@
 // CITA, University of Toronto
 // All rights reserved.
 //====================================================================================================================
+// 20.05.2018: all recombination settings are now centrally controlled (JC)
 // 23.04.2018: added structures to controll all the parameters and data passed on
 // 21.02.2018: added cosmic time setup for internal use and decaying particles
 // 10.01.2018: compute better high-z Te solution (JC)

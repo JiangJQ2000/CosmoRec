@@ -15,24 +15,11 @@
 #define MAGNETIC_FIELDS_H
 
 //========================================================================================
-// Settings and parameter access
-//========================================================================================
-void Switch_PMF_off();
-void Set_PMF(bool decay_on, bool ambi_on, bool Lorentz, double B0, double nB, double kD);
-
-double Get_B0_PMF();
-double Get_nB_PMF();
-double Get_kD_PMF();
-bool Get_decay_setting();
-bool Get_ambi_setting();
-bool Get_Lorentz_setting();
-
-//========================================================================================
 // evaluation of ODE terms for magnetic heating
 //========================================================================================
 void evaluate_magnetic_field_heating_RF(double z, double Hz, double fHe, double NH,
                                         double xp, double xHep, double Tm, double nbar,
-                                        double B0, double nB, double kD, double fvec[]);
+                                        double B0, double nB, double fvec[]);
 
 //========================================================================================
 // evaluation of ODE terms for collisions

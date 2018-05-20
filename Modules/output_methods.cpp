@@ -83,7 +83,7 @@ void open_files(ofstream *Xfiles, string path, int fresh=1)
     // Added for correction functions LH & JC
     if(write_corrections)
     {
-        if(Tr_Te_eval)
+        if(parameters.cosm_pars.Rec.eval_ion_Tr)
             Xfiles[6].open((prename+"correction_function.Tr"+addname).c_str(),wrmode);
         else Xfiles[6].open((prename+"correction_function"+addname).c_str(),wrmode);
     }
@@ -134,7 +134,7 @@ void write_HI_X_array_to_file(ofstream &ofile, double zval, double *X, int nHIeq
     ofile << scientific << " " << X[neq-1];
     // Xp, XeHeII
     ofile << scientific << " " << 1.0-Hydrogen_Atoms.X_tot();
-    ofile << scientific << " " << parameters.fHe-HeI_Atoms.X_tot() << endl;
+    ofile << scientific << " " << cosmos.fHe()-HeI_Atoms.X_tot() << endl;
     
     return;
 }
@@ -143,8 +143,8 @@ void write_HI_HeI_Xe_to_file(ofstream &ofile, double zval, double Xe)
 {
     ofile << scientific << zval;
     ofile << scientific << " " << 1.0-Hydrogen_Atoms.X_tot();
-    ofile << scientific << " " << parameters.fHe-HeI_Atoms.X_tot();
-    ofile << scientific << " " << 1.0-Hydrogen_Atoms.X_tot()+parameters.fHe-HeI_Atoms.X_tot();
+    ofile << scientific << " " << cosmos.fHe()-HeI_Atoms.X_tot();
+    ofile << scientific << " " << 1.0-Hydrogen_Atoms.X_tot()+cosmos.fHe()-HeI_Atoms.X_tot();
     ofile << scientific << " " << Xe << endl;
     return;
 }
@@ -159,9 +159,9 @@ void write_correction_functions_to_file(ofstream &ofile, double zval, Cosmos &co
     // Refrain from considering the correction functions if the redshift is past the Recfast++ limit
     if (zval < 50.) return;
     double f_H, f_He, f_tot;
-    f_tot = (1.0-Hydrogen_Atoms.X_tot()+parameters.fHe-HeI_Atoms.X_tot())/(cosmos.Xp(zval)+parameters.fHe-cosmos.XHeI1s(zval))-1;
+    f_tot = (1.0-Hydrogen_Atoms.X_tot()+cosmos.fHe()-HeI_Atoms.X_tot())/(cosmos.Xp(zval)+cosmos.fHe()-cosmos.XHeI1s(zval))-1;
     f_H  = (1.0-Hydrogen_Atoms.X_tot())/cosmos.Xp(zval)-1;
-    f_He = (parameters.fHe-HeI_Atoms.X_tot())/(parameters.fHe-cosmos.XHeI1s(zval))-1;
+    f_He = (cosmos.fHe()-HeI_Atoms.X_tot())/(cosmos.fHe()-cosmos.XHeI1s(zval))-1;
     // Write correction functions to the file along with the redshift
     ofile << scientific << zval << " " << f_tot << " " << f_H << " " << f_He;
     ofile << endl;
@@ -188,7 +188,7 @@ void write_X_Recfast_z_to_file(ofstream &ofile, double zval, Cosmos &cosmos)
           << cosmos.Te(zval) << " "
 //        << cosmos.dXe_dz_Seager(zval) << " " << cosmos.X1s(zval) << " " 
 //        << cosmos.dX1s_dz(zval) << " " << cosmos.Te_Tg(zval) << " " << cosmos.H(zval)
-//        << cosmos.Xp(zval) << " " << parameters.fHe-cosmos.XHe1s(zval)
+//        << cosmos.Xp(zval) << " " << cosmos.fHe()-cosmos.XHe1s(zval)
           << endl;
     
     return;

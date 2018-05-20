@@ -4,7 +4,6 @@
 // The University of Manchester
 // All rights reserved.
 //===========================================================================================
-// 30.03.2017: added set functions for parameters related to VFC [JC]
 
 //===========================================================================================
 // This simple module allows to include the effects of variations of alpha and me into
@@ -15,6 +14,8 @@
 #ifndef VAR_CONSTS_H
 #define VAR_CONSTS_H
 
+//===========================================================================================
+// structure to communicate current state of factors
 //===========================================================================================
 struct Variables_Fund_Consts
 {
@@ -37,7 +38,8 @@ struct Variables_Fund_Consts
 // run mode settings
 //===========================================================================================
 // The following is a description of all the different runmode settings and which
-// value corresponds to which mode
+// value corresponds to which mode. The modes are accessed by loading the data using
+// Get_evalode_Vars() from 'evalode.Recfast.cpp'
 //===========================================================================================
 // 0 - no rescaling
 // 1 - Rescaling of Boltzmann factor exponentials (i.e., temperatures)
@@ -47,18 +49,7 @@ struct Variables_Fund_Consts
 // 5 - Rescaling of Lyman alpha rates
 // 6 - Rescale everything
 //===========================================================================================
-void Switch_VFC_off();
-void Set_VFC_params(double aS, double mS, double pS, int RM); // called once at the beginning
-
 void Set_var_const_scale_factors(double z, Variables_Fund_Consts &D);
-
-//========================================================================================
-// access parameters
-//========================================================================================
-double Get_aScale();
-double Get_mScale();
-double Get_pScale();
-int Get_rMode();
 
 //===========================================================================================
 // restore initial values

@@ -240,23 +240,11 @@ void Cosmos :: init(const parameters &pars)
     CosmoRF.Omega_m=O_m; CosmoRF.Omega_b=O_b; CosmoRF.Omega_k=O_k; CosmoRF.Omega_L=O_L;
 
     // Recfast++ recombination settings
+    RecRF=pars.Rec;
+    // overwrite a few settings
     RecRF.verbosity=Cosmos_mess_flag;
     RecRF.npts=n_Xe; RecRF.zstart=zsRe; RecRF.zend=0.0;
-    RecRF.F=(pars.fudge==0.0 ? 1.14 : pars.fudge);
-    RecRF.include_CF=pars.CR_correction;
-    RecRF.f_ann=pars.fDM_annihilation;
-    RecRF.A2s1s=pars.A2s1s;
-    RecRF.eval_ion_Tr=pars.eval_ion_Tr;
-    RecRF.do_separate_H_He=pars.do_separate_H_He;
-/*
-     double f_dec, Gamma_dec;   // decay cases
-     
-     double B0, nB;             // primordial magnetic fields
-     bool turb, ambi;
-     
-     double aS, mS, pS;         // alp/alp_r, me/me_r, power for (1+z)^p
-     int RM;                    // mode
-*/
+
     return;
 }
 

@@ -203,15 +203,9 @@ public:
         double Omega_L, Omega_k; // if Omega_L <= 0 set internally assuming Omega_tot=1
         
         //================================================================================
-        // recombination specific
+        // recombination specific for Recfast++
         //================================================================================
-        double fudge;                 // old recfast recombination fudge factor
-        double fDM_annihilation;      // DM annihilation efficiency
-        bool CR_correction;           // switch to include CosmoRec correction functions
-        
-        double A2s1s;                 // Hydrogen 2gamma rate
-        bool eval_ion_Tr;             // temperature evaluation of beta_phot
-        bool do_separate_H_He;        // for correction function settings
+        RecPars Rec; // some settings will be overwritten in init(const parameters &pars)
         
         //================================================================================
         // default values set through constructor
@@ -220,8 +214,6 @@ public:
         {
             h100=0.71; T0=2.726; Yp=0.24, Nnu=3.046;
             Omega_m=0.26, Omega_b=0.044, Omega_L=0.0; Omega_k=0.0;
-            fudge=1.14; fDM_annihilation=0; CR_correction=1;
-            A2s1s=8.22458; do_separate_H_He=eval_ion_Tr=0;
         }
     };
 

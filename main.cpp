@@ -81,8 +81,6 @@ int main_random()
 
     for(int i = 0; i < nrep; i++) 
     {
-        cout << " **** Iteration: " << i << " ****" << endl;
-
         h0 = h0_l + (h0_u - h0_l) * drand48();
         omegab = (ombh2_l + (ombh2_u - ombh2_l) * drand48()) / (h0*h0);
         omegac = (omch2_l + (omch2_u - omch2_l) * drand48()) / (h0*h0);
@@ -99,6 +97,18 @@ int main_random()
         pS = pS_l + (pS_u - pS_l) * drand48();
         pS = 0.0;
         
+        runpars[3]=A2s1s;
+        
+        runpars[4]=B0*0;
+        runpars[5]=nB;
+        
+        runpars[7]=aS;
+        runpars[9]=pS;
+        
+        CosmoRec(runmode, runpars, omegac, omegab, omegak, Nnu,
+                 h0, tcmb, yhe, nz, z_arr, Xe_arr, Te_arr, 0);
+        
+        cout << " **** Iteration: " << i << " ****" << endl;
         cout << " omegab= " << omegab << endl;
         cout << " omegac= " << omegac << endl;
         cout << " omegam= " << omegac+omegab << endl;
@@ -111,17 +121,6 @@ int main_random()
         cout << " nB=  " << nB << endl;
         cout << " aS=  " << aS << endl;
         cout << " pS=  " << pS << endl;
-        
-        runpars[3]=A2s1s;
-        
-        runpars[4]=B0*0;
-        runpars[5]=nB;
-        
-        runpars[7]=aS;
-        runpars[9]=pS;
-        
-        CosmoRec(runmode, runpars, omegac, omegab, omegak, Nnu,
-                 h0, tcmb, yhe, nz, z_arr, Xe_arr, Te_arr, 0);
         
         seconds_end=clock();
         double seconds_Drun=(1.0*seconds_end-seconds_start)/CLOCKS_PER_SEC;

@@ -99,6 +99,7 @@ struct Fund_Const_scaling
 Fund_Const_scaling FC_CosmoRec={0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0};
 // Switch to determine whether we are rescaling Helium recombination or not
 int FC_He_switch = 1;
+bool do_separate_H_He=0;
 
 //==================================================================================================
 // memory for CosmoRec-ODE solver

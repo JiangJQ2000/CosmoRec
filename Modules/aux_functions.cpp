@@ -51,6 +51,7 @@ void set_cosmology(Parameters_form_initfile &inparams, Cosmos &cosmos, double fD
     cosm_pars.CR_correction=CR_corr;
     cosm_pars.A2s1s=const_HI_A2s_1s;
     cosm_pars.eval_ion_Tr=Tr_Te_eval;
+    cosm_pars.do_separate_H_He=do_separate_H_He;
     
     //=======================================================================================================
     // initializing cosmos object...
@@ -133,6 +134,7 @@ void read_entries_from_parameter_file(ifstream &paramfile, double *param)
     {
         // set Recfast++ parameters
         Set_VFC_params(aS, mS, pS, RM);
+        do_separate_H_He=1;
         // set CosmoRec parameters
         FC_CosmoRec.a_scale =(aS<=0.0 ? 1.0 : aS);
         FC_CosmoRec.m_scale =(mS<=0.0 ? 1.0 : mS);
@@ -143,6 +145,7 @@ void read_entries_from_parameter_file(ifstream &paramfile, double *param)
     {
         // set Recfast++ parameters
         Switch_VFC_off(); // switch VFC off
+        do_separate_H_He=0;
         // set CosmoRec parameters
         FC_CosmoRec.a_scale = FC_CosmoRec.m_scale = 1.0;
         FC_CosmoRec.p_scale = 0.0;

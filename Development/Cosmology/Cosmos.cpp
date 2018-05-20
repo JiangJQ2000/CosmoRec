@@ -247,6 +247,7 @@ void Cosmos :: init(const parameters &pars)
     RecRF.f_ann=pars.fDM_annihilation;
     RecRF.A2s1s=pars.A2s1s;
     RecRF.eval_ion_Tr=pars.eval_ion_Tr;
+    RecRF.do_separate_H_He=pars.do_separate_H_He;
 /*
      double f_dec, Gamma_dec;   // decay cases
      

@@ -364,8 +364,7 @@ void fcn_effective(double z, Data_Level_I &LI)
     // neutral helium part
     //==================================================================
     if(flag_He==1) fcn_HeI_effective(z, Xe, Tg, NH, H_z, XHeII, iHeI, LI);
-    
-    
+        
     //==================================================================
     // DM annihilation
     //==================================================================

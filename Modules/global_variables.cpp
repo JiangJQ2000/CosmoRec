@@ -117,6 +117,54 @@ ODE_solver_Rec::ODE_solver_accuracies tols;
 ODE_solver_Rec::ODE_Solver_data ODE_Solver_info_CR;
 
 //==================================================================================================
+// for reading in CosmoRec specific settings
+//==================================================================================================
+struct CosmoRec_parameters
+{
+    //----------------------------------------------------------------------------------------------
+    // Hydrogen settings
+    //----------------------------------------------------------------------------------------------
+    int nShells, nS_effective;
+    int Diffusion_flag;
+    int induced_flag;
+    int nS_2gamma, nS_Raman;
+    
+    //----------------------------------------------------------------------------------------------
+    // HeI settings
+    //----------------------------------------------------------------------------------------------
+    int nShellsHeI;
+    int HI_absorption;
+    int spin_forbidden;
+    int HeI_Feedback;
+
+    CosmoRec_parameters()
+    {
+        nShells=3; nS_effective=500;
+        Diffusion_flag=0;
+        induced_flag=0;
+        nS_2gamma=nS_Raman=0;
+        //
+        nShellsHeI=3;
+        HI_absorption=1;
+        spin_forbidden=1;
+        HeI_Feedback=2;
+    }
+    
+    void show()
+    {
+        cout << " CosmoRec_parameters :: show()" << endl;
+        cout << " Hydrogen settings: " << endl;
+        cout << " nShells= " << nShells << " nS_effective= " << nS_effective << endl;
+        cout << " Diffusion_flag= " << Diffusion_flag << " induced_flag= " << induced_flag << endl;
+        cout << " nS_2gamma= " << nS_2gamma << " nS_Raman= " << nS_Raman << endl;
+        cout << " HeI settings: " << endl;
+        cout << " nShellsHeI= " << nShellsHeI << endl;
+        cout << " HI_absorption= " << HI_absorption << " spin_forbidden= " << spin_forbidden << endl;
+        cout << " HeI_Feedback= " << HeI_Feedback << endl;
+    }
+};
+
+//==================================================================================================
 // for passing on the data about cosmology
 //==================================================================================================
 struct Parameters_form_initfile
@@ -127,28 +175,30 @@ struct Parameters_form_initfile
 
     string path, addname;
 
-    Cosmos::parameters cosm_pars;
+    Cosmos::parameters cosm_pars; // this contains Recfast++ parameters cosm_pars.Rec
+    CosmoRec_parameters CR_pars;  // specific CosmoRec parameters
     
     Parameters_form_initfile()
     {
         verbosity=show_CosmoRec_mess;
-        nz=2000;
-        zstart=3000; zend=0.0;
+        nz=2000; zstart=3200; zend=0.0;
     }
     
     void show()
     {
         cout << " Parameters_form_initfile :: show()" << endl;
         cout << " Verbosity level " << verbosity << endl;
+        cout << " path = " << path << " addname= " << addname << endl;
         cout << " nz = " << nz << " zstart= " << zstart << " zend= " << zend << endl;
         cosm_pars.show();
+        CR_pars.show();
     }
 };
 
 Parameters_form_initfile parameters;
 
 //==================================================================================================
-// Level I: Xi=Ni/NHtot 
+// Level I: Xi=Ni/NHtot [structure for storage of solutions etc]
 //==================================================================================================
 struct Data_Level_I
 {

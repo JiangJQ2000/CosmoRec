@@ -221,6 +221,12 @@ public:
         //================================================================================
         void show()
         {
+            cout << " Cosmos :: parameters :: show()" << endl;
+            cout << " Yp= " << Yp << " T0= " << T0 << endl;
+            cout << " Omega_m= " << Omega_m   << " Omega_b= " << Omega_b
+                 << " Omega_L= " << Omega_L   << " Omega_k= " << Omega_k
+                 << " Neff= " << Nnu << endl;
+            cout << " Hubble constant in units of 100 km s^-1 Mpc^-1: " << h100 << endl;
             Rec.show();
         }
     };

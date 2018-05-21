@@ -137,7 +137,7 @@ struct RecPars
         cout << " B0 = " << B0 << " nB = " << nB << endl;
         cout << " turb = " << turb << " ambi = " << ambi << endl;
         cout << " KK_or_PF_Lorentz = " << KK_or_PF_Lorentz << endl;
-        cout << " alp/alp_r = " << aS << " alp/alp_r = " << mS << " power for (1+z)^p = " << pS << endl;
+        cout << " alp/alp_r = " << aS << " me/me_r = " << mS << " power for (1+z)^p = " << pS << endl;
         cout << " mode for variation of constants: " << RM << endl;
         cout << " do separate H and He correction function: " << do_separate_H_He << endl;
         cout << " evaluate beta(T=Tr): " << eval_ion_Tr << endl;

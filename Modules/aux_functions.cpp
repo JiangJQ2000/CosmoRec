@@ -96,6 +96,189 @@ void set_array_dimensions_and_parameters(int wait=0)
 }
 
 //===========================================================================================================
+void read_cosmology_params_from_file(file_content &pfc, Cosmos::parameters &C, bool show_params)
+{
+    bool found; double dval;
+
+    //==============================================================================================
+    // cosmological parameters
+    //==============================================================================================
+    parser_read(pfc, "Yp", dval, found, show_params);
+    if(found) C.Yp=dval;
+    
+    parser_read(pfc, "T0", dval, found, show_params);
+    if(found) C.T0=dval;
+    
+    parser_read(pfc, "Omega_m", dval, found, show_params);
+    if(found) C.Omega_m=dval;
+    
+    parser_read(pfc, "Omega_b", dval, found, show_params);
+    if(found) C.Omega_b=dval;
+    
+    parser_read(pfc, "Omega_k", dval, found, show_params);
+    if(found) C.Omega_k=dval;
+    
+    parser_read(pfc, "Omega_L", dval, found, show_params);
+    if(found) C.Omega_L=dval;
+    
+    parser_read(pfc, "h100", dval, found, show_params);
+    if(found) C.h100=dval;
+    
+    parser_read(pfc, "N_eff", dval, found, show_params);
+    if(found) C.Nnu=dval;
+    
+    return;
+}
+
+//===========================================================================================================
+void read_CosmoRec_params_from_file(file_content &pfc, CosmoRec_parameters &CR, bool show_params)
+{
+    bool found; int ival;
+    
+    //----------------------------------------------------------------------------------------------
+    // settings for HI part
+    //----------------------------------------------------------------------------------------------
+    parser_read(pfc, "number of hydrogen shells", ival, found, show_params);
+    if(found) CR.nShells=ival;
+
+    parser_read(pfc, "nS for effective HI rates", ival, found, show_params);
+    if(found) CR.nS_effective=ival;
+
+    parser_read(pfc, "run HI PDE part", ival, found, show_params);
+    if(found) CR.Diffusion_flag=ival;
+
+    parser_read(pfc, "correction to 2s-1s channel", ival, found, show_params);
+    if(found) CR.induced_flag=ival;
+
+    parser_read(pfc, "nS two-photon decays", ival, found, show_params);
+    if(found) CR.nS_2gamma=ival;
+
+    parser_read(pfc, "nS Raman-scattering", ival, found, show_params);
+    if(found) CR.nS_Raman=ival;
+
+    //----------------------------------------------------------------------------------------------
+    // settings for HeI part
+    //----------------------------------------------------------------------------------------------
+    parser_read(pfc, "number of helium shells", ival, found, show_params);
+    if(found) CR.nShellsHeI=ival;
+
+    parser_read(pfc, "HI absorption", ival, found, show_params);
+    if(found) CR.HI_absorption=ival;
+
+    parser_read(pfc, "spin forbidden transitions", ival, found, show_params);
+    if(found) CR.spin_forbidden=ival;
+
+    parser_read(pfc, "HeI feedback setting", ival, found, show_params);
+    if(found) CR.HeI_Feedback=ival;
+
+    return;
+}
+
+//===========================================================================================================
+void read_Recfast_pp_params_from_file(file_content &pfc, RecPars &R, bool show_params)
+{
+    bool found; int ival; double dval;
+    
+    //----------------------------------------------------------------------------------------------
+    // standard recombination physics settings
+    // redshift range and number of points will be set by cosmology object, so don't bother
+    //----------------------------------------------------------------------------------------------
+    parser_read(pfc, "Recfast fudge factor", dval, found, show_params);
+    if(found) R.F=dval;
+    if(R.F==0) R.F=1.14;
+    if(R.F<0){ cerr << " read_Recfast_params_from_file : Choose fudge >=0 " << endl; exit(1); }
+    
+    parser_read(pfc, "include correction function", ival, found, show_params);
+    if(found) R.include_CF=(bool)ival;
+    
+    parser_read(pfc, "A2s1s", dval, found, show_params);
+    if(found && dval>0.0) R.A2s1s=dval;
+    
+    //==============================================================================================
+    // different non-standard cases
+    //----------------------------------------------------------------------------------------------
+    // annihilation
+    //----------------------------------------------------------------------------------------------
+    parser_read(pfc, "f_ann", dval, found, show_params);
+    if(found) R.f_ann=dval;
+    if(R.f_ann<0){ cerr << " read_Recfast_params_from_file : f_ann >=0 " << endl; exit(1); }
+    
+    //----------------------------------------------------------------------------------------------
+    // decay
+    //----------------------------------------------------------------------------------------------
+    parser_read(pfc, "f_dec", dval, found, show_params);
+    //if(found) R.f_dec=min(1.0, max(0.0, dval));  // to make sure f_dec >=0 and f_dec<=1
+    if(found) R.f_dec=dval;
+    if(R.f_dec<0){ cerr << " read_Recfast_params_from_file : f_dec >=0 " << endl; exit(1); }
+    
+    if(R.f_dec>0)
+    {
+        R.eval_ion_Tr=1;   // use physical evaluation of temperature for decay
+        parser_read(pfc, "Gamma_dec", dval, found, show_params);
+        if(found) R.Gamma_dec=dval;
+        if(R.Gamma_dec<0)
+        { cerr << " read_Recfast_params_from_file : Gamma_dec >=0 " << endl; exit(1); }
+    }
+    
+    //----------------------------------------------------------------------------------------------
+    // magnetic field heating
+    //----------------------------------------------------------------------------------------------
+    parser_read(pfc, "B0", dval, found, show_params);
+    if(found) R.B0=dval;
+    if(R.B0<0){ cerr << " read_Recfast_params_from_file : B0 >=0 " << endl; exit(1); }
+    
+    if(R.B0>0.0)
+    {
+        parser_read(pfc, "include turbulent decay", ival, found, show_params);
+        if(found) R.turb=(bool)ival;
+        
+        parser_read(pfc, "include ambipolar diffusion", ival, found, show_params);
+        if(found) R.ambi=(bool)ival;
+        
+        if(R.turb || R.ambi)
+        {
+            parser_read(pfc, "nB", dval, found, show_params);
+            if(found) R.nB=dval;
+            if(R.nB<-3.0){ cerr << " read_Recfast_params_from_file : nB > -3.0 " << endl; exit(1); }
+            
+            parser_read(pfc, "Paoletti-Finelli Lorentz", ival, found, show_params);
+            if(found) R.KK_or_PF_Lorentz=(R.ambi ? (bool)ival : 0);
+            
+            R.eval_ion_Tr=1;       // use physical evaluation of temperature
+        }
+    }
+    
+    //----------------------------------------------------------------------------------------------
+    // variation of alpha and me/mp
+    //----------------------------------------------------------------------------------------------
+    parser_read(pfc, "Variation mode", ival, found, show_params);
+    if(found) R.RM=ival;
+    if(R.RM>6){ cerr << " read_Recfast_params_from_file : Variation mode <=6 " << endl; exit(1); }
+    
+    if(R.RM>0)
+    {
+        parser_read(pfc, "alp/alp_ref", dval, found, show_params);
+        if(found) R.aS=dval;
+        
+        parser_read(pfc, "me/me_ref", dval, found, show_params);
+        if(found) R.mS=dval;
+        
+        if(R.aS<0 && R.mS<0){ R.aS=R.mS=1.0; R.RM=0; }
+        else if((R.aS<0 && R.mS==1.0) || (R.aS==1.0 && R.mS<0))
+        { R.aS=R.mS=1.0; R.RM=0; }
+        else
+        {
+            parser_read(pfc, "power for (1+z)^p", dval, found, show_params);
+            if(found) R.pS=dval;
+            
+            R.do_separate_H_He=1;
+        }
+    }
+    
+    return;
+}
+
+//===========================================================================================================
 void read_entries_from_parameter_file(string filename, double *param)
 {
     ifstream paramfile(filename.c_str());
@@ -170,8 +353,9 @@ void read_entries_from_parameter_file(string filename, double *param)
     // reset verbosity level
     //==============================================================================================
     parser_read(pfc, "verbosity level CosmoRec", ival, found, 0);
-    if(found) inp.verbosity=inp.cosm_pars.Rec.verbosity=ival;
-    
+    if(!found) parser_read(pfc, "verbosity level Recfast++", ival, found, 0);
+    if(found) inp.verbosity=ival;
+
     if(inp.verbosity>-1)
         cout << " CosmoRec :: read_entries_from_parameter_file : reading parameters from: "
              << filename << endl;
@@ -189,154 +373,37 @@ void read_entries_from_parameter_file(string filename, double *param)
     parser_read(pfc, "addition to name for output", sval, found, show_params);
     if(found) inp.addname=sval;
     
-/*
-    //==============================================================================================
-    // cosmological parameters
-    //==============================================================================================
-    parser_read(pfc, "Yp", dval, found, show_params);
-    if(found) inp.Cosmo.Yp=dval;
-    
-    parser_read(pfc, "T0", dval, found, show_params);
-    if(found) inp.Cosmo.T0=dval;
-    
-    parser_read(pfc, "Omega_m", dval, found, show_params);
-    if(found) inp.Cosmo.Omega_m=dval;
-    
-    parser_read(pfc, "Omega_b", dval, found, show_params);
-    if(found) inp.Cosmo.Omega_b=dval;
-    
-    parser_read(pfc, "Omega_k", dval, found, show_params);
-    if(found) inp.Cosmo.Omega_k=dval;
-    
-    parser_read(pfc, "Omega_L", dval, found, show_params);
-    if(found) inp.Cosmo.Omega_L=dval;
-    
-    parser_read(pfc, "h100", dval, found, show_params);
-    if(found) inp.Cosmo.h100=dval;
-    
-    parser_read(pfc, "N_eff", dval, found, show_params);
-    if(found) inp.Cosmo.Neff=dval;
-    
-    //----------------------------------------------------------------------------------------------
-    // set Omega_L according to Omega_K
-    //----------------------------------------------------------------------------------------------
-    if(inp.Cosmo.Omega_L<=0.0)
-    {
-        double Omega_rel=Recfastpp_Cosmology::calc_Orel(inp.Cosmo.T0, inp.Cosmo.Neff, inp.Cosmo.h100);
-        inp.Cosmo.Omega_L=1.0-inp.Cosmo.Omega_m-inp.Cosmo.Omega_k-Omega_rel;
-    }
-    
-    //==============================================================================================
-    // recombination parameters
     //----------------------------------------------------------------------------------------------
     // info for redshift output
     //----------------------------------------------------------------------------------------------
-    parser_read(pfc, "npts", ival, found, show_params);
-    if(found) inp.Rec.npts=ival;
-    if(inp.Rec.npts<1000){ cerr << " read_parameter_file : Choose npts > 1000 " << endl; exit(1); }
+    parser_read(pfc, "nzpts", ival, found, show_params);
+    if(found) inp.nz=ival;
+    if(inp.nz<1000){ cerr << " read_parameter_file : Choose nzpts > 1000 " << endl; exit(1); }
     
     parser_read(pfc, "zstart", dval, found, show_params);
-    if(found) inp.Rec.zstart=dval;
-    if(inp.Rec.zstart<3500){ cerr << " read_parameter_file : Choose zstart > 3500 " << endl; exit(1); }
+    if(found) inp.zstart=dval;
+    if(inp.zstart>3400){ cerr << " read_parameter_file : Choose zstart <= 3400 " << endl; exit(1); }
     
     parser_read(pfc, "zend", dval, found, show_params);
-    if(found) inp.Rec.zend=dval;
-    if(inp.Rec.zend<0){ cerr << " read_parameter_file : Choose zstart >=0 " << endl; exit(1); }
-    
-    //----------------------------------------------------------------------------------------------
-    // standard physics settings
-    //----------------------------------------------------------------------------------------------
-    parser_read(pfc, "Recfast fudge factor", dval, found, show_params);
-    if(found) inp.Rec.F=dval;
-    if(inp.Rec.F==0) inp.Rec.F=1.14;
-    if(inp.Rec.F<0){ cerr << " read_parameter_file : Choose fudge >=0 " << endl; exit(1); }
-    
-    parser_read(pfc, "include correction function", ival, found, show_params);
-    if(found) inp.Rec.include_CF=(bool)ival;
-    
-    parser_read(pfc, "A2s1s", dval, found, show_params);
-    if(found && dval>0.0) inp.Rec.A2s1s=dval;
-    
+    if(found) inp.zend=dval;
+    if(inp.zend<0){ cerr << " read_parameter_file : Choose zstart >=0 " << endl; exit(1); }
+
     //==============================================================================================
-    // different non-standard cases
-    //----------------------------------------------------------------------------------------------
-    // annihilation
-    //----------------------------------------------------------------------------------------------
-    parser_read(pfc, "f_ann", dval, found, show_params);
-    if(found) inp.Rec.f_ann=dval;
-    if(inp.Rec.f_ann<0){ cerr << " read_parameter_file : f_ann >=0 " << endl; exit(1); }
-    
-    //----------------------------------------------------------------------------------------------
-    // decay
-    //----------------------------------------------------------------------------------------------
-    parser_read(pfc, "f_dec", dval, found, show_params);
-    //if(found) inp.Rec.f_dec=min(1.0, max(0.0, dval));    // to make sure f_dec >=0 and f_dec<=1
-    if(found) inp.Rec.f_dec=dval;
-    if(inp.Rec.f_dec<0){ cerr << " read_parameter_file : f_dec >=0 " << endl; exit(1); }
-    
-    if(inp.Rec.f_dec>0)
-    {
-        inp.Rec.eval_ion_Tr=1;   // use physical evaluation of temperature for decay
-        parser_read(pfc, "Gamma_dec", dval, found, show_params);
-        if(found) inp.Rec.Gamma_dec=dval;
-        if(inp.Rec.Gamma_dec<0){ cerr << " read_parameter_file : Gamma_dec >=0 " << endl; exit(1); }
-    }
-    
-    //----------------------------------------------------------------------------------------------
-    // magnetic field heating
-    //----------------------------------------------------------------------------------------------
-    parser_read(pfc, "B0", dval, found, show_params);
-    if(found) inp.Rec.B0=dval;
-    if(inp.Rec.B0<0){ cerr << " read_parameter_file : B0 >=0 " << endl; exit(1); }
-    
-    if(inp.Rec.B0>0.0)
-    {
-        parser_read(pfc, "include turbulent decay", ival, found, show_params);
-        if(found) inp.Rec.turb=(bool)ival;
-        
-        parser_read(pfc, "include ambipolar diffusion", ival, found, show_params);
-        if(found) inp.Rec.ambi=(bool)ival;
-        
-        if(inp.Rec.turb || inp.Rec.ambi)
-        {
-            parser_read(pfc, "nB", dval, found, show_params);
-            if(found) inp.Rec.nB=dval;
-            if(inp.Rec.nB<-3.0){ cerr << " read_parameter_file : nB > -3.0 " << endl; exit(1); }
-            
-            parser_read(pfc, "Paoletti-Finelli Lorentz", ival, found, show_params);
-            if(found) inp.Rec.KK_or_PF_Lorentz=(inp.Rec.ambi ? (bool)ival : 0);
-            
-            inp.Rec.eval_ion_Tr=1;       // use physical evaluation of temperature
-        }
-    }
-    
-    //----------------------------------------------------------------------------------------------
-    // variation of alpha and me/mp
-    //----------------------------------------------------------------------------------------------
-    parser_read(pfc, "Variation mode", ival, found, show_params);
-    if(found) inp.Rec.RM=ival;
-    if(inp.Rec.RM>6){ cerr << " read_parameter_file : Variation mode <=6 " << endl; exit(1); }
-    
-    if(inp.Rec.RM>0)
-    {
-        parser_read(pfc, "alp/alp_ref", dval, found, show_params);
-        if(found) inp.Rec.aS=dval;
-        
-        parser_read(pfc, "me/me_ref", dval, found, show_params);
-        if(found) inp.Rec.mS=dval;
-        
-        if(inp.Rec.aS<0 && inp.Rec.mS<0){ inp.Rec.aS=inp.Rec.mS=1.0; inp.Rec.RM=0; }
-        else if((inp.Rec.aS<0 && inp.Rec.mS==1.0) || (inp.Rec.aS==1.0 && inp.Rec.mS<0))
-        { inp.Rec.aS=inp.Rec.mS=1.0; inp.Rec.RM=0; }
-        else
-        {
-            parser_read(pfc, "power for (1+z)^p", dval, found, show_params);
-            if(found) inp.Rec.pS=dval;
-            
-            inp.Rec.do_separate_H_He=1;
-        }
-    }
-*/
+    // cosmological parameters
+    //==============================================================================================
+    read_cosmology_params_from_file(pfc, inp.cosm_pars, show_params);
+
+    //==============================================================================================
+    // recombination parameters for CosmoRec
+    //==============================================================================================
+    read_CosmoRec_params_from_file(pfc, inp.CR_pars, show_params);
+
+    //==============================================================================================
+    // recombination parameters for Recfast++
+    //==============================================================================================
+    read_Recfast_pp_params_from_file(pfc, inp.cosm_pars.Rec, show_params);
+    inp.cosm_pars.Rec.verbosity=inp.verbosity;
+
     //==============================================================================================
     // cleanup
     //==============================================================================================
@@ -346,6 +413,9 @@ void read_entries_from_parameter_file(string filename, double *param)
     // show read parameters
     //==============================================================================================
     if(inp.verbosity>2) inp.show();
+    
+    inp.show();
+    wait_f_r();
     
     return;
 }

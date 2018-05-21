@@ -55,10 +55,10 @@ bool Diffusion_correction_HeI_is_on=0;
 double HeI_was_switched_off_at_z=0.0;
 
 //==================================================================================================
-// Variables for dark matter annihilation module
+// Variables for dark matter annihilation and decay module
 //==================================================================================================
 bool DM_annihilation=0;
-double fDM_CosmoRec=0.0;
+bool DM_decay=0;
 
 //==================================================================================================
 // Variables for magnetic field heating module
@@ -140,20 +140,28 @@ struct CosmoRec_parameters
     bool set_HeI_Quadrupole_lines;      // switch quadrupole lines on/off (added 29.12.2010)
     
     //----------------------------------------------------------------------------------------------
+    // non-standard physics
+    //----------------------------------------------------------------------------------------------
+    bool add_excitations;               // add excitations for annihilation and decay module
+    
+    //----------------------------------------------------------------------------------------------
     // default settings
     //----------------------------------------------------------------------------------------------
     CosmoRec_parameters()
     {
+        // Hydrogen
         nShells=3; nS_effective=500;
         Diffusion_flag=0;
         induced_flag=0;
         nS_2gamma=nS_Raman=0;
-        //
+        // Helium
         nShellsHeI=3; nS_effective_HeI=30;
         HI_absorption=1;
         spin_forbidden=1;
         HeI_Feedback=2;
         set_HeI_Quadrupole_lines=1;
+        // non-standard physics
+        add_excitations=1;
     }
     
     //----------------------------------------------------------------------------------------------
@@ -171,6 +179,8 @@ struct CosmoRec_parameters
         cout << " HI_absorption= " << HI_absorption << " spin_forbidden= " << spin_forbidden << endl;
         cout << " HeI_Feedback= " << HeI_Feedback
              << " set_HeI_Quadrupole_lines= " << set_HeI_Quadrupole_lines << endl;
+        cout << " non-standard physics settings: " << endl;
+        cout << " add_excitations= " << add_excitations << endl;
     }
 };
 

@@ -74,10 +74,10 @@ void evaluate_ionization_heating_excitation_terms(double z, double Hz,
     if(RECFAST_add_excitations)
     {
         double bHe_ex=branching_ex_Chen(xHep/fHe);
-        double bHI_xe=branching_ex_Chen(xp);
+        double bHI_ex=branching_ex_Chen(xp);
         
         fvec[0]+=(1.0-CHe)*bHe_ex/21.0*fHe/(1.0+fHe)*dE_dz;
-        fvec[1]+=(1.0-CH )*bHI_xe/10.2    /(1.0+fHe)*dE_dz;
+        fvec[1]+=(1.0-CH )*bHI_ex/10.2    /(1.0+fHe)*dE_dz;
     }
 
     return;

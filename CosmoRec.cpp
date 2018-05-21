@@ -145,7 +145,7 @@ void compute_fractions(const Data_Level_I &LI, double &Xe, double &Xp, double &X
 //===========================================================================================================
 // DM annihilation module
 //===========================================================================================================
-#include "./Modules/DM_annihilation.cpp"
+#include "./Modules/DM_annihilation_decay.cpp"
 
 //===========================================================================================================
 // Magnetic field heating module (added Oct. 2014)
@@ -206,7 +206,7 @@ void run_RECFAST(string filename)
     
     if(parameters.verbosity>=1) display_Recfast_pp_parameters(filename, parameters);
     
-    set_cosmology(parameters.cosm, cosmos, parameters.cosm.Rec.f_ann, parameters.cosm.Rec.include_CF);
+    set_cosmology(parameters.cosm, cosmos);
     
     //=======================================================================================================
     // initialise zarr
@@ -304,7 +304,8 @@ void compute_Recfast_part(double zi, double ze, double Xe_Hi, double Xe_Hei,
     init_xarr(zi, max(1.0e-5, ze), &zarr[0], nz, 0, 0);
     
     double TMi=cosmos.TCMB(zi)*rhoi;
-    cosmos.recombine_using_Recfast_system(nz, zi, ze, fDM_CosmoRec, Xe_Hi, max(1.0e-30, Xe_Hei),  
+    cosmos.recombine_using_Recfast_system(nz, zi, ze, parameters.cosm.Rec.f_ann,
+                                          Xe_Hi, max(1.0e-30, Xe_Hei),
                                           Xei, TMi, dXei, zarr, Xe_H, Xe_He, Xe, TM);
     
     //=======================================================================================================
@@ -560,9 +561,9 @@ void return_solution_to_calling_program(const int nz, double *z_arr, double *Xe_
     vector<double> za(nz_loc);
     vector<double> ya(nz_loc);
     
-    //======================================================================
+    //=======================================================================================================
     // Xe
-    //======================================================================
+    //=======================================================================================================
     for(int i=0; i<nz_loc; i++)
     { 
         za[nz_loc-1-i]=output_CosmoRec[i][0]; 
@@ -577,9 +578,9 @@ void return_solution_to_calling_program(const int nz, double *z_arr, double *Xe_
                                                        "return_solution_to_calling_program :: Xe");      
     else update_spline_coeffies_JC(return_solution_mem_Xe, nz_loc, &za[0], &ya[0]);      
         
-    //======================================================================
+    //=======================================================================================================
     // Te
-    //======================================================================
+    //=======================================================================================================
     for(int i=0; i<nz_loc; i++)
         ya[nz_loc-1-i]=log(output_CosmoRec[i][2]); 
     
@@ -588,9 +589,9 @@ void return_solution_to_calling_program(const int nz, double *z_arr, double *Xe_
                                                        "return_solution_to_calling_program :: Te");      
     else update_spline_coeffies_JC(return_solution_mem_Te, nz_loc, &za[0], &ya[0]);      
     
-    //======================================================================
+    //=======================================================================================================
     // copy output
-    //======================================================================
+    //=======================================================================================================
     for(int i=0; i<nz; i++)
     { 
         if(z_arr[i]>=zmax || z_arr[i]<=zmin) 
@@ -619,7 +620,8 @@ void run_RECFAST_pp(const int nz, double *z_arr,
         
     if(parameters.verbosity>=1) display_Recfast_pp_parameters("", parameters);
     
-    set_cosmology(parameters.cosm, cosmos, parameters.cosm.Rec.f_ann, CT_corr);
+    parameters.cosm.Rec.include_CF=CT_corr;  // overwrite just this one setting if requested.
+    set_cosmology(parameters.cosm, cosmos);
     
     for(int l=0; l<nz; l++)
     {
@@ -627,11 +629,14 @@ void run_RECFAST_pp(const int nz, double *z_arr,
         Te_arr[l]=cosmos.Te(z_arr[l]);
     }
     
-    //======================================================================
+    //=======================================================================================================
     // Add PCA terms if mode amplitudes are non-zero
-    //======================================================================
+    //=======================================================================================================
     add_PCA_functions(mu1, mu2, mu3, mu4, nz, z_arr, Xe_arr);
 
+    //=======================================================================================================
+    // write outputs of Xe and Te
+    //=======================================================================================================
     if(write_Xe_Te_sol>0)
     {
         if(parameters.verbosity>=0) cout << " writing data to " << parameters.path << endl;
@@ -649,7 +654,8 @@ void run_RECFAST_pp(const int nz, double *z_arr,
                                       << Xe_arr[l] << " "
                                       << Te_arr[l] << endl;
         
-        if(parameters.verbosity>=0) cout << " finished RECFAST++ run. Now exiting program ... " << endl << endl;
+        if(parameters.verbosity>=0)
+            cout << " finished RECFAST++ run. Now exiting program ... " << endl << endl;
     }
     
     return;
@@ -836,7 +842,6 @@ int CosmoRec(const int runmode, const double runpars[15],
     //=======================================================================================================
     parameters.CR.nShells=3;
     parameters.CR.nS_effective=500;
-    fDM_CosmoRec=runpars[0];
     
     parameters.CR.nShellsHeI=2;
     parameters.CR.HI_absorption=2;

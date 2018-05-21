@@ -4,24 +4,25 @@ void set_detailed_name(const Parameters_form_initfile &inp, string &dname)
     dname="CosmoRec.";
     dname+="HI.nS_eff_"+int_to_string(inp.CR.nS_effective)+".";
     if(Atom_activate_HI_Quadrupole_lines) dname+="HI_Q.";
-    //
+    
     dname+="nH_"+int_to_string(inp.CR.nShells)+".";
     dname+="nHe_"+int_to_string(inp.CR.nShellsHeI)+".";
-    //
+    
     if(inp.CR.spin_forbidden==0) dname+="no_Intercomb.";
     if(inp.CR.set_HeI_Quadrupole_lines) dname+="HeI_Q.";
-    //
+    
     if(Diffusion_correction_HeI) dname+="HeI_diff.";
     else
     {
         if(inp.CR.HI_absorption==1 && _HI_abs_appr_flag==0) dname+="H_abs.";
         if(inp.CR.HI_absorption==1 && _HI_abs_appr_flag==1) dname+="H_abs.fcorr.";
-        //
+        
         if(HeISTfeedback==1) dname+="HeI_feedback_nf_"+int_to_string(inp.CR.HeI_Feedback)+".";
         if(_HeI_feedback_w_HI_abs==1) dname+="w_HI_abs.";
     }
-    //
+    
     if(DM_annihilation) dname+="DM_annihil.";
+    if(DM_decy) dname+="DM_decay.";
 
     if(magnetic_fields)
     {

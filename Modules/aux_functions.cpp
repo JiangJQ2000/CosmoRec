@@ -5,19 +5,16 @@
 //===========================================================================================================
 
 //===========================================================================================================
-void set_cosmology(Cosmos::parameters &cosm_pars, Cosmos &cosmos, double fDM_ann, int CR_corr)
+void set_cosmology(Cosmos::parameters &cosm, Cosmos &cosmos)
 {
     if(parameters.verbosity>=1) print_message(" Initializing cosmology object ");
-    
-    cosm_pars.Rec.f_ann=fDM_ann;
-    cosm_pars.Rec.include_CF=CR_corr;
 
     //=======================================================================================================
     // initializing cosmos object...
     //=======================================================================================================
-    cosmos.init(cosm_pars);
+    cosmos.init(cosm);
     cosmos.init_splines();
-    cosmos.set_sigT_function(FC_CosmoRec.a_scale, FC_CosmoRec.m_scale, FC_CosmoRec.p_scale); // 16.05.2017: JC
+    cosmos.set_sigT_function(cosm.Rec.aS, cosm.Rec.mS, cosm.Rec.pS); // 16.05.2017: JC
     
     if(parameters.verbosity>=1) cosmos.display_cosmology();
     
@@ -325,7 +322,6 @@ void check_and_set_cosmology_params(Cosmos::parameters &C, int verbosity)
     // annihilation
     //----------------------------------------------------------------------------------------------
     if(C.Rec.f_ann<0){ cerr << funcname << " : f_ann >=0 " << endl; exit(1); }
-    fDM_CosmoRec=C.Rec.f_ann;
     
     //----------------------------------------------------------------------------------------------
     // decay
@@ -407,7 +403,8 @@ void set_startup_data(string filename,
         exit(0);
     }
 
-    if(fDM_CosmoRec>0) DM_annihilation=1;
+    if(inp.cosm.Rec.f_ann>0) DM_annihilation=1;
+    if(inp.cosm.Rec.f_dec>0) DM_decay=1;
     if(B0_CosmoRec >0) magnetic_fields=1;
     
     if(inp.verbosity>=1)
@@ -425,8 +422,12 @@ void set_startup_data(string filename,
     }
     
     if(DM_annihilation && inp.verbosity>=0)
-        cout << " Including dark matter annihilation. f_DM= " << fDM_CosmoRec << " eV/sec " << endl;
-    
+        cout << " Including dark matter annihilation. f_DM= " << inp.cosm.Rec.f_ann << " eV/sec " << endl;
+
+    if(DM_decay && inp.verbosity>=0)
+        cout << " Including dark matter decay. f_dec= " << inp.cosm.Rec.f_dec
+             << " Gamma_dec= " << inp.cosm.Rec.Gamma_dec << endl;
+
     if(magnetic_fields && inp.verbosity>=0)
         cout << " Including heating by magnetic fields. B0= " << B0_CosmoRec
              << " nG and nB= " << nB_CosmoRec << endl;
@@ -518,8 +519,23 @@ void set_startup_data(string filename,
     
     if(wait==1) wait_f_r();
     
-    set_cosmology(inp.cosm, cos, 0.0, 0); // for CosmoRec run, use Recfast++ history without any additions
+    //=======================================================================================================
+    // for CosmoRec run, use Recfast++ history without any non-standard physics
+    //=======================================================================================================
+    Cosmos::parameters cosm_ref;
+    cosm_ref.h100=inp.cosm.h100; cosm_ref.T0=inp.cosm.T0;
+    cosm_ref.Yp=inp.cosm.Yp; cosm_ref.Nnu=inp.cosm.Nnu;
+    cosm_ref.Omega_m=inp.cosm.Omega_m; cosm_ref.Omega_b=inp.cosm.Omega_b;
+    cosm_ref.Omega_L=inp.cosm.Omega_L; cosm_ref.Omega_k=inp.cosm.Omega_k;
+    cosm_ref.Rec.F=inp.cosm.Rec.F;
+    cosm_ref.Rec.A2s1s=inp.cosm.Rec.A2s1s;
+    cosm_ref.Rec.include_CF=0;
 
+    set_cosmology(cosm_ref, cos);
+
+    //=======================================================================================================
+    // set up atomic species
+    //=======================================================================================================
     if(!hydrogen_and_helium_atom_are_set)
     { 
         setup_Hydrogen_atom();

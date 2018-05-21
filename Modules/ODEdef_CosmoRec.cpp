@@ -369,10 +369,14 @@ void fcn_effective(double z, Data_Level_I &LI)
     // DM annihilation
     //==================================================================
     if(DM_annihilation)
-//        evaluate_DM_annihilation_terms(z, cosmos.fHe(), Tg, Xp, XHeII, fDM_CosmoRec,
-//                                       LI.g[iHI], LI.g[iHeI], LI.g[LI.neq-1]);
+        evaluate_DM_annihilation_terms(z, cosmos.fHe(), Tg, Xp, XHeII,
+                                       LI.g[iHI], LI.g[iHeI], LI.g[LI.neq-1]);
         
-        evaluate_DM_decay_terms(z, cosmos.fHe(), Tg, Xp, XHeII, fDM_CosmoRec, 1.0,
+    //==================================================================
+    // DM decay
+    //==================================================================
+    if(DM_decay)
+        evaluate_DM_decay_terms(z, cosmos.fHe(), Tg, Xp, XHeII,
                                 LI.g[iHI], LI.g[iHeI], LI.g[LI.neq-1]);
     
     //==================================================================
@@ -542,10 +546,16 @@ void fcn_for_jacobian_eval(int jX, int neq, double DXj, double z, double Tg,
     //==============================================================================================
     if(DM_annihilation && (jX==LI0.index_HI || jX==LI0.index_HeI || jX==LI0.neq-1))
     {
-        //evaluate_DM_annihilation_terms(z, cosmos.fHe(), Tg, Xp, XHeII, fDM_CosmoRec,
-        //                               f[LI0.index_HI], f[LI0.index_HeI], f[LI0.neq-1]);
+        evaluate_DM_annihilation_terms(z, cosmos.fHe(), Tg, Xp, XHeII,
+                                       f[LI0.index_HI], f[LI0.index_HeI], f[LI0.neq-1]);
+    }
 
-        evaluate_DM_decay_terms(z, cosmos.fHe(), Tg, Xp, XHeII, fDM_CosmoRec, 1.0,
+    //==============================================================================================
+    // DM decay
+    //==============================================================================================
+    if(DM_decay && (jX==LI0.index_HI || jX==LI0.index_HeI || jX==LI0.neq-1))
+    {
+        evaluate_DM_decay_terms(z, cosmos.fHe(), Tg, Xp, XHeII,
                                 f[LI0.index_HI], f[LI0.index_HeI], f[LI0.neq-1]);
     }
 

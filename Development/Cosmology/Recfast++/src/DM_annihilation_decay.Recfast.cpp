@@ -97,8 +97,8 @@ void evaluate_DM_annihilation_terms(double z, double Hz,
     // fDM [eV/s] gives annihilation efficiency; typical value fDM=2.0e-24 eV/s
     // (see Chluba 2010 for definitions)
     //=======================================================================================
-    double Fcal=(1.0+z)*(1.0+z)/Hz;
-    double dE_dz=fDM*Fcal;  // here the factor 1/NH was canceled with definition of dE_dt
+    double Fcal=-(1.0+z)*(1.0+z)/Hz; // '-' from transformation dt --> dz
+    double dE_dz=fDM * Fcal;  // here the factor 1/NH was canceled with definition of dE_dt
 
     //=======================================================================================
     // add corresponding terms
@@ -125,7 +125,7 @@ void evaluate_DM_decay_terms(double z, double Hz, double t_cos,
     //=======================================================================================
     double rho_cdm_NH=Omega_cdm()/Omega_H() * 938.28e+6; // eV
     double f_eff=0.1; // energy transfer efficiency factor
-    double dE_dz=-rho_cdm_NH*f_eff * fdec*Gamma_dec*exp(-Gamma_dec*t_cos)/(Hz*(1.0+z));
+    double dE_dz=-rho_cdm_NH * f_eff * fdec*Gamma_dec*exp(-Gamma_dec*t_cos)/(Hz*(1.0+z));
     
     //=======================================================================================
     // add corresponding terms

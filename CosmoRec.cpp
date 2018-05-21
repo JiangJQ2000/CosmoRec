@@ -93,14 +93,15 @@ using namespace ODE_HI_effective;
 using namespace ODE_solver_Rec;
 
 //===========================================================================================================
-// level of verbosity
+// this is where the main parameters are handled and structures with settings are defined. If you want to
+// add parameters or settings, this is the place to start [JC, May 2018]
 //===========================================================================================================
-int show_CosmoRec_mess=0;                                   // note LH: set to 1 for debug check of variables
+#include "./Modules/global_variables.cpp"
 
 //===========================================================================================================
 void print_message(string mess) // for messages to user
 {
-    if(show_CosmoRec_mess>=0)
+    if(parameters.verbosity>=0)
     {
         cout << "\n " << setfill('=') << setw(100) << "=" << endl;
         cout << " || " << mess << endl;
@@ -126,7 +127,6 @@ double const_HeI_A2s_1s = const_HeI_A2s_1s_0;
 //===========================================================================================================
 // these are several Modules (i.e. plugins) that are directly loaded when compiling.
 //===========================================================================================================
-#include "./Modules/global_variables.cpp"
 #include "./Modules/HI_routines.cpp"
 #include "./Modules/HeI_routines.cpp"
 #include "./Modules/HeI_feedback.cpp"
@@ -177,61 +177,49 @@ void compute_fractions(const Data_Level_I &LI, double &Xe, double &Xp, double &X
 // Normal Recfast-run
 //
 //===========================================================================================================
-
-//===========================================================================================================
-// initialization
-//===========================================================================================================
-void read_startup_data_RECFAST(string filename, Parameters_form_initfile &inparams, 
-                               Cosmos &cosmos, int corr_fac)
+void display_Recfast_pp_parameters(string filename, const Parameters_form_initfile &inp)
 {
-    double param[12];
-    read_entries_from_parameter_file(filename, param);
-    
-    // compute Omega_L according to Omega_K
-    if(param[7]<=0.0) param[7]=1.0-param[5]-param[8]-cosmos.calc_Orel(param[4], param[10], param[9]);
-    
-    if(show_CosmoRec_mess>=1)
-    {
-        cout << "\n Using parameters corresponding to " << filename << endl;
-        cout << "\n zs: " << param[1] << "\t ze: " << param[2] 
-             << "\t nzpts: " << (int)param[0] << endl;
-        cout << " Y_p: " << param[3] << "\t TCMB: " << param[4] << endl;
-        cout << " OmegaM: " << param[5] << "\t OmegaB: " << param[6] 
-             << "\n OmegaL: " << param[7] << "\t OmegaK: " << param[8] 
-             << "\t Omega_rel: " << cosmos.calc_Orel(param[4], param[10], param[9]) 
-             << " Nnu= " << param[10] << endl;
-        cout << " Hubble constant in units of 100 km s-1 Mpc-1: " << param[9] << endl;
-        cout << " Fudge factor for H recombination: " << param[11] << endl << endl;
-    }   
-    
-    set_startup_data(param, inparams);
-    set_cosmology(inparams.cosm_pars, cosmos, fDM_CosmoRec, corr_fac);
-    
+    if(filename!="") cout << "\n Using parameters corresponding to " << filename << endl;
+    cout << "\n zs: " << inp.zstart << "\t ze: " << inp.zend << "\t nzpts: " << inp.nz << endl;
+    cout << " Y_p: " << inp.cosm.Yp << "\t TCMB: " << inp.cosm.T0 << endl;
+    cout << " Omega_m: " << inp.cosm.Omega_m << "\t Omega_b: " << inp.cosm.Omega_b
+         << "\n Omega_L: " << inp.cosm.Omega_L << "\t Omega_k: " << inp.cosm.Omega_k
+         << "\t Omega_rel: " << cosmos.calc_Orel(inp.cosm.T0, inp.cosm.Nnu, inp.cosm.h100)
+         << " Nnu= " << inp.cosm.Nnu << endl;
+    cout << " Hubble constant in units of 100 km s-1 Mpc-1: " << inp.cosm.h100 << endl;
+    cout << " Fudge factor for H recombination: " << inp.cosm.Rec.F << endl;
+    cout << " HI A2s1s rate: " << inp.cosm.Rec.A2s1s << endl;
+
     return;
 }
 
 //===========================================================================================================
 // Just RECFAST
 //===========================================================================================================
-void run_RECFAST(string filename, int corr_fac)
+void run_RECFAST(string filename)
 {
     //=======================================================================================================
     // initialize cosmology and the general startup
     //=======================================================================================================
-    read_startup_data_RECFAST(filename, parameters, cosmos, corr_fac);
+    read_entries_from_parameter_file(filename, parameters);
+    check_and_set_cosmology_params(parameters.cosm, parameters.verbosity);
     
-    double *za=new double[parameters.nz];
+    if(parameters.verbosity>=1) display_Recfast_pp_parameters(filename, parameters);
+    
+    set_cosmology(parameters.cosm, cosmos, parameters.cosm.Rec.f_ann, parameters.cosm.Rec.include_CF);
+    
     //=======================================================================================================
     // initialise zarr
     //=======================================================================================================
+    double *za=new double[parameters.nz];
     init_xarr(parameters.zstart, max(1.0e-8, parameters.zend), za, parameters.nz, 0, 0);
     
-    if(show_CosmoRec_mess>=0) cout << " writing data to " << path << endl;
+    if(parameters.verbosity>=0) cout << " writing data to " << parameters.path << endl;
     
     ofstream ofile;
-    string name=path;
-    if(corr_fac==1) name+="Xe_Recfast.corr_fac.dat";
-    else name+="Xe_Recfast.dat";
+    string name=parameters.path;
+    if(parameters.cosm.Rec.include_CF==1) name+="Xe_Recfast.corr_fac"+parameters.addname;
+    else name+="Xe_Recfast"+parameters.addname;
     ofile.open(name.c_str());
     ofile.precision(10); 
     
@@ -241,18 +229,18 @@ void run_RECFAST(string filename, int corr_fac)
                                              << cosmos.Xe_Seager(za[l]) << " " 
                                              << cosmos.Te(za[l]) << endl;
     
-    if(show_CosmoRec_mess>=0) cout << " finished RECFAST++ run." << endl;
+    if(parameters.verbosity>=0) cout << " finished RECFAST++ run." << endl;
 
     //=======================================================================================================
     // write visibility function given the ionization history (LH)
     //=======================================================================================================
     if (write_RF_visi)
     {
-        if(show_CosmoRec_mess>=0) cout << " writing visibility function output ..." << flush;
+        if(parameters.verbosity>=0) cout << " writing visibility function output ..." << flush;
         
         ofstream vfile;
-        string vname=path;
-        if (corr_fac == 1) vname += "Visiblity_Recfast.corr_fac.dat";
+        string vname=parameters.path;
+        if (parameters.cosm.Rec.include_CF == 1) vname += "Visiblity_Recfast.corr_fac.dat";
         else vname+="Visiblity_Recfast.dat";
         vfile.open(vname.c_str());
         vfile.precision(10);
@@ -262,7 +250,7 @@ void run_RECFAST(string filename, int corr_fac)
         for (int l=0; l<parameters.nz; l++) vfile << scientific << za[l] << " "
                                                   << cosmos.g_visi(za[l]) << " " << endl;
         
-        if (show_CosmoRec_mess>=0) cout << " done. " << endl;
+        if (parameters.verbosity>=0) cout << " done. " << endl;
     }
     
     //=======================================================================================================
@@ -282,7 +270,7 @@ void run_RECFAST(string filename, int corr_fac)
                             /(0.26*const_e*pow(1.0+zeval, 4))*dt;
     }
     
-    if(show_CosmoRec_mess>=0)
+    if(parameters.verbosity>=0)
     {
         cout << " y= " << r << " y_max= " << r2/4.0 << endl;
         cout << " Now exiting program ..." << endl << endl;
@@ -306,7 +294,7 @@ void compute_Recfast_part(double zi, double ze, double Xe_Hi, double Xe_Hei,
                           double Xei, double rhoi, double dXei,
                           ofstream &ofile, ofstream &ofileRecfast)
 {
-    if(show_CosmoRec_mess>=0) 
+    if(parameters.verbosity>=0)
         cout << " compute_Recfast_part:: the solution will be extended to z= " << ze 
              << " solving the Recfast system" << endl;
     
@@ -367,7 +355,7 @@ int CosmoRec()
 {
     output_CosmoRec.clear();
     
-    string addname_in=addname;
+    string addname_in=parameters.addname;
     
     //==============================================================================
     // setup for the iteration
@@ -393,7 +381,7 @@ int CosmoRec()
         { 
             print_message("computing diffusion corrections from iteration # " + int_to_string(iteration_count-1)); 
             
-            if(show_CosmoRec_mess>=0) cout << " Entering HI-diffusion part " << endl; 
+            if(parameters.verbosity>=0) cout << " Entering HI-diffusion part " << endl;
             
             //======================================================================
             // reset parameters
@@ -423,7 +411,7 @@ int CosmoRec()
                                                             DF_nD1s_vec, DI1_2s_vec, 
                                                             min(Diff_corr_zmax*FC_CosmoRec.f_t*1.25, parameters.zstart/1.002),
                                                             max(Diff_corr_zmin*FC_CosmoRec.f_t, parameters.zend*1.002),
-                                                            ntg_max, nR_max, cosmos, 
+                                                            parameters.CR.nS_2gamma, parameters.CR.nS_Raman, cosmos, 
                                                             Hydrogen_Atoms, 
                                                             pass_on_the_Solution_CosmoRec,
                                                             iteration_count-1);
@@ -440,7 +428,7 @@ int CosmoRec()
             if(Diffusion_correction_HeI)
             //if(Diffusion_correction_HeI && iteration_count==Diff_iteration_max)
             {
-                if(show_CosmoRec_mess>=0) cout << "\n Entering HeI-diffusion part " << endl; 
+                if(parameters.verbosity>=0) cout << "\n Entering HeI-diffusion part " << endl;
 
                 vector<int> HeI_level_indices;
 
@@ -469,8 +457,8 @@ int CosmoRec()
             // change the name for output
             //======================================================================
             if(iteration_count<Diff_iteration_max) 
-                addname=".it_"+int_to_string(iteration_count)+addname_in;
-            else addname=".trans"+addname_in;
+                parameters.addname=".it_"+int_to_string(iteration_count)+addname_in;
+            else parameters.addname=".trans"+addname_in;
             
             print_message("starting iteration # " + int_to_string(iteration_count)); 
         }
@@ -493,7 +481,7 @@ int CosmoRec()
     //==============================================================================
     iteration_count=Diff_iteration_min;
     flag_He=1;              // has to be reset, since after each run it will be == 0
-    addname=addname_in;
+    parameters.addname=addname_in;
     Diffusion_correction_is_on=0;
     Diffusion_correction_HeI_is_on=0;
     
@@ -515,7 +503,6 @@ int CosmoRec(int narg, char *args[])
     {
         mode=args[narg-2];
         if(mode=="REC") print_message(" Running Recfast++ module.");
-        else if(mode=="RECcf") print_message(" Running Recfast++ module with correction function."); 
         else{ mode=""; print_message(" Runmode does not exist. Exiting"); exit(0); }
     }
     else{ cerr << " Too many/few parameters " << endl; exit(1); }
@@ -523,8 +510,7 @@ int CosmoRec(int narg, char *args[])
     //========================================================================
     // just run history using the recfast module in the cosmology class
     //========================================================================
-    if(mode=="REC") run_RECFAST(filename, 0);
-    if(mode=="RECcf") run_RECFAST(filename, 1);
+    if(mode=="REC") run_RECFAST(filename);
 
     //========================================================================
     // initialize cosmology and the general startup
@@ -550,7 +536,7 @@ int CosmoRec(int narg, char *args[])
     //========================================================================
     cleanup_CosmoRec();
 
-    if(show_CosmoRec_mess>=0) cout << " CosmoRec finished normally. " << endl;
+    if(parameters.verbosity>=0) cout << " CosmoRec finished normally. " << endl;
 
     return err;
 }
@@ -625,31 +611,15 @@ void return_solution_to_calling_program(const int nz, double *z_arr, double *Xe_
 //===========================================================================================================
 // Just return Recfast++ output
 //===========================================================================================================
-void run_RECFAST_pp(double param[12], const int nz, double *z_arr, 
-                    double *Xe_arr, double *Te_arr, double fDM,
+void run_RECFAST_pp(const int nz, double *z_arr,
+                    double *Xe_arr, double *Te_arr,
                     double mu1, double mu2, double mu3, double mu4, int CT_corr=0)
 {
-    //======================================================================
-    // compute Omega_L according to Omega_K
-    //======================================================================
-    if(param[7]<=0.0) 
-        param[7]=1.0-param[5]-param[8]-cosmos.calc_Orel(param[4], param[10], param[9]);
+    check_and_set_cosmology_params(parameters.cosm, parameters.verbosity);
+        
+    if(parameters.verbosity>=1) display_Recfast_pp_parameters("", parameters);
     
-    if(show_CosmoRec_mess>=1)
-    {
-        cout << "\n zs: " << param[1] << "\t ze: " << param[2] 
-             << "\t nzpts: " << (int)param[0] << endl;
-        cout << " Y_p: " << param[3] << "\t TCMB: " << param[4] << endl;
-        cout << " OmegaM: " << param[5] << "\t OmegaB: " << param[6] 
-             << "\n OmegaL: " << param[7] << "\t OmegaK: " << param[8] 
-             << "\t Omega_rel: " << cosmos.calc_Orel(param[4], param[10], param[9]) 
-             << " Nnu= " << param[10] << endl;
-        cout << " Hubble constant in units of 100 km s-1 Mpc-1: " << param[9] << endl;
-        cout << " Fudge factor for H recombination: " << param[11] << endl << endl;
-    }   
-    
-    set_startup_data(param, parameters);
-    set_cosmology(parameters.cosm_pars, cosmos, fDM, CT_corr);
+    set_cosmology(parameters.cosm, cosmos, parameters.cosm.Rec.f_ann, CT_corr);
     
     for(int l=0; l<nz; l++)
     {
@@ -664,12 +634,12 @@ void run_RECFAST_pp(double param[12], const int nz, double *z_arr,
 
     if(write_Xe_Te_sol>0)
     {
-        if(show_CosmoRec_mess>=0) cout << " writing data to " << path << endl;
+        if(parameters.verbosity>=0) cout << " writing data to " << parameters.path << endl;
     
         ofstream ofile;
         string name=COSMORECDIR+"./outputs/";
-        if(CT_corr==1) name+="Xe_Recfast.corr_fac"+addname+".dat";
-        else name+="Xe_Recfast"+addname+".dat";
+        if(CT_corr==1) name+="Xe_Recfast.corr_fac"+parameters.addname+".dat";
+        else name+="Xe_Recfast"+parameters.addname+".dat";
         ofile.open(name.c_str());
         ofile.precision(10);
         
@@ -679,7 +649,7 @@ void run_RECFAST_pp(double param[12], const int nz, double *z_arr,
                                       << Xe_arr[l] << " "
                                       << Te_arr[l] << endl;
         
-        if(show_CosmoRec_mess>=0) cout << " finished RECFAST++ run. Now exiting program ... " << endl << endl;
+        if(parameters.verbosity>=0) cout << " finished RECFAST++ run. Now exiting program ... " << endl << endl;
     }
     
     return;
@@ -760,16 +730,16 @@ int CosmoRec(const int runmode, const double runpars[15],
              const int nz, double *z_arr, double *Xe_arr, double *Te_arr, 
              const int label)
 {
-    //======================================================================
+    //=======================================================================================================
     // switch off messages 
-    //======================================================================
-    show_CosmoRec_mess=-1;
-    path=COSMORECDIR+"./outputs/";
-    addname=".batch."+int_to_string(label, 6)+".dat";
+    //=======================================================================================================
+    parameters.verbosity=-1;
+    parameters.path=COSMORECDIR+"./outputs/";
+    parameters.addname=".batch."+int_to_string(label, 6)+".dat";
     
-    //======================================================================
-    // switch on/off outputs 
-    //======================================================================
+    //=======================================================================================================
+    // switch on/off outputs
+    //=======================================================================================================
     write_Xe_Te_sol=0;
     write_populations=0;
     bool write_cosmology=0;
@@ -778,19 +748,27 @@ int CosmoRec(const int runmode, const double runpars[15],
     if((int)runpars[2] > 1) write_cosmology=1;
     if((int)runpars[2] > 2) write_populations=1;
     
-    //======================================================================
+    //=======================================================================================================
     // explicitly set value of A2s1s rate (added July 23.07.2014)
-    //======================================================================
+    //=======================================================================================================
     if(runpars[3] > 0.0) const_HI_A2s_1s=runpars[3];
-
-    //======================================================================
-    // magnetic field heating (added 11.10.2014)
-    //======================================================================
-    set_PMF_parameters_KK_PF(runpars[4], runpars[5], runpars[6], h0);
     
-    //======================================================================
+    //=======================================================================================================
+    // magnetic field heating (added 11.10.2014)
+    //=======================================================================================================
+    int PMFmode=runpars[6];
+    bool turb=0, ambi=0, KKLor=0;
+    if(PMFmode<0){ KKLor=1; PMFmode*=-1.0; }
+    else if(PMFmode==0) turb=1;
+    else if(PMFmode==1) ambi=1;
+    else if(PMFmode==2){ turb=1; ambi=1; }
+    else { cerr << " PMF mode not existing... " << endl; exit(1); }
+
+    set_PMF_parameters(runpars[4], runpars[5], turb, ambi, KKLor, h0);
+    
+    //=======================================================================================================
     // scaling of fundamental constants using input variables from camb
-    //======================================================================
+    //=======================================================================================================
     if(runpars[10] != 0 && runpars[9] != 0.0 && runmode < 2)
     {
         cerr << "Cannot currently run CosmoRec with the power law!" << endl;
@@ -799,104 +777,139 @@ int CosmoRec(const int runmode, const double runpars[15],
     
     Set_VFC_pars(runpars[7], runpars[8], runpars[9], runpars[10]);
     
-    //======================================================================
-    double params[12];
-    
-    //======================================================================
-    // general setup 
-    //======================================================================
-    params[0]=3000; // number of redshift points for CosmoRec computation;
-                    // for higher accuracy this number should be increased;
-                    // a smaller number than ~750 is not recommended.
-    params[1]=3000; // starting redshift
-    params[2]=0;    // ending redshift
+    //=======================================================================================================
+    // general setup
+    //=======================================================================================================
+    parameters.nz=3000;     // number of redshift points for CosmoRec computation;
+                            // for higher accuracy this number should be increased;
+                            // a smaller number than ~750 is not recommended.
+    parameters.zstart=3000; // starting redshift
+    parameters.zend  =0;    // ending redshift
 
-    //======================================================================
+    //=======================================================================================================
     // rescale upper redshift when varying alpha & me
-    //======================================================================
-    params[1]=min(params[1], 3350.0*(pow(FC_CosmoRec.a_scale, 2)*FC_CosmoRec.m_scale));
+    //=======================================================================================================
+    double zs_rescaled=3350.0*(pow(FC_CosmoRec.a_scale, 2)*FC_CosmoRec.m_scale);
+    parameters.zstart=min(parameters.zstart, zs_rescaled);
     
-    //======================================================================
-    // cosmological parameters 
-    //======================================================================
-    params[3]= yhe;              // Helium mass fraction
-    params[4]= tcmb;             // CMB temperature today
+    //=======================================================================================================
+    // cosmological parameters
+    //=======================================================================================================
+    parameters.cosm.Yp= yhe;                   // Helium mass fraction
+    parameters.cosm.T0= tcmb;                  // CMB temperature today
     //
-    params[5]= omegac + omegab;  // Omega_matter
-    params[6]= omegab;           // Omega_b
-    params[7]= 0.0;              // Omega_Lambda (computed internally)
-    params[8]= omegak;           // Omega_curv          
+    parameters.cosm.Omega_m= omegac + omegab;  // Omega_matter
+    parameters.cosm.Omega_b= omegab;           // Omega_b
+    parameters.cosm.Omega_L= 0.0;              // Omega_Lambda (computed internally)
+    parameters.cosm.Omega_k= omegak;           // Omega_curv
     //
-    params[9] = h0;              // h100
-    params[10]= Nnu;             // N_nu_eff
-    params[11]= 1.14;            // Recfast++ fudge-factor
+    parameters.cosm.h100 = h0;                 // h100
+    parameters.cosm.Nnu  = Nnu;                // N_nu_eff
     
-    //======================================================================
+    //=======================================================================================================
+    // Recfast++ settings [some have been set above already]
+    //=======================================================================================================
+    parameters.cosm.Rec.F= 1.14;               // Recfast++ fudge-factor
+    parameters.cosm.Rec.A2s1s=runpars[3];
+    parameters.cosm.Rec.f_ann=runpars[0];
+    
+    //=======================================================================================================
     // runmode 2: return Recfast++ result
-    //======================================================================
-    if(runmode==2) 
+    //=======================================================================================================
+    if(runmode==2)
     {
-        run_RECFAST_pp(params, nz, z_arr, Xe_arr, Te_arr, runpars[0],
-                       runpars[11], runpars[12], runpars[13], runpars[14], 0);
+        run_RECFAST_pp(nz, z_arr, Xe_arr, Te_arr, runpars[11], runpars[12], runpars[13], runpars[14], 0);
         return 0;
     }
 
-    //======================================================================
+    //=======================================================================================================
     // runmode 3: return Recfast++ result with CT2010 correction function
-    //======================================================================
-    if(runmode==3) 
+    //=======================================================================================================
+    if(runmode==3)
     {
-        run_RECFAST_pp(params, nz, z_arr, Xe_arr, Te_arr, runpars[0],
-                       runpars[11], runpars[12], runpars[13], runpars[14], 1);
+        run_RECFAST_pp(nz, z_arr, Xe_arr, Te_arr, runpars[11], runpars[12], runpars[13], runpars[14], 1);
         return 0;
     }
     
-    //======================================================================
+    //=======================================================================================================
     // parameters for the runmodes & output
-    //======================================================================
-    nShells=3;
-    nS_effective=500;
+    //=======================================================================================================
+    parameters.CR.nShells=3;
+    parameters.CR.nS_effective=500;
     fDM_CosmoRec=runpars[0];
     
-    nShellsHeI=2;
-    flag_HI_absorption=2;
-    flag_spin_forbidden=1;
-    nHeFeedback=0;
+    parameters.CR.nShellsHeI=2;
+    parameters.CR.HI_absorption=2;
+    parameters.CR.spin_forbidden=1;
+    parameters.CR.HeI_Feedback=0;
     
-    Diffusion_flag=1;
-    induced_flag=2;
-    ntg_max=3;
-    nR_max=2;   
+    parameters.CR.Diffusion_flag=1;
+    parameters.CR.induced_flag=2;
+    parameters.CR.nS_2gamma=3;
+    parameters.CR.nS_Raman=2;
     
-    //======================================================================
+    //=======================================================================================================
     // number of iterations over HI & HeI diffusion problem
-    //======================================================================
+    //=======================================================================================================
     Diff_iteration_max=1;   // For the default setting 1 iteration is enough
                             // In the other runmodes 2 should be better, but
                             // it slows the code down roughly by 2.
     
-    //======================================================================
+    //=======================================================================================================
     // settings for non-default cases
-    //======================================================================
+    //=======================================================================================================
     if((int)runpars[1]==-1)
-    { nShells=4; ntg_max=4; nR_max=3; nShellsHeI=2; nHeFeedback=-2; flag_HI_absorption=1; }
-    else if((int)runpars[1]==1){ nShells=4; ntg_max=4; nR_max=3; }
-    else if((int)runpars[1]==2){ nShells=10; ntg_max=8; nR_max=7; nShellsHeI=3; nHeFeedback=0; }
-    else if((int)runpars[1]==3){ nShells=10; ntg_max=8; nR_max=7; nShellsHeI=5; nHeFeedback=-5; } 
+    {
+        parameters.CR.nShells=4;
+        parameters.CR.nS_2gamma=4; parameters.CR.nS_Raman=3;
+        parameters.CR.nShellsHeI=2;
+        parameters.CR.HeI_Feedback=-2; parameters.CR.HI_absorption=1;
+    }
+    else if((int)runpars[1]==1)
+    {
+        parameters.CR.nShells=4;
+        parameters.CR.nS_2gamma=4; parameters.CR.nS_Raman=3;
+    }
+    else if((int)runpars[1]==2)
+    {
+        parameters.CR.nShells=10;
+        parameters.CR.nS_2gamma=8; parameters.CR.nS_Raman=7;
+        parameters.CR.nShellsHeI=3;
+        parameters.CR.HeI_Feedback=0;
+    }
+    else if((int)runpars[1]==3)
+    {
+        parameters.CR.nShells=10;
+        parameters.CR.nS_2gamma=8; parameters.CR.nS_Raman=7;
+        parameters.CR.nShellsHeI=5;
+        parameters.CR.HeI_Feedback=-5;
+    }
     
-    //======================================================================
+    //=======================================================================================================
     // runmode with helium diffusion module
-    //======================================================================
-    else if((int)runpars[1]==4){ nHeFeedback=-2; flag_HI_absorption=3; }
-    else if((int)runpars[1]==5){ nShells=4; ntg_max=4; nR_max=3; nShellsHeI=3; nHeFeedback=-3; flag_HI_absorption=3; }
-    else if((int)runpars[1]==6){ nShells=4; ntg_max=4; nR_max=3; nShellsHeI=5; nHeFeedback=-5; flag_HI_absorption=3; }
+    //=======================================================================================================
+    else if((int)runpars[1]==4){ parameters.CR.HeI_Feedback=-2; parameters.CR.HI_absorption=3; }
+    else if((int)runpars[1]==5)
+    {
+        parameters.CR.nShells=4;
+        parameters.CR.nS_2gamma=4; parameters.CR.nS_Raman=3;
+        parameters.CR.nShellsHeI=3;
+        parameters.CR.HeI_Feedback=-3; parameters.CR.HI_absorption=3;
+    }
+    else if((int)runpars[1]==6)
+    {
+        parameters.CR.nShells=4;
+        parameters.CR.nS_2gamma=4; parameters.CR.nS_Raman=3;
+        parameters.CR.nShellsHeI=5;
+        parameters.CR.HeI_Feedback=-5; parameters.CR.HI_absorption=3;
+    }
     
-    //======================================================================
-    if(runmode==1) Diffusion_flag=0;
+    //=======================================================================================================
+    if(runmode==1) parameters.CR.Diffusion_flag=0;
 
-    //======================================================================
+    //=======================================================================================================
     // initialize cosmology and the general startup
-    //======================================================================
+    //=======================================================================================================
     if(!CosmoRec_is_initialized)
     {
         cout << "\n ====================================================="
@@ -911,25 +924,25 @@ int CosmoRec(const int runmode, const double runpars[15],
     
     do
     {
-        set_startup_data("", params, parameters, cosmos);
+        set_startup_data("", parameters, cosmos);
         set_array_dimensions_and_parameters();  
         
         if(!CosmoRec_is_initialized && err==0) allocate_memory();
         
-        //========================================================================
+        //===================================================================================================
         // write info about cosmology
-        //========================================================================
-        if(write_cosmology==1) 
+        //===================================================================================================
+        if(write_cosmology==1)
             cosmos.dump_cosmology(COSMORECDIR+"./outputs/batch.cosmology."+int_to_string(label, 6)+".dat");
         
-        //========================================================================
+        //===================================================================================================
         // initialise zarr (only has to be done once...)
-        //========================================================================
+        //===================================================================================================
         init_xarr(parameters.zstart, parameters.zend, zarr, parameters.nz, 0, 0);
         
-        //======================================================================
+        //===================================================================================================
         // enter CosmoRec
-        //======================================================================
+        //===================================================================================================
         err=CosmoRec();
         
         if(err!=0)
@@ -940,20 +953,20 @@ int CosmoRec(const int runmode, const double runpars[15],
     }   
     while(err!=0);
 
-    //======================================================================
+    //=======================================================================================================
     // copy solution to output arrays
-    //======================================================================
+    //=======================================================================================================
     return_solution_to_calling_program(nz, z_arr, Xe_arr, Te_arr);
 
-    //======================================================================
+    //=======================================================================================================
     // Add PCA terms if mode amplitudes are non-zero
-    //======================================================================
+    //=======================================================================================================
     add_PCA_functions(runpars[11], runpars[12], runpars[13], runpars[14], nz, z_arr, Xe_arr);
     
-    //======================================================================
+    //=======================================================================================================
     // exiting CosmoRec
-    //======================================================================
-    if(show_CosmoRec_mess>=0) cout << " finished run... " << endl;
+    //=======================================================================================================
+    if(parameters.verbosity>=0) cout << " finished run... " << endl;
     
     if(!CosmoRec_is_initialized)
     {

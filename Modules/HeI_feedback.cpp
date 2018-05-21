@@ -167,7 +167,7 @@ void init_HeI_feedback(Gas_of_HeI_Atoms &HeIA, Parameters_form_initfile &params,
     
     if(!(HeI_Lines.size()>1))
     {
-        create_feedback_Table(min(nHeFeedback, 20), HeIA);
+        create_feedback_Table(min(params.CR.HeI_Feedback, 20), HeIA);
         
         cout << " init_HeI_feedback :: setting up pd and memory " << endl;
         
@@ -395,13 +395,17 @@ double Dn_HeI_effective(int linenum, double znow, double X1sHI,
     double DP=0.0;
     double eta_c=const_cl*NH*X1sHI*HeIA.HILyc.sig_phot_ion_nuc()/H_z;
 
-    if(linenum==1 && flag_HI_absorption==1 && znow<=zcrit_HI_Int*FC_CosmoRec.f_t && flag_spin_forbidden==1)
+    int HI_absorption=parameters.CR.HI_absorption;
+    int spin_forbidden=parameters.CR.spin_forbidden;
+
+    if(linenum==1 && HI_absorption==1 && znow<=zcrit_HI_Int*FC_CosmoRec.f_t && spin_forbidden==1)
         DP=DP_interpol_T(Tg, tauS, eta_c);
 
     //=======================================================================
     // here tau_S was used in the tabulation NOT pd*tauS!   
     //=======================================================================
-    if(linenum==2 && flag_HI_absorption==1 && znow<=zcrit_HI*FC_CosmoRec.f_t) DP=DP_interpol_S(Tg, tauS, eta_c);
+    if(linenum==2 && HI_absorption==1 && znow<=zcrit_HI*FC_CosmoRec.f_t)
+        DP=DP_interpol_S(Tg, tauS, eta_c);
 
     PdS=PS+DP;  
     Dn_noscatt=0.0;

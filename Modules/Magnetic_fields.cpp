@@ -14,12 +14,13 @@
 void Switch_PMF_off()
 {
     magnetic_fields=0;
-    KK_or_PF_Lorentz=decaying_turb_on=ambipolar_heat_on=0;
     B0_CosmoRec=nB_CosmoRec=0.0; kD_CosmoRec=1.0;
+    decaying_turb_on=ambipolar_heat_on=KK_or_PF_Lorentz=0;
     
     // Recfast++ settings
-    Cosmos::parameters *Cpars=&parameters.cosm_pars;
-    Cpars->Rec.B0=0.0;          // switch PMF heating off
+    Cosmos::parameters *Cpars=&parameters.cosm;
+    Cpars->Rec.B0=Cpars->Rec.nB=0.0;
+    Cpars->Rec.turb=Cpars->Rec.ambi=Cpars->Rec.KK_or_PF_Lorentz=0;
     Cpars->Rec.eval_ion_Tr=0;   // do old recfast evaluation
     //Cpars->Rec.eval_ion_Tr=1; // do new recfast evaluation
 
@@ -29,11 +30,14 @@ void Switch_PMF_off()
 //========================================================================================
 // convert parameters between KK and PF parametrizations
 //========================================================================================
-void set_PMF_parameters_KK_PF(double B0, double nB, int PMF_mode, double h0)
+void set_PMF_parameters(double B0, double nB,
+                        int turb, int ambi,
+                        int KKPFLorentz,
+                        double h0)
 {
-    Cosmos::parameters *Cpars=&parameters.cosm_pars;
+    Cosmos::parameters *Cpars=&parameters.cosm;
 
-    if(B0>0.0 && PMF_mode!=0)
+    if(B0>0.0 && (turb || ambi))
     {
         //======================================================================
         // KK parametrization and interpretation; B0 and nB unchanged; (default)
@@ -43,7 +47,7 @@ void set_PMF_parameters_KK_PF(double B0, double nB, int PMF_mode, double h0)
         //======================================================================
         // set dissipation scale and convert B_lam --> B0 when using PF vars
         //======================================================================
-        if(KK_or_PF_Lorentz)
+        if(KKPFLorentz)
         {
             double lambda_Mpc=1.0, k_lambda=TWOPI/lambda_Mpc;
             double B_lambda=B0, nBp3=nB+3.0, nBp5=nB+5.0;
@@ -54,24 +58,16 @@ void set_PMF_parameters_KK_PF(double B0, double nB, int PMF_mode, double h0)
         }
         //======================================================================
 
-        B0_CosmoRec=B0;
-        nB_CosmoRec=nB;
-        kD_CosmoRec=kD;
-        
-        if(PMF_mode< 0){ KK_or_PF_Lorentz=1; PMF_mode*=-1; }
-        else KK_or_PF_Lorentz=0;
-        
-        if(PMF_mode==0){ decaying_turb_on=1; ambipolar_heat_on=0; }
-        else if(PMF_mode==1){ decaying_turb_on=0; ambipolar_heat_on=1; }
-        else if(PMF_mode==2){ decaying_turb_on=1; ambipolar_heat_on=1; }
-        else{ cerr << " PMF-mode not existing. Exiting..." << endl; exit(1); }
+        B0_CosmoRec=B0; nB_CosmoRec=nB; kD_CosmoRec=kD;
+        decaying_turb_on=turb; ambipolar_heat_on=ambi;
+        KK_or_PF_Lorentz=KKPFLorentz;
 
         // Recfast++ settings
         Cpars->Rec.turb=decaying_turb_on;
         Cpars->Rec.ambi=ambipolar_heat_on;
         Cpars->Rec.KK_or_PF_Lorentz=KK_or_PF_Lorentz;
         Cpars->Rec.B0=B0; Cpars->Rec.nB=nB;
-        Cpars->Rec.eval_ion_Tr=1;
+        Cpars->Rec.eval_ion_Tr=1;      // use physical evaluation of temperature
     }
     else Switch_PMF_off();
 

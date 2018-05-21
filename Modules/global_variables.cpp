@@ -1,14 +1,11 @@
 //==================================================================================================
-// setting for two-gamma and Raman corrections
+// to check if atoms are set
 //==================================================================================================
-int ntg_max=0;
-int nR_max=0;
 bool hydrogen_and_helium_atom_are_set=0;
 
 //==================================================================================================
 // for data output
 //==================================================================================================
-string path, addname;
 string detailedname;
 ofstream *Xfiles=new ofstream[9];
 vector<vector<double> > output_CosmoRec;
@@ -43,7 +40,6 @@ double Xi_HeI_switch=1.0e-7;
 //==================================================================================================
 bool Diffusion_correction=0;
 bool Diffusion_correction_is_on=0;
-int Diffusion_flag;
 //
 int Diff_iteration_max=2, Diff_iteration_min=0;
 int iteration_count=Diff_iteration_min;
@@ -76,12 +72,13 @@ bool KK_or_PF_Lorentz =0;  // choose parametrization of KK (==0) or PF (==1)
 
 // set functions defined in './Modules/Magnetic_fields.cpp'
 void Switch_PMF_off();
-void set_PMF_parameters_KK_PF(double B0, double nB, int PMF_mode, double h0);
+void set_PMF_parameters(double B0, double nB, int turb, int ambi, int KKPFLorentz, double h0);
 
 //==================================================================================================
 // CosmoRec specific variables for variation of fundamental constant
 //==================================================================================================
 // Scaling variables for alpha, reduced mass and omission modes (Luke Hart)
+//--------------------------------------------------------------------------------------------------
 struct Fund_Const_scaling
 {
     size_t runmode;
@@ -108,7 +105,6 @@ int FC_He_switch = 1;
 void Switch_VFC_off();
 void Set_VFC_pars(double aS, double mS, double pS, int RM);
 
-
 //==================================================================================================
 // memory for CosmoRec-ODE solver
 //==================================================================================================
@@ -124,19 +120,28 @@ struct CosmoRec_parameters
     //----------------------------------------------------------------------------------------------
     // Hydrogen settings
     //----------------------------------------------------------------------------------------------
-    int nShells, nS_effective;
-    int Diffusion_flag;
-    int induced_flag;
-    int nS_2gamma, nS_Raman;
+    int nShells, nS_effective;          // number of shells for HI atom
+    int Diffusion_flag;                 // include diffusion corrections
+    int induced_flag;                   // to set treatment of 2s-1s transition
+    int nS_2gamma, nS_Raman;            // shells to include 2gamma and Raman effects
     
     //----------------------------------------------------------------------------------------------
     // HeI settings
     //----------------------------------------------------------------------------------------------
-    int nShellsHeI;
-    int HI_absorption;
-    int spin_forbidden;
-    int HeI_Feedback;
-
+    int nShellsHeI, nS_effective_HeI;   // number of shells for HeI atom
+    
+    int HI_absorption;                  // HI absorption on nP-1s helium lines
+                                        // 0: no effect;
+                                        // 1: effect on 2P-1s;
+                                        // 2: including of diffusion correction
+    
+    int spin_forbidden;                 // add spin-forbidden transistions
+    int HeI_Feedback;                   // nS for HeI feedback
+    bool set_HeI_Quadrupole_lines;      // switch quadrupole lines on/off (added 29.12.2010)
+    
+    //----------------------------------------------------------------------------------------------
+    // default settings
+    //----------------------------------------------------------------------------------------------
     CosmoRec_parameters()
     {
         nShells=3; nS_effective=500;
@@ -144,12 +149,16 @@ struct CosmoRec_parameters
         induced_flag=0;
         nS_2gamma=nS_Raman=0;
         //
-        nShellsHeI=3;
+        nShellsHeI=3; nS_effective_HeI=30;
         HI_absorption=1;
         spin_forbidden=1;
         HeI_Feedback=2;
+        set_HeI_Quadrupole_lines=1;
     }
     
+    //----------------------------------------------------------------------------------------------
+    // display settings
+    //----------------------------------------------------------------------------------------------
     void show()
     {
         cout << " CosmoRec_parameters :: show()" << endl;
@@ -158,9 +167,10 @@ struct CosmoRec_parameters
         cout << " Diffusion_flag= " << Diffusion_flag << " induced_flag= " << induced_flag << endl;
         cout << " nS_2gamma= " << nS_2gamma << " nS_Raman= " << nS_Raman << endl;
         cout << " HeI settings: " << endl;
-        cout << " nShellsHeI= " << nShellsHeI << endl;
+        cout << " nShellsHeI= " << nShellsHeI << " nS_effective_HeI= " << nS_effective_HeI << endl;
         cout << " HI_absorption= " << HI_absorption << " spin_forbidden= " << spin_forbidden << endl;
-        cout << " HeI_Feedback= " << HeI_Feedback << endl;
+        cout << " HeI_Feedback= " << HeI_Feedback
+             << " set_HeI_Quadrupole_lines= " << set_HeI_Quadrupole_lines << endl;
     }
 };
 
@@ -169,18 +179,18 @@ struct CosmoRec_parameters
 //==================================================================================================
 struct Parameters_form_initfile
 {
-    int verbosity;
-    int nz;
-    double zstart, zend;
+    int verbosity;           // note LH: set to 1 for debug check of variables
+    int nz;                  // number of reshift points for CosmoRec
+    double zstart, zend;     // starting and ending redshift
 
-    string path, addname;
+    string path, addname;    // for file-output
 
-    Cosmos::parameters cosm_pars; // this contains Recfast++ parameters cosm_pars.Rec
-    CosmoRec_parameters CR_pars;  // specific CosmoRec parameters
+    Cosmos::parameters cosm; // this contains Recfast++ parameters cosm_pars.Rec
+    CosmoRec_parameters CR;  // specific CosmoRec parameters
     
     Parameters_form_initfile()
     {
-        verbosity=show_CosmoRec_mess;
+        verbosity=0;
         nz=2000; zstart=3200; zend=0.0;
     }
     
@@ -190,8 +200,8 @@ struct Parameters_form_initfile
         cout << " Verbosity level " << verbosity << endl;
         cout << " path = " << path << " addname= " << addname << endl;
         cout << " nz = " << nz << " zstart= " << zstart << " zend= " << zend << endl;
-        cosm_pars.show();
-        CR_pars.show();
+        cosm.show();
+        CR.show();
     }
 };
 

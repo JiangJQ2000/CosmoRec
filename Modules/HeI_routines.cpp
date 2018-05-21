@@ -6,17 +6,10 @@ Gas_of_HeI_Atoms *HeIAtoms;
 #define HeI_Atoms (*HeIAtoms)
 
 //========================================================================
-// switch quadrupole lines on/off (added 29.12.2010)
-//========================================================================
-bool set_HeI_Quadrupole_lines=1;
-
-//========================================================================
 //
 // setting for helium effective rates
 //
 //========================================================================
-const int nS_effective_HeI=30;                     // this is always fixed
-
 string effective_rate_path_HeI_arr[7]=
 {
     Rec_database_path+"/Effective_Rates.HeI/Effective_Rate_Tables.HeI.res_2/",
@@ -36,26 +29,18 @@ string effective_rate_path_HeI;
 vector<double> Ai_df_dx_HeI, Bi_df_dx_HeI;
 vector<vector<double> > RijVec_df_dx_HeI;
 
-
 //========================================================================
 //
 // parameters which are reset with parameter file
 //
 //========================================================================
-int nShellsHeI=10;
 int njresolved=10;
-
-int flag_HI_absorption=1;         // HI absorption on nP-1s helium lines
-                                  // 0: no effect; 
-                                  // 1: effect on 2P-1s; 
-                                  // 2: including of diffusion correction
 
 int _HI_abs_appr_flag=0;
 
 //========================================================================
 // HeI specific switches
 //========================================================================
-int flag_spin_forbidden=1;
 int flag_He=1;
 
 //========================================================================
@@ -68,7 +53,6 @@ bool He_feedback_message=0;
 //========================================================================
 int HeISTfeedback=0;
 int _HeI_feedback_w_HI_abs=0;
-int nHeFeedback=2;                                
 
 //========================================================================
 // reference points for rescaling and switch of DPesc
@@ -88,26 +72,24 @@ void setup_Helium_atom()
 {
     print_message(" entering the setup for neutral helium ");
     
-    //if(nShellsHeI<njresolved) njresolved=nShellsHeI; // old helium atom setup
+    int nShellsHeI=parameters.CR.nShellsHeI;
+    bool set_HeI_Quadrupole_lines=parameters.CR.set_HeI_Quadrupole_lines;
     
-    //Set_flag_Intercombination_lines(10);             // old helium atom setup
     int nQ =0;
     int nTS=10;
     if(set_HeI_Quadrupole_lines)
     {
-        //Set_flag_Quadrupole_lines(10);               // old helium atom setup
         nQ=10;
         print_message(" switching on HeI nD-1S singlet quadrupole transitions ");
     }
     
-    //HeIAtoms=new Gas_of_HeI_Atoms(nShellsHeI, njresolved, -2); // old helium atom setup
     HeIAtoms=new Gas_of_HeI_Atoms(nShellsHeI, njresolved, nQ, nTS, -2);
     
     //===========================================================================
     // Load effective rates
     //===========================================================================
     if(nShellsHeI==2) effective_rate_path_HeI=effective_rate_path_HeI_arr[0];
-    else if(nShellsHeI==3) 
+    else if(nShellsHeI==3)
     {
         if(set_HeI_Quadrupole_lines) effective_rate_path_HeI=effective_rate_path_HeI_arr[4];
         else effective_rate_path_HeI=effective_rate_path_HeI_arr[1];
@@ -128,6 +110,7 @@ void setup_Helium_atom()
         exit(0); 
     }
     
+    int nS_effective_HeI=parameters.CR.nS_effective_HeI;
     load_rates(effective_rate_path_HeI, nS_effective_HeI, HeI_Atoms);
     
     //===========================================================================
@@ -150,7 +133,7 @@ void setup_Helium_atom()
     //===========================================================================
     // create/load DP escape tables
     //===========================================================================
-    if(flag_HI_absorption!=0) 
+    if(parameters.CR.HI_absorption!=0) 
         read_DP_Data(Rec_database_path+"/Pesc_Data/DP_Coll_Data.31.fac_50.neff_"
                                       +int_to_string(nS_effective_HeI)+".dat", 1);
     
@@ -167,7 +150,7 @@ void Set_HeI_Levels_to_Saha(double z)
     //double XHeII=min(Xe-Xp, parameters.fHe);  // JC: 15.05.2015
     double XHeII=cosmos.NHeII(z)/cosmos.NH(z);
 
-    if(show_CosmoRec_mess>=1) cout << " Helium \n" << " Xe-Xp: " << Xe-Xp << " " << XHeII << endl;
+    if(parameters.verbosity>=1) cout << " Helium \n" << " Xe-Xp: " << Xe-Xp << " " << XHeII << endl;
     
     // follow all sub-level
     for(long int i=0; i<Level_I.nHeIeq; i++)
@@ -180,11 +163,11 @@ void Set_HeI_Levels_to_Saha(double z)
         
         HeI_Atoms.Set_Xi(i, Level_I.X[i+Level_I.index_HeI]);
         
-        if(show_CosmoRec_mess>=2) 
+        if(parameters.verbosity>=2)
         {
             if(i==HeI_Atoms.Get_indexT()) cout << "\n Triplet-levels (j-resolved)" << endl;
             
-            if(i==HeI_Atoms.Get_indexT_no_j() && njresolved<nShellsHeI) 
+            if(i==HeI_Atoms.Get_indexT_no_j() && njresolved<parameters.CR.nShellsHeI) 
                 cout << " Triplet-levels (non-j-resolved)" << endl;
             
             cout << " He-Level: " << i << " " << Level_I.X[i+Level_I.index_HeI] 
@@ -192,7 +175,7 @@ void Set_HeI_Levels_to_Saha(double z)
         }
     }
 
-    if(show_CosmoRec_mess>=1) cout << endl;
+    if(parameters.verbosity>=1) cout << endl;
     
     return;
 }

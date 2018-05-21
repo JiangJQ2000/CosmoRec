@@ -242,7 +242,7 @@ void fcn_HeI_effective(double z, double Xe, double Tg, double NH, double H_z,
     for(int k=1; k<get_number_of_resolved_levels_HeI(); k++)
     {
         int ik=get_HeI_index(k);
-        if(flag_spin_forbidden==0 && ik==(int)HeI_Atoms.Get_Level_index(2, 1, 1, 1)) continue;
+        if(parameters.CR.spin_forbidden==0 && ik==(int)HeI_Atoms.Get_Level_index(2, 1, 1, 1)) continue;
         
         Transition_Data_HeI_A T=HeI_Atoms.Get_Trans_Data(ik, 1, 0, 0, 0);
         if(T.A21!=0) ODE_effective::evaluate_Ly_n_channel(z, Tg, HeI_Atoms.Xi(0), HeI_Atoms.Xi(ik),
@@ -282,7 +282,7 @@ void fcn_HeI_effective(double z, double Xe, double Tg, double NH, double H_z,
     //==================================================================
     // absorption by neutral hydrogen
     //==================================================================
-    if(flag_HI_absorption==1 && z<=zcrit_HI*FC_CosmoRec.f_t && !Diffusion_correction_HeI_is_on)
+    if(parameters.CR.HI_absorption==1 && z<=zcrit_HI*FC_CosmoRec.f_t && !Diffusion_correction_HeI_is_on)
     {  
         double dXe_HeI_HI_abs_dt=0.0;
         //==============================================================
@@ -303,7 +303,7 @@ void fcn_HeI_effective(double z, double Xe, double Tg, double NH, double H_z,
         //==============================================================
         // from intercombination line
         //==============================================================
-        if(z<=zcrit_HI_Int*FC_CosmoRec.f_t && flag_spin_forbidden==1)
+        if(z<=zcrit_HI_Int*FC_CosmoRec.f_t && parameters.CR.spin_forbidden==1)
         {
             dXe_HeI_HI_abs_dt=0.0;
             evaluate_HI_abs_HeI_Intercombination(z, Hydrogen_Atoms.X(1, 0), NH, H_z, Tg, Te,
@@ -493,7 +493,7 @@ void fcn_for_jacobian_eval(int jX, int neq, double DXj, double z, double Tg,
             //==================================================================
             // absorption by neutral hydrogen
             //==================================================================
-            if(flag_HI_absorption==1 && z<=zcrit_HI*FC_CosmoRec.f_t && !Diffusion_correction_HeI_is_on)
+            if(parameters.CR.HI_absorption==1 && z<=zcrit_HI*FC_CosmoRec.f_t && !Diffusion_correction_HeI_is_on)
             {  
                 if(jX==LI0.index_HeI || jX==LI0.index_HeI+2 || jX==LI0.index_HI)
                 {
@@ -518,7 +518,7 @@ void fcn_for_jacobian_eval(int jX, int neq, double DXj, double z, double Tg,
                 if(jX==LI0.index_HeI || jX==LI0.index_HI || 
                    jX==LI0.index_HeI+(int)HeI_Atoms.Get_Level_index(2, 1, 1, 1))
                 {
-                    if(z<=zcrit_HI_Int*FC_CosmoRec.f_t && flag_spin_forbidden==1)
+                    if(z<=zcrit_HI_Int*FC_CosmoRec.f_t && parameters.CR.spin_forbidden==1)
                     {
                         double dXe_HeI_HI_abs_dt=0.0;
                         evaluate_HI_abs_HeI_Intercombination(z, Hydrogen_Atoms.X(1, 0), NH, 
@@ -821,7 +821,7 @@ void jac_effective(double z, Data_Level_I &LI, int col)
         for(int k=1; k<neq_HeI; k++)
         {
             int ik=get_HeI_index(k);
-            if(flag_spin_forbidden==0 && ik==(int)HeI_Atoms.Get_Level_index(2, 1, 1, 1)) continue;
+            if(parameters.CR.spin_forbidden==0 && ik==(int)HeI_Atoms.Get_Level_index(2, 1, 1, 1)) continue;
             
             Transition_Data_HeI_A T=HeI_Atoms.Get_Trans_Data(ik, 1, 0, 0, 0);
             if(T.A21!=0) 
@@ -861,7 +861,7 @@ void jac_effective(double z, Data_Level_I &LI, int col)
         
         // JC: 23rd July 2015: l=0 and J=1 transition was neglected with previous version.
         //                     Very small rate though so this did not have a large effect.
-        if(!( flag_spin_forbidden==0 && ik==(int)HeI_Atoms.Get_Level_index(2, 1, 1, 1) ) )
+        if(!(parameters.CR.spin_forbidden==0 && ik==(int)HeI_Atoms.Get_Level_index(2, 1, 1, 1) ) )
         {
             Transition_Data_HeI_A T=HeI_Atoms.Get_Trans_Data(ik, 1, 0, 0, 0);
             if(T.A21!=0)

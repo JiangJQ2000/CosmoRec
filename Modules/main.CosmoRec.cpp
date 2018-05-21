@@ -1,7 +1,7 @@
 //===========================================================================================================
 void print_var_change_message(string mess, double zs)
 {
-    if(show_CosmoRec_mess<2) return;
+    if(parameters.verbosity<2) return;
     
     cout << "\n " << setfill('*') << setw(100) << "*" << endl;  
     cout << " * " << endl;
@@ -53,7 +53,7 @@ int Xe_frac_effective_rates()
     //===========================================================================
     // initial values for populations (Level I)
     //===========================================================================
-    if(show_CosmoRec_mess>=1) print_message(" Setting initial populations... "); 
+    if(parameters.verbosity>=1) print_message(" Setting initial populations... "); 
     
     //===========================================================================
     // hydrogen & helium specific setup
@@ -94,7 +94,7 @@ int Xe_frac_effective_rates()
         //===========================================================================
         // files etc
         //===========================================================================
-        open_files(Xfiles, path);   
+        open_files(Xfiles, parameters.path, parameters.addname, detailedname);   
 
         //===========================================================================
         // general output
@@ -169,11 +169,14 @@ int Xe_frac_effective_rates()
             //===========================================================================
             save_Xe_Te_for_output(ze);
             
-            if(show_CosmoRec_mess>=1)
+            if(parameters.verbosity>=1)
             {
                 cout << endl;
-                cout << "\n *----------------------------------------------------------------------------------------------------------* " << endl;
-                cout << " current redshift: i= " << i << " z= " << ze << " Xe= " << Level_I.X[0] << " XHI1s= " << Level_I.X[Level_I.index_HI];
+                cout << "\n *-----------------------------------------------------"
+                     << "-----------------------------------------------------* " << endl;
+                cout << " current redshift: i= " << i << " z= " << ze
+                     << " Xe= " << Level_I.X[0] << " XHI1s= " << Level_I.X[Level_I.index_HI];
+                
                 if(flag_He==1) cout << " XHeI1s= " << Level_I.X[Level_I.index_HeI];
                 cout << " rho= " << Level_I.X[Level_I.neq-1] << endl;
             }
@@ -187,8 +190,9 @@ int Xe_frac_effective_rates()
             if(HeISTfeedback==1 && flag_He==1 && !Diffusion_correction_HeI_is_on) 
                 save_HeI_distortion(HeI_Atoms, Hydrogen_Atoms.X(0), i, ze);
             
-            if(show_CosmoRec_mess>=1)
-                cout << " *----------------------------------------------------------------------------------------------------------* " << endl << endl;
+            if(parameters.verbosity>=1)
+                cout << " *-----------------------------------------------------"
+                     << "-----------------------------------------------------* " << endl << endl;
         }
         
         if(flag_compute_Recfast_part==1 && err==0) 

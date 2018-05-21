@@ -1,59 +1,59 @@
 //--------------------------------------------------------------------------------------------
-void set_detailed_name()
+void set_detailed_name(const Parameters_form_initfile &inp, string &dname)
 {
-    detailedname="CosmoRec.";
-    detailedname+="HI.nS_eff_"+int_to_string(nS_effective)+"."; 
-    if(Atom_activate_HI_Quadrupole_lines) detailedname+="HI_Q.";
+    dname="CosmoRec.";
+    dname+="HI.nS_eff_"+int_to_string(inp.CR.nS_effective)+".";
+    if(Atom_activate_HI_Quadrupole_lines) dname+="HI_Q.";
     //
-    detailedname+="nH_"+int_to_string(nShells)+".";
-    detailedname+="nHe_"+int_to_string(nShellsHeI)+".";
+    dname+="nH_"+int_to_string(inp.CR.nShells)+".";
+    dname+="nHe_"+int_to_string(inp.CR.nShellsHeI)+".";
     //
-    if(flag_spin_forbidden==0) detailedname+="no_Intercomb.";
-    if(set_HeI_Quadrupole_lines) detailedname+="HeI_Q.";
+    if(inp.CR.spin_forbidden==0) dname+="no_Intercomb.";
+    if(inp.CR.set_HeI_Quadrupole_lines) dname+="HeI_Q.";
     //
-    if(Diffusion_correction_HeI) detailedname+="HeI_diff.";
+    if(Diffusion_correction_HeI) dname+="HeI_diff.";
     else
     {
-        if(flag_HI_absorption==1 && _HI_abs_appr_flag==0) detailedname+="H_abs.";
-        if(flag_HI_absorption==1 && _HI_abs_appr_flag==1) detailedname+="H_abs.fcorr.";
+        if(inp.CR.HI_absorption==1 && _HI_abs_appr_flag==0) dname+="H_abs.";
+        if(inp.CR.HI_absorption==1 && _HI_abs_appr_flag==1) dname+="H_abs.fcorr.";
         //
-        if(HeISTfeedback==1) detailedname+="HeI_feedback_nf_"+int_to_string(nHeFeedback)+".";
-        if(_HeI_feedback_w_HI_abs==1) detailedname+="w_HI_abs.";
+        if(HeISTfeedback==1) dname+="HeI_feedback_nf_"+int_to_string(inp.CR.HeI_Feedback)+".";
+        if(_HeI_feedback_w_HI_abs==1) dname+="w_HI_abs.";
     }
     //
-    if(DM_annihilation) detailedname+="DM_annihil.";
+    if(DM_annihilation) dname+="DM_annihil.";
 
     if(magnetic_fields)
     {
-        detailedname+="magn_heat.";
-        if(decaying_turb_on) detailedname+="dec.";
-        if(ambipolar_heat_on) detailedname+="ambi.";
-        if(KK_or_PF_Lorentz) detailedname+="PF.";
+        dname+="magn_heat.";
+        if(decaying_turb_on) dname+="dec.";
+        if(ambipolar_heat_on) dname+="ambi.";
+        if(KK_or_PF_Lorentz) dname+="PF.";
     }
     
     if(FC_CosmoRec.runmode>0)
     {
-        if(FC_CosmoRec.a_scale!=1.0) detailedname+="alp.";
-        if(FC_CosmoRec.m_scale!=1.0) detailedname+="me.";
+        if(FC_CosmoRec.a_scale!=1.0) dname+="alp.";
+        if(FC_CosmoRec.m_scale!=1.0) dname+="me.";
         if(FC_CosmoRec.a_scale!=1.0 || FC_CosmoRec.m_scale!=1.0)
         {
-            if(FC_CosmoRec.runmode==1) detailedname+="Boltz.";
-            else if(FC_CosmoRec.runmode==2) detailedname+="sigT.";
-            else if(FC_CosmoRec.runmode==3) detailedname+="A2s1s.";
-            else if(FC_CosmoRec.runmode==4) detailedname+="phot.";
-            else if(FC_CosmoRec.runmode==5) detailedname+="Pesc.";  // currently not included...
-            else if(FC_CosmoRec.runmode==6) detailedname+="all.";
+            if(FC_CosmoRec.runmode==1) dname+="Boltz.";
+            else if(FC_CosmoRec.runmode==2) dname+="sigT.";
+            else if(FC_CosmoRec.runmode==3) dname+="A2s1s.";
+            else if(FC_CosmoRec.runmode==4) dname+="phot.";
+            else if(FC_CosmoRec.runmode==5) dname+="Pesc.";  // currently not included...
+            else if(FC_CosmoRec.runmode==6) dname+="all.";
         }
     }
     
-    if(show_CosmoRec_mess>=0)
-        cout << " set_detailed_name: detailedname: " << detailedname << endl;
+    if(inp.verbosity>=0)
+        cout << " set_detailed_name: detailedname: " << dname << endl;
     
     return; 
 }
 
 //--------------------------------------------------------------------------------------------
-void open_files(ofstream *Xfiles, string path, int fresh=1)
+void open_files(ofstream *Xfiles, string path, string addname, string detailedname, int fresh=1)
 {
     ios::openmode wrmode;
     if(fresh==1) wrmode=ios::out;
@@ -83,7 +83,7 @@ void open_files(ofstream *Xfiles, string path, int fresh=1)
     // Added for correction functions LH & JC
     if(write_corrections)
     {
-        if(parameters.cosm_pars.Rec.eval_ion_Tr)
+        if(parameters.cosm.Rec.eval_ion_Tr)
             Xfiles[6].open((prename+"correction_function.Tr"+addname).c_str(),wrmode);
         else Xfiles[6].open((prename+"correction_function"+addname).c_str(),wrmode);
     }

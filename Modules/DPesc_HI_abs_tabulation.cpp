@@ -593,7 +593,7 @@ void create_Pesc_tables(double z_s, double z_e, Gas_of_HeI_Atoms &HeIA, Cosmos &
     }
     
     save_DP_Data(Rec_database_path+"/Pesc_Data/DP_Coll_Data.31.fac_50.neff_"
-                                  +int_to_string(nS_effective_HeI)+".dat", mess);
+                                  +int_to_string(parameters.CR.nS_effective_HeI)+".dat", mess);
 
     return;
 }

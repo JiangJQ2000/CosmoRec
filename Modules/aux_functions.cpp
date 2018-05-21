@@ -5,40 +5,12 @@
 //===========================================================================================================
 
 //===========================================================================================================
-void set_startup_data(double params[12], Parameters_form_initfile &inparams)
-{
-    //=======================================================================================================
-    // params has to contain 11 parameters in the following sequence: 
-    // nzpts, zs, ze, Y_p, T0, OmT, OmB, OmL, OmK, h100, fudge
-    // if the fudge factor ==0.0 --> will use standard value 1.14
-    //=======================================================================================================
-    
-    inparams.nz=(int)params[0];
-    inparams.zstart=min(3400.0, params[1]);
-    inparams.zend=params[2];
-    inparams.cosm_pars.Yp=params[3];
-    inparams.cosm_pars.T0=params[4];
-    inparams.cosm_pars.Omega_m=params[5];
-    inparams.cosm_pars.Omega_b=params[6];
-    inparams.cosm_pars.Omega_L=params[7];
-    inparams.cosm_pars.Omega_k=params[8];
-    inparams.cosm_pars.h100 = params[9];
-    inparams.cosm_pars.Nnu = params[10];
-    
-    if(params[11]==0.0) inparams.cosm_pars.Rec.F=1.14;
-    else inparams.cosm_pars.Rec.F=params[11];
-    
-    return;
-}
-
-//===========================================================================================================
 void set_cosmology(Cosmos::parameters &cosm_pars, Cosmos &cosmos, double fDM_ann, int CR_corr)
 {
-    if(show_CosmoRec_mess>=1) print_message(" Initializing cosmology object ");
+    if(parameters.verbosity>=1) print_message(" Initializing cosmology object ");
     
     cosm_pars.Rec.f_ann=fDM_ann;
     cosm_pars.Rec.include_CF=CR_corr;
-    cosm_pars.Rec.A2s1s=const_HI_A2s_1s;
 
     //=======================================================================================================
     // initializing cosmos object...
@@ -47,7 +19,7 @@ void set_cosmology(Cosmos::parameters &cosm_pars, Cosmos &cosmos, double fDM_ann
     cosmos.init_splines();
     cosmos.set_sigT_function(FC_CosmoRec.a_scale, FC_CosmoRec.m_scale, FC_CosmoRec.p_scale); // 16.05.2017: JC
     
-    if(show_CosmoRec_mess>=1) cosmos.display_cosmology();
+    if(parameters.verbosity>=1) cosmos.display_cosmology();
     
     return;
 }
@@ -76,16 +48,16 @@ void set_array_dimensions_and_parameters(int wait=0)
     Level_I_temp.index_HeI=Level_I_temp_JAC.index_HeI=Level_I.index_HeI;
 
     //=======================================================================================================
-    if(show_CosmoRec_mess>=2)
+    if(parameters.verbosity>=2)
     {
         cout << "\n total number of equations: " << Level_I.neq
              << "\n Hydrogen equations: " << Level_I.nHIeq
              << "\n Helium equations: " << Level_I.nHeIeq << endl;
     
-        cout << " nShells: " << nShells
+        cout << " nShells: " << parameters.CR.nShells
              << "\n included number of hydrogen levels: " << Level_I.nHIeq << endl;
     
-        cout << " nShellsHeI: " << nShellsHeI 
+        cout << " nShellsHeI: " << parameters.CR.nShellsHeI
              << "\n included number of neutral helium levels: " << Level_I.nHeIeq << endl;
     }
     //=======================================================================================================
@@ -185,14 +157,12 @@ void read_Recfast_pp_params_from_file(file_content &pfc, RecPars &R, bool show_p
     //----------------------------------------------------------------------------------------------
     parser_read(pfc, "Recfast fudge factor", dval, found, show_params);
     if(found) R.F=dval;
-    if(R.F==0) R.F=1.14;
-    if(R.F<0){ cerr << " read_Recfast_params_from_file : Choose fudge >=0 " << endl; exit(1); }
     
     parser_read(pfc, "include correction function", ival, found, show_params);
     if(found) R.include_CF=(bool)ival;
     
     parser_read(pfc, "A2s1s", dval, found, show_params);
-    if(found && dval>0.0) R.A2s1s=dval;
+    if(found) R.A2s1s=dval;
     
     //==============================================================================================
     // different non-standard cases
@@ -201,23 +171,16 @@ void read_Recfast_pp_params_from_file(file_content &pfc, RecPars &R, bool show_p
     //----------------------------------------------------------------------------------------------
     parser_read(pfc, "f_ann", dval, found, show_params);
     if(found) R.f_ann=dval;
-    if(R.f_ann<0){ cerr << " read_Recfast_params_from_file : f_ann >=0 " << endl; exit(1); }
-    
+
     //----------------------------------------------------------------------------------------------
     // decay
     //----------------------------------------------------------------------------------------------
     parser_read(pfc, "f_dec", dval, found, show_params);
-    //if(found) R.f_dec=min(1.0, max(0.0, dval));  // to make sure f_dec >=0 and f_dec<=1
     if(found) R.f_dec=dval;
-    if(R.f_dec<0){ cerr << " read_Recfast_params_from_file : f_dec >=0 " << endl; exit(1); }
-    
-    if(R.f_dec>0)
-    {
-        R.eval_ion_Tr=1;   // use physical evaluation of temperature for decay
+
+    if(R.f_dec>0) {
         parser_read(pfc, "Gamma_dec", dval, found, show_params);
         if(found) R.Gamma_dec=dval;
-        if(R.Gamma_dec<0)
-        { cerr << " read_Recfast_params_from_file : Gamma_dec >=0 " << endl; exit(1); }
     }
     
     //----------------------------------------------------------------------------------------------
@@ -225,27 +188,19 @@ void read_Recfast_pp_params_from_file(file_content &pfc, RecPars &R, bool show_p
     //----------------------------------------------------------------------------------------------
     parser_read(pfc, "B0", dval, found, show_params);
     if(found) R.B0=dval;
-    if(R.B0<0){ cerr << " read_Recfast_params_from_file : B0 >=0 " << endl; exit(1); }
-    
-    if(R.B0>0.0)
-    {
+
+    if(R.B0>0.0) {
         parser_read(pfc, "include turbulent decay", ival, found, show_params);
         if(found) R.turb=(bool)ival;
         
         parser_read(pfc, "include ambipolar diffusion", ival, found, show_params);
         if(found) R.ambi=(bool)ival;
         
-        if(R.turb || R.ambi)
-        {
-            parser_read(pfc, "nB", dval, found, show_params);
-            if(found) R.nB=dval;
-            if(R.nB<-3.0){ cerr << " read_Recfast_params_from_file : nB > -3.0 " << endl; exit(1); }
-            
-            parser_read(pfc, "Paoletti-Finelli Lorentz", ival, found, show_params);
-            if(found) R.KK_or_PF_Lorentz=(R.ambi ? (bool)ival : 0);
-            
-            R.eval_ion_Tr=1;       // use physical evaluation of temperature
-        }
+        parser_read(pfc, "nB", dval, found, show_params);
+        if(found) R.nB=dval;
+
+        parser_read(pfc, "Paoletti-Finelli Lorentz", ival, found, show_params);
+        if(found) R.KK_or_PF_Lorentz=(bool)ival;
     }
     
     //----------------------------------------------------------------------------------------------
@@ -253,98 +208,28 @@ void read_Recfast_pp_params_from_file(file_content &pfc, RecPars &R, bool show_p
     //----------------------------------------------------------------------------------------------
     parser_read(pfc, "Variation mode", ival, found, show_params);
     if(found) R.RM=ival;
-    if(R.RM>6){ cerr << " read_Recfast_params_from_file : Variation mode <=6 " << endl; exit(1); }
-    
-    if(R.RM>0)
-    {
+
+    if(R.RM>0) {
         parser_read(pfc, "alp/alp_ref", dval, found, show_params);
         if(found) R.aS=dval;
         
         parser_read(pfc, "me/me_ref", dval, found, show_params);
         if(found) R.mS=dval;
-        
-        if(R.aS<0 && R.mS<0){ R.aS=R.mS=1.0; R.RM=0; }
-        else if((R.aS<0 && R.mS==1.0) || (R.aS==1.0 && R.mS<0))
-        { R.aS=R.mS=1.0; R.RM=0; }
-        else
-        {
-            parser_read(pfc, "power for (1+z)^p", dval, found, show_params);
-            if(found) R.pS=dval;
-            
-            R.do_separate_H_He=1;
-        }
+
+        parser_read(pfc, "power for (1+z)^p", dval, found, show_params);
+        if(found) R.pS=dval;
     }
     
     return;
 }
 
 //===========================================================================================================
-void read_entries_from_parameter_file(string filename, double *param)
+void read_entries_from_parameter_file(string filename, Parameters_form_initfile &inp)
 {
-    ifstream paramfile(filename.c_str());
-
-    if(!paramfile)
-    {
-        cerr << " read_startup_data :: Error opening parameter file. Exiting. " << endl;
-        exit(0);
-    }
-
-    for(int i=0; i<12; i++) paramfile >> param[i];
-    
-    // The code will now read in the parameters into the dummy parameters associated with these files
-    // double ---> size_t information will be lost when the parameters are converted in evalODE.Recfast or ODEeval
-    // These read in values will now go into Recfast++ and CosmoRec interdependently
-    double aS, mS, pS; int RM;
-    paramfile >> aS;
-    paramfile >> mS;
-    paramfile >> pS;
-    paramfile >> RM;
-    Set_VFC_pars(aS, mS, pS, RM);
-    
-    paramfile >> nShells;
-    paramfile >> nS_effective;
-    paramfile >> fDM_CosmoRec;
-    
-    //======================================================================
-    // explicitly set value of A2s1s rate (added 23.07.2014)
-    //======================================================================
-    double dumA2s1s;
-    paramfile >> dumA2s1s;
-    if(dumA2s1s>0.0) const_HI_A2s_1s=dumA2s1s;
-    
-    //======================================================================
-    // magnetic field parameters (added 10.10.2014)
-    //======================================================================
-    paramfile >> B0_CosmoRec; // B0 in nG
-    paramfile >> nB_CosmoRec;
-    int PMF_mode;
-    paramfile >> PMF_mode;
-    set_PMF_parameters_KK_PF(B0_CosmoRec, nB_CosmoRec, PMF_mode, param[9]);
-    
-    //======================================================================
-    paramfile >> nShellsHeI;
-    paramfile >> flag_HI_absorption;
-    paramfile >> flag_spin_forbidden;
-    paramfile >> nHeFeedback;
-    
-    paramfile >> Diffusion_flag;
-    paramfile >> induced_flag;
-    paramfile >> ntg_max;
-    paramfile >> nR_max;    
-        
-    paramfile >> path;
-    paramfile >> addname;
-
-    paramfile.close();
-    
     //==============================================================================================
     // read values (if given) from file
     //==============================================================================================
-    Parameters_form_initfile inp;
-    
-    //==============================================================================================
-    // read values (if given) from file
-    //==============================================================================================
+    string funcname="read_entries_from_parameter_file";
     bool found; int ival; double dval; string sval;
     file_content pfc;
     parser_read_file(filename, pfc, 0);
@@ -357,8 +242,7 @@ void read_entries_from_parameter_file(string filename, double *param)
     if(found) inp.verbosity=ival;
 
     if(inp.verbosity>-1)
-        cout << " CosmoRec :: read_entries_from_parameter_file : reading parameters from: "
-             << filename << endl;
+        cout << " CosmoRec :: " << funcname << " : reading parameters from: " << filename << endl;
     
     bool show_params=(inp.verbosity > 3 ? 1 : 0);
     // read again to show the parameter...
@@ -378,31 +262,31 @@ void read_entries_from_parameter_file(string filename, double *param)
     //----------------------------------------------------------------------------------------------
     parser_read(pfc, "nzpts", ival, found, show_params);
     if(found) inp.nz=ival;
-    if(inp.nz<1000){ cerr << " read_parameter_file : Choose nzpts > 1000 " << endl; exit(1); }
+    if(inp.nz<1000){ cerr << funcname << " : Choose nzpts > 1000 " << endl; exit(1); }
     
     parser_read(pfc, "zstart", dval, found, show_params);
     if(found) inp.zstart=dval;
-    if(inp.zstart>3400){ cerr << " read_parameter_file : Choose zstart <= 3400 " << endl; exit(1); }
+    if(inp.zstart>3400){ cerr << funcname << " : Choose zstart <= 3400 " << endl; exit(1); }
     
     parser_read(pfc, "zend", dval, found, show_params);
     if(found) inp.zend=dval;
-    if(inp.zend<0){ cerr << " read_parameter_file : Choose zstart >=0 " << endl; exit(1); }
+    if(inp.zend<0){ cerr << funcname << " : Choose zstart >=0 " << endl; exit(1); }
 
     //==============================================================================================
     // cosmological parameters
     //==============================================================================================
-    read_cosmology_params_from_file(pfc, inp.cosm_pars, show_params);
+    read_cosmology_params_from_file(pfc, inp.cosm, show_params);
 
     //==============================================================================================
     // recombination parameters for CosmoRec
     //==============================================================================================
-    read_CosmoRec_params_from_file(pfc, inp.CR_pars, show_params);
+    read_CosmoRec_params_from_file(pfc, inp.CR, show_params);
 
     //==============================================================================================
     // recombination parameters for Recfast++
     //==============================================================================================
-    read_Recfast_pp_params_from_file(pfc, inp.cosm_pars.Rec, show_params);
-    inp.cosm_pars.Rec.verbosity=inp.verbosity;
+    read_Recfast_pp_params_from_file(pfc, inp.cosm.Rec, show_params);
+    inp.cosm.Rec.verbosity=inp.verbosity;
 
     //==============================================================================================
     // cleanup
@@ -412,143 +296,199 @@ void read_entries_from_parameter_file(string filename, double *param)
     //==============================================================================================
     // show read parameters
     //==============================================================================================
-    if(inp.verbosity>2) inp.show();
-    
-    inp.show();
-    wait_f_r();
+    if(inp.verbosity>3) inp.show();
     
     return;
 }
 
 //===========================================================================================================
-void set_detailed_name();                                                    // defined in output_methods.cpp
+void check_and_set_cosmology_params(Cosmos::parameters &C, int verbosity)
+{
+    string funcname="check_and_set_cosmology_params";
+    
+    //==============================================================================================
+    // pure cosmology part of parameters (T0, Yp, etc) is checked by cosmology object. but do set
+    //==============================================================================================
+    if(C.Omega_L<=0.0) C.Omega_L=1.0-C.Omega_m-C.Omega_k-cosmos.calc_Orel(C.T0, C.Nnu, C.h100);
+
+    //----------------------------------------------------------------------------------------------
+    // check recombination part of Recfast++
+    //----------------------------------------------------------------------------------------------
+    if(C.Rec.F==0) C.Rec.F=1.14;
+    if(C.Rec.F<0){ cerr << funcname << " : Choose fudge >=0 " << endl; exit(1); }
+    
+    if(C.Rec.A2s1s<=0.0) C.Rec.A2s1s=const_HI_A2s_1s; // use values consistent with CosmoRec default
+    // explicitly set value of A2s1s rate in CosmoRec (added 23.07.2014)
+    if(C.Rec.A2s1s>0.0) const_HI_A2s_1s=C.Rec.A2s1s;
+
+    //----------------------------------------------------------------------------------------------
+    // annihilation
+    //----------------------------------------------------------------------------------------------
+    if(C.Rec.f_ann<0){ cerr << funcname << " : f_ann >=0 " << endl; exit(1); }
+    fDM_CosmoRec=C.Rec.f_ann;
+    
+    //----------------------------------------------------------------------------------------------
+    // decay
+    //----------------------------------------------------------------------------------------------
+    if(C.Rec.f_dec<0){ cerr << funcname << " : f_dec >=0 " << endl; exit(1); }
+    if(C.Rec.Gamma_dec<0){ cerr << funcname << " : Gamma_dec >=0 " << endl; exit(1); }
+
+    //----------------------------------------------------------------------------------------------
+    // magnetic field heating
+    //----------------------------------------------------------------------------------------------
+    if(C.Rec.B0<0){ cerr << funcname << " : B0 >=0 " << endl; exit(1); }
+    if(C.Rec.nB<-3.0){ cerr << funcname << " : nB > -3.0 " << endl; exit(1); }
+   
+    set_PMF_parameters(C.Rec.B0, C.Rec.nB, C.Rec.turb, C.Rec.ambi, C.Rec.KK_or_PF_Lorentz, C.h100);
+
+    //----------------------------------------------------------------------------------------------
+    // variation of alpha and me/mp
+    //----------------------------------------------------------------------------------------------
+    if(C.Rec.RM>6){ cerr << funcname << " : Variation mode <=6 " << endl; exit(1); }
+
+    Set_VFC_pars(C.Rec.aS, C.Rec.mS, C.Rec.pS, C.Rec.RM);
+    
+    //==============================================================================================
+    // show final parameters
+    //==============================================================================================
+    if(verbosity>2) C.show();
+
+    return;
+}
+
+//===========================================================================================================
+void set_detailed_name(const Parameters_form_initfile &inp, string &dname);  // defined in output_methods.cpp
 
 //===========================================================================================================
 //
 // setting the startup parameters according to param[12]
 //
 //===========================================================================================================
-void set_startup_data(string filename, double param[12], Parameters_form_initfile &inparams, 
+void set_startup_data(string filename,
+                      Parameters_form_initfile &inp,
                       Cosmos &cos, int wait=0)
 {
-    if(show_CosmoRec_mess>=0) cout << endl;
+    if(inp.verbosity>=0) cout << endl;
     
     //=======================================================================================================
-    // compute Omega_L according to Omega_K
+    // cosmology and Recfast++ parameter checks. This function also initializes derived CosmoRec parameters
+    // from standard recombination settings.
     //=======================================================================================================
-    if(param[7]<=0.0) param[7]=1.0-param[5]-param[8]-cos.calc_Orel(param[4], param[10], param[9]);
+    check_and_set_cosmology_params(inp.cosm, inp.verbosity);
     
-    if(nHeFeedback==0 || nHeFeedback==1 || nHeFeedback==-1)
+    //=======================================================================================================
+    // CosmoRec specific settings
+    //=======================================================================================================
+    if(inp.CR.HeI_Feedback==0 || inp.CR.HeI_Feedback==1 || inp.CR.HeI_Feedback==-1)
     { 
-        nHeFeedback=0; 
+        inp.CR.HeI_Feedback=0; 
         HeISTfeedback=0; 
         _HeI_feedback_w_HI_abs=0; 
     }
-    else if(nHeFeedback>0)
+    else if(inp.CR.HeI_Feedback>0)
     { 
-        nHeFeedback=(int)min(nHeFeedback, nShellsHeI); 
+        inp.CR.HeI_Feedback=(int)min(inp.CR.HeI_Feedback, inp.CR.nShellsHeI);
         HeISTfeedback=1; 
         _HeI_feedback_w_HI_abs=0; 
     }
     else 
     { 
-        nHeFeedback=(int)min(-nHeFeedback, nShellsHeI); 
-        HeISTfeedback=1; 
+        inp.CR.HeI_Feedback=(int)min(-inp.CR.HeI_Feedback, inp.CR.nShellsHeI);
+        HeISTfeedback=1;
         _HeI_feedback_w_HI_abs=1; 
     }
     
-    if(flag_HI_absorption==1){}
-    else if(flag_HI_absorption==2){ _HI_abs_appr_flag=1; flag_HI_absorption=1; }
-    else if(flag_HI_absorption==3){ _HI_abs_appr_flag=1; flag_HI_absorption=1; Diffusion_correction_HeI=1; }
-    else if(flag_HI_absorption>=4)
+    if(inp.CR.HI_absorption==1){}
+    else if(inp.CR.HI_absorption==2){ _HI_abs_appr_flag=1; inp.CR.HI_absorption=1; }
+    else if(inp.CR.HI_absorption==3){ _HI_abs_appr_flag=1; inp.CR.HI_absorption=1; Diffusion_correction_HeI=1; }
+    else if(inp.CR.HI_absorption>=4)
     { 
-        cerr << " set_startup_data :: flag_HI_absorption flag N/A. Exiting... " << endl; 
+        cerr << " set_startup_data :: HI_absorption flag N/A. Exiting... " << endl;
         exit(0);
     }
 
     if(fDM_CosmoRec>0) DM_annihilation=1;
     if(B0_CosmoRec >0) magnetic_fields=1;
     
-    if(show_CosmoRec_mess>=1)
+    if(inp.verbosity>=1)
     {
         if(filename!="") cout << " Using parameters corresponding to " << filename << endl;
-        cout << "\n zs: " << param[1] << "\t ze: " << param[2] << "\t nzpts: " 
-             << (int)param[0] << endl;
-        cout << " Y_p: " << param[3] << "\t TCMB: " << param[4] << endl;
-        cout << " OmegaM: " << param[5] << "\t OmegaB: " << param[6] 
-             << "\n OmegaL: " << param[7] << "\t OmegaK: " << param[8] 
-             << "\t Omega_rel: " << cos.calc_Orel(param[4], param[10], param[9]) 
-             << " Nnu= " << param[10] << endl;
-        cout << " Hubble constant in units of 100 km s-1 Mpc-1: " << param[9] << endl;
-        cout << " Fudge factor for H recombination: " << param[11] << endl;
+        cout << "\n zs: " << inp.zstart << "\t ze: " << inp.zend << "\t nzpts: " << inp.nz << endl;
+        cout << " Y_p: " << inp.cosm.Yp << "\t TCMB: " << inp.cosm.T0 << endl;
+        cout << " Omega_m: " << inp.cosm.Omega_m << "\t Omega_b: " << inp.cosm.Omega_b
+             << "\n Omega_L: " << inp.cosm.Omega_L << "\t Omega_k: " << inp.cosm.Omega_k
+             << "\t Omega_rel: " << cos.calc_Orel(inp.cosm.T0, inp.cosm.Nnu, inp.cosm.h100)
+             << " Nnu= " << inp.cosm.Nnu << endl;
+        cout << " Hubble constant in units of 100 km s-1 Mpc-1: " << inp.cosm.h100 << endl;
+        cout << " Fudge factor for H recombination: " << inp.cosm.Rec.F << endl;
         cout << " HI A2s1s rate: " << const_HI_A2s_1s << endl;
     }
     
-    if(DM_annihilation && show_CosmoRec_mess>=0)
+    if(DM_annihilation && inp.verbosity>=0)
         cout << " Including dark matter annihilation. f_DM= " << fDM_CosmoRec << " eV/sec " << endl;
     
-    if(magnetic_fields && show_CosmoRec_mess>=0)
+    if(magnetic_fields && inp.verbosity>=0)
         cout << " Including heating by magnetic fields. B0= " << B0_CosmoRec
              << " nG and nB= " << nB_CosmoRec << endl;
 
-    if(FC_CosmoRec.runmode>0 && show_CosmoRec_mess>=0)
+    if(FC_CosmoRec.runmode>0 && inp.verbosity>=0)
         cout << " Including variations of fundamental constants."
              << " Mode = " << FC_CosmoRec.runmode
              << ", a_scale = " << FC_CosmoRec.a_scale
              << ", m_scale = " << FC_CosmoRec.m_scale
              << ", p_scale = " << FC_CosmoRec.p_scale << endl;
     
-    if(flag_HI_absorption==1 && show_CosmoRec_mess>=0)
+    if(inp.CR.HI_absorption==1 && inp.verbosity>=0)
             cout << " HI absorption will be included during HeI-recombination " << endl;
     //
-    if(Diffusion_correction_HeI==1 && show_CosmoRec_mess>=0) 
+    if(Diffusion_correction_HeI==1 && inp.verbosity>=0)
         cout << " After the first iteration of the normal EMLA, the HeI-diffusion" 
              << " correction will be computed from PDE-solver " << endl;
     //
-    if(flag_spin_forbidden>=1)
+    if(inp.CR.spin_forbidden>=1)
     { 
-        if(show_CosmoRec_mess>=0) 
+        if(inp.verbosity>=0)
             cout << " HeI 2P-1S intercombination line is switched on " << endl; 
-        flag_spin_forbidden=1; 
+        inp.CR.spin_forbidden=1;
     }
     else
     { 
-        if(show_CosmoRec_mess>=0) 
+        if(inp.verbosity>=0)
             cout << " HeI 2P-1S intercombination line is switched off " << endl; 
-        flag_spin_forbidden=0; 
+        inp.CR.spin_forbidden=0;
     }
 
     if(Atom_activate_HI_Quadrupole_lines)
     { 
-        if(show_CosmoRec_mess>=0 && nShells==3) 
+        if(inp.verbosity>=0 && inp.CR.nShells==3)
             cout << " HI quadrupole lines are included " << endl; 
     }
     
-    if(Diffusion_flag>0)
+    if(inp.CR.Diffusion_flag>0)
     { 
-        Diffusion_flag=1;
+        inp.CR.Diffusion_flag=1;
         Diffusion_correction=1;
         DI1_2s_correction_on=0;
         switch_off_1s_2s_correction();
         
-        if(show_CosmoRec_mess>=0)
+        if(inp.verbosity>=0)
         {
             cout << " Diffusion correction for HI Ly-a will be included." 
                  << " The number of iterations will be "+int_to_string(Diff_iteration_max) 
                  << endl;
         }
 
-        if(induced_flag>=1)
+        if(inp.CR.induced_flag>=1)
         { 
             switch_on_1s_2s_correction();
             DI1_2s_correction_on=1;
             
-            if(show_CosmoRec_mess>=0) 
+            if(inp.verbosity>=0)
                 cout << " Switching on stimulated 2s-1s two-photon decays " << endl; 
             
-            if(induced_flag==2)
+            if(inp.CR.induced_flag==2)
             { 
-                if(show_CosmoRec_mess>=0)
+                if(inp.verbosity>=0)
                     cout << " Ly-n feedback to the 1s-2s two-photon channel " << endl; 
             }
             else switch_off_1s_2s_absorption_correction();     // defined in Solve_PDEs.h
@@ -558,29 +498,27 @@ void set_startup_data(string filename, double param[12], Parameters_form_initfil
     //=======================================================================================================
     // below given z extend the solution not solving the whole system
     //=======================================================================================================
-    if(param[2]<50.0)
+    if(inp.zend<50.0)
     {
         flag_compute_Recfast_part=1;
         nz_Recfast_part=100;
-        ze_Recfast=max(param[2], 0.001);
-        param[2]=50.0;
+        ze_Recfast=max(inp.zend, 0.001);
+        inp.zend=50.0;
     }   
     
-    set_startup_data(param, inparams);
-    
-    if( show_CosmoRec_mess>=0 && (write_Xe_Te_sol!=0 || write_populations!=0) )
+    if( inp.verbosity>=0 && (write_Xe_Te_sol!=0 || write_populations!=0) )
     {
-        cout << "\n output-path: " << path << endl;
-        cout << " addname    : " << addname << endl;
+        cout << "\n output-path: " << inp.path << endl;
+        cout << " addname    : " << inp.addname << endl;
     }
     
-    set_detailed_name();
+    set_detailed_name(inp, detailedname);
     
-    if(show_CosmoRec_mess>=0) cout << endl;
+    if(inp.verbosity>=0) cout << endl;
     
     if(wait==1) wait_f_r();
     
-    set_cosmology(inparams.cosm_pars, cos, 0.0, 0);       
+    set_cosmology(inp.cosm, cos, 0.0, 0); // for CosmoRec run, use Recfast++ history without any additions
 
     if(!hydrogen_and_helium_atom_are_set)
     { 
@@ -588,19 +526,20 @@ void set_startup_data(string filename, double param[12], Parameters_form_initfil
         setup_Helium_atom();
         hydrogen_and_helium_atom_are_set=1;
     }
-    
+
     return;
 }
 
 //===========================================================================================================
 // reading startup parameters from startup file
 //===========================================================================================================
-void read_startup_data(string filename, Parameters_form_initfile &inparams, 
+void read_startup_data(string filename,
+                       Parameters_form_initfile &inp,
                        Cosmos &cos, int wait=0)
 {
-    double param[12];
-    read_entries_from_parameter_file(filename, param);
-    set_startup_data(filename, param, inparams, cos, wait);
+    read_entries_from_parameter_file(filename, inp);
+    
+    set_startup_data(filename, inp, cos, wait);
     
     return;
 }   

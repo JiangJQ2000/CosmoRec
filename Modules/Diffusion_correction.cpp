@@ -34,7 +34,6 @@ int index_all_spline;
 // for module to account for the 2s-1s corrections
 //
 //==================================================================================================
-int induced_flag=0;          // is set according to parameter file (see ./Modules/aux_functions.cpp)
 bool DI1_2s_correction_on=0;
 
 

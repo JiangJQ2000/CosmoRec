@@ -264,7 +264,7 @@ void read_parameter_file(string fname, main_Settings &inp)
             if(inp.Rec.nB<-3.0){ cerr << " read_parameter_file : nB > -3.0 " << endl; exit(1); }
             
             parser_read(pfc, "Paoletti-Finelli Lorentz", ival, found, show_params);
-            if(found) inp.Rec.KK_or_PF_Lorentz=(inp.Rec.ambi ? (bool)ival : 0);
+            if(found) inp.Rec.KK_or_PF_Lorentz=(bool)ival;
 
             inp.Rec.eval_ion_Tr=1;       // use physical evaluation of temperature
         }

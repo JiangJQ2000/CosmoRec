@@ -8,7 +8,6 @@ Gas_of_Atoms *HAtoms=NULL;
 //==================================================================================================
 // setting for hydrogen effective rates
 //==================================================================================================
-int nS_effective=500;                                              // can be changed with start-file
 int Lyn_max_parameter=20;
 
 //==================================================================================================
@@ -34,11 +33,6 @@ string effective_rate_path;
 //==================================================================================================
 vector<double> Ai_df_dx, Bi_df_dx;
 vector<vector<double> > RijVec_df_dx;
-
-//==================================================================================================
-// different parameters
-//==================================================================================================
-int nShells=4;
 
 //==================================================================================================
 // simple outputs about quadrupole lines
@@ -90,7 +84,7 @@ void compute_Q_correction_to_lifetime()
     compute_Q_correction_to_lifetime(150);
     compute_Q_correction_to_lifetime(200);
     compute_Q_correction_to_lifetime(250);
-    compute_Q_correction_to_lifetime_tot(nShells);
+    compute_Q_correction_to_lifetime_tot(parameters.CR.nShells);
         
     return;
 }
@@ -102,6 +96,7 @@ void setup_Hydrogen_atom()
 {
     print_message(" entering the setup for neutral hydrogen ");
     
+    int nShells=parameters.CR.nShells;
     HAtoms=new Gas_of_Atoms(nShells, 1, 1.0, Atom_activate_HI_Quadrupole_lines, 0, -2);
     
 //    compute_Q_correction_to_lifetime();
@@ -117,7 +112,7 @@ void setup_Hydrogen_atom()
     //==============================================================================================
     // Load effective rates
     //==============================================================================================
-    if(nShells==3) 
+    if(nShells==3)
     {   
         if(!Atom_activate_HI_Quadrupole_lines)
         {
@@ -141,7 +136,7 @@ void setup_Hydrogen_atom()
         exit(0); 
     }
     
-    load_rates(effective_rate_path, nS_effective, Hydrogen_Atoms);
+    load_rates(effective_rate_path, parameters.CR.nS_effective, Hydrogen_Atoms);
     
     //==============================================================================================
     // memory for effective rates
@@ -162,7 +157,7 @@ void Set_Hydrogen_Levels_to_Saha(double z)
     double Xe=Level_I.X[0];
     double Xp=min(cosmos.Xp(z), 1.0);
     
-    if(show_CosmoRec_mess>=1) cout << " Xe= " << Xe << " Xp= " << Xp << endl;
+    if(parameters.verbosity>=1) cout << " Xe= " << Xe << " Xp= " << Xp << endl;
     
     // follow all sub-level 
     for(long int i=0; i<Level_I.nHIeq; i++)
@@ -174,11 +169,11 @@ void Set_Hydrogen_Levels_to_Saha(double z)
 
         Hydrogen_Atoms.Set_population_of_level(i, Level_I.X[i+1]);
         
-        if(show_CosmoRec_mess>=2) cout << " H-Level: " << i << " " << Level_I.X[i+1] << endl;
+        if(parameters.verbosity>=2) cout << " H-Level: " << i << " " << Level_I.X[i+1] << endl;
     }
     Level_I.X[Level_I.neq-1]=1.0;
 
-    if(show_CosmoRec_mess>=2)
+    if(parameters.verbosity>=2)
         cout << " total population: " << Hydrogen_Atoms.X_tot() << endl << endl;
     
     return;

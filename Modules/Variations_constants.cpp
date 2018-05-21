@@ -9,7 +9,7 @@
 void Switch_VFC_off()
 {
     // set Recfast++ parameters
-    Cosmos::parameters *Cpars=&parameters.cosm_pars;
+    Cosmos::parameters *Cpars=&parameters.cosm;
     Cpars->Rec.aS=Cpars->Rec.mS=1.0; Cpars->Rec.pS=0.0; Cpars->Rec.RM=0;
     Cpars->Rec.do_separate_H_He=0;
     
@@ -24,9 +24,11 @@ void Switch_VFC_off()
 void Set_VFC_pars(double aS, double mS, double pS, int RM)
 {
     if(RM==0){ Switch_VFC_off(); return; }
+    if(aS<0 && mS<0){ Switch_VFC_off(); return; }
+    if((aS<0 && mS==1.0) || (aS==1.0 && mS<0)){ Switch_VFC_off(); return; }
 
     // set Recfast++ parameters
-    Cosmos::parameters *Cpars=&parameters.cosm_pars;
+    Cosmos::parameters *Cpars=&parameters.cosm;
     Cpars->Rec.aS=aS; Cpars->Rec.mS=mS; Cpars->Rec.pS=pS; Cpars->Rec.RM=RM;
     Cpars->Rec.do_separate_H_He=1;
     
@@ -36,6 +38,7 @@ void Set_VFC_pars(double aS, double mS, double pS, int RM)
     FC_CosmoRec.p_scale = 0.0; // not really used yet in CosmoRec! [JC]
     FC_CosmoRec.runmode = RM;
     
+    // final check if mode activated
     if(aS==1.0 && mS==1.0 && pS==0.0) Switch_VFC_off();
 
     return;

@@ -1,10 +1,8 @@
 next (urgent) updates:
 
-- add parser like for CosmoTherm
+- need thourough testing. Some numerical issues seem to be present for 2 iterations
 
 - how to best communicate to CAMB and Class?
-
-- decaying particle scenarios
 
 - updated magnetic field description (Abir...)
 

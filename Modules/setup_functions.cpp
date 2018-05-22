@@ -346,15 +346,15 @@ void check_and_set_params(Parameters_form_initfile &inp, int verbosity)
     //----------------------------------------------------------------------------------------------
     // rescale upper redshift when varying alpha & me
     //----------------------------------------------------------------------------------------------
-    double zs_rescaled=3350.0*pow(C.Rec.aS, 2)*C.Rec.mS;
-    inp.zstart=min(inp.zstart, zs_rescaled);
+    //double zs_rescaled=3350.0*pow(C.Rec.aS, 2)*C.Rec.mS;
+    //inp.zstart=min(inp.zstart, zs_rescaled);
 
     //----------------------------------------------------------------------------------------------
     // check redshifts and number of points
     //----------------------------------------------------------------------------------------------
-    if(inp.nz<500) throw_error("set_startup_data", "Choose nzpts > 500");
-    if(inp.zstart>3400) throw_error("set_startup_data", "Choose zstart <= 3400");
-    if(inp.zend<0) throw_error("set_startup_data", "Choose zstart >=0");
+    if(inp.nz<500) throw_error(funcname, "Choose nzpts > 500");
+    if(inp.zstart>3400) throw_error(funcname, "Choose zstart <= 3400");
+    if(inp.zend<0) throw_error(funcname, "Choose zstart >=0");
     
     //----------------------------------------------------------------------------------------------
     // show final parameters
@@ -372,9 +372,9 @@ void check_and_set_params(Parameters_form_initfile &inp, int verbosity)
 // setting the startup parameters according to information given in structure Parameters_form_initfile inp
 //
 //===========================================================================================================
-void set_startup_data(string filename,
-                      Parameters_form_initfile &inp,
-                      Cosmos &cos, int wait=0)
+void set_startup_data_CR(string filename,
+                         Parameters_form_initfile &inp,
+                         Cosmos &cos, int wait=0)
 {
     if(inp.verbosity>=0) cout << endl;
     
@@ -409,7 +409,7 @@ void set_startup_data(string filename,
     if(inp.CR.HI_absorption==1){}
     else if(inp.CR.HI_absorption==2){ _HI_abs_appr_flag=1; inp.CR.HI_absorption=1; }
     else if(inp.CR.HI_absorption==3){ _HI_abs_appr_flag=1; inp.CR.HI_absorption=1; Diffusion_correction_HeI=1; }
-    else if(inp.CR.HI_absorption>=4) throw_error("set_startup_data", "HI_absorption flag N/A. Exiting...");
+    else if(inp.CR.HI_absorption>=4) throw_error("set_startup_data_CR", "HI_absorption flag N/A. Exiting...");
 
     if(inp.cosm.Rec.f_ann>0) DM_annihilation=1;
     if(inp.cosm.Rec.f_dec>0) DM_decay=1;
@@ -527,15 +527,9 @@ void set_startup_data(string filename,
     if(wait==1) wait_f_r();
     
     //=======================================================================================================
-    // for CosmoRec run, use Recfast++ history without any non-standard physics
+    // for CosmoRec run, use Recfast++ history without correction function [but including non-standard phys.]
     //=======================================================================================================
-    Cosmos::parameters cosm_ref;
-    cosm_ref.h100=inp.cosm.h100; cosm_ref.T0=inp.cosm.T0;
-    cosm_ref.Yp=inp.cosm.Yp; cosm_ref.Nnu=inp.cosm.Nnu;
-    cosm_ref.Omega_m=inp.cosm.Omega_m; cosm_ref.Omega_b=inp.cosm.Omega_b;
-    cosm_ref.Omega_L=inp.cosm.Omega_L; cosm_ref.Omega_k=inp.cosm.Omega_k;
-    cosm_ref.Rec.F=inp.cosm.Rec.F;
-    cosm_ref.Rec.A2s1s=inp.cosm.Rec.A2s1s;
+    Cosmos::parameters cosm_ref=inp.cosm;
     cosm_ref.Rec.include_CF=0;
 
     set_cosmology(cosm_ref, cos);
@@ -565,7 +559,7 @@ void read_startup_data(string filename,
 {
     read_entries_from_parameter_file(filename, inp);
     
-    set_startup_data(filename, inp, cos, wait);
+    set_startup_data_CR(filename, inp, cos, wait);
     
     return;
 }   

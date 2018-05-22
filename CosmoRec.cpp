@@ -907,7 +907,7 @@ int CosmoRec(const int runmode, const double runpars[15],
     
     do
     {
-        set_startup_data("", parameters, cosmos);
+        set_startup_data_CR("", parameters, cosmos);
         set_array_dimensions_and_parameters();  
         
         if(!CosmoRec_is_initialized && err==0) allocate_memory();

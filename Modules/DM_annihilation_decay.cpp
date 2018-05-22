@@ -38,26 +38,26 @@ void evaluate_ionization_heating_excitation_terms(double fHe, double Tg,
                                                   double &dXHI_1s_dt, double &dXHeI_1s_dt,
                                                   double &drho_dt)
 {
-    //---------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------
     // different branching ratios. Simple approximations here but this can be made more
     // comprehensive using Slatyer et al., if needed
-    //---------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------
     double bHe_ion=branching_ratio_ions_Chen(XHeII/fHe);
     double bHI_ion=branching_ratio_ions_Chen(XHII);
     double b_heat =branching_ratio_heat_Chen(XHII, XHeII/fHe, fHe);
     // for temperature equation
     double fheat=2.0/3.0*const_e/const_kB/(1.0+fHe+XHII+XHeII);
     
-    //=======================================================================================
+    //====================================================================================
     // return different terms (HI, HeI, Te)
-    //=======================================================================================
+    //====================================================================================
     dXHI_1s_dt+=-bHI_ion/13.6/(1.0+fHe)*dE_dt;
     if(XHeII>0.0) dXHeI_1s_dt+=-bHe_ion/24.6*fHe/(1.0+fHe)*dE_dt;
     drho_dt+=fheat*b_heat*dE_dt/Tg;
 
-    //=======================================================================================
+    //====================================================================================
     // additional excitations
-    //=======================================================================================
+    //====================================================================================
     if(parameters.CR.add_excitations)
     {
         double bHe_ex=branching_ratio_ex_Chen(XHeII/fHe);
@@ -102,9 +102,9 @@ void evaluate_DM_decay_terms(double z, double fHe, double Tg,
                              double &dXHI_1s_dt, double &dXHeI_1s_dt,
                              double &drho_dt)
 {
-    //=======================================================================================
+    //====================================================================================
     // total energy deposition in eV per hydrogen nucleus per sec
-    //=======================================================================================
+    //====================================================================================
     double fdec=parameters.cosm.Rec.f_dec;
     double Gamma_dec=parameters.cosm.Rec.Gamma_dec;
     double rho_cdm_NH=cosmos.Get_O_DM()/cosmos.Get_O_b()*(1.0-cosmos.Get_Y_p())*938.28e+6;
@@ -116,3 +116,6 @@ void evaluate_DM_decay_terms(double z, double fHe, double Tg,
     
     return;
 }
+
+//========================================================================================
+//========================================================================================

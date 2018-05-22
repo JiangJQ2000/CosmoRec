@@ -1,5 +1,5 @@
 //===========================================================================================================
-// 
+//
 // 
 // Variation of fundamental constants for use in CosmoRec
 // Author: Luke Hart (Dec 2016)
@@ -112,12 +112,12 @@ void rescale_variables_all(double alpha_scale, double me_scale, size_t run_mode,
     return;
 }
 
-//==================================================================================================
+//===========================================================================================================
 // Rescaling the rates
 // We need to rescale the Ai Bi and Rij rates by our coefficients and this function does that
 // independently since we need to do this for a series of vectors
 // This function is overloaded for 2 vectors and a vector of vectors as well as a single vector
-//==================================================================================================
+//===========================================================================================================
 void rescale_rates(vector<double>&A,vector<double>&B,vector<vector<double> >&R)
 {
     if(FC_CosmoRec.f_a==1.0 || FC_CosmoRec.f_b==1.0) return;  // save time if not needed
@@ -135,5 +135,5 @@ void rescale_rates(vector<double>&A,vector<double>&B,vector<vector<double> >&R)
     return;
 }
 
-//==================================================================================================
-//==================================================================================================
+//===========================================================================================================
+//===========================================================================================================

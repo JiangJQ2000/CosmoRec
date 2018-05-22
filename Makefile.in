@@ -171,11 +171,11 @@ Recfast++:
 #===============================================================================
 # dependencies
 #===============================================================================
-CosmoRec.o: ./Modules/aux_functions.cpp ./Modules/output_methods.cpp \
+CosmoRec.o: ./Modules/setup_functions.cpp ./Modules/output_methods.cpp \
             ./Modules/Diffusion_correction.cpp \
             ./Modules/Diffusion_correction.HeI.cpp \
             ./Modules/DM_annihilation_decay.cpp \
-            ./Modules/global_variables.cpp \
+            ./Modules/global_variables.cpp ./Modules/global_functions.cpp \
             ./Modules/HeI_routines.cpp \
             ./Modules/HeI_feedback.cpp \
             ./Modules/HI_routines.cpp \

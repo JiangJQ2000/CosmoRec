@@ -353,9 +353,6 @@ void check_and_set_cosmology_params(Cosmos::parameters &C, int verbosity)
 }
 
 //===========================================================================================================
-void set_detailed_name(const Parameters_form_initfile &inp, string &dname);  // defined in output_methods.cpp
-
-//===========================================================================================================
 //
 // setting the startup parameters according to param[12]
 //
@@ -499,12 +496,11 @@ void set_startup_data(string filename,
     //=======================================================================================================
     // below given z extend the solution not solving the whole system
     //=======================================================================================================
-    if(inp.zend<50.0)
+    if(inp.zend<z_extend)
     {
         flag_compute_Recfast_part=1;
-        nz_Recfast_part=100;
         ze_Recfast=max(inp.zend, 0.001);
-        inp.zend=50.0;
+        inp.zend=z_extend;
     }   
     
     if( inp.verbosity>=0 && (write_Xe_Te_sol!=0 || write_populations!=0) )
@@ -570,56 +566,6 @@ void restart_CosmoRec()
     
     return;
 }   
-
-//========================================================================================
-// Save results for PDE solver
-//========================================================================================
-void save_sol_for_PDE_solver(int iz, double z)
-{
-    if(!Diffusion_correction || (Diffusion_correction && iteration_count<Diff_iteration_max) )
-    {
-        pass_on_the_Solution_CosmoRec[iz][0]=z;
-        
-        for(int l=0; l<Level_I.nHIeq+1; l++) 
-            pass_on_the_Solution_CosmoRec[iz][l+1]=Level_I.X[l];
-
-        pass_on_the_Solution_CosmoRec[iz][Level_I.nHIeq+2]=Level_I.X[Level_I.neq-1];
-        pass_on_the_Solution_CosmoRec[iz][Level_I.nHIeq+3]=0.0;
-        pass_on_the_Solution_CosmoRec[iz][Level_I.nHIeq+4]=0.0;   
-
-        //================================================================================
-        // Helium diffusion correction; only resolved states + XHeI1s are saved      // JF
-        //================================================================================
-        if(Diffusion_correction_HeI)
-        {
-            pass_on_the_Solution_CosmoRec_HeI[iz][0]=z;
-            pass_on_the_Solution_CosmoRec_HeI[iz][1]=Level_I.X[Level_I.index_HeI];
-            
-            for(int l=0; l<get_number_of_resolved_levels_HeI(); l++) 
-                pass_on_the_Solution_CosmoRec_HeI[iz][l+2]=Level_I.X[Level_I.index_HeI+get_HeI_index(l)];
-        }
-    }
-    
-    return;
-}
-
-//===========================================================================================================
-// Save results for output to CosmoMC
-//===========================================================================================================
-void save_Xe_Te_for_output(double z)
-{
-    if(!Diffusion_correction || (Diffusion_correction && iteration_count==Diff_iteration_max) )
-    {
-        vector<double> dum(3);
-        dum[0]=z; 
-        dum[1]=Level_I.X[0]; 
-        dum[2]=Level_I.X[Level_I.neq-1]*cosmos.TCMB(z);
-        
-        output_CosmoRec.push_back(dum);
-    }
-
-    return;
-}
 
 //===========================================================================================================
 // memory (de)allocation

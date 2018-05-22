@@ -1,4 +1,4 @@
-//--------------------------------------------------------------------------------------------
+//===========================================================================================================
 void set_detailed_name(const Parameters_form_initfile &inp, string &dname)
 {
     dname="CosmoRec.";
@@ -22,7 +22,7 @@ void set_detailed_name(const Parameters_form_initfile &inp, string &dname)
     }
     
     if(DM_annihilation) dname+="DM_annihil.";
-    if(DM_decy) dname+="DM_decay.";
+    if(DM_decay) dname+="DM_decay.";
 
     if(magnetic_fields)
     {
@@ -53,7 +53,7 @@ void set_detailed_name(const Parameters_form_initfile &inp, string &dname)
     return; 
 }
 
-//--------------------------------------------------------------------------------------------
+//===========================================================================================================
 void open_files(ofstream *Xfiles, string path, string addname, string detailedname, int fresh=1)
 {
     ios::openmode wrmode;
@@ -116,7 +116,7 @@ void close_files(ofstream *Xfiles)
     return;
 }
 
-//--------------------------------------------------------------------------------------------
+//===========================================================================================================
 void write_HI_HeI_1s_array_to_file(ofstream &ofile, double zval)
 {
     ofile << scientific << zval;
@@ -150,6 +150,7 @@ void write_HI_HeI_Xe_to_file(ofstream &ofile, double zval, double Xe)
     return;
 }
 
+//===========================================================================================================
 void write_correction_functions_to_file(ofstream &ofile, double zval, Cosmos &cosmos)
 {
     // This function calculates and then writes the correction functions from CosmoRec and 
@@ -160,9 +161,13 @@ void write_correction_functions_to_file(ofstream &ofile, double zval, Cosmos &co
     // Refrain from considering the correction functions if the redshift is past the Recfast++ limit
     if (zval < 50.) return;
     double f_H, f_He, f_tot;
-    f_tot = (1.0-Hydrogen_Atoms.X_tot()+cosmos.fHe()-HeI_Atoms.X_tot())/(cosmos.Xp(zval)+cosmos.fHe()-cosmos.XHeI1s(zval))-1;
-    f_H  = (1.0-Hydrogen_Atoms.X_tot())/cosmos.Xp(zval)-1;
-    f_He = (cosmos.fHe()-HeI_Atoms.X_tot())/(cosmos.fHe()-cosmos.XHeI1s(zval))-1;
+    double Xp=1.0-Hydrogen_Atoms.X_tot();
+    double XHeII=cosmos.fHe()-HeI_Atoms.X_tot();
+    
+    f_tot = (Xp+XHeII)/(cosmos.Xp(zval)+cosmos.fHe()-cosmos.XHeI1s(zval))-1;
+    f_H  = Xp/cosmos.Xp(zval)-1;
+    f_He = XHeII/(cosmos.fHe()-cosmos.XHeI1s(zval))-1;
+    
     // Write correction functions to the file along with the redshift
     ofile << scientific << zval << " " << f_tot << " " << f_H << " " << f_He;
     ofile << endl;
@@ -170,7 +175,7 @@ void write_correction_functions_to_file(ofstream &ofile, double zval, Cosmos &co
     return;
 }
 
-//--------------------------------------------------------------------------------------------
+//===========================================================================================================
 void write_array_to_file(ofstream &ofile, double zval, double *X, int neq)
 {
     ofile << scientific << zval << " " << cosmos.TCMB(zval);
@@ -181,7 +186,7 @@ void write_array_to_file(ofstream &ofile, double zval, double *X, int neq)
     return;
 }
 
-//--------------------------------------------------------------------------------------------
+//===========================================================================================================
 void write_X_Recfast_z_to_file(ofstream &ofile, double zval, Cosmos &cosmos)
 {
     ofile << scientific << zval << " " 
@@ -195,16 +200,16 @@ void write_X_Recfast_z_to_file(ofstream &ofile, double zval, Cosmos &cosmos)
     return;
 }
 
-//--------------------------------------------------------------------------------------------
+//===========================================================================================================
 void write_Xe_Te_to_file(ofstream &ofile, double zval, double Xe, double Te)
 {
     ofile << scientific << zval << " " << Xe << " " << Te << endl;
     return;
 }
 
-//--------------------------------------------------------------------------------------------
+//===========================================================================================================
 // write spectral distortion from EMLA (added July 2nd 2012)
-//--------------------------------------------------------------------------------------------
+//===========================================================================================================
 void write_HI_distortion_to_file(ofstream &ofile, double zval)
 {
     if(zval>=parameters.zstart) return;
@@ -229,7 +234,7 @@ void write_HI_distortion_to_file(ofstream &ofile, double zval)
     return;
 }
 
-//--------------------------------------------------------------------------------------------
+//===========================================================================================================
 void write_files(double z, ofstream *Xfiles)
 {
     if(write_Xe_Te_sol)
@@ -265,14 +270,15 @@ void write_files(double z, ofstream *Xfiles)
     //==============================================================
     // write correction functions between Recfast++ and CosmoRec LH
     //==============================================================
-    if (write_corrections) write_correction_functions_to_file(Xfiles[6], z, cosmos);
+    if(write_corrections) write_correction_functions_to_file(Xfiles[6], z, cosmos);
     
     //==============================================================
     // write Xe for HI and HeI separately
     //==============================================================
-    if (write_split) write_HI_HeI_Xe_to_file(Xfiles[7],z,Level_I.X[0]);
+    if(write_split) write_HI_HeI_Xe_to_file(Xfiles[7], z, Level_I.X[0]);
     
     return;
 }
 
-
+//===========================================================================================================
+//===========================================================================================================

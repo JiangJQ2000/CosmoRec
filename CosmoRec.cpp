@@ -93,36 +93,24 @@ using namespace ODE_HI_effective;
 using namespace ODE_solver_Rec;
 
 //===========================================================================================================
-// this is where the main parameters are handled and structures with settings are defined. If you want to
-// add parameters or settings, this is the place to start [JC, May 2018]
-//===========================================================================================================
-#include "./Modules/global_variables.cpp"
-
-//===========================================================================================================
-void print_message(string mess) // for messages to user
-{
-    if(parameters.verbosity>=0)
-    {
-        cout << "\n " << setfill('=') << setw(100) << "=" << endl;
-        cout << " || " << mess << endl;
-        cout << " " << setfill('=') << setw(100) << "=" << endl << endl;
-    }
-    
-    return;
-}
-
-//===========================================================================================================
 //
 // define default HI A2s1s two-photon decay rate. This was added to allow changing it globally.
 // The corresponding variables are defined as extern in './Development/Definitions/physical_consts.h'
 // and './Development/Cosmology/Recfast++/include/constants.Recfast.h'. A new value is read from
-// the parameter input file (see './Modules/aux_functions.cpp').
+// the parameter input file (see './Modules/setup_functions.cpp').
 //
 // (added 23.07.2014 JC)
 //===========================================================================================================
 double const_HI_A2s_1s = const_HI_A2s_1s_0;                                  // initial setting of the values
 double const_sigT      = const_sigT_0;
 double const_HeI_A2s_1s = const_HeI_A2s_1s_0;
+
+//===========================================================================================================
+// this is where the main parameters are handled and structures with settings are defined. If you want to
+// add parameters or settings, this is the place to start [JC, May 2018]
+//===========================================================================================================
+#include "./Modules/global_variables.cpp"
+#include "./Modules/global_functions.cpp"
 
 //===========================================================================================================
 // these are several Modules (i.e. plugins) that are directly loaded when compiling.
@@ -137,10 +125,7 @@ double const_HeI_A2s_1s = const_HeI_A2s_1s_0;
 //===========================================================================================================
 // functions to read parameter file and set up memory etc
 //===========================================================================================================
-// defined in "./Modules/ODEdef_CosmoRec.cpp"
-void compute_fractions(const Data_Level_I &LI, double &Xe, double &Xp, double &XHeII);
-
-#include "./Modules/aux_functions.cpp"
+#include "./Modules/setup_functions.cpp"
 
 //===========================================================================================================
 // DM annihilation module
@@ -163,7 +148,7 @@ void compute_fractions(const Data_Level_I &LI, double &Xe, double &Xp, double &X
 #include "./Modules/PCA_functions.cpp"
 
 //===========================================================================================================
-// additional definitions for CosmoRec-ODE system
+// main definitions for CosmoRec-ODE system
 //===========================================================================================================
 #include "./Modules/ODEdef_CosmoRec.cpp"
 
@@ -171,6 +156,7 @@ void compute_fractions(const Data_Level_I &LI, double &Xe, double &Xp, double &X
 // writing the output
 //===========================================================================================================
 #include "./Modules/output_methods.cpp"
+
 
 //===========================================================================================================
 //
@@ -194,9 +180,9 @@ void display_Recfast_pp_parameters(string filename, const Parameters_form_initfi
 }
 
 //===========================================================================================================
-// Just RECFAST
+// Just Recfast++
 //===========================================================================================================
-void run_RECFAST(string filename)
+void run_Recfast_pp(string filename)
 {
     //=======================================================================================================
     // initialize cosmology and the general startup
@@ -229,7 +215,7 @@ void run_RECFAST(string filename)
                                              << cosmos.Xe_Seager(za[l]) << " " 
                                              << cosmos.Te(za[l]) << endl;
     
-    if(parameters.verbosity>=0) cout << " finished RECFAST++ run." << endl;
+    if(parameters.verbosity>=0) cout << " finished Recfast++ run." << endl;
 
     //=======================================================================================================
     // write visibility function given the ionization history (LH)
@@ -284,10 +270,9 @@ void run_RECFAST(string filename)
 }
 
 
-
 //===========================================================================================================
 //
-// extend computation using RECFAST
+// extend CosmoRec computation at low redshifts using Recfast++
 //
 //===========================================================================================================
 void compute_Recfast_part(double zi, double ze, double Xe_Hi, double Xe_Hei, 
@@ -511,7 +496,7 @@ int CosmoRec(int narg, char *args[])
     //========================================================================
     // just run history using the recfast module in the cosmology class
     //========================================================================
-    if(mode=="REC") run_RECFAST(filename);
+    if(mode=="REC") run_Recfast_pp(filename);
 
     //========================================================================
     // initialize cosmology and the general startup
@@ -612,7 +597,7 @@ void return_solution_to_calling_program(const int nz, double *z_arr, double *Xe_
 //===========================================================================================================
 // Just return Recfast++ output
 //===========================================================================================================
-void run_RECFAST_pp(const int nz, double *z_arr,
+void run_Recfast_pp(const int nz, double *z_arr,
                     double *Xe_arr, double *Te_arr,
                     double mu1, double mu2, double mu3, double mu4, int CT_corr=0)
 {
@@ -655,7 +640,7 @@ void run_RECFAST_pp(const int nz, double *z_arr,
                                       << Te_arr[l] << endl;
         
         if(parameters.verbosity>=0)
-            cout << " finished RECFAST++ run. Now exiting program ... " << endl << endl;
+            cout << " finished Recfast++ run. Now exiting program ... " << endl << endl;
     }
     
     return;
@@ -824,7 +809,7 @@ int CosmoRec(const int runmode, const double runpars[15],
     //=======================================================================================================
     if(runmode==2)
     {
-        run_RECFAST_pp(nz, z_arr, Xe_arr, Te_arr, runpars[11], runpars[12], runpars[13], runpars[14], 0);
+        run_Recfast_pp(nz, z_arr, Xe_arr, Te_arr, runpars[11], runpars[12], runpars[13], runpars[14], 0);
         return 0;
     }
 
@@ -833,7 +818,7 @@ int CosmoRec(const int runmode, const double runpars[15],
     //=======================================================================================================
     if(runmode==3)
     {
-        run_RECFAST_pp(nz, z_arr, Xe_arr, Te_arr, runpars[11], runpars[12], runpars[13], runpars[14], 1);
+        run_Recfast_pp(nz, z_arr, Xe_arr, Te_arr, runpars[11], runpars[12], runpars[13], runpars[14], 1);
         return 0;
     }
     

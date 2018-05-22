@@ -19,7 +19,7 @@ bool write_populations=0;   // output solution for the populations of the resolv
 bool write_corrections=0;   // output correction functions from Recfast++ and CosmoRec (LH)
 bool write_Xe_Te_sol=1;     // output Xe & Te
 bool write_HI_distortion=0; // output approximate HI distortion (added July 2nd 2012)
-bool write_split=0;         // output that splits the Xe for H and He so they can be individually analysed
+bool write_split=0;         // output that splits Xe for H and He to be individually analysed
 bool write_RF_visi=0;       // output thomson visibility function in RF mode (LH)
 
 //==================================================================================================
@@ -28,11 +28,12 @@ bool write_RF_visi=0;       // output thomson visibility function in RF mode (LH
 string Rec_database_path=COSMORECDIR+COSMOREC_BASE_PATH;
 
 //==================================================================================================
-// below z=200 extend the solution with Recfast system
+// below z_extend we extend the CosmoRec solution with Recfast system
 //==================================================================================================
 int flag_compute_Recfast_part=0;
-double ze_Recfast=0.0;
 int nz_Recfast_part=100;
+double z_extend=50.0;
+double ze_Recfast=0.0;
 double Xi_HeI_switch=1.0e-7;
 
 //==================================================================================================

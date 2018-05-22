@@ -36,6 +36,56 @@ void set_accuracies_own_solver(double *rtol, double *abs, int neq)
 }
 
 //===========================================================================================================
+// Save results for PDE solver
+//===========================================================================================================
+void save_sol_for_PDE_solver(int iz, double z)
+{
+    if(!Diffusion_correction || (Diffusion_correction && iteration_count<Diff_iteration_max) )
+    {
+        pass_on_the_Solution_CosmoRec[iz][0]=z;
+        
+        for(int l=0; l<Level_I.nHIeq+1; l++)
+            pass_on_the_Solution_CosmoRec[iz][l+1]=Level_I.X[l];
+        
+        pass_on_the_Solution_CosmoRec[iz][Level_I.nHIeq+2]=Level_I.X[Level_I.neq-1];
+        pass_on_the_Solution_CosmoRec[iz][Level_I.nHIeq+3]=0.0;
+        pass_on_the_Solution_CosmoRec[iz][Level_I.nHIeq+4]=0.0;
+        
+        //================================================================================
+        // Helium diffusion correction; only resolved states + XHeI1s are saved      // JF
+        //================================================================================
+        if(Diffusion_correction_HeI)
+        {
+            pass_on_the_Solution_CosmoRec_HeI[iz][0]=z;
+            pass_on_the_Solution_CosmoRec_HeI[iz][1]=Level_I.X[Level_I.index_HeI];
+            
+            for(int l=0; l<get_number_of_resolved_levels_HeI(); l++)
+                pass_on_the_Solution_CosmoRec_HeI[iz][l+2]=Level_I.X[Level_I.index_HeI+get_HeI_index(l)];
+        }
+    }
+    
+    return;
+}
+
+//===========================================================================================================
+// Save results for output to CosmoMC
+//===========================================================================================================
+void save_Xe_Te_for_output(double z)
+{
+    if(!Diffusion_correction || (Diffusion_correction && iteration_count==Diff_iteration_max) )
+    {
+        vector<double> dum(3);
+        dum[0]=z;
+        dum[1]=Level_I.X[0];
+        dum[2]=Level_I.X[Level_I.neq-1]*cosmos.TCMB(z);
+        
+        output_CosmoRec.push_back(dum);
+    }
+    
+    return;
+}
+
+//===========================================================================================================
 //
 // The calculation
 //
@@ -137,7 +187,8 @@ int Xe_frac_effective_rates()
                 
                 copy_LI_to_ysol(Level_I.X, &Sz.y[0], Level_I.neq, Level_I.index_HI, Level_I.index_HeI);
                 
-                ODE_solver_Rec::ODE_Solver_set_up_solution_and_memory(Sz, tols, ODE_Solver_info_CR, fcn_effective, numerical_jacobian);
+                ODE_solver_Rec::ODE_Solver_set_up_solution_and_memory(Sz, tols, ODE_Solver_info_CR,
+                                                                      fcn_effective, numerical_jacobian);
             }
             
             //===========================================================================

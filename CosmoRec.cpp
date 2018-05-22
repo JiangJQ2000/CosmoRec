@@ -188,8 +188,8 @@ void run_Recfast_pp(string filename)
     // initialize cosmology and the general startup
     //=======================================================================================================
     read_entries_from_parameter_file(filename, parameters);
-    check_and_set_cosmology_params(parameters.cosm, parameters.verbosity);
-    
+    check_and_set_params(parameters, parameters.verbosity);
+
     if(parameters.verbosity>=1) display_Recfast_pp_parameters(filename, parameters);
     
     set_cosmology(parameters.cosm, cosmos);
@@ -601,7 +601,7 @@ void run_Recfast_pp(const int nz, double *z_arr,
                     double *Xe_arr, double *Te_arr,
                     double mu1, double mu2, double mu3, double mu4, int CT_corr=0)
 {
-    check_and_set_cosmology_params(parameters.cosm, parameters.verbosity);
+    check_and_set_params(parameters, parameters.verbosity);
         
     if(parameters.verbosity>=1) display_Recfast_pp_parameters("", parameters);
     
@@ -738,36 +738,7 @@ int CosmoRec(const int runmode, const double runpars[15],
     if((int)runpars[2] > 0) write_Xe_Te_sol=1;
     if((int)runpars[2] > 1) write_cosmology=1;
     if((int)runpars[2] > 2) write_populations=1;
-    
-    //=======================================================================================================
-    // explicitly set value of A2s1s rate (added July 23.07.2014)
-    //=======================================================================================================
-    if(runpars[3] > 0.0) const_HI_A2s_1s=runpars[3];
-    
-    //=======================================================================================================
-    // magnetic field heating (added 11.10.2014)
-    //=======================================================================================================
-    int PMFmode=runpars[6];
-    bool turb=0, ambi=0, KKLor=0;
-    if(PMFmode<0){ KKLor=1; PMFmode*=-1.0; }
-    else if(PMFmode==0) turb=1;
-    else if(PMFmode==1) ambi=1;
-    else if(PMFmode==2){ turb=1; ambi=1; }
-    else { cerr << " PMF mode not existing... " << endl; exit(1); }
 
-    set_PMF_parameters(runpars[4], runpars[5], turb, ambi, KKLor, h0);
-    
-    //=======================================================================================================
-    // scaling of fundamental constants using input variables from camb
-    //=======================================================================================================
-    if(runpars[10] != 0 && runpars[9] != 0.0 && runmode < 2)
-    {
-        cerr << "Cannot currently run CosmoRec with the power law!" << endl;
-        exit(1);
-    }
-    
-    //Set_VFC_pars(runpars[7], runpars[8], runpars[9], runpars[10]);
-    
     //=======================================================================================================
     // general setup
     //=======================================================================================================
@@ -776,12 +747,6 @@ int CosmoRec(const int runmode, const double runpars[15],
                             // a smaller number than ~750 is not recommended.
     parameters.zstart=3000; // starting redshift
     parameters.zend  =0;    // ending redshift
-
-    //=======================================================================================================
-    // rescale upper redshift when varying alpha & me
-    //=======================================================================================================
-    double zs_rescaled=3350.0*pow(FC_CosmoRec.a_scale, 2)*FC_CosmoRec.m_scale;
-    parameters.zstart=min(parameters.zstart, zs_rescaled);
     
     //=======================================================================================================
     // cosmological parameters
@@ -798,12 +763,40 @@ int CosmoRec(const int runmode, const double runpars[15],
     parameters.cosm.Nnu  = Nnu;                // N_nu_eff
     
     //=======================================================================================================
-    // Recfast++ settings [some have been set above already]
+    // Recfast++ settings [some are default values]
     //=======================================================================================================
     parameters.cosm.Rec.F= 1.14;               // Recfast++ fudge-factor
-    parameters.cosm.Rec.A2s1s=runpars[3];
+    parameters.cosm.Rec.A2s1s=runpars[3];      // explicitly set value of A2s1s rate (added July 23.07.2014)
     parameters.cosm.Rec.f_ann=runpars[0];
     
+    //=======================================================================================================
+    // magnetic field heating (added 11.10.2014)
+    //=======================================================================================================
+    int PMFmode=runpars[6];
+    bool turb=0, ambi=0, KKLor=0;
+    if(PMFmode<0){ KKLor=1; PMFmode*=-1.0; }
+    else if(PMFmode==0) turb=1;
+    else if(PMFmode==1) ambi=1;
+    else if(PMFmode==2){ turb=1; ambi=1; }
+    else { cerr << " PMF mode not existing... " << endl; exit(1); }
+    
+    parameters.cosm.Rec.B0=runpars[4];
+    parameters.cosm.Rec.nB=runpars[5];
+    parameters.cosm.Rec.turb=turb;
+    parameters.cosm.Rec.ambi=ambi;
+    parameters.cosm.Rec.KK_or_PF_Lorentz=KKLor;
+    
+    //=======================================================================================================
+    // scaling of fundamental constants using input variables from camb
+    //=======================================================================================================
+    if(runpars[10] != 0 && runpars[9] != 0.0 && runmode < 2)
+        throw_error("CosmoRec", "Cannot currently run CosmoRec with the power law!");
+    
+    parameters.cosm.Rec.aS=runpars[7];
+    parameters.cosm.Rec.mS=runpars[8];
+    parameters.cosm.Rec.pS=runpars[9];
+    parameters.cosm.Rec.RM=runpars[10];
+
     //=======================================================================================================
     // runmode 2: return Recfast++ result
     //=======================================================================================================

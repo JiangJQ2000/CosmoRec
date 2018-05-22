@@ -130,11 +130,7 @@ void setup_Hydrogen_atom()
     else if(nShells==4) effective_rate_path=effective_rate_path_arr[1];
     else if(nShells==5) effective_rate_path=effective_rate_path_arr[2];
     else if(nShells==10) effective_rate_path=effective_rate_path_arr[3];
-    else
-    { 
-        cerr << " setup_Hydrogen_atom :: please choose nSHI = 3, 4, 5 or 10! Exiting... \n" << endl; 
-        exit(0); 
-    }
+    else throw_error("setup_Hydrogen_atom", "please choose nSHI = 3, 4, 5 or 10! Exiting...");
     
     load_rates(effective_rate_path, parameters.CR.nS_effective, Hydrogen_Atoms);
     

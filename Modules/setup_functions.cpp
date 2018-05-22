@@ -259,15 +259,12 @@ void read_entries_from_parameter_file(string filename, Parameters_form_initfile 
     //----------------------------------------------------------------------------------------------
     parser_read(pfc, "nzpts", ival, found, show_params);
     if(found) inp.nz=ival;
-    if(inp.nz<1000){ cerr << funcname << " : Choose nzpts > 1000 " << endl; exit(1); }
     
     parser_read(pfc, "zstart", dval, found, show_params);
     if(found) inp.zstart=dval;
-    if(inp.zstart>3400){ cerr << funcname << " : Choose zstart <= 3400 " << endl; exit(1); }
     
     parser_read(pfc, "zend", dval, found, show_params);
     if(found) inp.zend=dval;
-    if(inp.zend<0){ cerr << funcname << " : Choose zstart >=0 " << endl; exit(1); }
 
     //==============================================================================================
     // cosmological parameters
@@ -299,9 +296,10 @@ void read_entries_from_parameter_file(string filename, Parameters_form_initfile 
 }
 
 //===========================================================================================================
-void check_and_set_cosmology_params(Cosmos::parameters &C, int verbosity)
+void check_and_set_params(Parameters_form_initfile &inp, int verbosity)
 {
-    string funcname="check_and_set_cosmology_params";
+    string funcname="check_and_set_params";
+    Cosmos::parameters &C=inp.cosm;
     
     //==============================================================================================
     // pure cosmology part of parameters (T0, Yp, etc) is checked by cosmology object. but do set
@@ -312,7 +310,7 @@ void check_and_set_cosmology_params(Cosmos::parameters &C, int verbosity)
     // check recombination part of Recfast++
     //----------------------------------------------------------------------------------------------
     if(C.Rec.F==0) C.Rec.F=1.14;
-    if(C.Rec.F<0){ cerr << funcname << " : Choose fudge >=0 " << endl; exit(1); }
+    if(C.Rec.F<0) throw_error(funcname, "Choose fudge >=0");
     
     if(C.Rec.A2s1s<=0.0) C.Rec.A2s1s=const_HI_A2s_1s; // use values consistent with CosmoRec default
     // explicitly set value of A2s1s rate in CosmoRec (added 23.07.2014)
@@ -321,40 +319,57 @@ void check_and_set_cosmology_params(Cosmos::parameters &C, int verbosity)
     //----------------------------------------------------------------------------------------------
     // annihilation
     //----------------------------------------------------------------------------------------------
-    if(C.Rec.f_ann<0){ cerr << funcname << " : f_ann >=0 " << endl; exit(1); }
+    if(C.Rec.f_ann<0) throw_error(funcname, "Choose f_ann >=0");
     
     //----------------------------------------------------------------------------------------------
     // decay
     //----------------------------------------------------------------------------------------------
-    if(C.Rec.f_dec<0){ cerr << funcname << " : f_dec >=0 " << endl; exit(1); }
-    if(C.Rec.Gamma_dec<0){ cerr << funcname << " : Gamma_dec >=0 " << endl; exit(1); }
+    if(C.Rec.f_dec<0) throw_error(funcname, "Choose f_dec >=0");
+    if(C.Rec.Gamma_dec<0) throw_error(funcname, "Choose Gamma_dec >=0");
 
     //----------------------------------------------------------------------------------------------
     // magnetic field heating
     //----------------------------------------------------------------------------------------------
-    if(C.Rec.B0<0){ cerr << funcname << " : B0 >=0 " << endl; exit(1); }
-    if(C.Rec.nB<-3.0){ cerr << funcname << " : nB > -3.0 " << endl; exit(1); }
+    if(C.Rec.B0<0) throw_error(funcname, "Choose B0 >=0");
+    if(C.Rec.nB<-3.0) throw_error(funcname, "Choose nB > -3.0");
    
     set_PMF_parameters(C.Rec.B0, C.Rec.nB, C.Rec.turb, C.Rec.ambi, C.Rec.KK_or_PF_Lorentz, C.h100);
 
     //----------------------------------------------------------------------------------------------
     // variation of alpha and me/mp
     //----------------------------------------------------------------------------------------------
-    if(C.Rec.RM>6){ cerr << funcname << " : Variation mode <=6 " << endl; exit(1); }
+    if(C.Rec.RM>6) throw_error(funcname, "Variation mode <=6");
+    if(C.Rec.RM<0) throw_error(funcname, "Variation mode >=0");
 
     Set_VFC_pars(C.Rec.aS, C.Rec.mS, C.Rec.pS, C.Rec.RM);
     
-    //==============================================================================================
+    //----------------------------------------------------------------------------------------------
+    // rescale upper redshift when varying alpha & me
+    //----------------------------------------------------------------------------------------------
+    double zs_rescaled=3350.0*pow(C.Rec.aS, 2)*C.Rec.mS;
+    inp.zstart=min(inp.zstart, zs_rescaled);
+
+    //----------------------------------------------------------------------------------------------
+    // check redshifts and number of points
+    //----------------------------------------------------------------------------------------------
+    if(inp.nz<500) throw_error("set_startup_data", "Choose nzpts > 500");
+    if(inp.zstart>3400) throw_error("set_startup_data", "Choose zstart <= 3400");
+    if(inp.zend<0) throw_error("set_startup_data", "Choose zstart >=0");
+    
+    //----------------------------------------------------------------------------------------------
     // show final parameters
-    //==============================================================================================
+    //----------------------------------------------------------------------------------------------
     if(verbosity>2) C.show();
 
+    C.show();
+    wait_f_r();
+    
     return;
 }
 
 //===========================================================================================================
 //
-// setting the startup parameters according to param[12]
+// setting the startup parameters according to information given in structure Parameters_form_initfile inp
 //
 //===========================================================================================================
 void set_startup_data(string filename,
@@ -367,7 +382,7 @@ void set_startup_data(string filename,
     // cosmology and Recfast++ parameter checks. This function also initializes derived CosmoRec parameters
     // from standard recombination settings.
     //=======================================================================================================
-    check_and_set_cosmology_params(inp.cosm, inp.verbosity);
+    check_and_set_params(inp, inp.verbosity);
     
     //=======================================================================================================
     // CosmoRec specific settings
@@ -394,11 +409,7 @@ void set_startup_data(string filename,
     if(inp.CR.HI_absorption==1){}
     else if(inp.CR.HI_absorption==2){ _HI_abs_appr_flag=1; inp.CR.HI_absorption=1; }
     else if(inp.CR.HI_absorption==3){ _HI_abs_appr_flag=1; inp.CR.HI_absorption=1; Diffusion_correction_HeI=1; }
-    else if(inp.CR.HI_absorption>=4)
-    { 
-        cerr << " set_startup_data :: HI_absorption flag N/A. Exiting... " << endl;
-        exit(0);
-    }
+    else if(inp.CR.HI_absorption>=4) throw_error("set_startup_data", "HI_absorption flag N/A. Exiting...");
 
     if(inp.cosm.Rec.f_ann>0) DM_annihilation=1;
     if(inp.cosm.Rec.f_dec>0) DM_decay=1;

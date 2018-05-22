@@ -104,11 +104,7 @@ void setup_Helium_atom()
         if(set_HeI_Quadrupole_lines) effective_rate_path_HeI=effective_rate_path_HeI_arr[6];
         else effective_rate_path_HeI=effective_rate_path_HeI_arr[3];
     }
-    else
-    { 
-        cerr << " setup_Helium_atom :: please choose nSHeI = 2, 3, 5 or 10! Exiting... \n" << endl; 
-        exit(0); 
-    }
+    else throw_error("setup_Helium_atom", "please choose nSHeI = 2, 3, 5 or 10! Exiting...");
     
     int nS_effective_HeI=parameters.CR.nS_effective_HeI;
     load_rates(effective_rate_path_HeI, nS_effective_HeI, HeI_Atoms);

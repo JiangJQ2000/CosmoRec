@@ -88,10 +88,8 @@ void rescale_variables_all(double alpha_scale, double me_scale, size_t run_mode,
         }
         
         // Rescaled Pesc
-        if (run_mode == 5) {
-            cerr << " rescale_variables_all: this mode does not exist for CosmoRec case..." << endl;
-            exit(0);
-        }
+        if (run_mode == 5)
+            throw_error("rescale_variables_all", "This CosmoRec mode does not exist...");
     }
     
     // rescale hydrogen atom. This is done interally and relative to whatever state the atom is in [LH & JC]

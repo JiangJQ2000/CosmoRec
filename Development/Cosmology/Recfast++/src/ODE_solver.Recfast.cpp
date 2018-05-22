@@ -40,7 +40,7 @@ struct ODE_Solver_data
     ODE_solver_Solution Stemp;
     ODE_solver_Solution *Sptr;
     ODE_solver_Solution *Snewptr, *Sguessptr;
-    ODE_solver_Solution *Snptr, *Snm1ptr, *Snm2ptr, *Snm3ptr, *Snm4ptr, *Snm5ptr;
+    ODE_solver_Solution *Snptr[6];
     //
     vector<double> Jacobian_ptr;
     //
@@ -372,12 +372,7 @@ void ODE_Solver_set_up_solution_and_memory(double z, ODE_solver_Solution &Sz,
         ODE_Solver_pointers_were_set=1;
         ODE_Solver_info.Snewptr=new ODE_solver_Solution;
         ODE_Solver_info.Sguessptr=new ODE_solver_Solution;
-        ODE_Solver_info.Snptr=new ODE_solver_Solution;
-        ODE_Solver_info.Snm1ptr=new ODE_solver_Solution;
-        ODE_Solver_info.Snm2ptr=new ODE_solver_Solution;
-        ODE_Solver_info.Snm3ptr=new ODE_solver_Solution;
-        ODE_Solver_info.Snm4ptr=new ODE_solver_Solution;
-        ODE_Solver_info.Snm5ptr=new ODE_solver_Solution;
+        for(int k=0; k<6; k++) ODE_Solver_info.Snptr[k]=new ODE_solver_Solution;
     }
     
     ODE_Solver_info.Stemp.y.resize(neq); ODE_Solver_info.Stemp.dy.resize(neq); 
@@ -385,23 +380,22 @@ void ODE_Solver_set_up_solution_and_memory(double z, ODE_solver_Solution &Sz,
     ODE_Solver_info.Snewptr->y.resize(neq); ODE_Solver_info.Snewptr->dy.resize(neq); 
     ODE_Solver_info.Sguessptr->y.resize(neq); ODE_Solver_info.Sguessptr->dy.resize(neq);
     // 
-    ODE_Solver_info.Snptr->y.resize(neq); ODE_Solver_info.Snptr->dy.resize(neq); 
-    ODE_Solver_info.Snm1ptr->y.resize(neq); ODE_Solver_info.Snm1ptr->dy.resize(neq); 
-    ODE_Solver_info.Snm2ptr->y.resize(neq); ODE_Solver_info.Snm2ptr->dy.resize(neq); 
-    ODE_Solver_info.Snm3ptr->y.resize(neq); ODE_Solver_info.Snm3ptr->dy.resize(neq); 
-    ODE_Solver_info.Snm4ptr->y.resize(neq); ODE_Solver_info.Snm4ptr->dy.resize(neq);
-    ODE_Solver_info.Snm5ptr->y.resize(neq); ODE_Solver_info.Snm5ptr->dy.resize(neq);
+    for(int k=0; k<6; k++)
+    {
+        ODE_Solver_info.Snptr[k]->y.resize(neq);
+        ODE_Solver_info.Snptr[k]->dy.resize(neq);
+    }
     
     ODE_Solver_info.Jacobian_ptr.resize(neq*neq);
     
     //===================================================================================
     // copy solution
     //===================================================================================
-    ODE_Solver_info.Snptr->z=Sz.z;
-    ODE_Solver_info.Snptr->y=Sz.y;
-    ODE_Solver_info.Snptr->dy=Sz.dy;
+    ODE_Solver_info.Snptr[0]->z=Sz.z;
+    ODE_Solver_info.Snptr[0]->y=Sz.y;
+    ODE_Solver_info.Snptr[0]->dy=Sz.dy;
     
-    ODE_solver_f(neq, z, &ODE_Solver_info.Snptr->y[0], &ODE_Solver_info.Snptr->dy[0]);
+    ODE_solver_f(neq, z, &ODE_Solver_info.Snptr[0]->y[0], &ODE_Solver_info.Snptr[0]->dy[0]);
     
     //===================================================================================
     // Absolute accuracies
@@ -516,54 +510,62 @@ double ODE_Solver_alp5(double r1, double r2, double r3, double r4, double r5)
     return -t*t/( r5*(r1-r5)*(r2-r5)*(r3-r5)*(r4-r5)*ODE_Solver_Gears_fk5(r1, r2, r3, r4, r5) ); 
 }
 
+double ODE_Solver_alpi(int i, const double *r, const double *a)
+{
+    if(i==2) return ODE_Solver_alp1(r[0], r[1], r[2], r[3], r[4], a[2], a[3], a[4], a[5]);
+    if(i==3) return ODE_Solver_alp2(r[0], r[1], r[2], r[3], r[4], a[3], a[4], a[5]);
+    if(i==4) return ODE_Solver_alp3(r[0], r[1], r[2], r[3], r[4], a[4], a[5]);
+    if(i==5) return ODE_Solver_alp4(r[0], r[1], r[2], r[3], r[4], a[5]);
+    if(i==6) return ODE_Solver_alp5(r[0], r[1], r[2], r[3], r[4]);
+    
+    return 0;
+}
+
 //==================================================================================================
 // Gear's corrector (implicit)
 //==================================================================================================
-double ODE_Solver_compute_ynp1(int order, ODE_solver_Solution &Snp1_new, 
-                               const ODE_solver_Solution &Snp1_guess, 
-                               const ODE_solver_Solution &Sn, 
-                               const ODE_solver_Solution &Snm1, 
-                               const ODE_solver_Solution &Snm2, 
-                               const ODE_solver_Solution &Snm3, 
-                               const ODE_solver_Solution &Snm4, 
-                               const ODE_solver_Solution &Snm5)
+double ODE_Solver_compute_ynp1(int order, ODE_solver_Solution &Snp1_new,
+                               const ODE_solver_Solution &Snp1_guess,
+                               ODE_solver_Solution *Sn[6])
 {
-    if(order<1 || order>6){ cerr << " check order for ODE_Solver_compute_ynp1 " << endl; exit(0); }
+    if(order<1 || order>6)
+    {
+        cerr << " check order for ODE_Solver_compute_ynp1 " << endl;
+        exit(0);
+    }
     
-    //====================================================================================
-    // the structures yn, ynm1, ynm2 contain the information from the previous time steps
-    // the structure ynp1 contains the current version of ynp1 and dynm1
-    //====================================================================================
-    double delta=1.0, a0=0.0, a1=0.0, a2=0.0, a3=0.0, a4=0.0, a5=0.0;
-    double Dznp1=Snp1_guess.z-Sn.z, Dzn=0.0, Dznm1=0.0, Dznm2=0.0, Dznm3=0.0, Dznm4=0.0;
-    int neq=Snp1_new.y.size();
-
-    if(order>=2) Dzn=Sn.z-Snm1.z;
-    if(order>=3) Dznm1=Sn.z-Snm2.z;
-    if(order>=4) Dznm2=Sn.z-Snm3.z;
-    if(order>=5) Dznm3=Sn.z-Snm4.z;
-    if(order>=6) Dznm4=Sn.z-Snm5.z;
+    //===============================================================================
+    // the structures yn, ynm1, ynm2 contain the information from the previous time
+    // steps the structure ynp1 contains the current version of ynp1 and dynm1
+    //===============================================================================
+    double delta=1.0;
+    double Dznp1=Snp1_guess.z-Sn[0]->z;
     //
-    if(order>=6) a5=ODE_Solver_alp5(Dzn/Dznp1, Dznm1/Dznp1, Dznm2/Dznp1, 
-                                    Dznm3/Dznp1, Dznm4/Dznp1);
-    if(order>=5) a4=ODE_Solver_alp4(Dzn/Dznp1, Dznm1/Dznp1, Dznm2/Dznp1, 
-                                    Dznm3/Dznp1, Dznm4/Dznp1, a5);
-    if(order>=4) a3=ODE_Solver_alp3(Dzn/Dznp1, Dznm1/Dznp1, Dznm2/Dznp1, 
-                                    Dznm3/Dznp1, Dznm4/Dznp1, a4, a5);
-    if(order>=3) a2=ODE_Solver_alp2(Dzn/Dznp1, Dznm1/Dznp1, Dznm2/Dznp1, 
-                                    Dznm3/Dznp1, Dznm4/Dznp1, a3, a4, a5);
-    if(order>=2) a1=ODE_Solver_alp1(Dzn/Dznp1, Dznm1/Dznp1, Dznm2/Dznp1, 
-                                    Dznm3/Dznp1, Dznm4/Dznp1, a2, a3, a4, a5);
-    //
-    a0=ODE_Solver_alp0(a1, a2, a3, a4, a5); 
-    delta=ODE_Solver_delta0(Dzn/Dznp1, Dznm1/Dznp1, Dznm2/Dznp1, Dznm3/Dznp1, 
-                            Dznm4/Dznp1, a1, a2, a3, a4, a5);
-    //
-    for(int i=0; i<neq; i++) 
-        Snp1_new.y[i]=Dznp1*delta*Snp1_guess.dy[i]+a0*Sn.y[i]+a1*Snm1.y[i]
-                      +a2*Snm2.y[i]+a3*Snm3.y[i]+a4*Snm4.y[i]+a5*Snm5.y[i];        
+    double a[6]={0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+    double Dzn[5]={0.0, 0.0, 0.0, 0.0, 0.0};
+    double rho[5]={0.0, 0.0, 0.0, 0.0, 0.0};
     
-    return delta;   
+    for(int k=2; k<=order; k++){ Dzn[k-2]=Sn[0]->z-Sn[k-1]->z; rho[k-2]=Dzn[k-2]/Dznp1; }
+    
+    for(int k=order; k>=2; k--) a[k-1]=ODE_Solver_alpi(k, rho, a);
+    
+    a[0]=ODE_Solver_alp0(a[1], a[2], a[3], a[4], a[5]);
+    
+    delta=ODE_Solver_delta0(rho[0], rho[1], rho[2], rho[3], rho[4],
+                            a[1], a[2], a[3], a[4], a[5]);
+    
+    // add up different orders
+    for(int i=0; i<(int)Snp1_new.y.size(); i++)
+    {
+        Snp1_new.y[i]=Dznp1*delta*Snp1_guess.dy[i];
+        
+        double Sa=0.0;
+        for(int mo=order-1; mo>=0; mo--) Sa+=a[mo]*Sn[mo]->y[i];
+        
+        Snp1_new.y[i]+=Sa;
+    }
+    
+    return delta;
 }
 
 //==================================================================================================
@@ -594,55 +596,55 @@ double ODE_Solver_beta4(double r1, double r2, double r3, double r4, double r5, d
 double ODE_Solver_beta5(double r1, double r2, double r3, double r4, double r5)
 { return (1.0+r1)*(1.0+r2)*(1.0+r3)*(1.0+r4)/((r2-r5)*r5*(r5-r1)*(r5-r3)*(r5-r4)); }
 
+double ODE_Solver_betai(int i, const double *r, const double *b)
+{
+    if(i==2) return ODE_Solver_beta1(r[0], r[1], r[2], r[3], r[4], b[2], b[3], b[4], b[5]);
+    if(i==3) return ODE_Solver_beta2(r[0], r[1], r[2], r[3], r[4], b[3], b[4], b[5]);
+    if(i==4) return ODE_Solver_beta3(r[0], r[1], r[2], r[3], r[4], b[4], b[5]);
+    if(i==5) return ODE_Solver_beta4(r[0], r[1], r[2], r[3], r[4], b[5]);
+    if(i==6) return ODE_Solver_beta5(r[0], r[1], r[2], r[3], r[4]);
+    
+    return 0;
+}
+
 //==================================================================================================
 // extrapolation using old function values
 //==================================================================================================
-void ODE_Solver_extrapolate_ynp1(int order, ODE_solver_Solution &Snp1, 
-                                 const ODE_solver_Solution &Sn, 
-                                 const ODE_solver_Solution &Snm1, 
-                                 const ODE_solver_Solution &Snm2, 
-                                 const ODE_solver_Solution &Snm3, 
-                                 const ODE_solver_Solution &Snm4, 
-                                 const ODE_solver_Solution &Snm5)
+void ODE_Solver_extrapolate_ynp1(int order, ODE_solver_Solution &Snp1,
+                                 ODE_solver_Solution *Sn[6])
 {
     if(order<1 || order>6)
-    { 
-        cerr << " check order for ODE_Solver_extrapolate_ynp1 " << endl; 
-        exit(0); 
+    {
+        cerr << " check order for ODE_Solver_extrapolate_ynp1 " << endl;
+        exit(0);
     }
     
-    //====================================================================================
-    // the structures yn, ynm1,... contain the information from the previous time steps
-    // the structure ynp1 contains the current version of ynp1 and dynm1
-    //====================================================================================
-    double b0=1.0,  b1=0.0, b2=0.0, b3=0.0, b4=0.0, b5=0.0;
-    double Dznp1=Snp1.z-Sn.z, Dzn=0.0, Dznm1=0.0, Dznm2=0.0, Dznm3=0.0, Dznm4=0.0;
-    int neq=Sn.y.size();
-
-    if(order>=2) Dzn=Sn.z-Snm1.z;
-    if(order>=3) Dznm1=Sn.z-Snm2.z;
-    if(order>=4) Dznm2=Sn.z-Snm3.z;
-    if(order>=5) Dznm3=Sn.z-Snm4.z;
-    if(order>=6) Dznm4=Sn.z-Snm5.z;
+    //================================================================================
+    // the structures yn, ynm1,... contain the information from the previous time
+    // steps the structure ynp1 contains the current version of ynp1 and dynm1
+    //================================================================================
+    double Dznp1=Snp1.z-Sn[0]->z;
     //
-    if(order>=6) b5=ODE_Solver_beta5(Dzn/Dznp1, Dznm1/Dznp1, Dznm2/Dznp1, 
-                                     Dznm3/Dznp1, Dznm4/Dznp1);
-    if(order>=5) b4=ODE_Solver_beta4(Dzn/Dznp1, Dznm1/Dznp1, Dznm2/Dznp1, 
-                                     Dznm3/Dznp1, Dznm4/Dznp1, b5);
-    if(order>=4) b3=ODE_Solver_beta3(Dzn/Dznp1, Dznm1/Dznp1, Dznm2/Dznp1, 
-                                     Dznm3/Dznp1, Dznm4/Dznp1, b4, b5);
-    if(order>=3) b2=ODE_Solver_beta2(Dzn/Dznp1, Dznm1/Dznp1, Dznm2/Dznp1, 
-                                     Dznm3/Dznp1, Dznm4/Dznp1, b3, b4, b5);
-    if(order>=2) b1=ODE_Solver_beta1(Dzn/Dznp1, Dznm1/Dznp1, Dznm2/Dznp1, 
-                                     Dznm3/Dznp1, Dznm4/Dznp1, b2, b3, b4, b5);
-    //
-    b0=ODE_Solver_beta0(b1, b2, b3, b4, b5);
-    //
-    for(int i=0; i<neq; i++) 
-        Snp1.y[i]=b0*Sn.y[i]+b1*Snm1.y[i]+b2*Snm2.y[i]
-                 +b3*Snm3.y[i]+b4*Snm4.y[i]+b5*Snm5.y[i];     
+    double b[6]={0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+    double Dzn[5]={0.0, 0.0, 0.0, 0.0, 0.0};
+    double rho[5]={0.0, 0.0, 0.0, 0.0, 0.0};
     
-    return; 
+    for(int k=2; k<=order; k++){ Dzn[k-2]=Sn[0]->z-Sn[k-1]->z; rho[k-2]=Dzn[k-2]/Dznp1; }
+    
+    for(int k=order; k>=2; k--) b[k-1]=ODE_Solver_betai(k, rho, b);
+    
+    b[0]=ODE_Solver_beta0(b[1], b[2], b[3], b[4], b[5]);
+    
+    // add up different orders
+    for(int i=0; i<(int)Sn[0]->y.size(); i++)
+    {
+        double Sa=0.0;
+        for(int mo=order-1; mo>=0; mo--) Sa+=b[mo]*Sn[mo]->y[i];
+        
+        Snp1.y[i]=Sa;
+    }
+    
+    return;
 }
 
 //==================================================================================================
@@ -674,12 +676,7 @@ int ODE_Solver_estimate_error_and_next_possible_step_size(int order, const doubl
                                                           double zend, double &Dz_z, 
                                                           const double Dz_z_max, const double tol, 
                                                           const ODE_solver_Solution &S, 
-                                                          const ODE_solver_Solution &Sn, 
-                                                          const ODE_solver_Solution &Snm1, 
-                                                          const ODE_solver_Solution &Snm2, 
-                                                          const ODE_solver_Solution &Snm3, 
-                                                          const ODE_solver_Solution &Snm4, 
-                                                          const ODE_solver_Solution &Snm5, 
+                                                          ODE_solver_Solution *Sn[6],
                                                           int messflag=1)
 {
     order=(int) min(5, order);
@@ -689,7 +686,7 @@ int ODE_Solver_estimate_error_and_next_possible_step_size(int order, const doubl
     //--------------------------------------------------------
     int neq=S.y.size();
     ODE_Solver_info.Stemp.z=z;
-    ODE_Solver_extrapolate_ynp1(order, ODE_Solver_info.Stemp, Sn, Snm1, Snm2, Snm3, Snm4, Snm5); 
+    ODE_Solver_extrapolate_ynp1(order, ODE_Solver_info.Stemp, Sn);
     
     //--------------------------------------------------------
     // compute difference
@@ -850,15 +847,10 @@ void ODE_Solver_Solve_LA_system(vector<double > &A, vector<double > &b, vector<d
 //==================================================================================================
 int ODE_Solver_compute_new_Solution(int order, const double zout, const double reltol, 
                                     ODE_solver_Solution * &Snew, 
-                                    const ODE_solver_Solution &Sn, 
-                                    const ODE_solver_Solution &Snm1, 
-                                    const ODE_solver_Solution &Snm2, 
-                                    const ODE_solver_Solution &Snm3, 
-                                    const ODE_solver_Solution &Snm4, 
-                                    const ODE_solver_Solution &Snm5)
+                                    ODE_solver_Solution *Sn[6])
 {
-    double zin=Sn.z, Dz=zout-zin, delta;
-    int neq=Sn.y.size(), converged=0;
+    double zin=Sn[0]->z, Dz=zout-zin, delta;
+    int neq=Sn[0]->y.size(), converged=0;
     int Jac_loops=0;
     // tolerances for convergence
     double tolSol = reltol;
@@ -868,7 +860,7 @@ int ODE_Solver_compute_new_Solution(int order, const double zout, const double r
     // set initial values for iteration: extrapolate from z--> zout
     //========================================================
     ODE_Solver_info.Sguessptr->z=Snew->z=zout;
-    ODE_Solver_extrapolate_ynp1(order, *ODE_Solver_info.Sguessptr, Sn, Snm1, Snm2, Snm3, Snm4, Snm5); 
+    ODE_Solver_extrapolate_ynp1(order, *ODE_Solver_info.Sguessptr, Sn);
     
     do{
         Jac_loops++;
@@ -883,8 +875,7 @@ int ODE_Solver_compute_new_Solution(int order, const double zout, const double r
         // delta is the coefficient in front of h f(y); it depends 
         // on the order that is used to compute things
         //--------------------------------------------------------
-        delta=ODE_Solver_compute_ynp1(order, *Snew, *ODE_Solver_info.Sguessptr, 
-                                      Sn, Snm1, Snm2, Snm3, Snm4, Snm5);
+        delta=ODE_Solver_compute_ynp1(order, *Snew, *ODE_Solver_info.Sguessptr, Sn);
 
         //--------------------------------------------------------
         // this is rhs of J_F Dx = -F
@@ -960,12 +951,7 @@ int ODE_Solver_Solve_history(double zs, double zend, ODE_solver_Solution &Sz)
         
         LAerror=ODE_Solver_compute_new_Solution(ODE_Solver_info.order, zout, tolSol, 
                                                 ODE_Solver_info.Snewptr, 
-                                                *ODE_Solver_info.Snptr, 
-                                                *ODE_Solver_info.Snm1ptr, 
-                                                *ODE_Solver_info.Snm2ptr, 
-                                                *ODE_Solver_info.Snm3ptr, 
-                                                *ODE_Solver_info.Snm4ptr, 
-                                                *ODE_Solver_info.Snm5ptr);
+                                                ODE_Solver_info.Snptr);
         
         if(LAerror==1)
         {
@@ -983,12 +969,7 @@ int ODE_Solver_Solve_history(double zs, double zend, ODE_solver_Solution &Sz)
                                                                            zin, zout, zend, Dz_z, 
                                                                            Dz_z_max, tolSol, 
                                                                            *ODE_Solver_info.Snewptr, 
-                                                                           *ODE_Solver_info.Snptr, 
-                                                                           *ODE_Solver_info.Snm1ptr, 
-                                                                           *ODE_Solver_info.Snm2ptr, 
-                                                                           *ODE_Solver_info.Snm3ptr, 
-                                                                           *ODE_Solver_info.Snm4ptr, 
-                                                                           *ODE_Solver_info.Snm5ptr, 
+                                                                           ODE_Solver_info.Snptr,
                                                                            messflag);
             
             //--------------------------------------------------------
@@ -996,13 +977,9 @@ int ODE_Solver_Solve_history(double zs, double zend, ODE_solver_Solution &Sz)
             //--------------------------------------------------------
             if(redo_run==0)
             {
-                ODE_Solver_info.Sptr=ODE_Solver_info.Snm5ptr;
-                ODE_Solver_info.Snm5ptr=ODE_Solver_info.Snm4ptr;
-                ODE_Solver_info.Snm4ptr=ODE_Solver_info.Snm3ptr;
-                ODE_Solver_info.Snm3ptr=ODE_Solver_info.Snm2ptr;
-                ODE_Solver_info.Snm2ptr=ODE_Solver_info.Snm1ptr;
-                ODE_Solver_info.Snm1ptr=ODE_Solver_info.Snptr;
-                ODE_Solver_info.Snptr=ODE_Solver_info.Snewptr;
+                ODE_Solver_info.Sptr=ODE_Solver_info.Snptr[5];
+                for(int k=5; k>0; k--) ODE_Solver_info.Snptr[k]=ODE_Solver_info.Snptr[k-1];
+                ODE_Solver_info.Snptr[0]=ODE_Solver_info.Snewptr;
                 ODE_Solver_info.Snewptr=ODE_Solver_info.Sptr;
                 ODE_Solver_info.Sptr=NULL;
                 ODE_Solver_info.count++;
@@ -1026,9 +1003,9 @@ int ODE_Solver_Solve_history(double zs, double zend, ODE_solver_Solution &Sz)
     //--------------------------------------------------------
     ODE_Solver_info.Dz_z_last=Dz_z;
     //
-    Sz.z=ODE_Solver_info.Snptr->z;
-    Sz.y=ODE_Solver_info.Snptr->y;
-    Sz.dy=ODE_Solver_info.Snptr->dy;
+    Sz.z=ODE_Solver_info.Snptr[0]->z;
+    Sz.y=ODE_Solver_info.Snptr[0]->y;
+    Sz.dy=ODE_Solver_info.Snptr[0]->dy;
     
     return 0;
 }

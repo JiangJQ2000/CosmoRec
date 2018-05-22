@@ -1,10 +1,11 @@
 //======================================================================================
 // Author: Jens Chluba
 // first implementation: Jan 2002
-// last modification: Oct 2013
+// last modification: Feb 2018
 //
 // Purpose: collection of several simple routines
 //======================================================================================
+// Feb 2018: added Gaussian function (why not earlier??) and tanh-switch
 // Oct 2013: added Ei(x) function
 // Jul 2012: fixed a memory problem with gsl-1.15 compatibility of splines.
 // Jun 2012: fixed a memory issue with spline setup routines.
@@ -38,6 +39,11 @@ using namespace std;
 //======================================================================================
 // Special functions
 //======================================================================================
+double Gaussian(double x, double x0, double sigma)         // simple normlized Gaussian
+{ return exp(-min(200.0, pow( (x-x0)/sigma, 2)/2.0))/sqrt(TWOPI)/sigma; }
+
+double tanh_switch(double x, double x0, double sigma)      // simple tanh-switch
+{ return (1.0-tanh((x-x0)/sigma))/2.0; }
 
 //======================================================================================
 // Dawson integral; Based on Antia

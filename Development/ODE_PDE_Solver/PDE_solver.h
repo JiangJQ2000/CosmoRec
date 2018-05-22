@@ -123,7 +123,7 @@ void Step_PDE_O2t_Int(double theta, int it_max, double zs, double ze,
 //==================================================================================================
 void setup_Lagrange_interpolation_coefficients_O2_CODE(PDE_Stepper_Data &PDE_D, 
                                                        vector<double> &xarr, 
-                                                       bool setup_Integral);
+                                                       bool setup_Integral=1);
 
 void compute_derivatives(const vector<double> &yi, 
                          const vector<double> &Ai, const vector<double> &Bi, 

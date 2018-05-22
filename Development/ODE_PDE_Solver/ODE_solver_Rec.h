@@ -81,6 +81,12 @@ namespace ODE_solver_Rec
         double direction;
         // to pass on parameters for the setup
         void *p;
+        
+        ODE_Solver_data()
+        {
+            Snewptr=NULL;
+            p=NULL;
+        }
     };
     
     //==============================================================================================

@@ -603,8 +603,6 @@ void allocate_memory()
     //
     Level_I_temp_JAC.X =new double[Level_I.neq];
     Level_I_temp_JAC.g =new double[Level_I.neq];
-    
-    ODE_Solver_info_CR.Snewptr=NULL; // to make sure that the memory will be set
 
     return;
 }

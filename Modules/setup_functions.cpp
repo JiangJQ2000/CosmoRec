@@ -346,8 +346,8 @@ void check_and_set_params(Parameters_form_initfile &inp, int verbosity)
     //----------------------------------------------------------------------------------------------
     // rescale upper redshift when varying alpha & me
     //----------------------------------------------------------------------------------------------
-    //double zs_rescaled=3350.0*pow(C.Rec.aS, 2)*C.Rec.mS;
-    //inp.zstart=min(inp.zstart, zs_rescaled);
+    double zs_rescaled=3350.0*pow(C.Rec.aS, 2)*C.Rec.mS;
+    inp.zstart=min(inp.zstart, zs_rescaled);
 
     //----------------------------------------------------------------------------------------------
     // check redshifts and number of points
@@ -360,9 +360,6 @@ void check_and_set_params(Parameters_form_initfile &inp, int verbosity)
     // show final parameters
     //----------------------------------------------------------------------------------------------
     if(verbosity>2) C.show();
-
-    C.show();
-    wait_f_r();
     
     return;
 }
@@ -531,7 +528,6 @@ void set_startup_data_CR(string filename,
     //=======================================================================================================
     Cosmos::parameters cosm_ref=inp.cosm;
     cosm_ref.Rec.include_CF=0;
-
     set_cosmology(cosm_ref, cos);
 
     //=======================================================================================================
@@ -543,9 +539,6 @@ void set_startup_data_CR(string filename,
         setup_Helium_atom();
         hydrogen_and_helium_atom_are_set=1;
     }
-
-    inp.show();
-    wait_f_r();
 
     return;
 }

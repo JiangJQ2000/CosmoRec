@@ -8,15 +8,15 @@
 //===========================================================================================================
 void Switch_VFC_off()
 {
-    // set Recfast++ parameters
-    Cosmos::parameters *Cpars=&parameters.cosm;
-    Cpars->Rec.aS=Cpars->Rec.mS=1.0; Cpars->Rec.pS=0.0; Cpars->Rec.RM=0;
-    Cpars->Rec.do_separate_H_He=0;
-    
     // set CosmoRec parameters
     FC_CosmoRec.a_scale = FC_CosmoRec.m_scale = 1.0;
     FC_CosmoRec.p_scale = 0.0;
     FC_CosmoRec.runmode = 0;
+
+    // set Recfast++ parameters
+    Cosmos::parameters *Cpars=&parameters.cosm;
+    Cpars->Rec.aS=Cpars->Rec.mS=1.0; Cpars->Rec.pS=0.0; Cpars->Rec.RM=0;
+    Cpars->Rec.do_separate_H_He=0;
 
     return;
 }
@@ -25,11 +25,6 @@ void Set_VFC_pars(double aS, double mS, double pS, int RM)
 {
     if(RM==0){ Switch_VFC_off(); return; }
     if(aS<0 && mS<0){ Switch_VFC_off(); return; }
-
-    // set Recfast++ parameters
-    Cosmos::parameters *Cpars=&parameters.cosm;
-    Cpars->Rec.aS=aS; Cpars->Rec.mS=mS; Cpars->Rec.pS=pS; Cpars->Rec.RM=RM;
-    Cpars->Rec.do_separate_H_He=1;
     
     // set CosmoRec parameters
     FC_CosmoRec.a_scale =(aS<=0.0 ? 1.0 : aS);
@@ -38,7 +33,15 @@ void Set_VFC_pars(double aS, double mS, double pS, int RM)
     FC_CosmoRec.runmode = RM;
     
     // final check if mode activated
-    if(aS==1.0 && mS==1.0 && pS==0.0) Switch_VFC_off();
+    if(aS==1.0 && mS==1.0 && pS==0.0){ Switch_VFC_off(); return; }
+    
+    // set Recfast++ parameters
+    Cosmos::parameters *Cpars=&parameters.cosm;
+    Cpars->Rec.aS=FC_CosmoRec.a_scale;
+    Cpars->Rec.mS=FC_CosmoRec.m_scale;
+    Cpars->Rec.pS=FC_CosmoRec.p_scale;
+    Cpars->Rec.RM=RM;
+    Cpars->Rec.do_separate_H_He=1;
 
     return;
 }

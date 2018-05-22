@@ -726,7 +726,7 @@ int CosmoRec(const int runmode, const double runpars[15],
     //=======================================================================================================
     // switch off messages 
     //=======================================================================================================
-    parameters.verbosity=1;
+    parameters.verbosity=-1;
     parameters.path=COSMORECDIR+"./outputs/";
     parameters.addname=".batch."+int_to_string(label, 6)+".dat";
     

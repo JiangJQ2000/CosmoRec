@@ -724,7 +724,7 @@ int CosmoRec(const int runmode, const double runpars[15],
     //=======================================================================================================
     // switch off messages 
     //=======================================================================================================
-    parameters.verbosity=-1;
+    parameters.verbosity=1;
     parameters.path=COSMORECDIR+"./outputs/";
     parameters.addname=".batch."+int_to_string(label, 6)+".dat";
     
@@ -766,7 +766,7 @@ int CosmoRec(const int runmode, const double runpars[15],
         exit(1);
     }
     
-    Set_VFC_pars(runpars[7], runpars[8], runpars[9], runpars[10]);
+    //Set_VFC_pars(runpars[7], runpars[8], runpars[9], runpars[10]);
     
     //=======================================================================================================
     // general setup
@@ -780,7 +780,7 @@ int CosmoRec(const int runmode, const double runpars[15],
     //=======================================================================================================
     // rescale upper redshift when varying alpha & me
     //=======================================================================================================
-    double zs_rescaled=3350.0*(pow(FC_CosmoRec.a_scale, 2)*FC_CosmoRec.m_scale);
+    double zs_rescaled=3350.0*pow(FC_CosmoRec.a_scale, 2)*FC_CosmoRec.m_scale;
     parameters.zstart=min(parameters.zstart, zs_rescaled);
     
     //=======================================================================================================

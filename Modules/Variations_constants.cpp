@@ -25,7 +25,6 @@ void Set_VFC_pars(double aS, double mS, double pS, int RM)
 {
     if(RM==0){ Switch_VFC_off(); return; }
     if(aS<0 && mS<0){ Switch_VFC_off(); return; }
-    if((aS<0 && mS==1.0) || (aS==1.0 && mS<0)){ Switch_VFC_off(); return; }
 
     // set Recfast++ parameters
     Cosmos::parameters *Cpars=&parameters.cosm;

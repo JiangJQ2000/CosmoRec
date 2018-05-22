@@ -3,6 +3,8 @@ next (urgent) updates:
 - need thourough testing. Some numerical issues seem to be present for 2 iterations
     --> using nz = 3000 fixes the issue. Why? Interpolation issue?
 
+- batch mode is not working yet.... :/
+
 - need to change readme file after updates...
 
 - would like to have a git repository for the group

@@ -550,6 +550,9 @@ void set_startup_data(string filename,
         hydrogen_and_helium_atom_are_set=1;
     }
 
+    inp.show();
+    wait_f_r();
+
     return;
 }
 

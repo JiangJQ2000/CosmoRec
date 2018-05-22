@@ -502,7 +502,9 @@ int CosmoRec(int narg, char *args[])
     // initialize cosmology and the general startup
     //========================================================================
     print_message(" You are entering CosmoRec "+CosmoRec_version+".");
-    read_startup_data(filename, parameters, cosmos);
+    read_entries_from_parameter_file(filename, parameters);
+    set_startup_data_CR(filename, parameters, cosmos);
+
     set_array_dimensions_and_parameters();
     allocate_memory();
     

@@ -551,20 +551,6 @@ void set_startup_data_CR(string filename,
 }
 
 //===========================================================================================================
-// reading startup parameters from startup file
-//===========================================================================================================
-void read_startup_data(string filename,
-                       Parameters_form_initfile &inp,
-                       Cosmos &cos, int wait=0)
-{
-    read_entries_from_parameter_file(filename, inp);
-    
-    set_startup_data_CR(filename, inp, cos, wait);
-    
-    return;
-}   
-
-//===========================================================================================================
 // reset to fresh startup
 //===========================================================================================================
 void restart_CosmoRec()

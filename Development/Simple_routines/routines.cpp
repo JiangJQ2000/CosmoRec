@@ -5,7 +5,8 @@
 //
 // Purpose: collection of several simple routines
 //======================================================================================
-// Feb 2018: added Gaussian function (why not earlier??) and tanh-switch
+// Jun 2018: Functionality to create directory
+// Feb 2018: added Gaussian function and tanh-switch
 // Oct 2013: added Ei(x) function
 // Jul 2012: fixed a memory problem with gsl-1.15 compatibility of splines.
 // Jun 2012: fixed a memory issue with spline setup routines.
@@ -17,9 +18,12 @@
 #include <fstream>
 #include <cmath>
 #include <vector>
-
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <dirent.h>
 #include "routines.h"
 #include "Definitions.h"
+
 
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_spline.h>
@@ -319,6 +323,13 @@ bool isnan_JC(double a)
 #endif
 }
 
+// simple error message
+void throw_error(string funcname, string message, int k)
+{
+    cerr << " " << funcname << " : " << message << endl;
+    exit(k);
+}
+
 //===================================================================================
 //
 // Spline interpolation using the GSL libray
@@ -368,11 +379,7 @@ void update_spline_coeffies_JC(int memindex, int nxi,
         
         gsl_spline_init(splinevec[memindex], za, ya, nxi);
     }
-    else
-    { 
-        cerr << " update_spline_coeffies_JC::This part of memory was not set... " << endl; 
-        exit(0); 
-    }
+    else throw_error("update_spline_coeffies_JC", "This part of memory was not set...");
 
     return;
 }
@@ -670,6 +677,7 @@ void wait_f_r(string mess)
 {
     char c;
     cout << mess << endl;
+    cout << " To go on press return! " << endl;
     cin.get(c);
     return;
 }
@@ -678,6 +686,7 @@ void wait_f_r(int mess)
 {
     char c;
     cout << mess << endl;
+    cout << " To go on press return! " << endl;
     cin.get(c);
     return;
 }
@@ -686,6 +695,7 @@ void wait_f_r(double mess)
 {
     char c;
     cout << mess << endl;
+    cout << " To go on press return! " << endl;
     cin.get(c);
     return;
 }
@@ -1002,11 +1012,7 @@ double find_root_brent(double (* func)(double *, void *p), void *para,
 #ifdef GRACE_DEFINED
 void plot_xy_function(const vector<double> &xarr, const vector<double> &yarr, int flg=0)
 {
-    if (GraceOpen(1028) == -1) 
-	{
-		cerr << " can't run grace " << endl; 
-		exit(-1);
-	}
+    if(GraceOpen(1028) == -1) throw_error("plot_xy_function", "can't run grace", -1);
 	
 	//===============================================================
 	// Send some initialization commands to Grace 
@@ -1044,9 +1050,7 @@ void plot_xy_function(const vector<double> &xarr, const vector<double> &yarr, in
 #else
 void plot_xy_function(const vector<double> &xarr, const vector<double> &yarr, int flg=0)
 {
-    cerr << " plot_xy_function::Grace support was not activated. Exiting. " << endl;
-    exit(0);
-    return;
+    throw_error("plot_xy_function", "Grace support was not activated. Exiting.");
 }
 #endif
 
@@ -1127,6 +1131,32 @@ double DC_sumprod(const vector<double> &yarr, const vector<double> &zarr)
 
     int N=floor(M/2);
     return DC_sumprod(&yarr[0], &zarr[0], N)+DC_sumprod(&yarr[N], &zarr[N], M-N);
+}
+
+//======================================================================================
+// for checking and creating directories
+//======================================================================================
+bool check_if_dir_exists(string test_dir)
+{
+    DIR* dir = opendir(test_dir.c_str());
+    if (dir)
+    {
+        closedir(dir);
+        return 1; //Directory exists.
+    }
+    else return 0; //Directory does not exist.
+}
+
+void create_directory_if_it_does_not_exist(string dir, bool message)
+{
+    if(check_if_dir_exits(dir)) return;
+    else
+    {
+        if(message) cout << " Creating directory " << dir << endl;
+        mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+    }
+    
+    return;
 }
 
 //======================================================================================

@@ -48,6 +48,9 @@ double factorial_corrfac(int n);
 //======================================================================================
 bool isnan_JC(double a);
 
+// simple error message
+void throw_error(string funcname, string message, int k=1);
+
 //======================================================================================
 // routines for interpolation; based in GSL
 //======================================================================================
@@ -137,4 +140,13 @@ double DC_sum(const vector<double> &yarr);
 double DC_sumprod(const double *yarr, const double *zarr, int M);
 double DC_sumprod(const vector<double> &yarr, const vector<double> &zarr);
 
+
+//======================================================================================
+// for checking, creating and deleting directories
+//======================================================================================
+bool check_if_dir_exists(string dir);
+void create_directory_if_it_does_not_exist(string dir, bool message=1);
+
 #endif
+//======================================================================================
+//======================================================================================

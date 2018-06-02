@@ -902,17 +902,16 @@ double Cosmos :: dTe_dz(double z)
 
 double Cosmos :: c_sb(double z)
 {
-    cout << " Cosmos :: c_sb :: check this function! " << endl;
     double Xev=Xe_Seager(z);   // Xe_b --> Xe_Seager, JC Dec 2017
     double mu_mol=const_mp_gr/(1.0-Y_p)/(1.0+fHe()+Xev);
     double Tb=Te(z);
     double cs2=const_kB*Tb/(const_cl*const_cl)/mu_mol;
     
-//    cs2*=1.0+z/Tb/3.0*dTe_dz(z);  // Ma & Bertschinger 1995
-    cs2*=1.0;                     // Lewis 2007 (10.1103/PhysRevD.76.063001), with Delta_Tg ~ 0
+    cs2*=1.0+z/Tb/3.0*dTe_dz(z);  // Ma & Bertschinger 1995
+//    cs2*=1.0;                     // Lewis 2007 (10.1103/PhysRevD.76.063001), with Delta_Tg ~ 0
 //    cs2*=5.0/3.0;
 //    cout << " Cosmos :: c_sb " << 1.0+z/Tb/3.0*dTe_dz(z) << " " << z/Tb/3.0*dTe_dz(z) << endl;
- 
+
     return sqrt(cs2);
 }
     

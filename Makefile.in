@@ -187,9 +187,17 @@ CosmoRec.o: ./Modules/setup_functions.cpp ./Modules/output_methods.cpp \
             ./Modules/Variations_constants.cpp \
             ./Modules/PCA_functions.cpp
 
-Solve_PDEs.o: ./PDE_Problem/Solve_PDEs_Grace.cpp
+./PDE_Problem/Solve_PDEs.o: ./PDE_Problem/Solve_PDEs.cpp \
+						    ./PDE_Problem/Solve_PDEs.h \
+							./PDE_Problem/Solve_PDEs_Grace.cpp \
+							./PDE_Problem/Solve_PDEs_grid.cpp \
+							./PDE_Problem/Solve_PDEs_integrals.cpp
 
-Solve_PDEs_HeI.o: ./PDE_Problem_HeI/Solve_PDEs_HeI_Grace.cpp
+./PDE_Problem_HeI/Solve_PDEs_HeI.o: ./PDE_Problem_HeI/Solve_PDEs_HeI.cpp \
+						    ./PDE_Problem_HeI/Solve_PDEs_HeI.h \
+							./PDE_Problem_HeI/Solve_PDEs_HeI_Grace.cpp \
+							./PDE_Problem_HeI/Solve_PDEs_HeI_grid.cpp \
+							./PDE_Problem_HeI/Solve_PDEs_HeI_integrals.cpp
 
 #===============================================================================
 # rules

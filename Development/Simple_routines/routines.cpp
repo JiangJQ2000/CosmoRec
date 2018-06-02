@@ -1149,7 +1149,7 @@ bool check_if_dir_exists(string test_dir)
 
 void create_directory_if_it_does_not_exist(string dir, bool message)
 {
-    if(check_if_dir_exits(dir)) return;
+    if(check_if_dir_exists(dir)) return;
     else
     {
         if(message) cout << " Creating directory " << dir << endl;

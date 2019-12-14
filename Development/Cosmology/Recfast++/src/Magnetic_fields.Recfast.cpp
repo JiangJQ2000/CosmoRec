@@ -116,7 +116,7 @@ double Gamma_ambi_RF(double z, double Tm, double nbar, double Xp, double B0, dou
     double g=sig/(2.0*RF_mHatom);
     double rhobar=RF_mHatom*nbar;
     double kd=kD_func(B0, nB);
-    double Gamma=(1.0-Xp)/Xp/g*pow((1.0+z)*kd/(RF_Mpc*1.0e-2)*rhoB/rhobar, 2)*L2;
+    double Gamma=(1.0-Xp)/Xp/g*pow((1.0+z)*kd/RF_Mpc*rhoB/rhobar, 2)*L2;
     
     // fit that reproduces KK. It seems this is ~1/(8pi)^2 times smaller than the correct rate
     //double Gamma=(1.0-Xp)/Xp*pow(1.0+z, 4)/pow(Tm, 0.375)*5.7e-40*L2*pow(B0/3.0, 2);

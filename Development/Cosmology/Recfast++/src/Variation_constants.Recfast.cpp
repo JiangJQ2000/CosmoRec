@@ -43,10 +43,7 @@ void Set_var_const_scale_factors(double aS, double mS, int rmode, Variables_Fund
     
     if(rmode == 0){ Reset_var_const_scale_factors(D); return; }
     
-    if (rmode > 6) {
-        cerr << "Set_var_const_scale_factors :: Invalid mode selection!" << endl;
-        exit(1);
-    }
+    if (rmode > 6) throw_error_RF("Set_var_const_scale_factors", "Invalid mode", 1);
     
     D.aS=aS;
     D.mS=mS;

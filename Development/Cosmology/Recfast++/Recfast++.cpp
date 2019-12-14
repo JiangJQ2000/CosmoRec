@@ -42,6 +42,15 @@ using namespace RECFAST_atomic_constants;   // defined in constants.Recfast.h
 using namespace Recfastpp_Cosmology;        // defined in cosmology.Recfast.h
 
 //====================================================================================================================
+// simple error message
+//====================================================================================================================
+void throw_error_RF(string funcname, string message, int k)
+{
+    cerr << " " << funcname << " : " << message << endl;
+    exit(k);
+}
+
+//====================================================================================================================
 // Saha formula for HeIII
 //====================================================================================================================
 double SahaBoltz_HeIII(double nH, double fHe, double T)
@@ -251,12 +260,17 @@ int Xe_frac(const CosmoPars &Cosmo, const RecPars &Rec, vector<double> &zarr,
         double zs, ze;
         
         //================================================================================
-        // initialise zarr (linear in z)
+        // initialise zarr (linear in z until reionization and log after)
         //================================================================================
         double Dz=(z-Rec.zend)/(double)(nzpts-j-1);
         long int i;
-        for(zarr[j]=z, i=j+1; i<nzpts; i++) zarr[i]=zarr[i-1]-Dz;
-        zarr[nzpts-1]=0.0;
+        // standard part
+        for(zarr[j]=z, i=j+1; i<nzpts && zarr[i-1]>800.0; i++) zarr[i]=zarr[i-1]-Dz;
+        // reionization
+        double zfac=exp(log(zarr[i-1]/max(Rec.zend, 1.0e-2))/(double)(nzpts-i));
+        for(; i<nzpts && zarr[i-1]>Rec.zend; i++) zarr[i]=zarr[i-1]/zfac;
+        // last redshift point
+        zarr[nzpts-1]=max(0.0, Rec.zend);
         
         //================================================================================
         // Set starting solution. Everything is ionized, 
@@ -336,10 +350,8 @@ int Xe_frac_rescaled(const CosmoPars &Cosmo, const RecPars &Rec, const vector<do
     long int i, j=0, nzpts=Rec.npts;
     
     if(nzpts!=(int)zarr.size())
-    {
-        cerr << " Xe_frac_rescaled : redshift settings inconsistent " << endl;
-        exit(1);
-    }
+        throw_error_RF("Xe_frac_rescaled", "redshift settings inconsistent", 1);
+    
     if(nzpts!=(int)Xe_H.size()) Xe_H.resize(nzpts);
     if(nzpts!=(int)Xe_He.size()) Xe_He.resize(nzpts);
     if(nzpts!=(int)Xe.size()) Xe.resize(nzpts);

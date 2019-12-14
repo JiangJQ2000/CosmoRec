@@ -54,7 +54,7 @@ struct main_Settings
     //========================================================================================
     // show variables
     //========================================================================================
-    void show()
+    void show() const
     {
         cout << " verbosity level = " << verbosity << endl;
         cout << " output path= " << path << " addname= " << addname << endl;
@@ -193,15 +193,15 @@ void read_parameter_file(string fname, main_Settings &inp)
     //----------------------------------------------------------------------------------------------
     parser_read(pfc, "npts", ival, found, show_params);
     if(found) inp.Rec.npts=ival;
-    if(inp.Rec.npts<1000){ cerr << " read_parameter_file : Choose npts > 1000 " << endl; exit(1); }
+    if(inp.Rec.npts<1000) throw_error_RF("read_parameter_file", "Choose npts > 1000", 1);
     
     parser_read(pfc, "zstart", dval, found, show_params);
     if(found) inp.Rec.zstart=dval;
-    if(inp.Rec.zstart<3500){ cerr << " read_parameter_file : Choose zstart > 3500 " << endl; exit(1); }
+    if(inp.Rec.zstart<3500) throw_error_RF("read_parameter_file", "Choose zstart > 3500", 1);
     
     parser_read(pfc, "zend", dval, found, show_params);
     if(found) inp.Rec.zend=dval;
-    if(inp.Rec.zend<0){ cerr << " read_parameter_file : Choose zstart >=0 " << endl; exit(1); }
+    if(inp.Rec.zend<0) throw_error_RF("read_parameter_file", "Choose zstart >=0", 1);
     
     //----------------------------------------------------------------------------------------------
     // standard physics settings
@@ -209,7 +209,7 @@ void read_parameter_file(string fname, main_Settings &inp)
     parser_read(pfc, "Recfast fudge factor", dval, found, show_params);
     if(found) inp.Rec.F=dval;
     if(inp.Rec.F==0) inp.Rec.F=1.14;
-    if(inp.Rec.F<0){ cerr << " read_parameter_file : Choose fudge >=0 " << endl; exit(1); }
+    if(inp.Rec.F<0) throw_error_RF("read_parameter_file", "Choose fudge >=0", 1);
 
     parser_read(pfc, "include correction function", ival, found, show_params);
     if(found) inp.Rec.include_CF=(bool)ival;
@@ -224,22 +224,22 @@ void read_parameter_file(string fname, main_Settings &inp)
     //----------------------------------------------------------------------------------------------
     parser_read(pfc, "f_ann", dval, found, show_params);
     if(found) inp.Rec.f_ann=dval;
-    if(inp.Rec.f_ann<0){ cerr << " read_parameter_file : f_ann >=0 " << endl; exit(1); }
-
+    if(inp.Rec.f_ann<0) throw_error_RF("read_parameter_file", "f_ann >=0", 1);
+    
     //----------------------------------------------------------------------------------------------
     // decay
     //----------------------------------------------------------------------------------------------
     parser_read(pfc, "f_dec", dval, found, show_params);
     //if(found) inp.Rec.f_dec=min(1.0, max(0.0, dval));    // to make sure f_dec >=0 and f_dec<=1
     if(found) inp.Rec.f_dec=dval;
-    if(inp.Rec.f_dec<0){ cerr << " read_parameter_file : f_dec >=0 " << endl; exit(1); }
+    if(inp.Rec.f_dec<0) throw_error_RF("read_parameter_file", "f_dec >=0", 1);
 
     if(inp.Rec.f_dec>0)
     {
         inp.Rec.eval_ion_Tr=1;   // use physical evaluation of temperature for decay
         parser_read(pfc, "Gamma_dec", dval, found, show_params);
         if(found) inp.Rec.Gamma_dec=dval;
-        if(inp.Rec.Gamma_dec<0){ cerr << " read_parameter_file : Gamma_dec >=0 " << endl; exit(1); }
+        if(inp.Rec.Gamma_dec<0) throw_error_RF("read_parameter_file", "Gamma_dec >=0", 1);
     }
     
     //----------------------------------------------------------------------------------------------
@@ -247,7 +247,7 @@ void read_parameter_file(string fname, main_Settings &inp)
     //----------------------------------------------------------------------------------------------
     parser_read(pfc, "B0", dval, found, show_params);
     if(found) inp.Rec.B0=dval;
-    if(inp.Rec.B0<0){ cerr << " read_parameter_file : B0 >=0 " << endl; exit(1); }
+    if(inp.Rec.B0<0) throw_error_RF("read_parameter_file", "B0 >=0", 1);
 
     if(inp.Rec.B0>0.0)
     {
@@ -261,7 +261,7 @@ void read_parameter_file(string fname, main_Settings &inp)
         {
             parser_read(pfc, "nB", dval, found, show_params);
             if(found) inp.Rec.nB=dval;
-            if(inp.Rec.nB<-3.0){ cerr << " read_parameter_file : nB > -3.0 " << endl; exit(1); }
+            if(inp.Rec.nB<-3.0) throw_error_RF("read_parameter_file", "nB > -3.0", 1);
             
             parser_read(pfc, "Paoletti-Finelli Lorentz", ival, found, show_params);
             if(found) inp.Rec.KK_or_PF_Lorentz=(bool)ival;
@@ -275,7 +275,7 @@ void read_parameter_file(string fname, main_Settings &inp)
     //----------------------------------------------------------------------------------------------
     parser_read(pfc, "Variation mode", ival, found, show_params);
     if(found) inp.Rec.RM=ival;
-    if(inp.Rec.RM>6){ cerr << " read_parameter_file : Variation mode <=6 " << endl; exit(1); }
+    if(inp.Rec.RM>6) throw_error_RF("read_parameter_file", "Variation mode <=6", 1);
 
     if(inp.Rec.RM>0)
     {
@@ -297,6 +297,14 @@ void read_parameter_file(string fname, main_Settings &inp)
         }
     }
 
+    //----------------------------------------------------------------------------------------------
+    // reionization
+    //----------------------------------------------------------------------------------------------
+    parser_read(pfc, "Reionization model", ival, found, show_params);
+    if(found) inp.Rec.reion_model=ival;
+
+    if(inp.Rec.reion_model>0){ inp.Rec.eval_ion_Tr=1; } //inp.Rec.do_separate_H_He=1; }
+    
     //==============================================================================================
     // cleanup
     //==============================================================================================
@@ -323,8 +331,8 @@ void write_Recfast_output(string oname, const vector<double> &zarr,
     ofile.precision(8);
     
     ofile << "###############################################################" << endl;
-    ofile << "# Output from " << RECFASTPP_VERSION
-          << ". The Colums are:\n# z | Xe = Ne/NH | Xe_H = Ne_H/NH | Xe_He = Ne_He/NH | TM [K]" << endl;
+    ofile << "# Output from " << RECFASTPP_VERSION << ". The Colums are:     " << endl;
+    ofile << "# z | Xe = Ne/NH | Xe_H = Ne_H/NH | Xe_He = Ne_He/NH | TM [K]  " << endl;
     ofile << "###############################################################" << endl;
     
     for(int i=0; i<(int)zarr.size(); i++)
@@ -347,10 +355,7 @@ int main(int narg, char *args[])
     //====================================================================================
     system("clear");
     
-    if(narg < 2) {
-        cout << " Recfast-error: usage $ ./Recfast++ parameters.dat" << endl;
-        exit(0);
-    }
+    if(narg < 2) throw_error_RF("Recfast-error", "usage $ ./Recfast++ parameters.dat", 1);
     
     string fname=args[narg-1];
 
@@ -400,6 +405,10 @@ int main(int narg, char *args[])
     else if(InputPars.Rec.RM==6) oname+=".all";
     
     if(InputPars.Rec.eval_ion_Tr) oname+=".Tr";
+
+    if(InputPars.Rec.reion_model==1) oname+=".reion_VP";
+    else if(InputPars.Rec.reion_model==2) oname+=".reion_JC";
+
     oname+=InputPars.addname;
     
     write_Recfast_output(oname, zarr, Xe_H, Xe_He, Xe, TM, InputPars.verbosity);

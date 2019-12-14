@@ -43,7 +43,7 @@ double branching_ions_SvSt(double x){ return 0.4*pow(1.0-pow(x, 0.4), 7.0/4.0); 
 
 
 //===========================================================================================
-// evaluation of ODE terms for annihilation
+// evaluation of ODE terms given heating rate
 //===========================================================================================
 void evaluate_ionization_heating_excitation_terms(double z, double Hz,
                                                   double xp, double xHep,
@@ -99,6 +99,16 @@ void evaluate_DM_annihilation_terms(double z, double Hz,
     //=======================================================================================
     double Fcal=-(1.0+z)*(1.0+z)/Hz; // '-' from transformation dt --> dz
     double dE_dz=fDM * Fcal;  // here the factor 1/NH was canceled with definition of dE_dt
+
+    //=======================================================================================
+    // add boost factor (template)
+    //=======================================================================================
+    //double zh=20.0, zF=2.0*zh, Fc=1.0;
+    //double fh=200.0/3.0 * pow(1.0+zF, 3) * Fc;
+    //double erfc_val=erfc((1.0+z)/(1.0+zh));
+    //double B=fh/pow(1.0+z, 3) * erfc_val;
+    //
+    //dE_dz*=B;
 
     //=======================================================================================
     // add corresponding terms

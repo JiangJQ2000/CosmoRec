@@ -4,6 +4,7 @@
 // CITA, University of Toronto
 // All rights reserved.
 //========================================================================================
+// August  2018: added simple Reionization module
 // May     2018: A2s1s control now as parameter that is passed on [JC]
 // April   2018: restructured code variables and functions
 // March   2017: added control over photoionization evaluation [JC]

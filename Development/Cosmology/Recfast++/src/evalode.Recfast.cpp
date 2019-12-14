@@ -4,6 +4,7 @@
 // CITA, University of Toronto
 // All rights reserved.
 //========================================================================================
+// August  2018: added simple Reionization module
 // May     2018: A2s1s control now as parameter that is passed on [JC]
 // April   2018: restructured code variables and functions
 // March   2017: added control over photoionization evaluation [JC]
@@ -26,6 +27,7 @@
 #include "DM_annihilation_decay.Recfast.h"
 #include "Magnetic_fields.Recfast.h"
 #include "Variation_constants.Recfast.h"
+#include "Reionization.Recfast.h"
 
 using namespace std;
 using namespace RECFAST_physical_constants; // defined in constants.Recfast.h
@@ -218,28 +220,34 @@ void evaluate_Recfast_System(double z, double y[], double fvec[], int n)
     //====================================================================================
     // add terms due to DM annihilation
     //====================================================================================
-    if(RecVars.f_ann!=0.0)
+    if(RecVars.f_ann>0.0)
         evaluate_DM_annihilation_terms(z, Hz, xp, xHep, CHe, CH, RecVars.f_ann, fvec);
     
     //====================================================================================
     // add terms due to DM decay
     //====================================================================================
-    if(RecVars.f_dec!=0.0)
+    if(RecVars.f_dec>0.0)
         evaluate_DM_decay_terms(z, Hz, t_cos, xp, xHep, CHe, CH,
                                 RecVars.f_dec, RecVars.Gamma_dec, fvec);
     
     //====================================================================================
     // add terms due to magnetic field heating
     //====================================================================================
-    if(RecVars.B0!=0.0)
+    if(RecVars.B0>0.0)
         evaluate_magnetic_field_heating_RF(z, Hz, fHe, nHTot, xp, xHep,
                                            TM, nHTot/(1.0-Y_p()),
                                            RecVars.B0, RecVars.nB, fvec);
 
     //====================================================================================
+    // add simple reionization model
+    //====================================================================================
+    if(RecVars.reion_model>0)
+        evaluate_reionization_terms(z, Hz, xp, xHep, CHe, CH, fvec);
+
+    //====================================================================================
     // add collisional processes for cases with potentially lots of heating
     //====================================================================================
-    if(RecVars.B0!=0.0 || RecVars.f_dec!=0.0)
+    if(RecVars.B0>0.0 || RecVars.f_dec>0.0 || RecVars.reion_model>0)
         evaluate_magnetic_field_heating_RF_colls(z, Hz, fHe, nHTot, xp, xHep, TM, fvec);
 
     return;

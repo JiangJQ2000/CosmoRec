@@ -25,12 +25,14 @@
 #ifndef RECFAST_PP_H
 #define RECFAST_PP_H
 
-#define RECFASTPP_VERSION "Recfast++ v2.0"
+#define RECFASTPP_VERSION "Recfast++ v2.1"
 
 #include <stdlib.h>
 #include <iostream>
 #include <vector>
 #include <string>
+#include <sstream>
+#include <iomanip>
 
 #include "constants.Recfast.h"
 
@@ -60,15 +62,22 @@ struct CosmoPars
     //========================================================================================
     // show variables
     //========================================================================================
-    void show()
+    void create_sstring(std::ostringstream &str, bool show_dPDE=1) const
     {
-        cout << " CosmoPars :: show()" << endl;
-        cout << " Yp= " << Yp << " T0= " << T0 << endl;
-        cout << " Omega_m= " << Omega_m   << " Omega_b= " << Omega_b
+        str << setfill('=') << setw(80) << "=" << endl;
+        str << " CosmoPars :: show()" << endl;
+        str << setfill('=') << setw(80) << "=" << endl;
+        str << " Yp= " << Yp << " T0= " << T0 << endl;
+        str << " Omega_m= " << Omega_m   << " Omega_b= " << Omega_b
              << " Omega_L= " << Omega_L   << " Omega_k= " << Omega_k
              << " Neff= " << Neff << endl;
-        cout << " Hubble constant in units of 100 km s^-1 Mpc^-1: " << h100 << endl;
+        str << " Hubble constant in units of 100 km s^-1 Mpc^-1: " << h100 << endl;
+        str << endl;
     }
+
+    //========================================================================================
+    void show() const
+    { std::ostringstream str; create_sstring(str); cout << str.str() << endl; }
 };
 
 //====================================================================================================================
@@ -90,6 +99,11 @@ struct RecPars
     
     double aS, mS, pS;         // alp/alp_r, me/me_r, power for (1+z)^p
     int RM;                    // mode
+    
+    //========================================================================================
+    // reionization parameters
+    //========================================================================================
+    int reion_model;           // 0: none; 1: Poulin et al.; 2: JC
     
     //========================================================================================
     // parameters that are set internally (depending on runmode)
@@ -119,30 +133,44 @@ struct RecPars
         B0=nB=0.0; turb=ambi=0; KK_or_PF_Lorentz=0;
         aS=mS=1.0; pS=0.0; RM=0;
         do_separate_H_He=eval_ion_Tr=0;
+        reion_model=0;
     }
     
     //========================================================================================
     // show variables
     //========================================================================================
-    void show()
+    void create_sstring(std::ostringstream &str, bool show_dPDE=1) const
     {
-        cout << " RecPars :: show()" << endl;
-        cout << " Recombination verbosity = " << verbosity << endl;
-        cout << " zstart = " << zstart << " zend = " << zend << " npts= " << npts << endl;
-        cout << " Hydrogen 2gamma rate = " << A2s1s << endl;
-        cout << " Recfast fudge F = " << F << endl;
-        cout << " Include correction function: " << include_CF << endl;
-        cout << " f_ann = " << f_ann << endl;
-        cout << " f_dec = " << f_dec << " Gamma_dec = " << Gamma_dec << endl;
-        cout << " B0 = " << B0 << " nB = " << nB << endl;
-        cout << " turb = " << turb << " ambi = " << ambi << endl;
-        cout << " KK_or_PF_Lorentz = " << KK_or_PF_Lorentz << endl;
-        cout << " alp/alp_r = " << aS << " me/me_r = " << mS << " power for (1+z)^p = " << pS << endl;
-        cout << " mode for variation of constants: " << RM << endl;
-        cout << " do separate H and He correction function: " << do_separate_H_He << endl;
-        cout << " evaluate beta(T=Tr): " << eval_ion_Tr << endl;
+        str << setfill('=') << setw(80) << "=" << endl;
+        str << " RecPars :: show()" << endl;
+        str << setfill('=') << setw(80) << "=" << endl;
+        str << " Recombination verbosity = " << verbosity << endl;
+        str << " zstart = " << zstart << " zend = " << zend << " npts= " << npts << endl;
+        str << " Hydrogen 2gamma rate = " << A2s1s << endl;
+        str << " Recfast fudge F = " << F << endl;
+        str << " Include correction function: " << include_CF << endl;
+        str << " f_ann = " << f_ann << endl;
+        str << " f_dec = " << f_dec << " Gamma_dec = " << Gamma_dec << endl;
+        str << " B0 = " << B0 << " nB = " << nB << endl;
+        str << " turb = " << turb << " ambi = " << ambi << endl;
+        str << " KK_or_PF_Lorentz = " << KK_or_PF_Lorentz << endl;
+        str << " alp/alp_r = " << aS << " me/me_r = " << mS << " power for (1+z)^p = " << pS << endl;
+        str << " mode for variation of constants: " << RM << endl;
+        str << " do separate H and He correction function: " << do_separate_H_He << endl;
+        str << " evaluate beta(T=Tr): " << eval_ion_Tr << endl;
+        str << " reion_model= " << reion_model << endl;
+        str << endl;
     }
+
+    //========================================================================================
+    void show() const
+    { std::ostringstream str; create_sstring(str); cout << str.str() << endl; }
 };
+
+//====================================================================================================================
+// simple error message
+//====================================================================================================================
+void throw_error_RF(string funcname, string message, int k);
 
 //====================================================================================================================
 // compute ionization history like in Recfast-module

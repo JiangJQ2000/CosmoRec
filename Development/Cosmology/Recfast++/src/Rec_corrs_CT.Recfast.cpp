@@ -118,11 +118,9 @@ double interpolate_data(double z,int cflag)
     // 3 -- helium correction f_He
     // Add an error flag in case the values aren't the ones we want
     //====================================================================================
-    if (cflag != 1 && cflag != 2 && cflag != 3) {
-        cerr << " Recfast++ :: interpolate_data:"
-             << " invalid selection of correction function flag. exitting. " << endl;
-        exit(0);
-    }
+    if (cflag != 1 && cflag != 2 && cflag != 3)
+        throw_error_RF("Recfast++ :: interpolate_data",
+                       "Invalid selection of correction function flag", 1);
     
     double dz=z-Rec_corrs_CT_Data[Rec_corrs_CT_start_index-1][0];
     double df_dz=(Rec_corrs_CT_Data[Rec_corrs_CT_start_index][cflag]

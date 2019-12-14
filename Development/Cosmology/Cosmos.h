@@ -52,6 +52,8 @@
 #ifndef COSMOS_H
 #define COSMOS_H
 
+#include <sstream>
+#include <iomanip>
 #include <iostream>
 #include <cmath>
 #include <string>
@@ -219,17 +221,41 @@ public:
         //================================================================================
         // show parameters
         //================================================================================
-        void show()
+        void create_sstring(std::ostringstream &str, bool show_dPDE=1) const
         {
-            cout << " Cosmos :: parameters :: show()" << endl;
-            cout << " Yp= " << Yp << " T0= " << T0 << endl;
-            cout << " Omega_m= " << Omega_m   << " Omega_b= " << Omega_b
+            str << setfill('=') << setw(80) << "=" << endl;
+            str << " Cosmos :: parameters :: show()" << endl;
+            str << setfill('=') << setw(80) << "=" << endl;
+            str << " Yp= " << Yp << " T0= " << T0 << endl;
+            str << " Omega_m= " << Omega_m   << " Omega_b= " << Omega_b
                  << " Omega_L= " << Omega_L   << " Omega_k= " << Omega_k
                  << " Neff= " << Nnu << endl;
-            cout << " Hubble constant in units of 100 km s^-1 Mpc^-1: " << h100 << endl;
-            Rec.show();
+            str << " Hubble constant in units of 100 km s^-1 Mpc^-1: " << h100 << endl;
+            
+            Rec.create_sstring(str);
         }
+
+        //================================================================================
+        void show() const
+        { std::ostringstream str; create_sstring(str); cout << str.str() << endl; }
     };
+
+    //====================================================================================
+    // show cosmology parameters
+    //====================================================================================
+    void create_sstring(std::ostringstream &str) const
+    {
+        str << setfill('=') << setw(80) << "=" << endl;
+        str << " Cosmos :: show()" << endl;
+        str << setfill('=') << setw(80) << "=" << endl << endl;
+        CosmoRF.create_sstring(str);
+        RecRF.create_sstring(str);
+        str << setfill('=') << setw(80) << "=" << endl << endl;
+    }
+    
+    //================================================================================
+    void show() const
+    { std::ostringstream str; create_sstring(str); cout << str.str() << endl; }
 
     //====================================================================================
     // Konstructors and Destructors

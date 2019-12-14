@@ -1,9 +1,9 @@
 ====================================================================================================
 
-Recfast++ (v2.0, May 2018)
+Recfast++ (v2.1, Jan 2019)
 
 ====================================================================================================
-This directory contains the flexible cosmological recombination code Recfast++ (v1.2), 
+This directory contains the flexible cosmological recombination code Recfast++
 originally written by Jens Chluba (Oct 2010++), with additions from Luke Hart and Boris Bolliet 
 (The University of Manchester). This code originally started from the old C-version of Recfast 
 by Seager et al. 1999 (this version can be found at https://www.cfa.harvard.edu/~sasselov/rec/ 
@@ -14,6 +14,7 @@ although it is not maintained), but was then strongly rewritten and updated to:
 - allow running a simple Dark matter annihilation and decay module (Chluba, 2010, MNRAS, 402).
 - include of primordial magnetic field heating (Chluba et al., 2015, MNRAS, 451, 2244)
 - compute variations of fundamental constants (Hart & Chluba, 2017, 474, 1850-1861)
+- added simple reionization models
 
 These tasks are achieved using the simple 3-level approach of Peebles and with appropriate 
 correction function (Rubino-Martin et al, 2010, MNRAS, 403, 439-452). To solve the 

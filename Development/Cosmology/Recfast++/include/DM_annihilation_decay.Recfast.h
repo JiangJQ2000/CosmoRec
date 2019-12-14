@@ -16,6 +16,14 @@
 #define DM_ANNIHILATION_DECAY_H
 
 //===========================================================================================
+// evaluation of ODE terms given heating rate
+//===========================================================================================
+void evaluate_ionization_heating_excitation_terms(double z, double Hz,
+                                                  double xp, double xHep,
+                                                  double CHe, double CH,
+                                                  double dE_dz, double fvec[]);
+
+//===========================================================================================
 // evaluation of ODE terms for annihilation
 //===========================================================================================
 void evaluate_DM_annihilation_terms(double z, double Hz,

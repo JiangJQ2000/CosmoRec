@@ -35,14 +35,14 @@ struct Cosmological_variables
     Cosmological_variables()
     {
         CosmoPars();
-        H0 = Cosmo.h100*100.0*1.0e+5/RF_Mpc;
+        H0 = Cosmo.h100*100.0*1.0e+3/RF_Mpc;
         fHe= Cosmo.Yp/(4.0*RF_fac_mHemH*(1.0-Cosmo.Yp));
     }
     
     //========================================================================================
     // show variables
     //========================================================================================
-    void show()
+    void show() const
     {
         cout << " H0= " << H0 << " km s^-1 Mpc^-1 and fHe= " << fHe << endl;
         Cosmo.show();
@@ -54,7 +54,7 @@ Cosmological_variables CosmoVars;
 void Set_Cosmology(const CosmoPars &CosmoInputs)
 {
     CosmoVars.Cosmo=CosmoInputs;
-    CosmoVars.H0 = CosmoVars.Cosmo.h100*100.0*1.0e+5/RF_Mpc;
+    CosmoVars.H0 = CosmoVars.Cosmo.h100*100.0*1.0e+3/RF_Mpc;
     CosmoVars.fHe= CosmoVars.Cosmo.Yp/(4.0*RF_fac_mHemH*(1.0-CosmoVars.Cosmo.Yp));
     
     return;
@@ -120,7 +120,7 @@ double TCMB(double z){ return CosmoVars.Cosmo.T0*(1.0+z); }
 //====================================================================================================================
 double calc_Orel(double TCMB0, double Nnu, double h100)
 { 
-    double H0=h100*100.0*1.0e+5/RF_Mpc;
+    double H0=h100*100.0*1.0e+3/RF_Mpc;
     double a=RF_aRad*pow(TCMB0, 4)/RF_cLight/RF_cLight; 
     double b=3.0*pow(H0, 2)/(8.0*RF_PI*RF_G);  
     return a/b*(1.0+Nnu*(7.0/8.0)*pow(4.0/11.0, 4.0/3.0));

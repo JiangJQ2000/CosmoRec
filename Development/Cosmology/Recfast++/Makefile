@@ -20,7 +20,8 @@ OBJSLIB = ./Recfast++.o \
 	   ./src/DM_annihilation_decay.Recfast.o \
 	   ./src/Magnetic_fields.Recfast.o \
 	   ./src/Variation_constants.Recfast.o \
-	   ./src/Rec_corrs_CT.Recfast.o
+	   ./src/Rec_corrs_CT.Recfast.o \
+	   ./src/Reionization.Recfast.o
 
 OBJS = ./src/parser.Recfast.o
 
@@ -29,9 +30,9 @@ OBJS = ./src/parser.Recfast.o
 #===============================================================================
 all: Recfast++lib Recfast++
 
-Recfast++:  $(OBJS) main_Recfast++.o
+Recfast++:  $(OBJS) libRecfast++.a main_Recfast++.o
 			 @echo "Linking..."
-			 $(CC) $(LXXFLAGS) -L. -lRecfast++ $(OBJS) main_Recfast++.o -o Recfast++
+			 $(CC) $(LXXFLAGS) main_Recfast++.o -L. -lRecfast++ $(OBJS) -o Recfast++
 
 lib: Recfast++lib
 

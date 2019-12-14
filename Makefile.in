@@ -72,7 +72,7 @@ endif
 #===============================================================================
 CXXFLAGSLOC = $(CXXFLAGS) $(USE_GRACE) $(USE_OPENMP) \
               -D COSMORECPATH=\"$(PWD)/\" \
-              -D COSMOREC_BASE_PATH=\"$(REC_BASE)/\" \
+              -D COSMOREC_BASE_PATH=\"$(PWD)/$(REC_BASE)/\" \
               -D HEIDATADIR=\"$(PWD)/$(DEV_DIR)/$(HELIUM_DIR)/\"
 
 #===============================================================================
@@ -212,8 +212,6 @@ CosmoRec.o: ./Modules/setup_functions.cpp ./Modules/output_methods.cpp \
 
 INC_PATH = -I$(DEV_DIR)/Definitions -I$(DEV_DIR)/Recombination \
 	   -I$(DEV_DIR)/Integration -I$(DEV_DIR)/Cosmology \
-	   -I$(DEV_DIR)/Cosmology/Recfast++ \
-	   -I$(DEV_DIR)/Cosmology/Recfast++/include \
 	   -I$(DEV_DIR)/Hydrogenic -I$(DEV_DIR)/Line_profiles \
 	   -I$(DEV_DIR)/$(HELIUM_DIR) -I$(DEV_DIR)/Simple_routines \
 	   -I$(DEV_DIR)/ODE_PDE_Solver -I./PDE_Problem -I./PDE_Problem_HeI \

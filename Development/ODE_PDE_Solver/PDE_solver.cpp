@@ -1199,8 +1199,7 @@ void setup_Lagrange_interpolation_coefficients_O2_CODE(PDE_Stepper_Data &PDE_D,
 // compute dy and ddy
 //-------------------------------------------------------------------------------------
 void compute_derivatives(const vector<double> &yi, 
-                         const vector<double> &Ai, const vector<double> &Bi, 
-                         PDE_Stepper_Data &PDE_D, 
+                         PDE_Stepper_Data &PDE_D,
                          vector<double> &dy, vector<double> &ddy)
 {       
     //==========================================================================
@@ -1211,21 +1210,21 @@ void compute_derivatives(const vector<double> &yi,
     {
         dy[i]=ddy[i]=0.0;
         
-        double dum1=PDE_D.LG.d2li_d2x[i][0]*Ai[i]*yi[i+0-2]
-                   +PDE_D.LG.d2li_d2x[i][4]*Ai[i]*yi[i+4-2];
-        double dum2=PDE_D.LG.d2li_d2x[i][1]*Ai[i]*yi[i+1-2]
-                   +PDE_D.LG.d2li_d2x[i][3]*Ai[i]*yi[i+3-2];
+        double dum1=PDE_D.LG.d2li_d2x[i][0]*yi[i+0-2]
+                   +PDE_D.LG.d2li_d2x[i][4]*yi[i+4-2];
+        double dum2=PDE_D.LG.d2li_d2x[i][1]*yi[i+1-2]
+                   +PDE_D.LG.d2li_d2x[i][3]*yi[i+3-2];
         
-        ddy[i]=PDE_D.LG.d2li_d2x[i][2]*Ai[i]*yi[i];
+        ddy[i]=PDE_D.LG.d2li_d2x[i][2]*yi[i];
         ddy[i]+=dum2;
         ddy[i]+=dum1;
 
-        dum1=PDE_D.LG.dli_dx[i][0]*Bi[i]*yi[i+0-2]
-            +PDE_D.LG.dli_dx[i][4]*Bi[i]*yi[i+4-2];
-        dum2=PDE_D.LG.dli_dx[i][1]*Bi[i]*yi[i+1-2]
-            +PDE_D.LG.dli_dx[i][3]*Bi[i]*yi[i+3-2];
+        dum1=PDE_D.LG.dli_dx[i][0]*yi[i+0-2]
+            +PDE_D.LG.dli_dx[i][4]*yi[i+4-2];
+        dum2=PDE_D.LG.dli_dx[i][1]*yi[i+1-2]
+            +PDE_D.LG.dli_dx[i][3]*yi[i+3-2];
         
-        dy[i]=PDE_D.LG.dli_dx[i][2]*Bi[i]*yi[i];
+        dy[i]=PDE_D.LG.dli_dx[i][2]*yi[i];
         dy[i]+=dum2;
         dy[i]+=dum1;
         
@@ -1240,11 +1239,11 @@ void compute_derivatives(const vector<double> &yi,
     //==========================================================================
     for(int j=0; j<5; j++)
     {
-        ddy[0]+=PDE_D.LG.d2li_d2x[0][j]*Ai[1]*yi[j];
-        dy [0]+=PDE_D.LG.dli_dx  [0][j]*Bi[1]*yi[j];
+        ddy[0]+=PDE_D.LG.d2li_d2x[0][j]*yi[j];
+        dy [0]+=PDE_D.LG.dli_dx  [0][j]*yi[j];
 
-        ddy[1]+=PDE_D.LG.d2li_d2x[1][j]*Ai[1]*yi[j];
-        dy [1]+=PDE_D.LG.dli_dx  [1][j]*Bi[1]*yi[j];
+        ddy[1]+=PDE_D.LG.d2li_d2x[1][j]*yi[j];
+        dy [1]+=PDE_D.LG.dli_dx  [1][j]*yi[j];
     }
 
     //==========================================================================
@@ -1257,10 +1256,10 @@ void compute_derivatives(const vector<double> &yi,
     //==========================================================================
     for(int j=0; j<5; j++)
     {
-        ddy[i-1]+=PDE_D.LG.d2li_d2x[i-1][j]*Ai[i-1]*yi[i-4+j];
-        dy [i-1]+=PDE_D.LG.dli_dx  [i-1][j]*Bi[i-1]*yi[i-4+j];
-        ddy[i]  +=PDE_D.LG.d2li_d2x[i][j]*Ai[i]*yi[i-4+j];
-        dy [i]  +=PDE_D.LG.dli_dx  [i][j]*Bi[i]*yi[i-4+j];
+        ddy[i-1]+=PDE_D.LG.d2li_d2x[i-1][j]*yi[i-4+j];
+        dy [i-1]+=PDE_D.LG.dli_dx  [i-1][j]*yi[i-4+j];
+        ddy[i]  +=PDE_D.LG.d2li_d2x[i]  [j]*yi[i-4+j];
+        dy [i]  +=PDE_D.LG.dli_dx  [i]  [j]*yi[i-4+j];
     }
     //==========================================================================
 

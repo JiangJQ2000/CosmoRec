@@ -126,7 +126,6 @@ void setup_Lagrange_interpolation_coefficients_O2_CODE(PDE_Stepper_Data &PDE_D,
                                                        bool setup_Integral=1);
 
 void compute_derivatives(const vector<double> &yi, 
-                         const vector<double> &Ai, const vector<double> &Bi, 
                          PDE_Stepper_Data &PDE_D, 
                          vector<double> &dy, vector<double> &ddy);
 

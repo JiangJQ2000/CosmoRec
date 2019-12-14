@@ -18,13 +18,14 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <complex>
 
 using namespace std;
 
 //======================================================================================
 // Special functions
 //======================================================================================
-double Gaussian(double x, double x0, double sigma);     // simple normlized Gaussian
+double Gaussian(double x, double x0, double sigma);     // simple normalized Gaussian
 double tanh_switch(double x, double x0, double sigma);  // simple tanh-switch
 
 double Dawson_Int(const double &x); // Dawson integral; Based on Antia
@@ -34,6 +35,8 @@ double Gamma_JC(const double &x);                    // Gamma-function
 double Gamma_JC(const double &x, const double &a);   // incomplete Gamma-function
 double Ei_JC(double x);             // Ei(x) = - E_1(x) = - int_{-x}^infty e^{-t}/t dt
 double ex_Ei_JC(double x);          // exp(x) Ei(x)
+
+double scaled_BesselK2(double x);   // modified Bessel function exp(x) K2(x)
 
 double max(double a, double b);
 double min(double a, double b);
@@ -70,7 +73,7 @@ void show_spline_memory();
 //======================================================================================
 // load tables of data (added Jan 2012)
 //======================================================================================
-void load_data_from_file(string fname, int cols, vector<int> &spline_mem_indices, 
+void load_data_from_file(string fname, int cols, vector<int> &spline_mem_indices,
                          bool logx, bool logy);
 
 void load_data_from_file_loglin(string fname, int cols, vector<int> &spline_mem_indices);
@@ -146,6 +149,17 @@ double DC_sumprod(const vector<double> &yarr, const vector<double> &zarr);
 //======================================================================================
 bool check_if_dir_exists(string dir);
 void create_directory_if_it_does_not_exist(string dir, bool message=1);
+void change_to_executable(string fname);
+
+//======================================================================================
+complex<double> LnGamma_func(complex<double> z);  // complex number z
+
+// Lambda == Gamma(a) Gamma(b) / Gamma(c) Gamma(d)
+complex<double> LnLambda_func(complex<double> a, complex<double> b,
+                              complex<double> c, complex<double> d);
+
+double Harmonic_number_Re(double x);              // Re[H(i x)] is computed, x>0
+double Harmonic_number_Im(double x);              // Im[H(i x)] is computed, x>0
 
 #endif
 //======================================================================================

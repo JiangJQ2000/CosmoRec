@@ -18,18 +18,19 @@
 #include <fstream>
 #include <cmath>
 #include <vector>
+#include <complex>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <dirent.h>
 #include "routines.h"
 #include "Definitions.h"
 
-
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_spline.h>
 #include <gsl/gsl_sf_coupling.h>
 #include <gsl/gsl_sf_gamma.h>
 #include <gsl/gsl_sf_expint.h>
+#include <gsl/gsl_sf_bessel.h>
 
 //======================================================================================
 // for xmgrace output
@@ -43,11 +44,11 @@ using namespace std;
 //======================================================================================
 // Special functions
 //======================================================================================
-double Gaussian(double x, double x0, double sigma)         // simple normlized Gaussian
+double Gaussian(double x, double x0, double sigma)         // simple normalized Gaussian
 { return exp(-min(200.0, pow( (x-x0)/sigma, 2)/2.0))/sqrt(TWOPI)/sigma; }
 
 double tanh_switch(double x, double x0, double sigma)      // simple tanh-switch
-{ return (1.0-tanh((x-x0)/sigma))/2.0; }
+{ return (1.0-tanh((x-x0)/sigma))/2.0; }                   // x << x0 --> 1
 
 //======================================================================================
 // Dawson integral; Based on Antia
@@ -310,6 +311,9 @@ double factorial_corrfac(int n)
                  -5.921664373537e-4/(n+1.0)/(n+1.0)/(n+1.0)/(n+1.0)/(n+1.0)/(n+1.0)/(n+1.0) 
                  );
 }
+
+double scaled_BesselK2(double x)   // modified Bessel function exp(x) K2(x)
+{ return gsl_sf_bessel_Kn_scaled(2, x); }
 
 //======================================================================================
 // checking for nan
@@ -1157,6 +1161,83 @@ void create_directory_if_it_does_not_exist(string dir, bool message)
     }
     
     return;
+}
+
+void change_to_executable(string fname)
+{
+    cout << " changing " << fname << " to executable." << endl;
+    chmod(fname.c_str(), S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH);
+    return;
+}
+
+//======================================================================================
+complex<double> LnGamma_func(complex<double> z)
+{
+    if(real(z)==0 && imag(z)==0) return 1.0;
+    
+    if(abs(z)>10.0)
+        return z*log(z)-z-0.5*log(z/TWOPI)+( 1.0/12.0-( 1.0/360.0-1.0/(1260.0*z*z) )/(z*z) )/z;
+    
+    if(abs(z)<0.01) return z*(-0.57721566490153286061 +
+                              z*(0.82246703342411321824 +
+                                 z*(-0.40068563438653142847 +
+                                    z*(0.27058080842778454788 +
+                                       z*(-0.20738555102867398527 +
+                                          z*(0.16955717699740818995 +
+                                           z*(-0.14404989676884611812 +
+                                            z*(0.12550966952474304242 +
+                                             z*(-0.11133426586956469049 +
+                                              z*(0.10009945751278180853 +
+                                               z*(-0.090954017145829042233 +
+                                                z*(0.083353840546109004025 +
+                                                 z*(-0.076932516411352191473 +
+                                                  z*(0.071432946295361336059 +
+                                                   (-0.066668705882420468033 + 0.062500955141213040742*z)*z)
+                                                    ))))))))))))) - log(z);
+
+    complex<double> I(0,1);
+    gsl_sf_result lnr, ar;
+    gsl_sf_lngamma_complex_e(real(z), imag(z), &lnr, &ar);
+    
+    return lnr.val+I*ar.val;
+}
+
+complex<double> LnLambda_func(complex<double> a, complex<double> b, complex<double> c, complex<double> d)
+{
+    return (LnGamma_func(a)-LnGamma_func(c))+(LnGamma_func(b)-LnGamma_func(d));
+}
+
+double Harmonic_number_Re(double x)
+{
+    double ix2=1.0/(x*x);
+    
+    if(x>10.0) return EULERGAMMA - 0.5*log(ix2)
+        + ix2/12*(1.0+ix2*(1.0/10+ix2*(1.0/21+ix2*(1.0/20+ix2*(1.0/11+ix2*691/2730)))));
+    
+    double x2=x*x, r=1.0/(1.0+x2);
+    for(int m=2; m<=20000; m++)
+    {
+        double dr=1.0/((x2+m*m)*m);
+        r+=dr;
+        if(abs(dr/r)<1.0e-10) break;
+    }
+    
+    return x2*r;
+}
+
+double Harmonic_number_Im(double x)
+{
+    if(x>10.0) return (PI-1.0/x)/2.0 + TWOPI*(1.0/tanh(PI*x)-1.0);
+    
+    double x2=x*x, r=1.0/(1.0+x2);
+    for(int m=2; m<=20000; m++)
+    {
+        double dr=1.0/(x2+m*m);
+        r+=dr;
+        if(abs(dr/r)<1.0e-10) break;
+    }
+    
+    return x*r;
 }
 
 //======================================================================================

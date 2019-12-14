@@ -62,6 +62,7 @@
 #include "physical_consts.h"
 #include "routines.h"
 #include "Integration_routines.h"
+#include "Photoionization_cross_section.h"
 
 using namespace std;
 
@@ -597,6 +598,29 @@ double Cosmos :: t(double z)
 }
 
 //========================================================================================
+// conversion of time to z
+//========================================================================================
+struct Search_Data_time_to_z{ double val; Cosmos *c; };
+
+double func_compute_time2z(double *l1z, void *p)
+{
+    Search_Data_time_to_z *d=((Search_Data_time_to_z *)p);
+    double z1=exp(*l1z);
+    return d->c->t(z1-1.0)/d->val-1.0;
+}
+
+double Cosmos :: t_to_z(double t)
+{
+    if(t>=Cosmos::t(0.0)) return 0.0;
+    
+    Search_Data_time_to_z d={t, this};
+    double lz1=log(1.0), lz2=log(1.0+1.0e+15), lzacc=1.0e-8;
+    void *p=&d;
+    
+    return exp(find_root_brent(func_compute_time2z, p, lz1, lz2, lzacc))-1.0;
+}
+
+//========================================================================================
 // Spitzer formula
 //========================================================================================
 double Cosmos :: t_ep(double z)                                                
@@ -963,7 +987,7 @@ double Cosmos :: y_elect(double zlow, double zup)
 //========================================================================================
 // y-parameter has certain value
 //========================================================================================
-struct Search_Data{ double z, val; Cosmos *c; };
+struct Search_Data{ double z, x, val; Cosmos *c; };
 
 double func_compute_y(double *lz, void *p)
 {
@@ -976,7 +1000,7 @@ double func_compute_y(double *lz, void *p)
 
 double Cosmos :: compute_z_for_given_y(double y_val)
 {
-    Search_Data d={0, y_val, this};
+    Search_Data d={0, 0, y_val, this};
     void *p=&d;
     double lz1=log(1.0), lz2=log(1.0e+6), lzacc=1.0e-8;
     return exp(find_root_brent(func_compute_y, p, lz1, lz2, lzacc));
@@ -988,7 +1012,7 @@ double Cosmos :: compute_z_for_given_y(double y_val)
 double dtau_ff_GSL(double logz, void *p)
 {
     Integral_Info *d =(Integral_Info *) p;
-    double z1=exp(logz), z=z1-1.0;
+    double z=exp(logz)-1.0;
     double x=d->var;
     
     double Thg=d->c->ThetaCMB(z);
@@ -997,13 +1021,13 @@ double dtau_ff_GSL(double logz, void *p)
     double KBR=const_alpha/TWOPI*pow(const_lambdac, 3)/sqrt(3.0*TWOPI)/pow(Thg, 3.5)*gff*(Np+NHeII+4.0*NHeIII);
     double dtau_dt=1.0/d->c->t_eg(z);
     
-    return -z1*dtau_dt*d->c->dt_dz(z)*KBR*(1.0-exp(-x))/pow(x, 3);
+    return -(1.0+z)*dtau_dt*d->c->dt_dz(z)*KBR*(1.0-exp(-x))/pow(x, 3);
 }
 
 double dtau_ff_GSL_e(double logz, void *p)
 {
     Integral_Info *d =(Integral_Info *) p;
-    double z1=exp(logz), z=z1-1.0;
+    double z=exp(logz)-1.0;
     double x=d->var;
     
     double Thg=d->c->ThetaCMB(z);
@@ -1024,14 +1048,14 @@ double dtau_ff_GSL_e(double logz, void *p)
     //double KBR=const_alpha/TWOPI*pow(const_lambdac, 3)/sqrt(3.0*TWOPI)/pow(The, 3.5)*gffN;
     double dtau_dt=1.0/d->c->t_eg(z);
     
-    //return -z1*dtau_dt*d->c->dt_dz(z1-1.0)*KBR/pow(xe, 2);
-    return -z1*dtau_dt*d->c->dt_dz(z1-1.0)*KBR*(1.0-exp(-xe))/pow(xe, 3);
+    //return -(1.0+z)*dtau_dt*d->c->dt_dz(z)*KBR/pow(xe, 2);
+    return -(1.0+z)*dtau_dt*d->c->dt_dz(z)*KBR*(1.0-exp(-xe))/pow(xe, 3);
 }
 
 double Cosmos :: tau_ff(double x, double z)
 {
     Integral_Info V; V.c=this; V.var=x;
-    double epsInt=1.0e-5, epsabs=0.0, a=log(1.0), b=log(z+1.0);
+    double epsInt=1.0e-4, epsabs=0.0, a=log(1.0), b=log(z+1.0);
     void *p=&V;
 
     return Integrate_gk_GSL(6, a, b, epsInt, epsabs, dtau_ff_GSL_e, p);
@@ -1055,7 +1079,7 @@ double func_compute_x_abs(double *lxabs, void *p)
 
 double Cosmos :: compute_x_abs(double z, double val)
 {
-    Search_Data d={z, val, this};
+    Search_Data d={z, 0, val, this};
     void *p=&d;
     double lx1=log(1.0e-10), lx2=log(1.0), lxacc=1.0e-8;
     
@@ -1078,7 +1102,7 @@ double func_compute_x_h_low(double *lxabs, void *p)
 
 double Cosmos :: compute_x_h_low(double z)
 {
-    Search_Data d={z, 0, this};
+    Search_Data d={z, 0, 0, this};
     void *p=&d;
     double lx1=log(1.0e-10), lx2=log(1.0), lxacc=1.0e-8;
     
@@ -1103,7 +1127,7 @@ double func_compute_x_h_high(double *lxi, void *p)
 
 double Cosmos :: compute_x_h_high(double z)
 {
-    Search_Data d={z, 0, this};
+    Search_Data d={z, 0, 0, this};
     void *p=&d;
     double lx1=log(1.0e-10), lx2=log(100.0), lxacc=1.0e-8;
     

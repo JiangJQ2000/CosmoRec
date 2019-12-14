@@ -144,7 +144,7 @@ private:
     //====================================================================================
     CosmoPars CosmoRF;
     RecPars RecRF;
-
+    
     int recombination_history(int nzpts, double zstart, double zend,
                               vector<double> &zarr,
                               vector<double> &Xe_H, vector<double> &Xe_He,
@@ -271,10 +271,12 @@ public:
     double Get_O_L() const   { return O_L;    } 
     // 
     double Get_O_g() const  { return O_g;   } 
-    double Get_rho_c() const { return rho_c; } 
+    double Get_O_rel() const  { return O_rel;   }
+    double Get_rho_c() const { return rho_c; }
     double Get_rho_g() const { return rho_g; } 
     double Get_T27()   const { return T27;   } 
     double Get_T_CMB0() const{ return T_CMB0;} 
+    double Get_T_CMB0_eV() const{ return T_CMB0*const_kB/const_e;}
 
     //====================================================================================
     // CMB temperature
@@ -433,7 +435,8 @@ public:
     //====================================================================================
     // cosmological time
     //====================================================================================
-    double t(double z);                 
+    double t(double z);
+    double t_to_z(double t);
 
     //====================================================================================
     // times for energy exchange

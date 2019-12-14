@@ -1,20 +1,20 @@
 //==================================================================================================
-// ODE_solver routines 
+// ODE_solver routines
 //
-// Purpose: solve a system of stiff ODEs with moderate dimension (n<~100). 
-// 
-// Basic Aspects: The solver is based on a 6th order Gears method (implicit && stiffly-stable) with 
-// variable time-step. The linear algebra system is solved iteratively using a biconjugate gradient 
-// method. A guess for the next solution is extrapolated from the previous solutions; 
+// Purpose: solve a system of stiff ODEs with moderate dimension (n<~100).
+//
+// Basic Aspects: The solver is based on a 6th order Gears method (implicit && stiffly-stable) with
+// variable time-step. The linear algebra system is solved iteratively using a biconjugate gradient
+// method. A guess for the next solution is extrapolated from the previous solutions;
 //
 // Author: Jens Chluba with contributions from Geoff Vasil at CITA
 //
 // First implementation: 12/01/2010
-// Last modification   : 03/01/2012
+// Last modification   : 14/12/2019
 //==================================================================================================
 // 24/08/2012: improved some of the functions and tidied the code up
 //
-// 15/06/2011: set max order to 5; This was making the code a bit faster; 
+// 15/06/2011: set max order to 5; This was making the code a bit faster;
 //             tidied the code a bit;
 //==================================================================================================
 
@@ -81,11 +81,19 @@ namespace ODE_solver_Rec
         double direction;
         // to pass on parameters for the setup
         void *p;
+        int max_it; // for iterative solution of full matrix problem
         
+        void reset_Solver_Info()
+        {
+            Snewptr=NULL; // this indicates a fresh start is happening
+            p=NULL;
+            return;
+        }
+        
+        // default values
         ODE_Solver_data()
         {
-            Snewptr=NULL;
-            p=NULL;
+            reset_Solver_Info();
         }
     };
     

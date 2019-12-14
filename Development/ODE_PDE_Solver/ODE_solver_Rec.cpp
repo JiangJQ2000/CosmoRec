@@ -10,7 +10,7 @@
 // Author: Jens Chluba with contributions from Geoff Vasil at CITA
 //
 // First implementation: 12/01/2010
-// Last modification   : 05/03/2017
+// Last modification   : 14/12/2019
 //==================================================================================================
 // 05/03/2017: added brute force solution for moderate matrix via Gaussian elimination [JC]
 // 24/08/2012: improved some of the functions and tidied the code up
@@ -139,14 +139,20 @@ namespace ODE_solver_Rec
         return;
     }
     
-    double Get_element(int c, int r, ODE_solver_matrix &Jac)
+    long Get_element_index(int c, int r, ODE_solver_matrix &Jac)
     {
-        for(unsigned int i=0; i<Jac.A.size(); i++) 
+        for(unsigned int i=0; i<Jac.A.size(); i++)
         {
-            if(c==Jac.col[i] && r==Jac.row[i]) return Jac.A[i];
+            if(c==Jac.col[i] && r==Jac.row[i]) return i;
         }
         
-        return 0.0;
+        return -1;
+    }
+    
+    double Get_element(int c, int r, ODE_solver_matrix &Jac)
+    {
+        long i=Get_element_index(c, r, Jac);
+        return (i==-1 ? 0.0 : Jac.A[i]);
     }
     
     void show_whole_matrix(ODE_solver_matrix &Jac, vector<double > &b)
@@ -156,6 +162,7 @@ namespace ODE_solver_Rec
         cout << endl;
         for(int r=0; r<(int)Jac.diags.size(); r++)
         {
+            cout << r << " : ";
             for(int c=0; c<(int)Jac.diags.size(); c++) 
             {
                 cout.width(4);
@@ -190,8 +197,8 @@ namespace ODE_solver_Rec
     //  
     // This routine was adapted from the IML++ http://math.nist.gov/iml++/
     //===================================================================================
-    int BiCGSTAB_JC(const ODE_solver_matrix &Jac, vector<double> &x, 
-                    const vector<double> &b, int &max_iter, double &tol)
+    int BiCGSTAB_JC(const ODE_solver_matrix &Jac, const vector<double> &b,
+                    vector<double> &x, int &max_iter, double &tol)
     {
         int neq=b.size();
         double resid;
@@ -238,8 +245,7 @@ namespace ODE_solver_Rec
             else 
             {
                 beta = (rho_1/rho_2) * (alpha/omega);
-                for(int i=0; i<neq; i++) 
-                    p[i] = r[i] + beta * (p[i] - omega * v[i]);
+                for(int i=0; i<neq; i++) p[i] = r[i] + beta * (p[i] - omega * v[i]);
             }
             //------------------------------------------------------
             // preconditioning phat
@@ -371,6 +377,8 @@ namespace ODE_solver_Rec
             if(isnan_loc(tol)) ifail=10;
         }
         
+        cout << " average tolerance achieved  : " << tol << " with " << maxit << " iterations" << endl;
+        
         return ifail;
     }    
         
@@ -384,7 +392,7 @@ namespace ODE_solver_Rec
     // right hand side of the differential equation system dX/dz = g(z, X)
     //===================================================================================
     void ODE_solver_f(int neq, double z, double *y, double *f, 
-                      ODE_Solver_data &SD)
+                      const ODE_Solver_data &SD)
     {
         //==================================================================
         // evaluate the rhs of system  dy/dz == g(t,y)
@@ -394,7 +402,7 @@ namespace ODE_solver_Rec
     }
     
     void ODE_solver_f_col(int neq, double z, double *y, double *f, 
-                          int col, ODE_Solver_data &SD)
+                          int col, const ODE_Solver_data &SD)
     {
         //==================================================================
         // evaluate the rhs of system  dy/dz == g(t,y)
@@ -427,7 +435,7 @@ namespace ODE_solver_Rec
         double y0=y[col], Dyj=y[col]*1.0e-8, eps=1.0e-12;
         if(y0==0.0) Dyj=1.0e-8;
         
-        vector<double> fp1(neq), fm1(neq);
+        vector<double> fp1(neq), f0(neq), fm1(neq);
 
         //===============================================================================
         // derivatives with respect to Xj.
@@ -441,7 +449,8 @@ namespace ODE_solver_Rec
         ODE_solver_f_col(neq, z, &y[0], &fm1[0], col, SD);
         // restore y again
         y[col]=y0;
-        
+        ODE_solver_f_col(neq, z, &y[0], &f0[0], col, SD); // required for consistency
+
         //===============================================================================
         // define numerical derivative
         //===============================================================================
@@ -509,24 +518,23 @@ namespace ODE_solver_Rec
         return;
     }
     
-    //===================================================================================
     void ODE_solver_jac_2p_param(int neq, int col, double z, double Dz, 
                                  double *y, double *r, 
                                  ODE_Solver_data &SD)
     { 
-        //==================================================================
+        //===============================================================================
         // r[i] is reset here
         // y[i] should contain the solution at z
-        //==================================================================
+        //===============================================================================
         double y0=y[col], Dyj=y[col]*1.0e-8, eps=1.0e-12;
         if(y0==0.0) Dyj=1.0e-8;
         
         vector<double> fp1(neq), fm1(neq);
         
-        //==================================================================
+        //===============================================================================
         // derivatives with respect to Xj.
         // A two-point formula is used. It has accuracy O(h^2)
-        //==================================================================
+        //===============================================================================
         // get f(yj+Dyj)
         y[col]=y0+Dyj;
         ODE_solver_f_param_col(neq, z, &y[0], &fp1[0], col, SD);
@@ -536,18 +544,18 @@ namespace ODE_solver_Rec
         // restore y again
         y[col]=y0;
         
-        //==================================================================
+        //===============================================================================
         // define numerical derivative
-        //==================================================================
+        //===============================================================================
         for(int k=0; k<neq; k++)
         {
             r[k]=ODE_solver_df_dx_2point(fp1[k], fm1[k], Dyj, eps);
             r[k]=-Dz*r[k];
         }
         
-        //==================================================================
+        //===========================================================================
         // add unity to the i==j element
-        //==================================================================
+        //===========================================================================
         r[col]+=1.0;   
         
         return; 
@@ -560,14 +568,14 @@ namespace ODE_solver_Rec
     { 
         SD.fcn_col_para_ptr(&neq, &z, y, r, col, SD.p);
         
-        //==================================================================
+        //===============================================================================
         // define derivative
-        //==================================================================
+        //===============================================================================
         for(int k=0; k<neq; k++) r[k]=-Dz*r[k];
         
-        //==================================================================
+        //===========================================================================
         // add unity to the i==j element
-        //==================================================================
+        //===========================================================================
         r[col]+=1.0;   
         
         return; 
@@ -598,39 +606,24 @@ namespace ODE_solver_Rec
         //===============================================================================
         // fill Matrix with values
         //===============================================================================
-        if(SD.num_jac) 
+        void (*Jac_func)(int, int, double, double, double *, double *, ODE_Solver_data &);
+        
+        if(SD.num_jac) Jac_func=ODE_solver_jac_2p;
+        else Jac_func=ODE_solver_jac_user;
+        
+        for(int J=0; J<neq; J++)
         {
-            for(int J=0; J<neq; J++)
-            {   
-                ODE_solver_jac_2p(neq, J, z, Dz, y, &Jij[0], SD);
+            Jac_func(neq, J, z, Dz, y, &Jij[0], SD);
+            
+            for(int row=0; row<neq; row++)
+                if(Jij[row]!=0.0)
+                {
+                    Jac.A.push_back(Jij[row]);
+                    Jac.col.push_back(J);
+                    Jac.row.push_back(row);
                 
-                for(int row=0; row<neq; row++)
-                    if(Jij[row]!=0.0)
-                    {
-                        Jac.A.push_back(Jij[row]);
-                        Jac.col.push_back(J);
-                        Jac.row.push_back(row);
-                        
-                        if(J==row) Jac.diags.push_back((int)(Jac.A.size()-1));
-                    }
-            }
-        }
-        else 
-        {
-            for(int J=0; J<neq; J++)
-            {   
-                ODE_solver_jac_user(neq, J, z, Dz, y, &Jij[0], SD);
-
-                for(int row=0; row<neq; row++)
-                    if(Jij[row]!=0.0)
-                    {
-                        Jac.A.push_back(Jij[row]);
-                        Jac.col.push_back(J);
-                        Jac.row.push_back(row);
-                        
-                        if(J==row) Jac.diags.push_back((int)(Jac.A.size()-1));
-                    }
-            }
+                    if(J==row) Jac.diags.push_back((int)(Jac.A.size()-1));
+                }
         }
         
         if(mess==1) cout << " Number of non-zero elements = " << Jac.A.size() 
@@ -832,6 +825,7 @@ namespace ODE_solver_Rec
         //  
         ODE_Solver_info.n_up=0;
         ODE_Solver_info.n_down=0;
+        ODE_Solver_info.max_it=0;
         
         //===============================================================================
         // Copy absolute & relative accuracies
@@ -1011,7 +1005,7 @@ namespace ODE_solver_Rec
 
         return delta;   
     }
-   
+    
     //===================================================================================
     // beta_i coefficients for extrapolation with avariable step-size
     // These expression where derived by Geoff Vasil (CITA)
@@ -1098,18 +1092,22 @@ namespace ODE_solver_Rec
     // Functions for the ODE solver (error checking)
     //
     //===================================================================================
-    inline double ODE_Solver_error_check(double z, double rtol, double atol, double y, 
-                                         double Dy, int mflag, int component, string mess="")
+    inline double ODE_Solver_error_check(double z, double rtol, double atol, double y,
+                                         double Dy, int mflag, int component,
+                                         int &error_type, string mess="")
     {
         Dy=fabs(Dy);
+        error_type=0;
+
         double err_aim=rtol*fabs(y), fac=1.0e+10;
         if(err_aim<=atol)
         { 
-            if(mflag>=1) cout << " Time-stepper: absolute error control for ( " << mess 
+            if(mflag>=3) cout << " Time-stepper: absolute error control for ( " << mess
                               << " / component " << component << " ) at z= " 
                               << z << " and y= " << y << " |Dy|= " << Dy 
                               << " Dy_rel= " << err_aim << " Dy_abs= " << atol << endl;
             err_aim=atol;
+            error_type=1;
         }
         
         if(Dy!=0.0) fac=err_aim/Dy;
@@ -1122,19 +1120,19 @@ namespace ODE_solver_Rec
     // error and step-size estimate
     //
     //===================================================================================
-    int ODE_Solver_estimate_error_and_next_step_size(int order, const double zin, 
-                                                     double z, double zend, 
-                                                     double &Dz_z, const double Dz_z_max, 
-                                                     ODE_Solver_data &ODE_Solver_info, 
-                                                     const ODE_solver_Solution &S, 
-                                                     ODE_solver_Solution *Sn[6], 
+    int ODE_Solver_estimate_error_and_next_step_size(int order, const double zin,
+                                                     double z, double zend,
+                                                     double &Dz_z, const double Dz_z_max,
+                                                     ODE_Solver_data &ODE_Solver_info,
+                                                     const ODE_solver_Solution &S,
+                                                     ODE_solver_Solution *Sn[6],
                                                      int messflag=1)
     {
         //--------------------------------------------------------
         // even if higher order is used just go with fourth order
         // for error check (added June 15)
         //--------------------------------------------------------        
-        int loc_order=(int) min(max(order, 1), 4);
+        int loc_order=(int) min(max(order, 1), 6);
         
         //--------------------------------------------------------
         // S contains best approximation to order 'order'
@@ -1142,7 +1140,7 @@ namespace ODE_solver_Rec
         //--------------------------------------------------------
         int neq=S.y.size();
         ODE_Solver_info.Stemp.z=z;
-        ODE_Solver_extrapolate_ynp1(order, ODE_Solver_info.Stemp, Sn); 
+        ODE_Solver_extrapolate_ynp1(order, ODE_Solver_info.Stemp, Sn);
         
         //--------------------------------------------------------
         // compute difference
@@ -1153,7 +1151,7 @@ namespace ODE_solver_Rec
         // estimate errors
         //--------------------------------------------------------
         double power, fac=1.0e+10, dum;
-        int max_err_time=-1;
+        int max_err_time=-1, err_type;
         //--------------------------------------------------------
         if(loc_order<=1) power=1.0;
         else power=1.0/loc_order;
@@ -1162,25 +1160,44 @@ namespace ODE_solver_Rec
         {
             if(ODE_Solver_info.rel_vector[l]!=0.0) 
             {
-                dum=ODE_Solver_error_check(z, ODE_Solver_info.rel_vector[l], 
-                                           ODE_Solver_info.abs_vector[l], S.y[l], 
-                                           ODE_Solver_info.Stemp.y[l], messflag, l, "?");
-                
+                dum=ODE_Solver_error_check(z, ODE_Solver_info.rel_vector[l],
+                                           ODE_Solver_info.abs_vector[l], S.y[l],
+                                           ODE_Solver_info.Stemp.y[l], messflag,
+                                           l, err_type, "?");
+
                 if(fac>dum){ fac=dum; max_err_time=l; }
             }
         }
         
-        if(messflag>=2) cout << " Max error in component " << max_err_time << endl;
+        if(messflag>=2 && max_err_time!=-1)
+        {
+            cout << " Max error in component " << max_err_time
+                 << " (of " << neq << ") hitting "
+                 << (err_type==0 ? "relative error " : "absolute error ")
+                 << (err_type==0 ?
+                     ODE_Solver_info.rel_vector[max_err_time] :
+                     ODE_Solver_info.abs_vector[max_err_time])
+                 << endl;
+        }
         
         //--------------------------------------------------------
         // change step-size; 
         // limit change by different values, depending on success
         //--------------------------------------------------------
+        // control of step-size changes. Old quoted setting were
+        // numerically unstable. Most crucial was change of
+        // 'up_thresh', which controls the minimally required
+        // change upwards [added 26.01.19, JC]
+        //--------------------------------------------------------
+        double max_fac    =5.0; // was =100.0;
+        double down_thresh=0.7; // was =0.9;
+        double up_thresh  =1.3; // was =1.1;
+        //--------------------------------------------------------
         double Dz_z_min=1.0e-10;
-        double Dz_z_new=Dz_z*min(100.0, pow(fac, power));
-        
+        double Dz_z_new=Dz_z*min(max_fac, pow(fac, power));
+
         Dz_z_new=min(max(Dz_z_new, Dz_z_min), Dz_z_max);
-        //
+
         if(messflag==1)
         {
             cout << " Estimated change: ";
@@ -1189,7 +1206,7 @@ namespace ODE_solver_Rec
                  << " -- new suggested step-size: " << Dz_z_new << " -- Dz= " << zin*Dz_z_new 
                  << " z= " << z 
                  << " zend= " << zend << " Dz= " << z-zend << " zin= " << zin << " Dz= " << zin-z;
-            //
+
             if(Dz_z_new==Dz_z) cout << " -- no change " << endl;
             else if(Dz_z_new==Dz_z_max) cout << " -- maximal step-size reached " << endl;
             else if(Dz_z_new>Dz_z) cout << " -- increase by: " << Dz_z_new/Dz_z << endl;
@@ -1199,10 +1216,10 @@ namespace ODE_solver_Rec
         //--------------------------------------------------------
         // to put limits on the changes in Dz (not too small)
         //--------------------------------------------------------
-        if(Dz_z*0.9>Dz_z_new)
+        if(Dz_z*down_thresh>Dz_z_new)
         {
             Dz_z=Dz_z_new;
-            //
+
             ODE_Solver_info.n_down=(int) min(ODE_Solver_info.n_down+1, 5);
             
             //--------------------------------------------------------
@@ -1226,10 +1243,10 @@ namespace ODE_solver_Rec
             
             if(Dz_z*0.5>Dz_z_new) return 1;
         }
-        else if(Dz_z*1.1<Dz_z_new)
+        else if(Dz_z*up_thresh<Dz_z_new)
         {
             Dz_z=min(Dz_z_new, Dz_z_max);
-            //
+
             ODE_Solver_info.n_down=0;
             
             return 0;

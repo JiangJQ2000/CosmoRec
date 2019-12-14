@@ -251,6 +251,10 @@ void read_entries_from_parameter_file(string filename, Parameters_form_initfile 
     parser_read(pfc, "path for output", sval, found, show_params);
     if(found) inp.path=sval;
     
+    // create output directory if it does not exist
+    bool dir_message=(inp.verbosity>1 ? 1 : 0);
+    create_directory_if_it_does_not_exist(inp.path, dir_message);
+
     parser_read(pfc, "addition to name for output", sval, found, show_params);
     if(found) inp.addname=sval;
     

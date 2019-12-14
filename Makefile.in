@@ -76,21 +76,19 @@ CXXFLAGSLOC = $(CXXFLAGS) $(USE_GRACE) $(USE_OPENMP) \
               -D HEIDATADIR=\"$(PWD)/$(DEV_DIR)/$(HELIUM_DIR)/\"
 
 #===============================================================================
-# Required external libs
+# Recfast++ part
 #===============================================================================
-LIBS    = $(LIBSGSL) $(LIBSGR) $(LIBOPENMI) -lm 
+RF          = Recfast++
+RF_INC_PATH = -I$(DEV_DIR)/Cosmology/Recfast++/include/ \
+              -I$(DEV_DIR)/Cosmology/Recfast++/.
+RF_LIB_PATH = $(DEV_DIR)/Cosmology/Recfast++/
+LIBSRF  = -L$(RF_LIB_PATH) -l$(RF)
 
 #===============================================================================
-# Recfast++ object files
+# Required external libs
 #===============================================================================
-OBJSRecfast++ = $(DEV_DIR)/Cosmology/Recfast++/Recfast++.o \
-		$(DEV_DIR)/Cosmology/Recfast++/src/ODE_solver.Recfast.o \
-		$(DEV_DIR)/Cosmology/Recfast++/src/cosmology.Recfast.o \
-		$(DEV_DIR)/Cosmology/Recfast++/src/evalode.Recfast.o \
-		$(DEV_DIR)/Cosmology/Recfast++/src/DM_annihilation_decay.Recfast.o \
-		$(DEV_DIR)/Cosmology/Recfast++/src/Magnetic_fields.Recfast.o \
-		$(DEV_DIR)/Cosmology/Recfast++/src/Rec_corrs_CT.Recfast.o \
-        $(DEV_DIR)/Cosmology/Recfast++/src/Variation_constants.Recfast.o
+LIBS    = -L/usr/local/lib/ -L/opt/local/lib/ \
+           $(LIBSRF) $(LIBSGSL) $(LIBSGR) $(LIBOPENMI) -lm
 
 #===============================================================================
 # object files
@@ -151,28 +149,31 @@ endif
 #===============================================================================
 # all objects
 #===============================================================================
-OBJS= $(OBJSRecfast++) $(OBJSDEV) $(OBJSRAMAN) $(OBJSDATA) $(OBJSHEDIF) $(OBJSHEI)
+OBJS= $(OBJSDEV) $(OBJSRAMAN) $(OBJSDATA) $(OBJSHEDIF) $(OBJSHEI)
 
 #===============================================================================
 # program 
 #===============================================================================
 
-all: Recfast++ CosmoReclib CosmoRec
+all: Recfast++lib CosmoReclib CosmoRec
 
-lib: CosmoReclib
+lib: Recfast++lib CosmoReclib
 
-bin: Recfast++ CosmoReclib CosmoRec
+bin: Recfast++lib CosmoReclib CosmoRec
 
-CosmoRec:  CosmoReclib main.o
+CosmoRec: CosmoReclib main.o
 	   @echo "\n Linking CosmoRec binary\n"
-	   $(CC) $(LXXFLAGS) -L. -lCosmoRec main.o $(LIBS) -o CosmoRec
+	   $(CC) $(LXXFLAGS) -L. -lCosmoRec $(LIBS) main.o -o CosmoRec
 
 CosmoReclib: $(OBJS) CosmoRec.o
 	     @echo "\n Creating CosmoRec library\n"
 	     ar rvs ./libCosmoRec.a $?
+		@echo "\n done...\n";
 
-Recfast++: 
-	cd $(DEV_DIR)/Cosmology/Recfast++; make lib CC=$(CC) CXXFLAGS='$(CXXFLAGS)';
+Recfast++lib:
+		@echo "\n Creating Recfast++ library\n"
+		cd $(DEV_DIR)/Cosmology/Recfast++; make lib CC=$(CC);
+		@echo "\n done...\n";
 
 #===============================================================================
 # dependencies
@@ -219,7 +220,7 @@ INC_PATH = -I$(DEV_DIR)/Definitions -I$(DEV_DIR)/Recombination \
        -I$(DEV_DIR)/Compton_Kernel \
 	   -I$(REC_BASE)/Effective_Rates.HI \
 	   -I$(REC_BASE)/Effective_Rates.HeI \
-	   -I$(GSL_INC_PATH) -I$(GR_INC_PATH) -I.
+	   $(RF_INC_PATH) -I$(GSL_INC_PATH) -I$(GR_INC_PATH) -I.
 
 .cpp.o:
 	@echo "Producing object-file $@"

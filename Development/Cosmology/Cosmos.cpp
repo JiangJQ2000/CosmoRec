@@ -1,5 +1,6 @@
 //========================================================================================
 // Author: Jens Chluba (May 2003)
+// Last modification: Dec 2019
 // CITA, University of Toronto
 // All rights reserved.
 //========================================================================================
@@ -62,7 +63,6 @@
 #include "physical_consts.h"
 #include "routines.h"
 #include "Integration_routines.h"
-#include "Photoionization_cross_section.h"
 
 using namespace std;
 

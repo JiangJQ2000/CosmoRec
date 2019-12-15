@@ -70,8 +70,8 @@ void open_files(ofstream *Xfiles, string path, string addname, string detailedna
         }
         
         Xfiles[1].open((prename+"Xe"+addname).c_str(), wrmode);
-        Xfiles[1] << "# CosmoRec "+CosmoRec_version+" output. The columns are z, Xe=Ne/NH, Te\n#" 
-                  << endl;        
+        Xfiles[1] << "# CosmoRec "+CosmoRec_version+" output."
+                  << " The columns are z, Xe=Ne/NH, Te\n#" << endl;        
     }
     
     //  Xfiles[2].open((prename+"rho"+addname).c_str(), wrmode); 
@@ -243,6 +243,7 @@ void write_files(double z, ofstream *Xfiles)
         // only Xe and Te
         //==========================================================
         if(iteration_count==0) write_X_Recfast_z_to_file(Xfiles[0], z, cosmos);
+        
         write_Xe_Te_to_file(Xfiles[1], z, Level_I.X[0], Level_I.X[Level_I.neq-1]*cosmos.TCMB(z));
     }
     //==============================================================

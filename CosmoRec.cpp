@@ -286,7 +286,7 @@ void compute_Recfast_part(double zi, double ze, double Xe_Hi, double Xe_Hei,
     int nz=nz_Recfast_part;
     vector<double> zarr(nz), Xe_H(nz), Xe_He(nz), Xe(nz), TM(nz);
     
-    init_xarr(zi, max(1.0e-5, ze), &zarr[0], nz, 0, 0);
+    init_xarr(zi, max(1.0e-5, ze), &zarr[0], nz, 1, 0);
     
     double TMi=cosmos.TCMB(zi)*rhoi;
     cosmos.recombine_using_Recfast_system(nz, zi, ze, parameters.cosm.Rec.f_ann,
@@ -298,7 +298,7 @@ void compute_Recfast_part(double zi, double ze, double Xe_Hi, double Xe_Hei,
     //=======================================================================================================
     for(int i=1; i<nz; i++)
     {
-        ofile << scientific << zarr[i] << " " << Xe[i] << " " << TM[i] << endl;
+        write_Xe_Te_to_file(ofile, zarr[i], Xe[i], TM[i]);
         write_X_Recfast_z_to_file(ofileRecfast, zarr[i], cosmos);
     }
     

@@ -72,7 +72,7 @@ endif
 #===============================================================================
 CXXFLAGSLOC = $(CXXFLAGS) $(USE_GRACE) $(USE_OPENMP) \
               -D COSMORECPATH=\"$(PWD)/\" \
-              -D COSMOREC_BASE_PATH=\"$(PWD)/$(REC_BASE)/\" \
+              -D COSMOREC_BASE_PATH=\"$(REC_BASE)/\" \
               -D HEIDATADIR=\"$(PWD)/$(DEV_DIR)/$(HELIUM_DIR)/\"
 
 #===============================================================================

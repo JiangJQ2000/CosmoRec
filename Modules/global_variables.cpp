@@ -31,7 +31,7 @@ string Rec_database_path=COSMORECDIR+COSMOREC_BASE_PATH;
 // below z_extend we extend the CosmoRec solution with Recfast system
 //==================================================================================================
 int flag_compute_Recfast_part=0;
-int nz_Recfast_part=100;
+int nz_Recfast_part=200;
 double z_extend=50.0;
 double ze_Recfast=0.0;
 double Xi_HeI_switch=1.0e-7;

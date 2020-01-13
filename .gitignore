@@ -1,0 +1,12 @@
+outputs/
+outputs.*/
+plots/
+plots_*/
+Rec_database/
+Rec_database.pub/
+Rec_database.publite/
+*.o
+*.a
+CosmoRec
+CosmoRec.xcworkspace/contents.xcworkspacedata
+CosmoRec.xcworkspace/xcuserdata/jchluba.xcuserdatad/UserInterfaceState.xcuserstate

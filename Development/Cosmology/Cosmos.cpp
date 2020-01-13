@@ -715,7 +715,7 @@ double Cosmos :: SahaBoltz_HeI1s(double T)
 
 double Cosmos :: SahaBoltz_HI1s(double T)
 {
-    // HeI ionization energy in [J]
+    // HI ionization energy in [J]
     //double RF_EionHI   =2.17869e-18;
     double RF_EionHI   =const_EH_inf_ergs*1.0e-7/(1.0+const_me_mp);
     

@@ -21,6 +21,8 @@ all:
     cp -r ./PDE_Problem_HeI ./CosmoRec.vX/.; \
     mkdir ./CosmoRec.vX/Rec_database; \
     cp -r ./Rec_database.pub/* ./CosmoRec.vX/Rec_database/.; \
+    cp -r ./Rec_database/Effective_Rates.HI/get_effective_rates.HI.* ./CosmoRec.vX/Rec_database/Effective_Rates.HI/.; \
+    cp -r ./Rec_database/Effective_Rates.HeI/get_effective_rates.HeI.* ./CosmoRec.vX/Rec_database/Effective_Rates.HeI/.; \
     mkdir ./CosmoRec.vX/runfiles; \
     cp -r ./runfiles/parameters.dat ./CosmoRec.vX/runfiles/.; \
     cp -r ./runfiles/parameters.HeI_diff.dat ./CosmoRec.vX/runfiles/.; \
@@ -38,6 +40,8 @@ lite: all
 	rm -rf ./CosmoRec.vX/Rec_database; \
     mkdir ./CosmoRec.vX/Rec_database; \
     cp -r ./Rec_database.publite/* ./CosmoRec.vX/Rec_database/.; \
+    cp -r ./Rec_database/Effective_Rates.HI/get_effective_rates.HI.* ./CosmoRec.vX/Rec_database/Effective_Rates.HI/.; \
+    cp -r ./Rec_database/Effective_Rates.HeI/get_effective_rates.HeI.* ./CosmoRec.vX/Rec_database/Effective_Rates.HeI/.; \
     mv ./CosmoRec.vX/ ./CosmoRec.vX.lite/;
 
 tarlite: lite

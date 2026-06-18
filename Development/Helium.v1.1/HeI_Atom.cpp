@@ -2845,7 +2845,7 @@ int Gas_of_HeI_Atoms::Get_Level_index(int n, int l, int s, int j) const
     else if(s==1 && n<=njresolved) return Trip.Get_Level_index(n, l, j)+indexT;
     else if(s==1 && n>njresolved) return Trip_no_j.Get_Level_index(n, l)+indexT_no_j;
     
-    cerr << " Get_as_of_HeI_Atoms::Get_Level_index: No level with (n, l, s, j)= ("
+    cerr << " Gas_of_HeI_Atoms::Get_Level_index: No level with (n, l, s, j)= ("
          << n << ", " << l << ", " << s << ", " << j << ")!!! " << endl;
     exit(0);
     

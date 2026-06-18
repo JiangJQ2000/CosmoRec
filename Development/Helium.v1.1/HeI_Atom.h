@@ -749,9 +749,11 @@ public:
     int Get_indexT() const { return indexT; }
     int Get_indexT_no_j() const { return indexT_no_j; }
     int Get_njres() const { return njresolved; }
-    int Get_Level_index(int n, int l, int s, int j) const; 
+    int Get_Level_index(int n, int l, int s, int j) const;
+    
     // approximate reduced mass of helium in units of me
     double Get_mu_red() const { return 1.0/(1.0+const_me_malp); }
+    double Get_gc() const { return 4.0; }   // spin weight of continuum particle
 
     bool are_add_Q_lines_loaded() const { return add_Q_lines_loaded; }
     bool are_add_TS_lines_loaded() const { return add_TS_lines_loaded; }
@@ -775,7 +777,8 @@ public:
     int Get_J(int i) const;
     double Get_gw(int i) const;
     double Get_nu_ion(int i) const;
-    
+    double Get_nu_ul(int i, int j) const { return Get_nu_ion(j)-Get_nu_ion(i); }
+
     int Get_n_down() const;
     int Get_n_down(int i) const;
     const Transition_Data_HeI_A& Get_Trans_Data(int i, int m) const;

@@ -18,14 +18,21 @@ CXXFLAGS = -Wall -pedantic -O2
 LXXFLAGS =
 
 #===============================================================================
+# default lib path
+#===============================================================================
+#DEF_INC_PATH = /usr/local/include/
+#DEF_LIB_PATH = /usr/local/lib/
+#DEF_INC_PATH = /opt/local/include/
+#DEF_LIB_PATH = /opt/local/lib/
+DEF_INC_PATH = /opt/homebrew/include/
+DEF_LIB_PATH = /opt/homebrew/lib/
+
+#===============================================================================
 # GSL lib
 #===============================================================================
-GSL          = gsl
-#GSL_INC_PATH = /usr/local/include/
-#GSL_LIB_PATH = /usr/local/lib/
-GSL_INC_PATH = /opt/local/include/
-GSL_LIB_PATH = /opt/local/lib/
-LIBSGSL = -L$(GSL_LIB_PATH) -l$(GSL) -lgslcblas
+GSL_INC_PATH = $(DEF_INC_PATH)
+GSL_LIB_PATH = $(DEF_LIB_PATH)
+LIBSGSL = -L$(GSL_LIB_PATH) -lgsl -lgslcblas
 
 #===============================================================================
 # grace lib (for outputs with xmgrace from the diffusion modules)
@@ -36,10 +43,9 @@ LIBSGSL = -L$(GSL_LIB_PATH) -l$(GSL) -lgslcblas
 #USE_GRACE   = -D GRACE_DEFINED
 
 ifeq ($(USE_GRACE),-D GRACE_DEFINED)
-    GR          = grace_np
-    GR_INC_PATH = /opt/local/include/
-    GR_LIB_PATH = /opt/local/lib/
-    LIBSGR  = -L$(GR_LIB_PATH)  -l$(GR)
+    GR_INC_PATH = $(DEF_INC_PATH)
+    GR_LIB_PATH = $(DEF_LIB_PATH)
+    LIBSGR  = -L$(GR_LIB_PATH) -lgrace_np
 endif
 
 #===============================================================================

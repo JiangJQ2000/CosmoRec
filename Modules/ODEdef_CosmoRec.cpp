@@ -511,6 +511,8 @@ void fcn_for_jacobian_eval(int jX, int neq, double DXj, double z, double Tg,
                     // Helium levels
                     f[LI0.index_HeI+0]+= dXe_HeI_HI_abs_dt;
                     f[LI0.index_HeI+2]+=-dXe_HeI_HI_abs_dt;
+                    // electron equation
+                    f[0]+=dXe_HeI_HI_abs_dt; // JC CHECK
                     // HI 1s
                     f[LI0.index_HI]+=-dXe_HeI_HI_abs_dt;
                 }
@@ -532,6 +534,8 @@ void fcn_for_jacobian_eval(int jX, int neq, double DXj, double z, double Tg,
                         // Helium levels
                         f[LI0.index_HeI+0]+= dXe_HeI_HI_abs_dt;
                         f[LI0.index_HeI+HeI_Atoms.Get_Level_index(2, 1, 1, 1)]+=-dXe_HeI_HI_abs_dt;
+                        // electron equation
+                        f[0]+=dXe_HeI_HI_abs_dt; // JC CHECK
                         // HI 1s
                         f[LI0.index_HI]+=-dXe_HeI_HI_abs_dt;
                     }

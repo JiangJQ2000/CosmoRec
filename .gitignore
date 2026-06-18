@@ -1,3 +1,5 @@
+*.plist
+.DS_Store
 CosmoRec.vX/
 CosmoSpec.vX/
 Rec_database-pre-track/

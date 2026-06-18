@@ -9,7 +9,7 @@ CC= g++
 #===============================================================================
 # compiler flags
 #===============================================================================
-CXXFLAGS = -Wall -pedantic -O2
+CXXFLAGS = -Wall -pedantic -O2 -fPIC
 #CXXFLAGS = -Wall -pedantic -pg
 
 #===============================================================================
@@ -77,9 +77,10 @@ endif
 # passing the CosmoRec path on to the compiler
 #===============================================================================
 CXXFLAGSLOC = $(CXXFLAGS) $(USE_GRACE) $(USE_OPENMP) \
-              -D COSMORECPATH=\"$(PWD)/\" \
+              -D RECFASTPPPATH=\"$(CURDIR)/$(DEV_DIR)/Cosmology/Recfast++/\" \
+              -D COSMORECPATH=\"$(CURDIR)/\" \
               -D COSMOREC_BASE_PATH=\"$(REC_BASE)/\" \
-              -D HEIDATADIR=\"$(PWD)/$(DEV_DIR)/$(HELIUM_DIR)/\"
+              -D HEIDATADIR=\"$(CURDIR)/$(DEV_DIR)/$(HELIUM_DIR)/\"
 
 #===============================================================================
 # Recfast++ part
@@ -95,6 +96,19 @@ LIBSRF  = -L$(RF_LIB_PATH) -l$(RF)
 #===============================================================================
 LIBS    = -L/usr/local/lib/ -L/opt/local/lib/ \
            $(LIBSRF) $(LIBSGSL) $(LIBSGR) $(LIBOPENMI) -lm
+
+#===============================================================================
+# object files
+#===============================================================================
+OBJSRecfast++ = $(DEV_DIR)/Cosmology/Recfast++/Recfast++.o \
+	   $(DEV_DIR)/Cosmology/Recfast++/src/cosmology.Recfast.o \
+	   $(DEV_DIR)/Cosmology/Recfast++/src/evalode.Recfast.o \
+	   $(DEV_DIR)/Cosmology/Recfast++/src/ODE_solver.Recfast.o \
+	   $(DEV_DIR)/Cosmology/Recfast++/src/DM_annihilation_decay.Recfast.o \
+	   $(DEV_DIR)/Cosmology/Recfast++/src/Magnetic_fields.Recfast.o \
+	   $(DEV_DIR)/Cosmology/Recfast++/src/Variation_constants.Recfast.o \
+	   $(DEV_DIR)/Cosmology/Recfast++/src/Rec_corrs_CT.Recfast.o \
+	   $(DEV_DIR)/Cosmology/Recfast++/src/Reionization.Recfast.o
 
 #===============================================================================
 # object files
@@ -155,7 +169,7 @@ endif
 #===============================================================================
 # all objects
 #===============================================================================
-OBJS= $(OBJSDEV) $(OBJSRAMAN) $(OBJSDATA) $(OBJSHEDIF) $(OBJSHEI)
+OBJS= $(OBJSRecfast++) $(OBJSDEV) $(OBJSRAMAN) $(OBJSDATA) $(OBJSHEDIF) $(OBJSHEI)
 
 #===============================================================================
 # program 
@@ -178,7 +192,7 @@ CosmoReclib: $(OBJS) CosmoRec.o
 
 Recfast++lib:
 		@echo "\n Creating Recfast++ library\n"
-		cd $(DEV_DIR)/Cosmology/Recfast++; make lib CC=$(CC);
+		cd $(DEV_DIR)/Cosmology/Recfast++; make lib CC=$(CC) CXXFLAGS='$(CXXFLAGS)';
 		@echo "\n done...\n";
 
 #===============================================================================

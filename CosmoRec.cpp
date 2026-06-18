@@ -19,7 +19,7 @@
 // 23.07.2014: added possibility to change A2s1s two-photon decay rate
 // 22.07.2014: new He-diffusion runmodes (runpars[1]== 4, 5, 6)
 // 17.07.2014: included HeI-diffusion correction (most of the coding done 02-05.2011)
-// 16.07.2014: default runmode for batch version with Diff_iteration_max=1 and nShellsHeI=2
+// 16.07.2014: default runmode for batch version with nShellsHeI=2
 // 17.06.2013: small cosmetic changes
 // 18.06.2012: added C-version to communicate Hubble pointer
 // 08.06.2012: added version to communicate Hubble
@@ -715,8 +715,18 @@ void run_Recfast_pp(const int nz, double *z_arr,
 //
 // runpars[11-14]: EM1..EM4
 //
+//-----------------------------------------------------------------------------------------------------------
+// CAMB overrides. Negative values keep the default or selected accuracy preset.
+//
+// runpars[15]>=0: override Diff_iteration_max.
+// runpars[16]>=0: override nShells.
+// runpars[17]>=0: override nShellsHeI.
+// runpars[18]>=0: override HI_absorption.
+// runpars[19]>=0: override nS_2gamma.
+// runpars[20]>=0: override nS_Raman.
+//
 //===========================================================================================================
-int CosmoRec(const int runmode, const double runpars[15],
+int CosmoRec(const int runmode, const double runpars[21],
              const double omegac, const double omegab, 
              const double omegak, const double Nnu,  
              const double h0, const double tcmb, const double yhe,
@@ -836,9 +846,10 @@ int CosmoRec(const int runmode, const double runpars[15],
     //=======================================================================================================
     // number of iterations over HI & HeI diffusion problem
     //=======================================================================================================
-    Diff_iteration_max=1;   // For the default setting 1 iteration is enough
-                            // In the other runmodes 2 should be better, but
-                            // it slows the code down roughly by 2.
+    Diff_iteration_max=2;   // Match CosmoRec's internal default.
+                            // CAMB can explicitly override this through
+                            // runpars[15] / cosmorec_diff_iteration_max.
+    if((int)runpars[15] >= 0) Diff_iteration_max=(int)runpars[15];
     
     //=======================================================================================================
     // settings for non-default cases
@@ -888,6 +899,12 @@ int CosmoRec(const int runmode, const double runpars[15],
         parameters.CR.nShellsHeI=5;
         parameters.CR.HeI_Feedback=-5; parameters.CR.HI_absorption=3;
     }
+    
+    if((int)runpars[16] >= 0) parameters.CR.nShells=(int)runpars[16];
+    if((int)runpars[17] >= 0) parameters.CR.nShellsHeI=(int)runpars[17];
+    if((int)runpars[18] >= 0) parameters.CR.HI_absorption=(int)runpars[18];
+    if((int)runpars[19] >= 0) parameters.CR.nS_2gamma=(int)runpars[19];
+    if((int)runpars[20] >= 0) parameters.CR.nS_Raman=(int)runpars[20];
     
     //=======================================================================================================
     if(runmode==1) parameters.CR.Diffusion_flag=0;

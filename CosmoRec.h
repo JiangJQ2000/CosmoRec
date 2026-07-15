@@ -19,7 +19,7 @@
 // 23.07.2014: added possibility to change A2s1s two-photon decay rate
 // 22.07.2014: new He-diffusion runmodes (runpars[1]== 4, 5, 6)
 // 17.07.2014: included HeI-diffusion correction (most of the coding done 02-05.2011)
-// 16.07.2014: default runmode for batch version with Diff_iteration_max=1 and nShellsHeI=2
+// 16.07.2014: default runmode for batch version with nShellsHeI=2
 // 17.06.2013: small cosmetic changes
 // 18.06.2012: added C-version to communicate Hubble pointer
 // 08.06.2012: added version to communicate Hubble
@@ -112,8 +112,18 @@ int CosmoRec(int narg, char *args[]);
 //
 // runpars[11-14]: EM1..EM4
 //
+//-----------------------------------------------------------------------------------------------------------
+// CAMB overrides. Negative values keep the default or selected accuracy preset.
+//
+// runpars[15]>=0: override Diff_iteration_max.
+// runpars[16]>=0: override nShells.
+// runpars[17]>=0: override nShellsHeI.
+// runpars[18]>=0: override HI_absorption.
+// runpars[19]>=0: override nS_2gamma.
+// runpars[20]>=0: override nS_Raman.
+//
 //===========================================================================================================
-int CosmoRec(const int runmode, const double runpars[15],
+int CosmoRec(const int runmode, const double runpars[21],
              const double omegac, const double omegab, 
              const double omegak, const double Nnu,  
              const double h0, const double tcmb, const double yhe, 

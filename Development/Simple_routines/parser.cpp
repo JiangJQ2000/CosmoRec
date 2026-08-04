@@ -101,5 +101,11 @@ int parser_read_double(const struct file_content &pfc, string var_id, double &va
 int parser_read_string(const struct file_content &pfc, string var_id, string &val, bool &found, bool show_entry)
 { return parser_read(pfc, var_id, val, found, show_entry); }
 
+// Keep the template symbols externally visible when parser users are compiled
+// in separate translation units (required by recent GCC optimization passes).
+template int parser_read<int>(const struct file_content &, string, int &, bool &, bool);
+template int parser_read<double>(const struct file_content &, string, double &, bool &, bool);
+template int parser_read<string>(const struct file_content &, string, string &, bool &, bool);
+
 //====================================================================================================================
 //====================================================================================================================

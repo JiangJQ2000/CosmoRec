@@ -1,3 +1,9 @@
+#include <gsl/gsl_spline.h>
+
+// Reuse the existing GSL cubic spline and accelerator from routines.cpp.
+extern std::vector<gsl_spline *> splinevec;
+extern std::vector<gsl_interp_accel *> accvec;
+
 //==================================================================================================
 // accuracy for integrator
 //==================================================================================================
@@ -48,8 +54,10 @@ double calc_DF(double xmin, double xmax, double epsabs=1.0e-60)
     //=========================================================================
     // Integrals
     //=========================================================================
-    double epsrel=epsrel_HI;
-    double r=Integrate_using_Patterson_adaptive(xmin, xmax, epsrel, epsabs, dnbar_dx_2g_R);
+    double r=0.0;
+    if(xmin<xmax)
+        r=gsl_spline_eval_integ(splinevec[Spline_for_nx_integral.memindex],
+                               xmin, xmax, accvec[Spline_for_nx_integral.memindex]);
     
     return r;   
 }

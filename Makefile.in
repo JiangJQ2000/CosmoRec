@@ -24,14 +24,14 @@ LXXFLAGS =
 #DEF_LIB_PATH = /usr/local/lib/
 #DEF_INC_PATH = /opt/local/include/
 #DEF_LIB_PATH = /opt/local/lib/
-DEF_INC_PATH = /opt/homebrew/include/
-DEF_LIB_PATH = /opt/homebrew/lib/
+DEF_INC_PATH ?= /usr/local/include/
+DEF_LIB_PATH ?= /usr/local/lib/
 
 #===============================================================================
 # GSL lib
 #===============================================================================
-GSL_INC_PATH = $(DEF_INC_PATH)
-GSL_LIB_PATH = $(DEF_LIB_PATH)
+GSL_INC_PATH ?= $(DEF_INC_PATH)
+GSL_LIB_PATH ?= $(DEF_LIB_PATH)
 LIBSGSL = -L$(GSL_LIB_PATH) -lgsl -lgslcblas
 
 #===============================================================================
@@ -238,7 +238,7 @@ INC_PATH = -I$(DEV_DIR)/Definitions -I$(DEV_DIR)/Recombination \
        -I$(DEV_DIR)/Compton_Kernel \
 	   -I$(REC_BASE)/Effective_Rates.HI \
 	   -I$(REC_BASE)/Effective_Rates.HeI \
-	   $(RF_INC_PATH) -I$(GSL_INC_PATH) -I$(GR_INC_PATH) -I.
+       $(RF_INC_PATH) -I$(GSL_INC_PATH) $(if $(GR_INC_PATH),-I$(GR_INC_PATH)) -I.
 
 .cpp.o:
 	@echo "Producing object-file $@"
